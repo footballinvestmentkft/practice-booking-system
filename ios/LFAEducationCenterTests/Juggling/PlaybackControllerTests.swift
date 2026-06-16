@@ -287,4 +287,46 @@ final class PlaybackControllerTests: XCTestCase {
                 "player.rate must stay 0 while paused — rate \(rate.label) changed it")
         }
     }
+
+    // MARK: — User rotation cycle (RC-01..RC-05)
+
+    // RC-01: initial userRotation is 0
+    func test_RC01_initialUserRotationIsZero() {
+        let (ctrl, _) = makeController()
+        XCTAssertEqual(ctrl.userRotation, 0)
+    }
+
+    // RC-02: first rotateClockwise → 90
+    func test_RC02_rotateClockwiseOnce() {
+        let (ctrl, _) = makeController()
+        ctrl.rotateClockwise()
+        XCTAssertEqual(ctrl.userRotation, 90)
+    }
+
+    // RC-03: second rotateClockwise → 180
+    func test_RC03_rotateClockwiseTwice() {
+        let (ctrl, _) = makeController()
+        ctrl.rotateClockwise()
+        ctrl.rotateClockwise()
+        XCTAssertEqual(ctrl.userRotation, 180)
+    }
+
+    // RC-04: third rotateClockwise → 270
+    func test_RC04_rotateClockwiseThreeTimes() {
+        let (ctrl, _) = makeController()
+        ctrl.rotateClockwise()
+        ctrl.rotateClockwise()
+        ctrl.rotateClockwise()
+        XCTAssertEqual(ctrl.userRotation, 270)
+    }
+
+    // RC-05: fourth rotateClockwise → wraps back to 0
+    func test_RC05_rotateClockwiseFourTimesWrapsToZero() {
+        let (ctrl, _) = makeController()
+        ctrl.rotateClockwise()
+        ctrl.rotateClockwise()
+        ctrl.rotateClockwise()
+        ctrl.rotateClockwise()
+        XCTAssertEqual(ctrl.userRotation, 0, "Four clockwise rotations must wrap back to 0°")
+    }
 }

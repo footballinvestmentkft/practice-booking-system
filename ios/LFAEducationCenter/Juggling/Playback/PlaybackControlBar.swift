@@ -30,6 +30,7 @@ struct PlaybackControlBar: View {
                 playPauseButton
                 frameStepButton(forward: true)
                 Spacer()
+                rotateButton
                 rateMenuButton
             }
             .disabled(!isEnabled)
@@ -71,6 +72,17 @@ struct PlaybackControlBar: View {
                 .frame(width: 44, height: 44)
         }
         .accessibilityLabel(forward ? "Step forward one frame" : "Step backward one frame")
+    }
+
+    private var rotateButton: some View {
+        Button { controller.rotateClockwise() } label: {
+            Image(systemName: "rotate.right")
+                .font(.system(size: 20, weight: .medium))
+                .foregroundColor(.white)
+                .frame(width: 44, height: 44)
+        }
+        .accessibilityLabel("Videó forgatása 90°-kal jobbra")
+        .accessibilityHint("Ciklikus: 0° → 90° → 180° → 270° → 0°")
     }
 
     private var rateMenuButton: some View {

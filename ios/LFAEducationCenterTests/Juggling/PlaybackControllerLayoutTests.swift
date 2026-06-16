@@ -63,4 +63,98 @@ final class PlaybackControllerLayoutTests: XCTestCase {
         XCTAssertEqual(result.width,  1920, accuracy: 0.5)
         XCTAssertEqual(result.height, 1080, accuracy: 0.5)
     }
+
+    // MARK: — computeVideoRenderSize (RC-06..RC-11)
+    //
+    // Verifies that the render frame assigned to AVPlayerLayerView before
+    // .rotationEffect() always fits entirely within the container, for all
+    // four user-rotation values.
+
+    // RC-06: landscape 1280×720 at 0° — render width fills container width
+    func test_RC06_landscapeAt0DegreeFillsContainerWidth() {
+        let renderSize = PlaybackController.computeVideoRenderSize(
+            videoSize:    CGSize(width: 1280, height: 720),
+            container:    CGSize(width: 390, height: 221),
+            userRotation: 0
+        )
+        XCTAssertLessThanOrEqual(renderSize.width,  390 + 0.5, "renderW must not overflow container width")
+        XCTAssertLessThanOrEqual(renderSize.height, 221 + 0.5, "renderH must not overflow container height")
+        // 16:9 in 390 wide → height ≈ 219 (width-constrained)
+        XCTAssertEqual(renderSize.width, 390, accuracy: 1.0)
+        XCTAssertEqual(renderSize.height, 390 * (720.0 / 1280.0), accuracy: 1.0)
+    }
+
+    // RC-07: landscape 1280×720 at 90° — visual footprint (renderH × renderW) fits in container
+    func test_RC07_landscapeAt90DegreesVisualFootprintFitsContainer() {
+        let renderSize = PlaybackController.computeVideoRenderSize(
+            videoSize:    CGSize(width: 1280, height: 720),
+            container:    CGSize(width: 390, height: 221),
+            userRotation: 90
+        )
+        // After 90° rotation: visual width = renderH, visual height = renderW
+        let visualW = renderSize.height
+        let visualH = renderSize.width
+        XCTAssertLessThanOrEqual(visualW, 390 + 0.5, "visual width after 90° must fit container width")
+        XCTAssertLessThanOrEqual(visualH, 221 + 0.5, "visual height after 90° must fit container height")
+        // Render frame itself must not overflow either (pre-rotation bounds)
+        XCTAssertLessThanOrEqual(renderSize.width,  390 + 0.5)
+        XCTAssertLessThanOrEqual(renderSize.height, 221 + 0.5)
+    }
+
+    // RC-08: landscape 1280×720 at 270° — same scale as 90° (symmetric)
+    func test_RC08_landscapeAt270DegreesSameScaleAs90() {
+        let at90  = PlaybackController.computeVideoRenderSize(
+            videoSize: CGSize(width: 1280, height: 720),
+            container: CGSize(width: 390, height: 221),
+            userRotation: 90
+        )
+        let at270 = PlaybackController.computeVideoRenderSize(
+            videoSize: CGSize(width: 1280, height: 720),
+            container: CGSize(width: 390, height: 221),
+            userRotation: 270
+        )
+        XCTAssertEqual(at90.width,  at270.width,  accuracy: 0.01)
+        XCTAssertEqual(at90.height, at270.height, accuracy: 0.01)
+    }
+
+    // RC-09: landscape 1280×720 at 180° — same renderSize as 0°
+    func test_RC09_landscapeAt180DegreesSameScaleAs0() {
+        let at0   = PlaybackController.computeVideoRenderSize(
+            videoSize: CGSize(width: 1280, height: 720),
+            container: CGSize(width: 390, height: 221),
+            userRotation: 0
+        )
+        let at180 = PlaybackController.computeVideoRenderSize(
+            videoSize: CGSize(width: 1280, height: 720),
+            container: CGSize(width: 390, height: 221),
+            userRotation: 180
+        )
+        XCTAssertEqual(at0.width,  at180.width,  accuracy: 0.01)
+        XCTAssertEqual(at0.height, at180.height, accuracy: 0.01)
+    }
+
+    // RC-10: portrait video 720×1280 at 0° — height-constrained, fits container
+    func test_RC10_portraitAt0DegreeHeightConstrained() {
+        let renderSize = PlaybackController.computeVideoRenderSize(
+            videoSize:    CGSize(width: 720, height: 1280),
+            container:    CGSize(width: 390, height: 221),
+            userRotation: 0
+        )
+        XCTAssertLessThanOrEqual(renderSize.width,  390 + 0.5)
+        XCTAssertLessThanOrEqual(renderSize.height, 221 + 0.5)
+        // height-constrained: renderH ≈ 221, renderW ≈ 221 * (720/1280) ≈ 124
+        XCTAssertEqual(renderSize.height, 221, accuracy: 1.0)
+    }
+
+    // RC-11: zero-size video — guard returns container size without crashing
+    func test_RC11_zeroSizeVideoReturnsContainerFallback() {
+        let container  = CGSize(width: 390, height: 221)
+        let renderSize = PlaybackController.computeVideoRenderSize(
+            videoSize:    CGSize.zero,
+            container:    container,
+            userRotation: 0
+        )
+        XCTAssertEqual(renderSize.width,  container.width,  accuracy: 0.01)
+        XCTAssertEqual(renderSize.height, container.height, accuracy: 0.01)
+    }
 }

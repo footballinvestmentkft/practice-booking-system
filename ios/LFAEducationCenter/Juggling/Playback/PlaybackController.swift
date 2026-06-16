@@ -61,6 +61,7 @@ final class PlaybackController: ObservableObject {
     @Published private(set) var currentTimestampMs: Int          = 0
     @Published private(set) var selectedRate:       PlaybackRate = .normal
     @Published private(set) var videoNaturalSize:   CGSize?      = nil
+    @Published private(set) var userRotation:       Int          = 0   // 0/90/180/270 — session-local
     @Published var duration: CMTime = .zero
 
     // Set once when the asset loads; var (not private(set)) so tests can inject
@@ -148,6 +149,41 @@ final class PlaybackController: ObservableObject {
         if isPlaying {
             player.rate = rate.rawValue
         }
+    }
+
+    // Cycles userRotation clockwise: 0 → 90 → 180 → 270 → 0.
+    // Session-local; not persisted to the server.
+    func rotateClockwise() {
+        userRotation = (userRotation + 90) % 360
+    }
+
+    // MARK: — Video render size (static — directly unit-testable without AVAsset)
+
+    // Returns the frame size (in points) to assign to AVPlayerLayerView before
+    // applying .rotationEffect(.degrees(userRotation)).
+    //
+    // The key invariant: the *visual footprint* after rotation must fit entirely
+    // within the container with no clipping:
+    //   - At 0°/180°: visual footprint = renderW × renderH  (fits vW:vH into W:H)
+    //   - At 90°/270°: visual footprint = renderH × renderW (fits vH:vW into W:H,
+    //     because the axes swap after rotation)
+    //
+    // Choosing the render frame instead of relying on .scaledToFit() avoids the
+    // SwiftUI layout trap where rotationEffect fires after frame is already locked.
+    static func computeVideoRenderSize(
+        videoSize:    CGSize,
+        container:    CGSize,
+        userRotation: Int
+    ) -> CGSize {
+        let vW = videoSize.width,  vH = videoSize.height
+        let W  = container.width,  H  = container.height
+        guard vW > 0, vH > 0, W > 0, H > 0 else { return container }
+        let scale: CGFloat
+        switch userRotation % 360 {
+        case 90, 270: scale = min(W / vH, H / vW)
+        default:      scale = min(W / vW, H / vH)
+        }
+        return CGSize(width: vW * scale, height: vH * scale)
     }
 
     // Frame-accurate step — always pauses first. Clamps to [0, duration].

@@ -165,4 +165,18 @@ final class PlaybackBarTests: XCTestCase {
         let ctrl = PlaybackController(player: MockPlayer())
         XCTAssertEqual(ctrl.selectedRate, .normal)
     }
+
+    // RC-B01: rotate button exists — rotateClockwise() is callable from the bar's
+    // controller and the bar init does not crash with rotation state present.
+    func test_RC_B01_rotateButtonExistsAndControllerRotateClockwiseWorks() {
+        let player = MockPlayer()
+        let ctrl   = PlaybackController(player: player)
+        let bar    = PlaybackControlBar(controller: ctrl)
+        _ = bar   // init must not crash with rotate button in HStack
+
+        // Verify rotateClockwise() is accessible and produces expected cycle
+        XCTAssertEqual(ctrl.userRotation, 0)
+        ctrl.rotateClockwise()
+        XCTAssertEqual(ctrl.userRotation, 90)
+    }
 }

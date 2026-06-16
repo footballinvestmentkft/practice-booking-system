@@ -221,15 +221,27 @@ struct JugglingAnnotationScreen: View {
 
     @ViewBuilder
     private func videoArea(in geo: GeometryProxy) -> some View {
+        let containerW = geo.size.width
+        let containerH = videoAreaHeight(in: geo)
+        let videoSize  = playback.videoNaturalSize ?? CGSize(width: 16, height: 9)
+        let renderSize = PlaybackController.computeVideoRenderSize(
+            videoSize:    videoSize,
+            container:    CGSize(width: containerW, height: containerH),
+            userRotation: playback.userRotation
+        )
+
         ZStack {
             Color.black
             if let avp = playback.avPlayer, loaderReady {
                 AVPlayerLayerView(player: avp)
+                    .frame(width: renderSize.width, height: renderSize.height)
+                    .rotationEffect(.degrees(Double(playback.userRotation)))
+                    .animation(.easeInOut(duration: 0.25), value: playback.userRotation)
             } else {
                 loaderPlaceholder
             }
         }
-        .frame(width: geo.size.width, height: videoAreaHeight(in: geo))
+        .frame(width: containerW, height: containerH)
         .clipped()
     }
 
