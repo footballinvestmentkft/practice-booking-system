@@ -430,3 +430,5 @@ class BallDetectionTriggerResult(BaseModel):
     events_queued:          int
     events_skipped:         int
     skipped_reasons:        List[str]
+
+    model_config = {"protected_namespaces": ()}
