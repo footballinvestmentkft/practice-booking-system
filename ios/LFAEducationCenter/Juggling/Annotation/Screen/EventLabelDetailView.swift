@@ -61,6 +61,9 @@ struct EventLabelDetailView: View {
     @State private var mode:     LabelingDetailMode = .sequential
     @State private var isSaving: Bool               = false
 
+    // AN-3B2C-1 — ball detection section error toast (nil = no error shown).
+    @State private var ballDetectionError: String? = nil
+
     // MARK: — Body
 
     var body: some View {
@@ -98,7 +101,11 @@ struct EventLabelDetailView: View {
         .navigationViewStyle(.stack)
         .onAppear { setUpQueue() }
         .onDisappear { previewSession.stop() }
-        .onChange(of: currentIndex) { _ in loadPreviewForCurrentDraft() }
+        .onChange(of: currentIndex) { _ in
+            loadPreviewForCurrentDraft()
+            ballDetectionError = nil
+            fetchBallDetectionForCurrent()
+        }
     }
 
     // MARK: — Top-level labeling layout (SILO-2)
@@ -131,6 +138,11 @@ struct EventLabelDetailView: View {
                     taxonomyFallbackContent
                 } else {
                     emojiPickerContent
+                }
+                // AN-3B2C-1: ball detection secondary section (always shown when event is synced).
+                if currentDraft?.serverEventId != nil {
+                    Divider().padding(.top, 4)
+                    ballDetectionSection
                 }
             }
         }
@@ -337,6 +349,30 @@ struct EventLabelDetailView: View {
                 }
             }
 
+            // AN-3B2C-1: ball position overlay (rendered above video, below controls).
+            if let serverEventId = currentDraft?.serverEventId,
+               case .loaded(let detection) = vm.ballDetections[serverEventId] {
+                BallOverlayView(
+                    detection:    detection,
+                    isDragEnabled: ballDragEnabled(detection: detection)
+                ) { nx, ny in
+                    ballDetectionError = nil
+                    Task {
+                        do {
+                            try await vm.postManualBallPosition(
+                                videoId: vm.videoId,
+                                eventId: serverEventId,
+                                x: nx, y: ny
+                            )
+                        } catch {
+                            ballDetectionError = error.localizedDescription
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .allowsHitTesting(ballDragEnabled(detection: detection))
+            }
+
             if !previewSession.isLoading, !previewSession.hasError {
                 HStack(spacing: 20) {
                     Button {
@@ -369,6 +405,11 @@ struct EventLabelDetailView: View {
         .frame(height: adaptivePreviewHeight)
         .clipped()
         .accessibilityHidden(true)
+    }
+
+    // Ball is draggable only when position is known and not "no ball".
+    private func ballDragEnabled(detection: BallDetectionOut) -> Bool {
+        !detection.noBallDetected && detection.ballX != nil && detection.ballY != nil
     }
 
     // MARK: — Timestamp row
@@ -466,6 +507,7 @@ struct EventLabelDetailView: View {
 
         loadFormState()
         loadPreviewForCurrentDraft()
+        fetchBallDetectionForCurrent()
     }
 
     private func loadFormState() {
@@ -552,6 +594,130 @@ struct EventLabelDetailView: View {
                 selectedSide = nil
             }
         }
+    }
+
+    // MARK: — Ball Detection Section (AN-3B2C-1)
+
+    @ViewBuilder
+    private var ballDetectionSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Labda detektálás")
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+
+            Group {
+                if let serverEventId = currentDraft?.serverEventId {
+                    let state = vm.ballDetections[serverEventId] ?? .notFetched
+                    switch state {
+                    case .notFetched:
+                        Text("Betöltés…")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    case .fetching:
+                        HStack(spacing: 8) {
+                            ProgressView().progressViewStyle(CircularProgressViewStyle())
+                            Text("Elemzés lekérése…")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    case .featureDisabled:
+                        Text("Labda detektálás nem érhető el")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    case .notFound:
+                        HStack(spacing: 8) {
+                            ProgressView().progressViewStyle(CircularProgressViewStyle())
+                            Text("Elemzés folyamatban…")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    case .networkError(let msg):
+                        Text("Hálózati hiba: \(msg)")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    case .loaded(let detection):
+                        ballDetectionLoadedRow(detection: detection, serverEventId: serverEventId)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+
+            if let err = ballDetectionError {
+                Text(err)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 16)
+            }
+        }
+        .padding(.bottom, 12)
+    }
+
+    @ViewBuilder
+    private func ballDetectionLoadedRow(detection: BallDetectionOut, serverEventId: UUID) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if detection.noBallDetected {
+                Label("Nincs labda jelezve", systemImage: "xmark.circle")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                // Revert button
+                Button {
+                    ballDetectionError = nil
+                    Task {
+                        do {
+                            if let ax = detection.autoBallX, let ay = detection.autoBallY {
+                                try await vm.postManualBallPosition(
+                                    videoId: vm.videoId, eventId: serverEventId, x: ax, y: ay
+                                )
+                            }
+                            // No auto coords: can't revert automatically; user must drag on preview.
+                        } catch {
+                            ballDetectionError = error.localizedDescription
+                        }
+                    }
+                } label: {
+                    Label(
+                        detection.autoBallX != nil ? "Labda volt — visszaállítás" : "Nincs visszaállítható pozíció",
+                        systemImage: "arrow.uturn.backward"
+                    )
+                    .font(.caption)
+                }
+                .disabled(detection.autoBallX == nil)
+                .foregroundColor(detection.autoBallX != nil ? .accentColor : .secondary)
+            } else {
+                if let conf = detection.confidence {
+                    let pct = Int(conf * 100)
+                    let src = detection.detectionSource == "manual" ? "manuális" : "auto"
+                    Label("Pozíció: \(src), \(pct)% konfidencia", systemImage: "target")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    Label("Pozíció: manuális", systemImage: "target")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                // "No ball" button
+                Button {
+                    ballDetectionError = nil
+                    Task {
+                        do {
+                            try await vm.markNoBall(videoId: vm.videoId, eventId: serverEventId)
+                        } catch {
+                            ballDetectionError = error.localizedDescription
+                        }
+                    }
+                } label: {
+                    Label("Nincs labda ezen a képkockán", systemImage: "xmark.circle")
+                        .font(.caption)
+                }
+                .foregroundColor(.secondary)
+            }
+        }
+    }
+
+    private func fetchBallDetectionForCurrent() {
+        guard let serverEventId = currentDraft?.serverEventId else { return }
+        Task { await vm.fetchBallDetection(videoId: vm.videoId, eventId: serverEventId) }
     }
 
     private func loadPreviewForCurrentDraft() {

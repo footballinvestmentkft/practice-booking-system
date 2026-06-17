@@ -132,15 +132,16 @@ struct JugglingAnnotationScreen: View {
                     }
 
                     EventTimelineView(
-                        events:    vm.activeEvents,
-                        duration:  playback.duration,
-                        currentMs: playback.currentTimestampMs,
+                        events:              vm.activeEvents,
+                        duration:            playback.duration,
+                        currentMs:           playback.currentTimestampMs,
                         onTap:  { id in
                             if let draft = vm.activeEvents.first(where: { $0.deviceEventId == id }) {
                                 playback.seek(toTimestampMs: draft.timestampMs)
                             }
                         },
-                        onSeek: { playback.seek(toTimestampMs: $0) }
+                        onSeek: { playback.seek(toTimestampMs: $0) },
+                        ballDetectionStates: vm.ballDetections
                     )
                     .padding(.bottom, 4)
 

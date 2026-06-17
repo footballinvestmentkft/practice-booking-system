@@ -151,6 +151,10 @@
 		CC400004000000000000033 /* RotationPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000033 /* RotationPersistenceTests.swift */; };
 		CC400004000000000000034 /* FlushOnDismissTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000034 /* FlushOnDismissTests.swift */; };
 		CC400004000000000000035 /* PoseSnapshotFetchOnAppearTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000035 /* PoseSnapshotFetchOnAppearTests.swift */; };
+		CC400004000000000000036 /* BallDetectionAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000036 /* BallDetectionAPIClientTests.swift */; };
+		CC400004000000000000037 /* BallDetectionVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000037 /* BallDetectionVMTests.swift */; };
+		CC400004000000000000038 /* BallOverlayViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000038 /* BallOverlayViewTests.swift */; };
+		CC400004000000000000039 /* BallDetectionTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000039 /* BallDetectionTimelineTests.swift */; };
 		CC400004000000000000030 /* JugglingVideoUploadIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000030 /* JugglingVideoUploadIntegrationTests.swift */; };
 		CC400004000000000000001 /* JugglingVideoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000001 /* JugglingVideoTests.swift */; };
 		CC400004000000000000005 /* ContactTaxonomyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000005 /* ContactTaxonomyTests.swift */; };
@@ -166,6 +170,7 @@
 		BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100003000000000000006 /* AVPlayerLayerViewTests.swift */; };
 		BB200004000000000000001 /* JugglingAnnotationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000001 /* JugglingAnnotationScreen.swift */; };
 		BB200004000000000000020 /* PoseSnapshotOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000020 /* PoseSnapshotOverlayView.swift */; };
+		BB200004000000000000021 /* BallOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000021 /* BallOverlayView.swift */; };
 		BB200004000000000000003 /* EventTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000003 /* EventTimelineView.swift */; };
 		BB200004000000000000006 /* PlaybackControllerLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */; };
 		BB200004000000000000009 /* EventTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000009 /* EventTimelineTests.swift */; };
@@ -301,6 +306,7 @@
 		BB100003000000000000006 /* AVPlayerLayerViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVPlayerLayerViewTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000001 /* JugglingAnnotationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationScreen.swift; sourceTree = "<group>"; };
 		BB200003000000000000020 /* PoseSnapshotOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotOverlayView.swift; sourceTree = "<group>"; };
+		BB200003000000000000021 /* BallOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallOverlayView.swift; sourceTree = "<group>"; };
 		BB200003000000000000003 /* EventTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineView.swift; sourceTree = "<group>"; };
 		BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControllerLayoutTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000009 /* EventTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineTests.swift; sourceTree = "<group>"; };
@@ -329,6 +335,10 @@
 		CC300003000000000000033 /* RotationPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotationPersistenceTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000034 /* FlushOnDismissTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlushOnDismissTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000035 /* PoseSnapshotFetchOnAppearTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotFetchOnAppearTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000036 /* BallDetectionAPIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallDetectionAPIClientTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000037 /* BallDetectionVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallDetectionVMTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000038 /* BallOverlayViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallOverlayViewTests.swift; sourceTree = "<group>"; };
+		CC300003000000000000039 /* BallDetectionTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallDetectionTimelineTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000030 /* JugglingVideoUploadIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoUploadIntegrationTests.swift; sourceTree = "<group>"; };
 		DD000003000000000000001 /* Config.Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.Debug.xcconfig; sourceTree = "<group>"; };
 		DD000003000000000000002 /* Config.Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.Release.xcconfig; sourceTree = "<group>"; };
@@ -651,6 +661,7 @@
 			children = (
 				BB200003000000000000001 /* JugglingAnnotationScreen.swift */,
 				BB200003000000000000020 /* PoseSnapshotOverlayView.swift */,
+				BB200003000000000000021 /* BallOverlayView.swift */,
 				BB200003000000000000003 /* EventTimelineView.swift */,
 				BB200003000000000000010 /* AnnotationDebugOverlay.swift */,
 				BB200003000000000000011 /* EventLabelDetailView.swift */,
@@ -743,6 +754,10 @@
 				CC300003000000000000033 /* RotationPersistenceTests.swift */,
 				CC300003000000000000034 /* FlushOnDismissTests.swift */,
 				CC300003000000000000035 /* PoseSnapshotFetchOnAppearTests.swift */,
+				CC300003000000000000036 /* BallDetectionAPIClientTests.swift */,
+				CC300003000000000000037 /* BallDetectionVMTests.swift */,
+				CC300003000000000000038 /* BallOverlayViewTests.swift */,
+				CC300003000000000000039 /* BallDetectionTimelineTests.swift */,
 				BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */,
 				BB100003000000000000005 /* PlaybackBarTests.swift */,
 				BB100003000000000000006 /* AVPlayerLayerViewTests.swift */,
@@ -977,6 +992,7 @@
 				BB100004000000000000003 /* PlaybackControlBar.swift in Sources */,
 				BB200004000000000000001 /* JugglingAnnotationScreen.swift in Sources */,
 				BB200004000000000000020 /* PoseSnapshotOverlayView.swift in Sources */,
+				BB200004000000000000021 /* BallOverlayView.swift in Sources */,
 				BB200004000000000000003 /* EventTimelineView.swift in Sources */,
 				BB200004000000000000010 /* AnnotationDebugOverlay.swift in Sources */,
 				BB200004000000000000011 /* EventLabelDetailView.swift in Sources */,
@@ -1029,6 +1045,10 @@
 				CC400004000000000000033 /* RotationPersistenceTests.swift in Sources */,
 				CC400004000000000000034 /* FlushOnDismissTests.swift in Sources */,
 				CC400004000000000000035 /* PoseSnapshotFetchOnAppearTests.swift in Sources */,
+				CC400004000000000000036 /* BallDetectionAPIClientTests.swift in Sources */,
+				CC400004000000000000037 /* BallDetectionVMTests.swift in Sources */,
+				CC400004000000000000038 /* BallOverlayViewTests.swift in Sources */,
+				CC400004000000000000039 /* BallDetectionTimelineTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,

@@ -77,6 +77,9 @@ final class JugglingAnnotationViewModel: ObservableObject {
     // AN-3B2A P2 — marking vs. labeling. Set by enterLabelingMode() /
     // exitLabelingMode(); the Screen reads this to drive navigation.
     @Published private(set) var screenMode:         AnnotationScreenMode = .marking
+    // AN-3B2C-1 — per-event ball detection state, keyed by server event UUID.
+    // Starts .notFetched; transitions via fetchBallDetection / polling.
+    @Published private(set) var ballDetections:     [UUID: BallDetectionState] = [:]
 
     let userId:  Int
     let videoId: String
@@ -85,6 +88,7 @@ final class JugglingAnnotationViewModel: ObservableObject {
     private let localStore:    LocalAnnotationStore
     private let syncEngine:    AnnotationSyncEngine
     private let apiClient:     JugglingAnnotationAPIClientProtocol
+    private var ballDetectionPollingTask: Task<Void, Never>? = nil
 
     init(
         userId:      Int,
@@ -893,4 +897,170 @@ final class JugglingAnnotationViewModel: ObservableObject {
             finishError = "A befejezés sikertelen: \(error.localizedDescription)"
         }
     }
+
+    // MARK: — Ball Detection (AN-3B2C-1)
+
+    // Fetch the current ball detection for a single event.
+    // Sets .fetching immediately; on 404 starts polling (Celery not yet run);
+    // on 503 sets .featureDisabled; on other errors sets .networkError.
+    func fetchBallDetection(videoId: String, eventId: UUID) async {
+        guard let client = apiClient as? JugglingAnnotationAPIClient else { return }
+        ballDetections[eventId] = .fetching
+        do {
+            let detection = try await client.fetchBallDetection(videoId: videoId, eventId: eventId)
+            ballDetections[eventId] = .loaded(detection)
+        } catch let err as AnnotationAPIError {
+            switch err {
+            case .permanent(let code, _) where code == 404:
+                ballDetections[eventId] = .notFound
+                startPolling(videoId: videoId, eventId: eventId)
+            case .permanent(let code, _) where code == 503:
+                ballDetections[eventId] = .featureDisabled
+            default:
+                ballDetections[eventId] = .networkError(err.errorDescription ?? err.localizedDescription)
+            }
+        } catch {
+            ballDetections[eventId] = .networkError(error.localizedDescription)
+        }
+    }
+
+    // Submit a manual ball position correction.
+    // Optimistic update: UI reflects the new position immediately;
+    // reverts to the previous state on failure.
+    func postManualBallPosition(videoId: String, eventId: UUID, x: Double, y: Double) async throws {
+        guard let client = apiClient as? JugglingAnnotationAPIClient else { return }
+
+        let previousState = ballDetections[eventId]
+        let existing: BallDetectionOut? = {
+            if case .loaded(let d) = previousState { return d }
+            return nil
+        }()
+        let vidUUID = UUID(uuidString: videoId) ?? UUID()
+        let optimistic = BallDetectionOut(
+            id:                   existing?.id ?? UUID(),
+            contactEventId:       eventId,
+            videoId:              vidUUID,
+            detectionSource:      "manual",
+            ballX:                x,
+            ballY:                y,
+            confidence:           existing?.confidence,
+            worldXM:              nil,
+            worldYM:              nil,
+            modelVersion:         nil,
+            noBallDetected:       false,
+            excludedFromTraining: true,
+            autoBallX:            existing?.autoBallX ?? existing?.ballX,
+            autoBallY:            existing?.autoBallY ?? existing?.ballY,
+            autoBallConfidence:   existing?.autoBallConfidence,
+            createdAt:            existing?.createdAt ?? Date(),
+            updatedAt:            Date()
+        )
+        ballDetections[eventId] = .loaded(optimistic)
+
+        do {
+            let req = BallDetectionManualRequest(ballX: x, ballY: y, confidence: nil, noBallDetected: false)
+            let updated = try await client.postBallDetection(videoId: videoId, eventId: eventId, request: req)
+            ballDetections[eventId] = .loaded(updated)
+        } catch {
+            ballDetections[eventId] = previousState
+            throw error
+        }
+    }
+
+    // Mark that no ball is visible in this event frame.
+    // If a prior auto-detection exists, the auto coords are frozen on the server;
+    // ball_x/ball_y become nil to indicate no-ball.
+    func markNoBall(videoId: String, eventId: UUID) async throws {
+        guard let client = apiClient as? JugglingAnnotationAPIClient else { return }
+
+        let previousState = ballDetections[eventId]
+        let existing: BallDetectionOut? = {
+            if case .loaded(let d) = previousState { return d }
+            return nil
+        }()
+        let vidUUID = UUID(uuidString: videoId) ?? UUID()
+        let optimistic = BallDetectionOut(
+            id:                   existing?.id ?? UUID(),
+            contactEventId:       eventId,
+            videoId:              vidUUID,
+            detectionSource:      "manual",
+            ballX:                nil,
+            ballY:                nil,
+            confidence:           nil,
+            worldXM:              nil,
+            worldYM:              nil,
+            modelVersion:         nil,
+            noBallDetected:       true,
+            excludedFromTraining: true,
+            autoBallX:            existing?.autoBallX ?? existing?.ballX,
+            autoBallY:            existing?.autoBallY ?? existing?.ballY,
+            autoBallConfidence:   existing?.autoBallConfidence,
+            createdAt:            existing?.createdAt ?? Date(),
+            updatedAt:            Date()
+        )
+        ballDetections[eventId] = .loaded(optimistic)
+
+        do {
+            let req = BallDetectionManualRequest(ballX: nil, ballY: nil, confidence: nil, noBallDetected: true)
+            let updated = try await client.postBallDetection(videoId: videoId, eventId: eventId, request: req)
+            ballDetections[eventId] = .loaded(updated)
+        } catch {
+            ballDetections[eventId] = previousState
+            throw error
+        }
+    }
+
+    // Cancel any active polling loop for ball detection.
+    func cancelBallDetectionPolling() {
+        ballDetectionPollingTask?.cancel()
+        ballDetectionPollingTask = nil
+    }
+
+    // iOS 14-compatible sleep: DispatchQueue.asyncAfter, not Task.sleep(nanoseconds:).
+    private func dispatchSleep(seconds: Double) async {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
+                continuation.resume()
+            }
+        }
+    }
+
+    // Polling loop — only started from .notFound (Celery in-flight).
+    // Max 5 attempts × 30 s. Stops on success, permanent non-404 error,
+    // or task cancellation.
+    private func startPolling(videoId: String, eventId: UUID) {
+        cancelBallDetectionPolling()
+        ballDetectionPollingTask = Task { [weak self] in
+            guard let self else { return }
+            for attempt in 1...self.ballDetectionMaxPollingAttempts {
+                await self.dispatchSleep(seconds: self.ballDetectionPollingIntervalSeconds)
+                guard !Task.isCancelled else { return }
+                guard let client = self.apiClient as? JugglingAnnotationAPIClient else { return }
+                do {
+                    let detection = try await client.fetchBallDetection(videoId: videoId, eventId: eventId)
+                    self.ballDetections[eventId] = .loaded(detection)
+                    return
+                } catch let err as AnnotationAPIError {
+                    switch err {
+                    case .permanent(let code, _) where code == 404:
+                        if attempt == self.ballDetectionMaxPollingAttempts {
+                            self.ballDetections[eventId] = .notFound
+                        }
+                    case .permanent(let code, _) where code == 503:
+                        self.ballDetections[eventId] = .featureDisabled
+                        return
+                    default:
+                        self.ballDetections[eventId] = .networkError(err.errorDescription ?? err.localizedDescription)
+                        return
+                    }
+                } catch {
+                    self.ballDetections[eventId] = .networkError(error.localizedDescription)
+                    return
+                }
+            }
+        }
+    }
+
+    private let ballDetectionMaxPollingAttempts:    Int    = 5
+    private let ballDetectionPollingIntervalSeconds: Double = 30.0
 }

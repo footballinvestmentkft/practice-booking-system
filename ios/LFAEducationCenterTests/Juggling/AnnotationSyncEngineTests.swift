@@ -56,6 +56,18 @@ final class MockAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
     func completeUpload(videoId: String) async throws -> JugglingCompleteResponse {
         try completeUploadResult.get()
     }
+
+    // AN-3B2C-1 stubs — protocol conformance only; ViewModel guard-casts to
+    // JugglingAnnotationAPIClient so these are never called in unit tests.
+    var fetchBallDetectionResult: Result<BallDetectionOut, Error> = .failure(AnnotationAPIError.unauthorized)
+    var postBallDetectionResult:  Result<BallDetectionOut, Error> = .failure(AnnotationAPIError.unauthorized)
+
+    func fetchBallDetection(videoId: String, eventId: UUID) async throws -> BallDetectionOut {
+        try fetchBallDetectionResult.get()
+    }
+    func postBallDetection(videoId: String, eventId: UUID, request: BallDetectionManualRequest) async throws -> BallDetectionOut {
+        try postBallDetectionResult.get()
+    }
 }
 
 // MARK: — AN2-T17..T25: AnnotationSyncEngine state transitions

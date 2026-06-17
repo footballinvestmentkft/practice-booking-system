@@ -412,6 +412,12 @@ class Settings(BaseSettings):
     #   Dev: set True in .env.local to test pose capture locally.
     POSE_SNAPSHOT_ENABLED: bool = False
 
+    # BALL_DETECTION_ENABLED — Phase 2B feature flag.
+    #   OFF by default. When OFF, ball detection endpoints return HTTP 503.
+    #   Turn ON per-deployment in .env: BALL_DETECTION_ENABLED=true
+    BALL_DETECTION_ENABLED: bool = False
+    BALL_DETECTION_MODEL_PATH: str = "app/ml_models/ssd_mobilenet_v1_12.onnx"
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

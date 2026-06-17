@@ -430,9 +430,9 @@ class TestCE216WelcomeEditorUnchanged:
 
 class TestCE217RouteCount:
     def test_openapi_snapshot_route_count_unchanged(self):
-        """PR-JUG-1 juggling intake adds 5 new paths (883 prior → 888); P4 private media adds 2 (888 → 890); biometric/pr2 photo upload adds 1 (891 → 892); B-2 media delete endpoint adds 1 (897 → 898); Phase 2A pose/rotation adds 3 (898 → 901)."""
+        """AN-3B2B ball detection adds 2 paths (901 → 903): user ball-detection + admin trigger."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 901, (
-            f"Expected 901 routes (898 prior + 3 Phase 2A pose/rotation endpoints), got {len(paths)}."
+        assert len(paths) == 903, (
+            f"Expected 903 routes (901 prior + 2 AN-3B2B ball detection paths), got {len(paths)}."
         )

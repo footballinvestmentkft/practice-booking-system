@@ -51,10 +51,15 @@ class JugglingConsentOut(BaseModel):
 
 # ── Upload-init schemas ──────────────────────────────────────────────────────
 
+_VALID_TRAINING_VIDEO_TYPES = frozenset({"juggling", "gan_footvolley", "gan_foottennis"})
+
+
 class JugglingUploadInitRequest(BaseModel):
-    source_type:   str = Field(..., description="in_app_capture | uploaded_video")
-    upload_source: str = Field(default="unknown",
-                               description="camera | gallery | file | unknown")
+    source_type:          str = Field(..., description="in_app_capture | uploaded_video")
+    upload_source:        str = Field(default="unknown",
+                                      description="camera | gallery | file | unknown")
+    training_video_type:  str = Field(default="juggling",
+                                      description="juggling | gan_footvolley | gan_foottennis")
     client_reported_metadata: Optional[Dict[str, Any]] = None
 
     @model_validator(mode="after")
@@ -70,6 +75,11 @@ class JugglingUploadInitRequest(BaseModel):
             raise ValueError(
                 f"upload_source must be one of {sorted(valid_upload_sources)}, "
                 f"got {self.upload_source!r}"
+            )
+        if self.training_video_type not in _VALID_TRAINING_VIDEO_TYPES:
+            raise ValueError(
+                f"training_video_type must be one of {sorted(_VALID_TRAINING_VIDEO_TYPES)}, "
+                f"got {self.training_video_type!r}"
             )
         if self.client_reported_metadata is not None:
             # Strip unknown keys silently — do not raise
@@ -153,6 +163,7 @@ class JugglingVideoItemOut(BaseModel):
     source_type:                str
     annotation_status:          Optional[str] = None
     user_rotation_degrees:      int = 0
+    training_video_type:        str = "juggling"
 
 
 class JugglingVideoListOut(BaseModel):
@@ -377,3 +388,64 @@ class PoseSnapshotOut(BaseModel):
     created_at:           datetime
 
     model_config = {"from_attributes": True, "protected_namespaces": ()}
+
+
+# ── Ball detection schemas (AN-3B2B-1) ──────────────────────────────────────
+
+
+class BallDetectionManualRequest(BaseModel):
+    """Manual ball position override by user or admin.
+
+    no_ball_detected=False (default): ball_x and ball_y are required.
+    no_ball_detected=True:            ball_x and ball_y must be omitted / None.
+    """
+    ball_x:           Optional[float] = Field(None, ge=0.0, le=1.0)
+    ball_y:           Optional[float] = Field(None, ge=0.0, le=1.0)
+    confidence:       Optional[float] = Field(None, ge=0.0, le=1.0)
+    no_ball_detected: bool            = Field(False)
+
+    @model_validator(mode="after")
+    def _coords_required_unless_no_ball(self) -> "BallDetectionManualRequest":
+        if not self.no_ball_detected and (self.ball_x is None or self.ball_y is None):
+            raise ValueError("ball_x and ball_y are required when no_ball_detected=False")
+        return self
+
+
+class BallDetectionOut(BaseModel):
+    """Returned by GET and POST ball-detection endpoints."""
+    id:                     uuid.UUID
+    contact_event_id:       uuid.UUID
+    video_id:               uuid.UUID
+    detection_source:       str
+    ball_x:                 Optional[float]
+    ball_y:                 Optional[float]
+    confidence:             Optional[float]
+    world_x_m:              Optional[float]
+    world_y_m:              Optional[float]
+    model_version:          Optional[str]
+    image_width_px:         Optional[int]
+    image_height_px:        Optional[int]
+    no_ball_detected:       bool
+    excluded_from_training: bool
+    # AN-3B2C-1 (Opció A): original automatic state preserved on first manual override.
+    # None when detection was manual-first (auto pipeline never ran for this event).
+    auto_ball_x:            Optional[float]
+    auto_ball_y:            Optional[float]
+    # AN-3B2C-1 follow-up: model confidence at auto detection time; None for pre-migration rows.
+    auto_confidence:        Optional[float]
+    created_at:             datetime
+    updated_at:             datetime
+
+    model_config = {"from_attributes": True, "protected_namespaces": ()}
+
+
+class BallDetectionTriggerResult(BaseModel):
+    """Response from admin trigger endpoint."""
+    video_id:               uuid.UUID
+    training_video_type:    str
+    model_used:             str
+    events_queued:          int
+    events_skipped:         int
+    skipped_reasons:        List[str]
+
+    model_config = {"protected_namespaces": ()}

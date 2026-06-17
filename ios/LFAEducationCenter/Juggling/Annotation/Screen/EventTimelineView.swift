@@ -26,11 +26,13 @@ import AVFoundation
 
 struct EventTimelineView: View {
 
-    let events:       [ContactEventDraft]
-    let duration:     CMTime
-    let currentMs:    Int
+    let events:              [ContactEventDraft]
+    let duration:            CMTime
+    let currentMs:           Int
     var onTap:   (UUID) -> Void
     var onSeek:  (Int)  -> Void
+    // AN-3B2C-1: optional ball detection states for badge superscripts on pins.
+    var ballDetectionStates: [UUID: BallDetectionState] = [:]
 
     private var durationMs: Int { duration.asMilliseconds }
 
@@ -73,14 +75,34 @@ struct EventTimelineView: View {
     private func pins(width: CGFloat) -> some View {
         ForEach(events.filter { $0.syncStatus != .deleted && !$0.deletedLocally }) { draft in
             let x = xPosition(ms: draft.timestampMs, trackWidth: width)
-            Circle()
-                .fill(pinColor(for: draft.syncStatus))
-                .frame(width: 10, height: 10)
-                .shadow(color: .black.opacity(0.25), radius: 1)
-                .offset(x: x - 5)
-                .onTapGesture { onTap(draft.deviceEventId) }
-                .accessibilityLabel("Esemény \(PlaybackControlBar.formatTimestamp(ms: draft.timestampMs))")
-                .accessibilityAddTraits(.isButton)
+            ZStack(alignment: .topTrailing) {
+                Circle()
+                    .fill(pinColor(for: draft.syncStatus))
+                    .frame(width: 10, height: 10)
+                    .shadow(color: .black.opacity(0.25), radius: 1)
+                ballBadge(for: draft)
+            }
+            .offset(x: x - 5)
+            .onTapGesture { onTap(draft.deviceEventId) }
+            .accessibilityLabel("Esemény \(PlaybackControlBar.formatTimestamp(ms: draft.timestampMs))")
+            .accessibilityAddTraits(.isButton)
+        }
+    }
+
+    @ViewBuilder
+    private func ballBadge(for draft: ContactEventDraft) -> some View {
+        if let serverEventId = draft.serverEventId,
+           case .loaded(let detection) = ballDetectionStates[serverEventId] {
+            let badgeColor: Color = detection.noBallDetected
+                ? .gray
+                : (detection.detectionSource == "manual" ? .blue : .green)
+            let badgeName: String = detection.noBallDetected ? "xmark" : "soccerball"
+            Image(systemName: badgeName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 6, height: 6)
+                .foregroundColor(badgeColor)
+                .offset(x: 4, y: -4)
         }
     }
 

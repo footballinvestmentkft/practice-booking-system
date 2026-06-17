@@ -61,6 +61,7 @@ def create_pending(
     upload_source: str,
     client_reported_metadata: Optional[Dict[str, Any]],
     db: Session,
+    training_video_type: str = "juggling",
 ) -> JugglingVideo:
     """Create a new juggling_video record in pending_upload state."""
     video = JugglingVideo(
@@ -68,6 +69,7 @@ def create_pending(
         user_id=user_id,
         source_type=source_type,
         upload_source=upload_source,
+        training_video_type=training_video_type,
         status=JugglingVideoStatus.pending_upload.value,
         client_reported_metadata=client_reported_metadata,
     )

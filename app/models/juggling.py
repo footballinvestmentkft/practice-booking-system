@@ -86,6 +86,12 @@ class JugglingUploadSource(str, enum.Enum):
     unknown = "unknown"
 
 
+class JugglingTrainingVideoType(str, enum.Enum):
+    juggling       = "juggling"
+    gan_footvolley = "gan_footvolley"
+    gan_foottennis = "gan_foottennis"
+
+
 class JugglingConsent(Base):
     """
     Per-user consent record for the juggling POC pipeline.
@@ -142,6 +148,12 @@ class JugglingVideo(Base):
                            comment="in_app_capture | uploaded_video")
     upload_source = Column(String(30), nullable=False, default="unknown",
                            comment="camera | gallery | file | unknown")
+    training_video_type = Column(
+        String(30), nullable=False,
+        default=JugglingTrainingVideoType.juggling.value,
+        server_default="juggling",
+        comment="Training activity type: juggling | gan_footvolley | gan_foottennis",
+    )
 
     # ── State machine ────────────────────────────────────────────────────────
     status = Column(String(30), nullable=False,
@@ -502,6 +514,73 @@ class JugglingPoseSnapshot(Base):
     )
 
 
+class JugglingBallDetection(Base):
+    """
+    Per-event ball position detected by ONNX model or manual override.
+
+    detection_source: 'mobilenet_ssd_v2' (auto) | 'manual' (user override).
+    Coordinates: screen-normalized [0,1], origin top-left.
+    world_x_m / world_y_m: NULL until pitch_config is applied (AN-3B2B-2).
+    excluded_from_training always True (Policy B).
+    """
+    __tablename__ = "juggling_ball_detections"
+
+    id                   = Column(UUID(as_uuid=True), primary_key=True,
+                                  default=_uuid_mod.uuid4)
+    contact_event_id     = Column(UUID(as_uuid=True),
+                                  ForeignKey("juggling_contact_events.id",
+                                             ondelete="CASCADE"),
+                                  nullable=False)
+    video_id             = Column(UUID(as_uuid=True),
+                                  ForeignKey("juggling_videos.id",
+                                             ondelete="CASCADE"),
+                                  nullable=False, index=True)
+    detection_source     = Column(String(40), nullable=False)
+    ball_x               = Column(Float, nullable=True)
+    ball_y               = Column(Float, nullable=True)
+    confidence           = Column(Float, nullable=True)
+    world_x_m            = Column(Float, nullable=True)
+    world_y_m            = Column(Float, nullable=True)
+    model_version        = Column(String(60), nullable=True)
+    image_width_px       = Column(Integer, nullable=True)
+    image_height_px      = Column(Integer, nullable=True)
+    no_ball_detected     = Column(Boolean, nullable=False, default=False,
+                                  server_default="false")
+    excluded_from_training = Column(Boolean, nullable=False, default=True,
+                                    server_default="true")
+    # AN-3B2C-1 Opció A: original automatic state frozen on first manual override.
+    # Populated only when detection_source transitions automatic→manual for the first time.
+    # NULL for manual-first events (auto pipeline never ran) and for pure automatic records.
+    # auto_confidence is set by the before_insert ORM listener below (no task code change needed).
+    auto_ball_x          = Column(Float, nullable=True)
+    auto_ball_y          = Column(Float, nullable=True)
+    auto_confidence      = Column(Float, nullable=True,
+                                  comment="Model confidence at auto detection; frozen, never overwritten by manual override")
+    created_at           = Column(DateTime(timezone=True), nullable=False,
+                                  default=lambda: datetime.now(timezone.utc))
+    updated_at           = Column(DateTime(timezone=True), nullable=False,
+                                  default=lambda: datetime.now(timezone.utc),
+                                  onupdate=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        UniqueConstraint("contact_event_id",
+                         name="ux_juggling_ball_detections_event"),
+        CheckConstraint(
+            "detection_source IN ('mobilenet_ssd_v1', 'manual')",
+            name="ck_juggling_ball_detections_source",
+        ),
+        CheckConstraint(
+            "confidence IS NULL OR (confidence >= 0.0 AND confidence <= 1.0)",
+            name="ck_juggling_ball_detections_confidence",
+        ),
+        CheckConstraint(
+            "(no_ball_detected = true AND ball_x IS NULL AND ball_y IS NULL) "
+            "OR (no_ball_detected = false AND ball_x IS NOT NULL AND ball_y IS NOT NULL)",
+            name="ck_juggling_ball_detections_coords",
+        ),
+    )
+
+
 class JugglingFileDeletionLog(Base):
     """
     Immutable audit trail for all file deletion and retention scan events.
@@ -537,3 +616,18 @@ class JugglingFileDeletionLog(Base):
                             comment="Celery task ID for correlation")
     created_at     = Column(DateTime(timezone=True), nullable=False,
                             default=lambda: datetime.now(timezone.utc))
+
+
+# ── ORM listener: auto_confidence (AN-3B2C-1 follow-up) ──────────────────────
+# Set auto_confidence = confidence for new automatic detection rows at INSERT
+# time. This avoids modifying juggling_analysis_task.py (restricted pipeline).
+# Manual overrides update detection_source → "manual" via UPDATE, never INSERT,
+# so this listener only fires for the initial auto row creation.
+
+from sqlalchemy import event as _sa_event  # noqa: E402
+
+
+@_sa_event.listens_for(JugglingBallDetection, "before_insert")
+def _freeze_auto_confidence_on_insert(mapper, connection, target):  # noqa: ANN001
+    if target.detection_source != "manual" and target.auto_confidence is None:
+        target.auto_confidence = target.confidence

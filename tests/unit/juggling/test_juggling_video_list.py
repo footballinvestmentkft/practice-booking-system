@@ -463,7 +463,7 @@ def test_jvl25_openapi_path_and_route_delta(client):
         if hasattr(r, "methods") and hasattr(r, "path")
         for m in (r.methods or [])
     ]
-    assert len(routes) == 1025, f"Expected 1025 routes, got {len(routes)}"
+    assert len(routes) == 1028, f"Expected 1028 routes, got {len(routes)}"
     get_list = [r for r in routes if r[0] == "GET" and r[1] == "/api/v1/users/me/juggling/videos"]
     assert len(get_list) == 1
 
@@ -471,13 +471,13 @@ def test_jvl25_openapi_path_and_route_delta(client):
 # ── JVL-26: Alembic head unchanged ───────────────────────────────────────────
 
 def test_jvl26_alembic_head_unchanged():
-    """JVL-26: Alembic head is 2026_06_17_1200 (Phase 2A — widen audit_logs.action)."""
+    """JVL-26: Alembic head is 2026_06_18_1400 (AN-3B2C-1 follow-up — auto_confidence)."""
     from alembic.config import Config
     from alembic.script import ScriptDirectory
     import os
     cfg = Config(os.path.join(os.path.dirname(__file__), "..", "..", "..", "alembic.ini"))
     heads = ScriptDirectory.from_config(cfg).get_heads()
-    assert heads == ["2026_06_17_1200"], f"Unexpected Alembic heads: {heads}"
+    assert heads == ["2026_06_18_1400"], f"Unexpected Alembic heads: {heads}"
 
 
 # ── JVL-27: P4 thumbnail/media regression ────────────────────────────────────

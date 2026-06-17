@@ -178,6 +178,7 @@ def list_videos(
             source_type=v.source_type,
             annotation_status=v.annotation_status,
             user_rotation_degrees=v.user_rotation_degrees if v.user_rotation_degrees is not None else 0,
+            training_video_type=v.training_video_type,
         )
         for v in rows
     ]
@@ -210,6 +211,7 @@ def upload_init(
         upload_source=body.upload_source,
         client_reported_metadata=body.client_reported_metadata,
         db=db,
+        training_video_type=body.training_video_type,
     )
 
     video_id = str(video.id)

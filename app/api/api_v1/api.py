@@ -198,5 +198,12 @@ api_router.include_router(
     prefix="/admin/biometric",
     tags=["admin", "biometric"],
 )
+# Juggling admin ball detection trigger (AN-3B2B-2; BALL_DETECTION_ENABLED gated)
+from .endpoints import juggling_admin_ball_detection
+api_router.include_router(
+    juggling_admin_ball_detection.router,
+    prefix="/admin/juggling",
+    tags=["admin", "juggling"],
+)
 api_router.include_router(sandbox.router, prefix="/sandbox", tags=["sandbox-testing"])
 api_router.include_router(sandbox_data.router, prefix="/sandbox", tags=["sandbox-data"])
