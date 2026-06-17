@@ -254,6 +254,10 @@ class JugglingActionHandler:
                 if status_code == 201
                 else AuditAction.JUGGLING_POSE_SNAPSHOT_UPDATED
             )
+        if "/ball-detection" in path:
+            if method == "GET":
+                return AuditAction.JUGGLING_BALL_DETECTION_QUERIED
+            return AuditAction.JUGGLING_BALL_DETECTION_CREATED
         if "/finish" in path:
             return AuditAction.JUGGLING_ANNOTATION_FINISHED
         if method == "POST":
