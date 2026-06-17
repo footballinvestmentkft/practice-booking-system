@@ -16,7 +16,7 @@ name: iOS CI — Build + Unit Tests
 #   - Network / staging integration tests
 #   - Celery worker state (backend concern)
 #
-# Runner:  macos-15  (Apple Silicon, Xcode 16.2 pre-installed)
+# Runner:  macos-15  (Apple Silicon, runner-default Xcode)
 # Target:  iOS Simulator — newest available runtime (dynamic, not hardcoded)
 # Timeout: 30 min hard limit
 # ──────────────────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ on:
 
 jobs:
   ios-build-and-test:
-    name: iOS Build + Unit Tests (Xcode 16, iOS 15 min-target)
+    name: iOS Build + Unit Tests (iOS 15 min-target)
     runs-on: macos-15
     timeout-minutes: 30
 
@@ -79,11 +79,16 @@ jobs:
           fi
           echo "Working tree is clean ✓"
 
-      # ── 4. Pin exact Xcode version ────────────────────────────────────────────
-      - name: Select Xcode 16.2
+      # ── 4. Report active Xcode version ───────────────────────────────────────
+      - name: Report active Xcode version
         run: |
-          sudo xcode-select -s /Applications/Xcode_16.2.app
+          # Do NOT force a specific Xcode path. The macos-15 runner (2026) ships
+          # with Xcode 17.x and iOS 26.x simulator runtimes. Forcing Xcode 16.2
+          # (iOS 18.2 SDK) caused a runtime mismatch because iOS 18.x simulator
+          # is not pre-installed — only iOS 16.5-17.2 and iOS 26.x are present.
+          # The runner's default Xcode is always compatible with available runtimes.
           xcodebuild -version
+          echo "Active toolchain: $(xcode-select -p)"
 
       # ── 5. Boot simulator (runs while build is warming up cache) ──────────────
       - name: Discover and boot best available iPhone simulator
