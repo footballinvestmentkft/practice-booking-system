@@ -2080,19 +2080,33 @@
         "type": "object"
       },
       "BallDetectionManualRequest": {
-        "description": "Manual ball position override by user or admin.",
+        "description": "Manual ball position override by user or admin.\n\nno_ball_detected=False (default): ball_x and ball_y are required.\nno_ball_detected=True:            ball_x and ball_y must be omitted / None.",
         "properties": {
           "ball_x": {
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Ball X",
-            "type": "number"
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ball X"
           },
           "ball_y": {
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Ball Y",
-            "type": "number"
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ball Y"
           },
           "confidence": {
             "anyOf": [
@@ -2106,18 +2120,52 @@
               }
             ],
             "title": "Confidence"
+          },
+          "no_ball_detected": {
+            "default": false,
+            "title": "No Ball Detected",
+            "type": "boolean"
           }
         },
-        "required": [
-          "ball_x",
-          "ball_y"
-        ],
         "title": "BallDetectionManualRequest",
         "type": "object"
       },
       "BallDetectionOut": {
         "description": "Returned by GET and POST ball-detection endpoints.",
         "properties": {
+          "auto_ball_x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Ball X"
+          },
+          "auto_ball_y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Ball Y"
+          },
+          "auto_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Confidence"
+          },
           "ball_x": {
             "anyOf": [
               {
@@ -2259,6 +2307,9 @@
           "image_height_px",
           "no_ball_detected",
           "excluded_from_training",
+          "auto_ball_x",
+          "auto_ball_y",
+          "auto_confidence",
           "created_at",
           "updated_at"
         ],
