@@ -32,6 +32,9 @@ protocol JugglingAnnotationAPIClientProtocol: AnyObject {
     func uploadInit(sourceType: String, uploadSource: String) async throws -> JugglingUploadInitResponse
     func uploadVideoFile(videoId: String, fileURL: URL, mimeType: String) async throws -> JugglingUploadFileResponse
     func completeUpload(videoId: String) async throws -> JugglingCompleteResponse
+    // AN-3B2C-1: ball detection
+    func fetchBallDetection(videoId: String, eventId: UUID) async throws -> BallDetectionOut
+    func postBallDetection(videoId: String, eventId: UUID, request: BallDetectionManualRequest) async throws -> BallDetectionOut
 }
 
 @MainActor
@@ -320,6 +323,41 @@ final class JugglingAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
         }
     }
 
+    // MARK: — Phase 2C-1: Ball Detection
+    //
+    // fetchBallDetection: GET /contacts/{event_id}/ball-detection
+    //   200 → BallDetectionOut
+    //   404 → AnnotationAPIError.permanent(code: 404) — no detection yet
+    //   503 → AnnotationAPIError.permanent(code: 503) — BALL_DETECTION_ENABLED=false
+    //
+    // postBallDetection: POST /contacts/{event_id}/ball-detection
+    //   200/201 → BallDetectionOut (idempotent upsert)
+    //   422 → AnnotationAPIError.permanent — invalid coords (validator)
+    //   503 → AnnotationAPIError.permanent — feature flag off
+
+    func fetchBallDetection(videoId: String, eventId: UUID) async throws -> BallDetectionOut {
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)/contacts/\(eventId.uuidString.lowercased())/ball-detection"
+        do {
+            return try await authManager.authenticatedGet(path: path)
+        } catch let apiErr as APIError {
+            throw classifyAPIError(apiErr, path: "fetchBallDetection")
+        }
+    }
+
+    func postBallDetection(
+        videoId: String,
+        eventId: UUID,
+        request: BallDetectionManualRequest
+    ) async throws -> BallDetectionOut {
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)/contacts/\(eventId.uuidString.lowercased())/ball-detection"
+        do {
+            let (data, _) = try await authManager.authenticatedPostRaw(path: path, body: request)
+            return try isoDecoder.decode(BallDetectionOut.self, from: data)
+        } catch let apiErr as APIError {
+            throw classifyAPIError(apiErr, path: "postBallDetection")
+        }
+    }
+
     // MARK: — Private helpers
 
     private func decodeEvent(_ data: Data) throws -> ContactEventOut {
@@ -523,6 +561,82 @@ enum JugglingUploadError: Error, LocalizedError, Equatable {
         case (.invalidExportOutput, .invalidExportOutput): return true
         case (.insufficientStorage, .insufficientStorage): return true
         default:                                   return false
+        }
+    }
+}
+
+// MARK: — Ball Detection types (AN-3B2C-1)
+
+struct BallDetectionOut: Decodable, Equatable {
+    let id:                   UUID
+    let contactEventId:       UUID
+    let videoId:              UUID
+    // "mobilenet_ssd_v1" (automatic) | "manual" (user override)
+    let detectionSource:      String
+    let ballX:                Double?      // nil when noBallDetected=true
+    let ballY:                Double?
+    let confidence:           Double?
+    let worldXM:              Double?      // nil in Phase 2C-1 (pitch config not yet applied)
+    let worldYM:              Double?
+    let modelVersion:         String?
+    let noBallDetected:       Bool
+    let excludedFromTraining: Bool
+    // Opció A: original auto coordinates frozen on first manual override; nil when manual-first
+    let autoBallX:            Double?
+    let autoBallY:            Double?
+    let createdAt:            Date
+    let updatedAt:            Date
+
+    enum CodingKeys: String, CodingKey {
+        case id, confidence
+        case contactEventId       = "contact_event_id"
+        case videoId              = "video_id"
+        case detectionSource      = "detection_source"
+        case ballX                = "ball_x"
+        case ballY                = "ball_y"
+        case worldXM              = "world_x_m"
+        case worldYM              = "world_y_m"
+        case modelVersion         = "model_version"
+        case noBallDetected       = "no_ball_detected"
+        case excludedFromTraining = "excluded_from_training"
+        case autoBallX            = "auto_ball_x"
+        case autoBallY            = "auto_ball_y"
+        case createdAt            = "created_at"
+        case updatedAt            = "updated_at"
+    }
+}
+
+struct BallDetectionManualRequest: Encodable {
+    let ballX:          Double?    // nil when noBallDetected=true
+    let ballY:          Double?
+    let confidence:     Double?
+    let noBallDetected: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case ballX          = "ball_x"
+        case ballY          = "ball_y"
+        case confidence
+        case noBallDetected = "no_ball_detected"
+    }
+}
+
+enum BallDetectionState: Equatable {
+    case notFetched                    // onAppear not yet called
+    case fetching                      // GET in-flight
+    case loaded(BallDetectionOut)      // successful fetch
+    case notFound                      // 404 — Celery not yet run; polling active
+    case featureDisabled               // 503 — BALL_DETECTION_ENABLED=false
+    case networkError(String)          // transport failure
+
+    static func == (lhs: BallDetectionState, rhs: BallDetectionState) -> Bool {
+        switch (lhs, rhs) {
+        case (.notFetched,       .notFetched):      return true
+        case (.fetching,         .fetching):        return true
+        case (.loaded(let a),    .loaded(let b)):   return a == b
+        case (.notFound,         .notFound):        return true
+        case (.featureDisabled,  .featureDisabled): return true
+        case (.networkError(let a), .networkError(let b)): return a == b
+        default:                                    return false
         }
     }
 }
