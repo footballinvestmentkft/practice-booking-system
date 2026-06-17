@@ -1,4 +1,5 @@
 import XCTest
+import SwiftUI
 @testable import LFAEducationCenter
 
 // MARK: — BallOverlayViewTests (AN-3B2C-1)
@@ -45,7 +46,7 @@ final class BallOverlayViewTests: XCTestCase {
     func test_BD_OV_01_autoHighConfidenceIsGreen() {
         let d = detection(source: "mobilenet_ssd_v1", confidence: 0.90)
         let color = BallOverlayViewColorHelper.ballColor(for: d)
-        XCTAssertEqual(color, .green,
+        XCTAssertEqual(color, Color.green,
                        "confidence >= 0.80 with auto source must produce green")
     }
 
@@ -53,43 +54,43 @@ final class BallOverlayViewTests: XCTestCase {
     func test_BD_OV_02_autoMediumConfidenceIsYellow() {
         let d = detection(source: "mobilenet_ssd_v1", confidence: 0.65)
         let color = BallOverlayViewColorHelper.ballColor(for: d)
-        XCTAssertEqual(color, .yellow)
+        XCTAssertEqual(color, Color.yellow)
     }
 
     // BD-OV-03: auto detection with confidence < 0.50 → orange.
     func test_BD_OV_03_autoLowConfidenceIsOrange() {
         let d = detection(source: "mobilenet_ssd_v1", confidence: 0.30)
         let color = BallOverlayViewColorHelper.ballColor(for: d)
-        XCTAssertEqual(color, .orange)
+        XCTAssertEqual(color, Color.orange)
     }
 
     // BD-OV-04: auto detection with nil confidence → orange.
     func test_BD_OV_04_autoNilConfidenceIsOrange() {
         let d = detection(source: "mobilenet_ssd_v1", confidence: nil)
         let color = BallOverlayViewColorHelper.ballColor(for: d)
-        XCTAssertEqual(color, .orange)
+        XCTAssertEqual(color, Color.orange)
     }
 
     // BD-OV-05: manual detection always → blue, regardless of confidence.
     func test_BD_OV_05_manualSourceIsBlueRegardlessOfConfidence() {
-        for conf in [nil, 0.1, 0.55, 0.95] as [Double?] {
+        let confidences: [Double?] = [nil, 0.1, 0.55, 0.95]
+        for conf in confidences {
             let d = detection(source: "manual", confidence: conf)
             let color = BallOverlayViewColorHelper.ballColor(for: d)
-            XCTAssertEqual(color, .blue,
-                           "manual detection must always be blue (confidence=\(conf.map(String.init) ?? "nil"))")
+            XCTAssertEqual(color, Color.blue, "manual detection must always be blue")
         }
     }
 
     // BD-OV-06: noBallDetected=true → isDragEnabled is false.
     func test_BD_OV_06_noBallDetectedDisablesDrag() {
-        let d = detection(noBall: true, ballX: nil, ballY: nil)
+        let d = detection(ballX: nil, ballY: nil, confidence: nil, noBall: true)
         XCTAssertFalse(BallOverlayViewColorHelper.isDragEnabled(for: d),
                        "noBallDetected=true must disable drag regardless of coords")
     }
 
     // BD-OV-07: valid position with noBallDetected=false → isDragEnabled is true.
     func test_BD_OV_07_validPositionEnablesDrag() {
-        let d = detection(noBall: false, ballX: 0.5, ballY: 0.5)
+        let d = detection(ballX: 0.5, ballY: 0.5, noBall: false)
         XCTAssertTrue(BallOverlayViewColorHelper.isDragEnabled(for: d),
                       "A loaded detection with valid coords and noBallDetected=false must enable drag")
     }
@@ -97,7 +98,7 @@ final class BallOverlayViewTests: XCTestCase {
     // BD-OV-08: nil coords with noBallDetected=false → isDragEnabled is false
     // (can't drag a position that isn't known).
     func test_BD_OV_08_nilCoordsDisablesDrag() {
-        let d = detection(noBall: false, ballX: nil, ballY: nil)
+        let d = detection(ballX: nil, ballY: nil, noBall: false)
         XCTAssertFalse(BallOverlayViewColorHelper.isDragEnabled(for: d),
                        "nil ballX/ballY must disable drag even when noBallDetected=false")
     }
@@ -107,8 +108,6 @@ final class BallOverlayViewTests: XCTestCase {
 //
 // Thin logic extraction — mirrors BallOverlayView's private helpers so they
 // can be unit-tested without instantiating a SwiftUI view.
-
-import SwiftUI
 
 enum BallOverlayViewColorHelper {
 

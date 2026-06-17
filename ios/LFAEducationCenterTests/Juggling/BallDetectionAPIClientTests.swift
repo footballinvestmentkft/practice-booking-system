@@ -72,9 +72,9 @@ final class BallDetectionAPIClientTests: XCTestCase {
 
         XCTAssertEqual(out.id, UUID(uuidString: "11111111-0000-0000-0000-000000000001"))
         XCTAssertEqual(out.detectionSource, "mobilenet_ssd_v1")
-        XCTAssertEqual(out.ballX, 0.45, accuracy: 0.001)
-        XCTAssertEqual(out.ballY, 0.60, accuracy: 0.001)
-        XCTAssertEqual(out.confidence!, 0.92, accuracy: 0.001)
+        XCTAssertEqual(out.ballX ?? 0, 0.45, accuracy: 0.001)
+        XCTAssertEqual(out.ballY ?? 0, 0.60, accuracy: 0.001)
+        XCTAssertEqual(out.confidence ?? 0, 0.92, accuracy: 0.001)
         XCTAssertFalse(out.noBallDetected)
         XCTAssertNil(out.autoBallX)
         XCTAssertNil(out.autoBallY)
@@ -98,9 +98,11 @@ final class BallDetectionAPIClientTests: XCTestCase {
                             autoBallX: 0.45, autoBallY: 0.60)
         let out = try isoDecoder.decode(BallDetectionOut.self, from: data)
 
-        XCTAssertEqual(out.autoBallX!, 0.45, accuracy: 0.001)
-        XCTAssertEqual(out.autoBallY!, 0.60, accuracy: 0.001)
-        XCTAssertEqual(out.ballX!, 0.3, accuracy: 0.001)  // updated position
+        XCTAssertNotNil(out.autoBallX, "auto_ball_x must be decoded")
+        XCTAssertNotNil(out.autoBallY, "auto_ball_y must be decoded")
+        XCTAssertEqual(out.autoBallX ?? 0, 0.45, accuracy: 0.001)
+        XCTAssertEqual(out.autoBallY ?? 0, 0.60, accuracy: 0.001)
+        XCTAssertEqual(out.ballX ?? 0, 0.3, accuracy: 0.001)  // updated position
     }
 
     // BD-AC-04: BallDetectionState == comparison.
@@ -125,9 +127,9 @@ final class BallDetectionAPIClientTests: XCTestCase {
         let data = try JSONEncoder().encode(req)
         let obj  = try JSONSerialization.jsonObject(with: data) as! [String: Any]
 
-        XCTAssertEqual(obj["ball_x"] as? Double,  0.5,   accuracy: 0.001)
-        XCTAssertEqual(obj["ball_y"] as? Double,  0.3,   accuracy: 0.001)
-        XCTAssertEqual(obj["confidence"] as? Double, 0.8, accuracy: 0.001)
+        XCTAssertEqual(obj["ball_x"] as? Double ?? 0,  0.5,   accuracy: 0.001)
+        XCTAssertEqual(obj["ball_y"] as? Double ?? 0,  0.3,   accuracy: 0.001)
+        XCTAssertEqual(obj["confidence"] as? Double ?? 0, 0.8, accuracy: 0.001)
         XCTAssertEqual(obj["no_ball_detected"] as? Bool, false)
         XCTAssertNil(obj["ballX"], "camelCase key must not appear; only snake_case")
     }

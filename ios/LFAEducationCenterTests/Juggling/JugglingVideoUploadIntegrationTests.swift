@@ -344,6 +344,12 @@ private final class B3MockUploadClient: JugglingAnnotationAPIClientProtocol {
     func deleteVideo(videoId: String) async throws {
         throw VideoDeleteError.unauthorized
     }
+    func fetchBallDetection(videoId: String, eventId: UUID) async throws -> BallDetectionOut {
+        throw AnnotationAPIError.unauthorized
+    }
+    func postBallDetection(videoId: String, eventId: UUID, request: BallDetectionManualRequest) async throws -> BallDetectionOut {
+        throw AnnotationAPIError.unauthorized
+    }
 }
 
 private final class B3MockExportService: JugglingVideoExportServiceProtocol {
@@ -396,5 +402,11 @@ private final class B3MockDeleteClient: JugglingAnnotationAPIClientProtocol {
     }
     func completeUpload(videoId: String) async throws -> JugglingCompleteResponse {
         throw JugglingUploadError.unauthorized
+    }
+    func fetchBallDetection(videoId: String, eventId: UUID) async throws -> BallDetectionOut {
+        throw AnnotationAPIError.unauthorized
+    }
+    func postBallDetection(videoId: String, eventId: UUID, request: BallDetectionManualRequest) async throws -> BallDetectionOut {
+        throw AnnotationAPIError.unauthorized
     }
 }

@@ -884,4 +884,11 @@ final class MockUploadClient: JugglingAnnotationAPIClientProtocol {
     func deleteVideo(videoId: String) async throws {
         throw VideoDeleteError.unauthorized
     }
+
+    func fetchBallDetection(videoId: String, eventId: UUID) async throws -> BallDetectionOut {
+        throw AnnotationAPIError.unauthorized
+    }
+    func postBallDetection(videoId: String, eventId: UUID, request: BallDetectionManualRequest) async throws -> BallDetectionOut {
+        throw AnnotationAPIError.unauthorized
+    }
 }

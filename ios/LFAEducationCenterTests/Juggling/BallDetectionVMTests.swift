@@ -31,11 +31,11 @@ final class BallDetectionVMTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeViewModel(apiClient: MockAnnotationAPIClient = MockAnnotationAPIClient()) -> JugglingAnnotationViewModel {
+    private func makeViewModel() -> JugglingAnnotationViewModel {
         JugglingAnnotationViewModel(
             userId:        1,
             videoId:       "vid-bd-test",
-            apiClient:     apiClient,
+            apiClient:     MockAnnotationAPIClient(),
             taxonomyStore: ContactTaxonomyStore(authManager: AuthManager(), cacheDirectory: tempDir),
             localStore:    LocalAnnotationStore(baseDirectory: tempDir)
         )
