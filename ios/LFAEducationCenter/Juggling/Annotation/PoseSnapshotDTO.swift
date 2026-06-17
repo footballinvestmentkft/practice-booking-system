@@ -77,7 +77,7 @@ struct PoseSnapshotOut: Codable, Identifiable {
     let inferenceConfidence: Double?
     let imageWidthPx:        Int?
     let imageHeightPx:       Int?
-    let createdAt:           Date
+    let createdAt:           String
 
     enum CodingKeys: String, CodingKey {
         case id
