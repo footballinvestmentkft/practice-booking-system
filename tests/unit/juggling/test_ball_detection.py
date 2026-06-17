@@ -12,15 +12,23 @@ to exercise the ball detection endpoints in isolation.
 from __future__ import annotations
 
 import uuid
+from datetime import timedelta
 
 import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import event as sa_event
+from sqlalchemy.orm import sessionmaker
 
+from app.core.auth import create_access_token
+from app.database import engine, get_db
+from app.main import app
 from app.models.juggling import (
     JugglingConsent,
     JugglingContactEvent,
     JugglingVideo,
     JugglingBallDetection,
 )
+from app.models.user import User, UserRole
 from app.services.juggling import feature_flag as ff_module
 from app.api.api_v1.endpoints.users import juggling_ball_detection as bd_module
 from app.services.juggling.analysis_model_registry import (
@@ -29,7 +37,59 @@ from app.services.juggling.analysis_model_registry import (
 )
 
 
-# ── Fixtures ──────────────────────────────────────────────────────────────────
+# ── Local fixtures ────────────────────────────────────────────────────────────
+
+@pytest.fixture()
+def db_session():
+    connection = engine.connect()
+    transaction = connection.begin()
+    TestSession = sessionmaker(autocommit=False, autoflush=False, bind=connection)
+    session = TestSession()
+    connection.begin_nested()
+
+    @sa_event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(sess, txn):
+        if txn.nested and not txn._parent.nested:
+            sess.begin_nested()
+
+    try:
+        yield session
+    finally:
+        session.close()
+        if transaction.is_active:
+            transaction.rollback()
+        connection.close()
+
+
+@pytest.fixture()
+def client(db_session):
+    app.dependency_overrides[get_db] = lambda: db_session
+    with TestClient(app, raise_server_exceptions=False) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture()
+def student_user(db_session):
+    user = User(
+        email=f"bdt_student+{uuid.uuid4().hex[:8]}@test.com",
+        name="BDT Student",
+        password_hash="hashed",
+        role=UserRole.STUDENT,
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+@pytest.fixture()
+def student_token(student_user):
+    return create_access_token(
+        data={"sub": student_user.email}, expires_delta=timedelta(hours=1)
+    )
+
 
 @pytest.fixture(autouse=True)
 def _enable_flags(monkeypatch):
@@ -43,12 +103,12 @@ def _auth(token: str) -> dict:
 
 @pytest.fixture
 def student_user2(db_session):
-    from app.models.user import User, UserRole
-    from app.core.security import get_password_hash
     user = User(
-        name="BDT Student Two", email="bdt_student2@test.com",
-        password_hash=get_password_hash("bdt_student2pw"),
-        role=UserRole.STUDENT, is_active=True,
+        email=f"bdt_student2+{uuid.uuid4().hex[:8]}@test.com",
+        name="BDT Student Two",
+        password_hash="hashed",
+        role=UserRole.STUDENT,
+        is_active=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -57,10 +117,10 @@ def student_user2(db_session):
 
 
 @pytest.fixture
-def student_token2(client, student_user2):
-    r = client.post("/api/v1/auth/login",
-                    json={"email": "bdt_student2@test.com", "password": "bdt_student2pw"})
-    return r.json()["access_token"]
+def student_token2(student_user2):
+    return create_access_token(
+        data={"sub": student_user2.email}, expires_delta=timedelta(hours=1)
+    )
 
 
 @pytest.fixture
@@ -404,19 +464,20 @@ def test_bdt_d05_manual_detection_on_footvolley(
 # ── BDT-A-01..BDT-A-05: Admin trigger endpoint tests ─────────────────────────
 
 @pytest.fixture
-def admin_token(client, db_session):
-    from app.models.user import User, UserRole
-    from app.core.security import get_password_hash
+def admin_token(db_session):
     admin = User(
-        name="BDT Admin", email="bdt_admin@test.com",
-        password_hash=get_password_hash("bdt_admin_pw"),
-        role=UserRole.ADMIN, is_active=True,
+        email=f"bdt_admin+{uuid.uuid4().hex[:8]}@test.com",
+        name="BDT Admin",
+        password_hash="hashed",
+        role=UserRole.ADMIN,
+        is_active=True,
     )
     db_session.add(admin)
     db_session.commit()
-    r = client.post("/api/v1/auth/login",
-                    json={"email": "bdt_admin@test.com", "password": "bdt_admin_pw"})
-    return r.json()["access_token"]
+    db_session.refresh(admin)
+    return create_access_token(
+        data={"sub": admin.email}, expires_delta=timedelta(hours=1)
+    )
 
 
 @pytest.fixture
@@ -520,12 +581,11 @@ def test_bdt_a05_admin_trigger_disabled_503(
 
 def test_bdt_fr01_extract_frame_mock(monkeypatch):
     import numpy as np
-    mock_frame = np.zeros((240, 320, 3), dtype=np.uint8)
 
     class MockCap:
         def isOpened(self): return True
         def set(self, prop, val): pass
-        def read(self): return True, mock_frame
+        def read(self): return True, np.zeros((240, 320, 3), dtype=np.uint8)
         def release(self): pass
 
     import app.services.juggling.frame_extractor as fe_module
