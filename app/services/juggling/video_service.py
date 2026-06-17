@@ -12,13 +12,15 @@ State transitions:
   apply_rejection     — Celery task writes gate decision → rejected
   apply_failure       — Celery task writes technical error → failed
   reset_processing    — admin/stuck recovery → uploaded
+  delete_media        — user request: remove media files, preserve analysis/annotation data
 """
 from __future__ import annotations
 
+import logging
 import uuid as _uuid_mod
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -29,6 +31,9 @@ from app.models.juggling import (
     JugglingVideoQualityStatus,
     JugglingTranscodeStatus,
 )
+from app.services.juggling.retention_service import write_deletion_log
+
+logger = logging.getLogger(__name__)
 
 JUGGLING_UPLOAD_DIR = Path(settings.JUGGLING_UPLOAD_DIR)
 
@@ -40,6 +45,14 @@ _COMPLETE_BLOCKED_STATUSES = {
     JugglingVideoStatus.rejected.value,
     JugglingVideoStatus.gdpr_deleted.value,
 }
+
+# Celery task callbacks are no-ops when the video has reached a terminal deletion state.
+# This guards against the race where a processing task writes back a new status after
+# the video has been user-deleted or GDPR-deleted.
+_TERMINAL_STATUSES: frozenset[str] = frozenset({
+    JugglingVideoStatus.media_deleted.value,
+    JugglingVideoStatus.gdpr_deleted.value,
+})
 
 
 def create_pending(
@@ -117,6 +130,9 @@ def apply_analysis(
     video = db.query(JugglingVideo).filter(JugglingVideo.id == video_id).first()
     if video is None:
         raise ValueError(f"video_not_found: {video_id}")
+    if video.status in _TERMINAL_STATUSES:
+        # Race: video was deleted while the Celery task was running. No-op.
+        return video
     video.status                   = JugglingVideoStatus.analyzed.value
     video.server_detected_metadata = server_detected_metadata
     video.quality_score            = str(round(quality_score, 4))
@@ -141,6 +157,9 @@ def apply_rejection(
     video = db.query(JugglingVideo).filter(JugglingVideo.id == video_id).first()
     if video is None:
         raise ValueError(f"video_not_found: {video_id}")
+    if video.status in _TERMINAL_STATUSES:
+        # Race: video was deleted while the Celery task was running. No-op.
+        return video
     video.status                   = JugglingVideoStatus.rejected.value
     video.quality_status           = JugglingVideoQualityStatus.rejected.value
     video.rejection_reason         = rejection_reason
@@ -164,6 +183,9 @@ def apply_failure(
     video = db.query(JugglingVideo).filter(JugglingVideo.id == video_id).first()
     if video is None:
         raise ValueError(f"video_not_found: {video_id}")
+    if video.status in _TERMINAL_STATUSES:
+        # Race: video was deleted while the Celery task was running. No-op.
+        return video
     video.status           = JugglingVideoStatus.failed.value
     video.rejection_reason = reason
     video.updated_at       = datetime.now(timezone.utc)
@@ -262,6 +284,145 @@ def apply_transcode_failure(
 def is_gdpr_deleted(video: JugglingVideo) -> bool:
     """Return True if this video has been permanently GDPR-deleted."""
     return video.status == JugglingVideoStatus.gdpr_deleted.value
+
+
+# ── Media delete ──────────────────────────────────────────────────────────────
+
+def _try_delete_file(raw_path: str) -> bool:
+    """
+    Unlink a file at raw_path. Returns True on success or if the file is already absent.
+    Returns False on OSError (permissions, I/O error, etc.).
+    """
+    try:
+        p = Path(raw_path)
+        if p.exists():
+            p.unlink()
+        return True
+    except OSError as exc:
+        logger.warning("media_delete_unlink_failed", extra={"error": str(exc)})
+        return False
+
+
+def delete_media(
+    video_id: str,
+    user_id: int,
+    db: Session,
+) -> Dict[str, Any]:
+    """
+    User-initiated media delete: removes physical files and nulls path/checksum fields.
+
+    Preserved (never touched by this function):
+      quality_score, quality_status, quality_detail, rejection_reason,
+      server_detected_metadata, processed_resolution, processed_fps,
+      processed_file_size_bytes, transcode_status, audio_stripped,
+      annotation_status, annotation_finished_at, total_juggling_count,
+      file_size_bytes, source_type, upload_source, created_at.
+
+    Contact events are not touched — they remain fully active.
+
+    Returns one of:
+      {"status": "deleted",  "video_id": str}              success
+      {"status": "skipped",  "reason": "already_deleted"}  already media_deleted (idempotent)
+      {"status": "error",    "reason": "not_found"}         no video for this user
+      {"status": "error",    "reason": "gdpr_deleted"}      terminal state — caller should 410
+      {"status": "failed",   "reason": str}                 file deletion OSError
+    """
+    video = (
+        db.query(JugglingVideo)
+        .filter(JugglingVideo.id == video_id, JugglingVideo.user_id == user_id)
+        .first()
+    )
+    if video is None:
+        return {"status": "error", "reason": "not_found"}
+
+    if video.status == JugglingVideoStatus.gdpr_deleted.value:
+        return {"status": "error", "reason": "gdpr_deleted"}
+
+    if video.status == JugglingVideoStatus.media_deleted.value:
+        return {"status": "skipped", "reason": "already_deleted"}
+
+    # Collect file paths to attempt (original + processed + thumbnail).
+    # storage_path is a fallback for older rows where original_path was not set.
+    paths_to_delete: List[Tuple[str, str]] = []
+    for field_name, attr in [
+        ("original",   video.original_path),
+        ("processed",  video.processed_path),
+        ("thumbnail",  video.thumbnail_path),
+    ]:
+        if attr:
+            paths_to_delete.append((field_name, attr))
+    if video.storage_path and not video.original_path:
+        paths_to_delete.append(("original", video.storage_path))
+
+    # Attempt each file deletion, collecting failures.
+    all_succeeded = True
+    failed_files: List[str] = []
+
+    for file_type, raw_path in paths_to_delete:
+        success = _try_delete_file(raw_path)
+        if not success:
+            all_succeeded = False
+            failed_files.append(file_type)
+        write_deletion_log(
+            db=db,
+            event_type="user_media_delete",
+            video_id=video_id,
+            user_id=user_id,
+            file_type=file_type,
+            raw_path=raw_path,
+            dry_run=False,
+            success=success,
+        )
+
+    if not all_succeeded:
+        # Partial or full file failure: do NOT transition to media_deleted.
+        # The record stays in its current status; retention_error is set for debugging.
+        error_msg = f"file_delete_failed:{','.join(failed_files)}"
+        video.retention_error = error_msg
+        video.retention_last_checked_at = datetime.now(timezone.utc)
+        video.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        write_deletion_log(
+            db=db,
+            event_type="user_media_delete",
+            video_id=video_id,
+            user_id=user_id,
+            file_type="all",
+            dry_run=False,
+            success=False,
+            error_message=error_msg,
+        )
+        return {"status": "failed", "reason": error_msg}
+
+    # All files deleted (or were already absent). Null media-related fields only.
+    # Analysis, quality, and annotation fields are intentionally left untouched.
+    video.storage_path            = None
+    video.original_path           = None
+    video.processed_path          = None
+    video.thumbnail_path          = None
+    video.filename_stored         = None
+    video.checksum_sha256         = None
+    video.checksum_processed      = None
+    video.client_reported_metadata = None
+
+    video.status          = JugglingVideoStatus.media_deleted.value
+    video.deleted_at      = datetime.now(timezone.utc)
+    video.deletion_reason = "user_request"
+    video.retention_error = None
+    video.updated_at      = datetime.now(timezone.utc)
+    db.commit()
+
+    write_deletion_log(
+        db=db,
+        event_type="user_media_delete",
+        video_id=video_id,
+        user_id=user_id,
+        file_type="all",
+        dry_run=False,
+        success=True,
+    )
+    logger.info("media_delete_completed", extra={"video_id": video_id})
+    return {"status": "deleted", "video_id": video_id}
 
 
 def set_uploaded_with_original(

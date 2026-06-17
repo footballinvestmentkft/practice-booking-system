@@ -4,7 +4,7 @@ import Foundation
 // Exact mirror of AN-1 OpenAPI schema ContactEventOut.
 // All fields verified against tests/snapshots/openapi_snapshot.json @ f1054056.
 
-struct ContactEventOut: Codable, Identifiable {
+struct ContactEventOut: Codable, Identifiable, Equatable {
     let eventId:                UUID     // required, uuid string
     let deviceEventId:          UUID     // required, uuid string
     let timestampMs:            Int      // required

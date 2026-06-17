@@ -4,22 +4,27 @@ Juggling POC — Video transcode, audio stripping, and thumbnail generation.
 Decision matrix (evaluated in order):
   1. Skip — no rotation, no audio, fps ≤ target, height ≤ target
              → no processed file; thumbnail still generated
-  2. Audio-only strip — no rotation, no fps/scale filter needed, but has_audio=True
+  2. Audio-only strip — rotation=0, no fps/scale filter needed, but has_audio=True
              → -c:v copy -an  (stream copy is safe: no -vf present)
   3. Full transcode — any rotation / fps > target / height > target
-             → -c:v libx264 with explicit -vf filtergraph
+             → -c:v libx264; autorotate handles rotation, -vf only for scale/fps
              RULE: -c:v copy is FORBIDDEN whenever -vf is present
 
-Filtergraph order (when used):
-  transpose (rotation) → scale → fps
+Rotation handling:
+  ffmpeg autorotate (ON by default) reads the Display Matrix from the input,
+  physically rotates the decoded frames, and writes an identity transform to
+  the output track header (tkhd). No explicit transpose filter is needed.
+  Explicit transpose would double-rotate (autorotate + transpose = 2×).
+  For iOS MOV/MP4 with side_data Display Matrix rotation=90: autorotate
+  produces correctly-oriented 640×628 output; tkhd is identity; AVPlayer
+  plays without any additional rotation.
 
-Rotation map:
-   90  → transpose=1
-  270  → transpose=2
-  180  → transpose=1,transpose=1
+Filtergraph (when used):
+  scale → fps  (rotation handled by autorotate, not by filter)
 
 Thumbnail:
   Always generated from original_path (even on skip).
+  ffmpeg autorotate handles rotation; no explicit -vf needed.
   ffmpeg: -ss 0 -i <original> -vframes 1 -q:v 2 <uuid_thumb.jpg>
 
 Atomic write:
@@ -87,46 +92,52 @@ def build_transcode_command(
 
     Raises TranscodeSkip when no processing is needed.
 
-    Invariant enforced: if the returned command contains -vf, it will NOT
-    contain -c:v copy. Full transcode (-c:v libx264) is used instead.
+    Rotation contract:
+      ffmpeg autorotate (ON by default) is intentionally left enabled. It reads
+      the Display Matrix / rotate tag from the input, physically rotates the
+      decoded frames, and writes an identity transform to the output tkhd box.
+      AVPlayer therefore sees no rotation hint and renders pixels as-is.
+      Explicit -vf transpose is NOT added for rotation — it would double-rotate
+      (autorotate + transpose = two 90° turns). The `rotation` parameter is only
+      used to decide whether a full re-encode is required (instead of TranscodeSkip
+      or audio-only stream-copy).
     """
     needs_rotation = rotation not in (0, None)
     needs_scale = (height is not None) and (height > target_height)
     needs_fps = (fps is not None) and (fps > target_fps)
-    needs_vf = needs_rotation or needs_scale or needs_fps
+    # needs_vf: scale/fps require an explicit vf filtergraph.
+    # rotation does NOT add a filter — autorotate handles it in the decoder.
+    needs_vf = needs_scale or needs_fps
+    # needs_full_transcode: anything that requires a full re-encode.
+    # rotation forces a re-encode so that autorotate can rewrite the tkhd matrix.
+    needs_full_transcode = needs_rotation or needs_vf
 
-    if not needs_vf and not has_audio:
+    if not needs_full_transcode and not has_audio:
         raise TranscodeSkip("no_processing_needed")
 
     binary = shutil.which("ffmpeg") or "ffmpeg"
     cmd: list[str] = [binary, "-y", "-i", str(input_path)]
 
-    if needs_vf:
-        # Build filtergraph: transpose → scale → fps
-        filters: list[str] = []
-        if rotation == 90:
-            filters.append("transpose=1")
-        elif rotation == 270:
-            filters.append("transpose=2")
-        elif rotation == 180:
-            filters.append("transpose=1,transpose=1")
-        elif rotation not in (0, None):
-            logger.warning("transcode_unknown_rotation", extra={"rotation": rotation})
-
-        if needs_scale:
-            filters.append(f"scale=-2:{target_height}")
-        if needs_fps:
-            filters.append(f"fps={target_fps}")
-
-        cmd += ["-vf", ",".join(filters)]
-        # RULE: -c:v libx264 when -vf is present; -c:v copy is forbidden here
+    if needs_full_transcode:
+        if needs_vf:
+            # Build filtergraph: scale → fps (no transpose — autorotate handles rotation)
+            filters: list[str] = []
+            if needs_scale:
+                filters.append(f"scale=-2:{target_height}")
+            if needs_fps:
+                filters.append(f"fps={target_fps}")
+            if filters:
+                cmd += ["-vf", ",".join(filters)]
+        # RULE: -c:v libx264 for full transcode; -c:v copy is forbidden here
         cmd += ["-c:v", "libx264", "-crf", "23", "-preset", "medium"]
         cmd += ["-an"]  # always strip audio in processed output
     else:
-        # Audio-only strip: stream-copy video (-c:v copy is safe without -vf)
+        # Audio-only strip: stream-copy video (-c:v copy bypasses the decoder
+        # so autorotate never fires, which is fine because rotation=0 here)
         cmd += ["-c:v", "copy", "-an"]
 
-    # Nullify rotation metadata (prevent double-rotation by players)
+    # Strip all metadata from the output (removes rotate tag, clears any
+    # residual metadata — the tkhd rotation is already cleared by the re-encode)
     cmd += ["-map_metadata", "-1"]
     cmd += ["-movflags", "+faststart"]
     cmd += [str(output_path)]
@@ -138,20 +149,17 @@ def build_thumbnail_command(
     output_path: Path,
     rotation: int = 0,
 ) -> list[str]:
-    """Return ffmpeg argv for first-frame JPEG with rotation correction."""
+    """Return ffmpeg argv for first-frame JPEG with rotation correction.
+
+    ffmpeg autorotate (ON by default) reads the Display Matrix / rotate tag
+    from the input and correctly orients the output frame. No explicit
+    transpose or -noautorotate is needed.
+
+    The `rotation` parameter is accepted for API compatibility but unused —
+    autorotate handles all rotation cases correctly.
+    """
     binary = shutil.which("ffmpeg") or "ffmpeg"
     cmd: list[str] = [binary, "-y", "-ss", "0", "-i", str(input_path)]
-
-    filters: list[str] = []
-    if rotation == 90:
-        filters.append("transpose=1")
-    elif rotation == 270:
-        filters.append("transpose=2")
-    elif rotation == 180:
-        filters.append("transpose=1,transpose=1")
-    if filters:
-        cmd += ["-vf", ",".join(filters)]
-
     cmd += ["-vframes", "1", "-q:v", "2", str(output_path)]
     return cmd
 

@@ -234,6 +234,37 @@ class TournamentActionHandler:
         return f"{method}_{path}"
 
 
+class JugglingActionHandler:
+    """
+    Handles juggling annotation audit actions.
+
+    Paths: /juggling/*
+    Actions: JUGGLING_CONTACT_CREATED, JUGGLING_CONTACT_UPDATED,
+             JUGGLING_CONTACT_SOFT_DELETED, JUGGLING_ANNOTATION_FINISHED,
+             JUGGLING_POSE_SNAPSHOT_CREATED, JUGGLING_POSE_SNAPSHOT_UPDATED
+    """
+
+    def can_handle(self, path: str) -> bool:
+        return "/juggling/" in path
+
+    def determine_action(self, method: str, path: str, status_code: int) -> str:
+        if "/pose-snapshot" in path:
+            return (
+                AuditAction.JUGGLING_POSE_SNAPSHOT_CREATED
+                if status_code == 201
+                else AuditAction.JUGGLING_POSE_SNAPSHOT_UPDATED
+            )
+        if "/finish" in path:
+            return AuditAction.JUGGLING_ANNOTATION_FINISHED
+        if method == "POST":
+            return AuditAction.JUGGLING_CONTACT_CREATED
+        if method in ("PUT", "PATCH"):
+            return AuditAction.JUGGLING_CONTACT_UPDATED
+        if method == "DELETE":
+            return AuditAction.JUGGLING_CONTACT_SOFT_DELETED
+        return f"{method}_{path}"
+
+
 class DefaultActionHandler:
     """
     Fallback handler for unrecognized paths.
@@ -273,6 +304,7 @@ class ActionDeterminer:
             QuizActionHandler(),
             CertificateActionHandler(),
             TournamentActionHandler(),
+            JugglingActionHandler(),
             DefaultActionHandler(),  # Always last (fallback)
         ]
 

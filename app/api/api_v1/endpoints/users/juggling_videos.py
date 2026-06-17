@@ -28,7 +28,9 @@ Security pipeline (pre-save, all in upload endpoint):
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Request
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Request, Response
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -39,6 +41,8 @@ from app.models.user import User
 from app.schemas.juggling import (
     JugglingCompleteOut,
     JugglingQualityOut,
+    JugglingRotationPatchOut,
+    JugglingRotationPatchRequest,
     JugglingUploadFileOut,
     JugglingUploadInitRequest,
     JugglingUploadInitOut,
@@ -52,6 +56,9 @@ from app.services.juggling.security_service import (
     run_all_pre_save_checks,
 )
 from app.services.juggling import video_service
+
+import logging
+logger = logging.getLogger(__name__)
 from app.services.juggling.media_service import (
     MediaMissingError,
     MediaNotReadyError,
@@ -140,6 +147,7 @@ def list_videos(
         .filter(
             JugglingVideo.user_id == current_user.id,
             JugglingVideo.status != JugglingVideoStatus.gdpr_deleted.value,
+            JugglingVideo.status != JugglingVideoStatus.media_deleted.value,
         )
     )
     total = base_q.count()
@@ -169,6 +177,7 @@ def list_videos(
             upload_source=v.upload_source,
             source_type=v.source_type,
             annotation_status=v.annotation_status,
+            user_rotation_degrees=v.user_rotation_degrees if v.user_rotation_degrees is not None else 0,
         )
         for v in rows
     ]
@@ -376,6 +385,8 @@ def get_thumbnail(
     current_user: User = Depends(get_current_user_media),
 ) -> FileResponse:
     video = _get_video_or_404(video_id, current_user.id, db)
+    if video.status == JugglingVideoStatus.media_deleted.value:
+        raise HTTPException(status_code=410, detail="Media has been deleted.")
     try:
         path = resolve_thumbnail_path(video)
     except ThumbnailNotReadyError as exc:
@@ -400,6 +411,8 @@ def get_media(
     current_user: User = Depends(get_current_user_media),
 ) -> FileResponse:
     video = _get_video_or_404(video_id, current_user.id, db)
+    if video.status == JugglingVideoStatus.media_deleted.value:
+        raise HTTPException(status_code=410, detail="Media has been deleted.")
     try:
         path = resolve_media_path(video)
     except MediaNotReadyError as exc:
@@ -409,3 +422,69 @@ def get_media(
     except PathSafetyError:
         raise HTTPException(status_code=404, detail="Media file not available.")
     return FileResponse(path=str(path), media_type="video/mp4", headers=_MEDIA_HEADERS)
+
+
+@router.delete(
+    "/me/juggling/videos/{video_id}",
+    status_code=204,
+    dependencies=[Depends(require_juggling_enabled)],
+    summary="Delete juggling video media (storage release)",
+    description=(
+        "Deletes the physical media files for the video and marks it as media_deleted. "
+        "Analysis results, quality data, contact events and annotation data are preserved. "
+        "Idempotent: calling DELETE on an already media_deleted video returns 204. "
+        "This is NOT a GDPR erasure — account/profile data deletion is a separate flow."
+    ),
+    tags=["juggling"],
+)
+def delete_video(
+    video_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    logger.info("delete_video_request", extra={"video_id": video_id, "user_id": current_user.id})
+    result = video_service.delete_media(video_id, current_user.id, db)
+    logger.info("delete_video_result", extra={"video_id": video_id, "status": result.get("status"), "reason": result.get("reason")})
+    status = result["status"]
+
+    if status in ("deleted", "skipped"):
+        return Response(status_code=204)
+
+    reason = result.get("reason", "")
+    if status == "error":
+        if reason == "gdpr_deleted":
+            raise HTTPException(status_code=410, detail="Video has been permanently deleted.")
+        raise HTTPException(status_code=404, detail="Video not found.")
+
+    raise HTTPException(
+        status_code=500,
+        detail=f"Media deletion failed: {reason}",
+    )
+
+
+@router.patch(
+    "/me/juggling/videos/{video_id}/rotation",
+    response_model=JugglingRotationPatchOut,
+    dependencies=[Depends(require_juggling_enabled)],
+    summary="Persist user display rotation override",
+    tags=["juggling"],
+)
+def patch_rotation(
+    video_id: str,
+    body: JugglingRotationPatchRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> JugglingRotationPatchOut:
+    """
+    Stores the user-chosen display rotation (0/90/180/270 degrees) for a video.
+    This is a display-only override — the processed file is never re-encoded.
+    Idempotent: calling PATCH with the same value is a no-op.
+    """
+    video = _get_video_or_404(video_id, current_user.id, db)
+    video.user_rotation_degrees = body.rotation_degrees
+    video.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return JugglingRotationPatchOut(
+        video_id=video_id,
+        user_rotation_degrees=video.user_rotation_degrees,
+    )

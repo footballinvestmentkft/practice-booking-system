@@ -32,6 +32,9 @@ final class AuthManager: ObservableObject {
     @Published private(set) var justRegistered:       Bool    = false
     // First name captured from the register form for immediate display in WelcomeSuccessView.
     private(set) var registeredUserName:              String? = nil
+    // Cached from GET /api/v1/users/me after successful validateSession / login.
+    // Used by annotation screens to scope local storage without an extra network call.
+    @Published private(set) var currentUserId:        Int?    = nil
 
     // Shared-task barrier replacing the former isRefreshing: Bool flag.
     // A non-nil value means a refresh is in-flight; new callers join via .value.
@@ -41,6 +44,11 @@ final class AuthManager: ObservableObject {
         // Optimistic: set isLoggedIn from Keychain immediately.
         // isValidatingSession stays true so SplashView is shown until validateSession() finishes.
         isLoggedIn = KeychainService.load(account: KeychainService.accessTokenKey) != nil
+        if isLoggedIn {
+            // Restore the cached id so currentUserId is never nil while isLoggedIn is
+            // optimistically true, even before validateSession() completes.
+            currentUserId = Self.cachedUserId()
+        }
     }
 
     // MARK: — Session restore (call once on app launch)
@@ -48,10 +56,13 @@ final class AuthManager: ObservableObject {
     // Validates the stored session against the backend.
     // Strategy:
     //   1. No tokens → stay logged out.
-    //   2. Has access_token → GET /users/me to verify.
-    //   3. 401 on /users/me → try refresh.
+    //   2. Has access_token → GET /users/me to verify and capture currentUserId.
+    //   3. 401 on /users/me → try refresh, then retry /users/me.
     //   4. Refresh 401 → logout (tokens invalid/expired beyond recovery).
-    //   5. Network error at any step → stay logged in (offline tolerance).
+    //   5. Network error at any step → fall back to the cached currentUserId
+    //      (offline tolerance). If no cache exists, the session cannot be
+    //      trusted — log out rather than leave currentUserId nil while
+    //      isLoggedIn is true.
     func validateSession() async {
         // isValidatingSession was true from init — clear it when we're done regardless of outcome.
         defer { isValidatingSession = false }
@@ -61,19 +72,29 @@ final class AuthManager: ObservableObject {
             return
         }
 
-        do {
-            let _: UserProfile = try await APIClient.get(
-                path: "/api/v1/users/me",
-                token: token
-            )
+        if let id = await fetchUserId(token: token) {
+            currentUserId = id
+            Self.cacheUserId(id)
             isLoggedIn = true
+            return
+        }
 
-        } catch APIError.httpError(401, _) {
-            let refreshed = await performRefresh()
-            if refreshed { isLoggedIn = true }
+        // /users/me failed. Distinguish 401 (needs refresh) from other errors
+        // by retrying the request once more after a successful refresh.
+        let refreshed = await performRefresh()
+        if refreshed {
+            // performRefresh() guarantees currentUserId on success (see runRefresh).
+            isLoggedIn = currentUserId != nil
+            return
+        }
 
-        } catch {
-            // Network error on launch — remain optimistically logged in.
+        // Refresh did not run/succeed (e.g. network error, no 401 occurred).
+        // Fall back to the cached id for offline tolerance.
+        if let cached = Self.cachedUserId() {
+            currentUserId = cached
+            isLoggedIn = true
+        } else {
+            isLoggedIn = false
         }
     }
 
@@ -90,13 +111,26 @@ final class AuthManager: ObservableObject {
                 body: LoginRequest(email: email, password: password)
             )
             saveTokens(response)
+
+            // currentUserId must be established before the session is marked
+            // ready — annotation flows rely on a valid, positive userId.
+            guard let id = await fetchUserId(token: response.accessToken) else {
+                errorMessage = "Could not load user profile. Please try again."
+                return
+            }
+            currentUserId = id
+            Self.cacheUserId(id)
             isLoggedIn = true
 
         } catch APIError.httpError(let code, _) {
             errorMessage = (code == 401 || code == 422)
                 ? "Invalid email or password."
                 : "Server error (\(code)). Please try again."
-        } catch APIError.networkError {
+        } catch APIError.networkError(let underlyingError) {
+            #if DEBUG
+            let urlErr = underlyingError as? URLError
+            print("[AuthManager] ✖ login networkError type=\(type(of: underlyingError)) urlCode=\(urlErr?.code.rawValue ?? -99999)")
+            #endif
             errorMessage = "Network error. Check your connection and try again."
         } catch {
             errorMessage = "Something went wrong. Please try again."
@@ -145,6 +179,15 @@ final class AuthManager: ObservableObject {
                 body: body
             )
             saveTokens(response)
+
+            // currentUserId must be established before the session is marked
+            // ready — annotation flows rely on a valid, positive userId.
+            guard let id = await fetchUserId(token: response.accessToken) else {
+                errorMessage = "Could not load user profile. Please try again."
+                return
+            }
+            currentUserId      = id
+            Self.cacheUserId(id)
             registeredUserName = firstName
             justRegistered     = true
             isLoggedIn         = true
@@ -176,8 +219,10 @@ final class AuthManager: ObservableObject {
 
     func logout() {
         KeychainService.clearAll()
+        Self.clearCachedUserId()
         justRegistered     = false
         registeredUserName = nil
+        currentUserId      = nil
         isLoggedIn         = false
     }
 
@@ -228,6 +273,32 @@ final class AuthManager: ObservableObject {
             guard refreshed, let newToken = accessToken else { throw APIError.unauthorized }
             return try await APIClient.multipartPost(
                 path: path, imageData: imageData,
+                mimeType: mimeType, fieldName: fieldName, token: newToken
+            )
+        }
+    }
+
+    // File upload with multipart/form-data — Bearer inject, single 401 refresh + retry.
+    // Streams the video file from fileURL without loading it fully into memory.
+    // Uses APIClient.multipartUploadFromFile which writes the multipart envelope
+    // to a temp file and streams it via URLSession.uploadTask(with:fromFile:).
+    func authenticatedMultipartUploadFile<T: Decodable>(
+        path:      String,
+        fileURL:   URL,
+        mimeType:  String,
+        fieldName: String = "file"
+    ) async throws -> T {
+        guard let token = accessToken else { logout(); throw APIError.unauthorized }
+        do {
+            return try await APIClient.multipartUploadFromFile(
+                path: path, fileURL: fileURL,
+                mimeType: mimeType, fieldName: fieldName, token: token
+            )
+        } catch APIError.httpError(401, _) {
+            let refreshed = await performRefresh()
+            guard refreshed, let newToken = accessToken else { throw APIError.unauthorized }
+            return try await APIClient.multipartUploadFromFile(
+                path: path, fileURL: fileURL,
                 mimeType: mimeType, fieldName: fieldName, token: newToken
             )
         }
@@ -311,8 +382,12 @@ final class AuthManager: ObservableObject {
 
     // MARK: — Token accessors
 
+    // Test-only override: set before test, clear in tearDown.
+    // nil in production — Keychain is always used when this is nil.
+    var _testAccessToken: String? = nil
+
     var accessToken: String? {
-        KeychainService.load(account: KeychainService.accessTokenKey)
+        _testAccessToken ?? KeychainService.load(account: KeychainService.accessTokenKey)
     }
 
     var refreshToken: String? {
@@ -361,6 +436,20 @@ final class AuthManager: ObservableObject {
             // Rotating refresh: backend issues a new refresh_token every time.
             // Always save BOTH tokens after a successful refresh.
             saveTokens(response)
+
+            // Guarantee currentUserId after a successful refresh — never leave
+            // the session in a state where tokens are valid but currentUserId is nil.
+            if currentUserId == nil {
+                if let id = await fetchUserId(token: response.accessToken) {
+                    currentUserId = id
+                    Self.cacheUserId(id)
+                } else if let cached = Self.cachedUserId() {
+                    currentUserId = cached
+                } else {
+                    logout()
+                    return false
+                }
+            }
             return true
 
         } catch APIError.httpError(401, _) {
@@ -377,5 +466,41 @@ final class AuthManager: ObservableObject {
     private func saveTokens(_ response: AuthResponse) {
         KeychainService.save(response.accessToken,  account: KeychainService.accessTokenKey)
         KeychainService.save(response.refreshToken, account: KeychainService.refreshTokenKey)
+    }
+
+    // GET /api/v1/users/me and extract a usable (positive) user id.
+    // Swallows all errors — returns nil on 401, network error, or a profile
+    // with a nil/non-positive id. Callers decide how to react to nil.
+    private func fetchUserId(token: String) async -> Int? {
+        do {
+            let profile: UserProfile = try await APIClient.get(path: "/api/v1/users/me", token: token)
+            guard let id = profile.id, id > 0 else { return nil }
+            return id
+        } catch {
+            return nil
+        }
+    }
+
+    // MARK: — currentUserId persistence (UserDefaults)
+    //
+    // AuthResponse (login/refresh) carries no user id, so currentUserId can
+    // only be obtained via GET /users/me. This cache lets currentUserId be
+    // restored immediately on relaunch (init) and survive transient network
+    // errors during validateSession()/refresh without leaving currentUserId nil
+    // while isLoggedIn is true.
+
+    private static let currentUserIdDefaultsKey = "lfa_current_user_id"
+
+    private static func cachedUserId() -> Int? {
+        let value = UserDefaults.standard.integer(forKey: currentUserIdDefaultsKey)
+        return value > 0 ? value : nil
+    }
+
+    private static func cacheUserId(_ id: Int) {
+        UserDefaults.standard.set(id, forKey: currentUserIdDefaultsKey)
+    }
+
+    private static func clearCachedUserId() {
+        UserDefaults.standard.removeObject(forKey: currentUserIdDefaultsKey)
     }
 }

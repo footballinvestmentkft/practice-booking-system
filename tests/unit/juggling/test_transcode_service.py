@@ -178,50 +178,57 @@ class TestFullTranscode:
 
 
 # ── Rotation filtergraph ──────────────────────────────────────────────────────
+# Since commit 5eca4ace the service uses ffmpeg autorotate (decoder-side) to
+# handle display-matrix rotation.  No explicit transpose filter is added to
+# -vf — that would double-rotate (autorotate + transpose = 2×90°).
+# The rotation parameter only forces a re-encode so autorotate can rewrite the
+# tkhd Display Matrix; it does NOT inject a transpose into the filtergraph.
 
 class TestRotationFiltergraph:
-    def _vf(self, rotation: int) -> str:
-        cmd = build_transcode_command(
+    def _cmd(self, rotation: int) -> list:
+        return build_transcode_command(
             Path("in.mp4"), Path("out.mp4"),
             rotation=rotation, fps=60.0, height=1080, has_audio=False,
             target_fps=30, target_height=720,
         )
+
+    def _vf(self, rotation: int) -> str:
+        cmd = self._cmd(rotation)
         idx = cmd.index("-vf")
         return cmd[idx + 1]
 
-    def test_rotation_90_transpose_1(self):
-        assert "transpose=1" in self._vf(90)
+    def test_rotation_90_no_transpose_in_vf(self):
+        # Autorotate handles rotation; -vf must not contain transpose.
+        assert "transpose" not in self._vf(90)
 
-    def test_rotation_270_transpose_2(self):
-        assert "transpose=2" in self._vf(270)
+    def test_rotation_270_no_transpose_in_vf(self):
+        assert "transpose" not in self._vf(270)
 
-    def test_rotation_180_double_transpose(self):
-        vf = self._vf(180)
-        assert vf.count("transpose=1") >= 2
+    def test_rotation_180_no_transpose_in_vf(self):
+        assert "transpose" not in self._vf(180)
 
     def test_rotation_0_no_transpose(self):
-        cmd = build_transcode_command(
-            Path("in.mp4"), Path("out.mp4"),
-            rotation=0, fps=60.0, height=1080, has_audio=False,
-            target_fps=30, target_height=720,
-        )
+        cmd = self._cmd(0)
         vf_idx = cmd.index("-vf")
         assert "transpose" not in cmd[vf_idx + 1]
 
-    def test_filtergraph_order_rotation_scale_fps(self):
+    def test_rotation_90_triggers_full_transcode(self):
+        # rotation != 0 must force libx264 re-encode (not -c:v copy).
+        cmd = self._cmd(90)
+        assert "-c:v" in cmd
+        cv_idx = cmd.index("-c:v")
+        assert cmd[cv_idx + 1] == "libx264"
+
+    def test_filtergraph_scale_before_fps(self):
+        # When both scale and fps filters are present, scale comes first.
         vf = self._vf(90)  # fps=60 > 30, height=1080 > 720
         parts = vf.split(",")
-        has_transpose = any("transpose" in p for p in parts)
         has_scale = any("scale" in p for p in parts)
         has_fps = any("fps" in p for p in parts)
-        if has_transpose and has_scale and has_fps:
-            transpose_idx = next(i for i, p in enumerate(parts) if "transpose" in p)
+        if has_scale and has_fps:
             scale_idx = next(i for i, p in enumerate(parts) if "scale" in p)
             fps_idx = next(i for i, p in enumerate(parts) if "fps" in p)
-            assert transpose_idx < scale_idx < fps_idx, (
-                f"Wrong filtergraph order: transpose={transpose_idx}, "
-                f"scale={scale_idx}, fps={fps_idx}"
-            )
+            assert scale_idx < fps_idx, f"scale must precede fps: {vf}"
 
 
 # ── Thumbnail command ─────────────────────────────────────────────────────────
@@ -237,21 +244,18 @@ class TestThumbnailCommand:
         assert "-q:v" in cmd
         assert cmd[cmd.index("-q:v") + 1] == "2"
 
-    def test_rotation_90_adds_vf(self):
+    def test_rotation_90_no_vf(self):
+        # Thumbnail rotation handled by ffmpeg autorotate — no -vf transpose.
         cmd = build_thumbnail_command(Path("in.mp4"), Path("thumb.jpg"), rotation=90)
-        assert "-vf" in cmd
-        assert "transpose=1" in cmd[cmd.index("-vf") + 1]
+        assert "-vf" not in cmd
 
-    def test_rotation_270_transpose_2(self):
+    def test_rotation_270_no_vf(self):
         cmd = build_thumbnail_command(Path("in.mp4"), Path("thumb.jpg"), rotation=270)
-        assert "-vf" in cmd
-        assert "transpose=2" in cmd[cmd.index("-vf") + 1]
+        assert "-vf" not in cmd
 
-    def test_rotation_180_double_transpose(self):
+    def test_rotation_180_no_vf(self):
         cmd = build_thumbnail_command(Path("in.mp4"), Path("thumb.jpg"), rotation=180)
-        assert "-vf" in cmd
-        vf = cmd[cmd.index("-vf") + 1]
-        assert vf.count("transpose=1") >= 2
+        assert "-vf" not in cmd
 
     def test_rotation_0_no_vf(self):
         cmd = build_thumbnail_command(Path("in.mp4"), Path("thumb.jpg"), rotation=0)

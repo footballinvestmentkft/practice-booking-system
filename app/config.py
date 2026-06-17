@@ -406,6 +406,12 @@ class Settings(BaseSettings):
         else os.getenv("JUGGLING_AUDIT_HASH_SECRET", "")
     )
 
+    # POSE_SNAPSHOT_ENABLED — Phase 2A feature flag.
+    #   OFF by default. When OFF, pose snapshot endpoints return HTTP 503.
+    #   Turn ON per-deployment in .env: POSE_SNAPSHOT_ENABLED=true
+    #   Dev: set True in .env.local to test pose capture locally.
+    POSE_SNAPSHOT_ENABLED: bool = False
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

@@ -50,11 +50,12 @@ final class LocalAnnotationStore {
 
     // MARK: — Public interface
 
-    // Load session. On corruption: quarantine + return empty + emit recovery event.
+    // Load session. On corruption: quarantine the bad file + return .quarantined
+    // (the caller decides whether/how to start a fresh session).
     func load(userId: Int, videoId: String) -> AnnotationLoadResult {
         let url = fileURL(userId: userId, videoId: videoId)
         guard FileManager.default.fileExists(atPath: url.path) else {
-            return .empty
+            return .notFound
         }
         do {
             let data = try Data(contentsOf: url)
@@ -106,6 +107,26 @@ final class LocalAnnotationStore {
     func delete(userId: Int, videoId: String) {
         let url = fileURL(userId: userId, videoId: videoId)
         try? FileManager.default.removeItem(at: url)
+    }
+
+    // MARK: — Diagnostics (read-only; no side effects)
+
+    // Exposes the on-disk session path for a (userId, videoId) pair without
+    // touching the filesystem. Used by AnnotationDebugOverlay (DEBUG only).
+    func sessionFileURL(userId: Int, videoId: String) -> URL {
+        fileURL(userId: userId, videoId: videoId)
+    }
+
+    // Read-only existence check — does not create, read, or modify the file.
+    func sessionFileExists(userId: Int, videoId: String) -> Bool {
+        FileManager.default.fileExists(atPath: fileURL(userId: userId, videoId: videoId).path)
+    }
+
+    // The quarantine directory for a (userId, videoId) pair. Does not create it.
+    func quarantineDirectory(userId: Int, videoId: String) -> URL {
+        fileURL(userId: userId, videoId: videoId)
+            .deletingLastPathComponent()
+            .appendingPathComponent("quarantine", isDirectory: true)
     }
 
     // MARK: — Session factory
@@ -162,7 +183,11 @@ final class LocalAnnotationStore {
 // MARK: — AnnotationLoadResult
 
 enum AnnotationLoadResult {
-    case empty
+    // No session file exists on disk yet — safe to create a fresh empty session.
+    case notFound
     case loaded(AnnotationSessionFile)
+    // File existed but was corrupt/checksum-mismatched and has been moved to
+    // quarantine/ (original bytes preserved). The path is now free, but the
+    // caller must surface loadWarning to the user before starting fresh.
     case quarantined(quarantineURL: URL, hasLocalOnlyEvents: Bool)
 }

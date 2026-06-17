@@ -1,0 +1,12 @@
+// Config.Release.xcconfig — Release / TestFlight / App Store build backend URL
+//
+// Set this to the production HTTPS backend URL before archiving.
+// Must NOT be a LAN IP address (192.168.x.x, 10.x.x.x) or localhost.
+// The app will crash at launch if this is a development IP in a Release build.
+//
+// IMPORTANT: xcconfig files treat // as a comment delimiter — do NOT write
+// https:// literally. Use SLASH = / so $(SLASH)$(SLASH) expands to // at
+// build time. The SLASH variable is defined in this file.
+
+SLASH = /
+API_BASE_URL = https:$(SLASH)$(SLASH)PRODUCTION_URL_NOT_SET

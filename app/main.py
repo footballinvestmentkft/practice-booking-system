@@ -124,7 +124,16 @@ if settings.ENABLE_SECURITY_HEADERS:
     app.add_middleware(SecurityHeadersMiddleware)
 
 if settings.ENABLE_REQUEST_SIZE_LIMIT:
-    app.add_middleware(RequestSizeLimitMiddleware, max_size_mb=10)
+    app.add_middleware(
+        RequestSizeLimitMiddleware,
+        max_size_mb=10,
+        # Juggling video upload uses its own JUGGLING_VIDEO_MAX_SIZE_MB=100 limit.
+        # Excluding it here lets the endpoint return a proper HTTP 413 instead of
+        # a TCP-level close (which iOS would misread as URLError.networkConnectionLost).
+        excluded_path_regexes=[
+            r"^/api/v1/users/me/juggling/videos/[^/]+/upload$",
+        ],
+    )
 
 if settings.ENABLE_RATE_LIMITING:
     app.add_middleware(

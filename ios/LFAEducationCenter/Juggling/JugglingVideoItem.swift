@@ -29,6 +29,8 @@ struct JugglingVideoItem: Codable, Identifiable {
     // AN-1 contact annotation state. Nil if the backend response predates AN-1
     // or annotation was never started for this video.
     let annotationStatus:         String?
+    // User display rotation override. Nil if the backend response predates this field.
+    let userRotationDegrees:      Int?
 
     var id: String { videoId }
 
@@ -49,6 +51,7 @@ struct JugglingVideoItem: Codable, Identifiable {
         case uploadSource             = "upload_source"
         case sourceType               = "source_type"
         case annotationStatus         = "annotation_status"
+        case userRotationDegrees      = "user_rotation_degrees"
     }
 
     // MARK: — Display helpers
@@ -85,11 +88,13 @@ struct JugglingVideoItem: Codable, Identifiable {
         case "failed":         return "! Failed"
         case "uploaded":       return "↑ Uploaded"
         case "pending_upload": return "Pending"
+        case "media_deleted":  return "📦 Archivált"
         default:               return status.capitalized
         }
     }
 
     var isPlayable: Bool { hasMedia }
+
 }
 
 // MARK: — List response envelope

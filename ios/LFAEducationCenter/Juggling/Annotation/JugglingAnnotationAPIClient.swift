@@ -26,6 +26,12 @@ protocol JugglingAnnotationAPIClientProtocol: AnyObject {
     func patchContact(videoId: String, eventId: UUID, request: ContactEventPatchRequest) async throws -> ContactEventOut
     func deleteContact(videoId: String, eventId: UUID) async throws -> DeleteContactResult
     func finishAnnotation(videoId: String, confirmZero: Bool) async throws -> FinishAnnotationOut
+    // B-2: storage release — 204 or 410 are both success; throws VideoDeleteError on failure
+    func deleteVideo(videoId: String) async throws
+    // B-3: three-step video upload pipeline (init → upload → complete)
+    func uploadInit(sourceType: String, uploadSource: String) async throws -> JugglingUploadInitResponse
+    func uploadVideoFile(videoId: String, fileURL: URL, mimeType: String) async throws -> JugglingUploadFileResponse
+    func completeUpload(videoId: String) async throws -> JugglingCompleteResponse
 }
 
 @MainActor
@@ -159,6 +165,161 @@ final class JugglingAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
         }
     }
 
+    // MARK: — Video upload pipeline (B-3)
+    //
+    // Step 1 — uploadInit: POST /upload-init → {video_id, status, upload_url}
+    //   201 → JugglingUploadInitResponse
+    //   403 → JugglingUploadError.noConsent (service consent not given)
+    //   401 → JugglingUploadError.unauthorized (session expired)
+    //   network → JugglingUploadError.networkError
+    //
+    // Step 2 — uploadVideoFile: POST /videos/{id}/upload (multipart, field="file")
+    //   200 → JugglingUploadFileResponse
+    //   409 → JugglingUploadError.invalidState (video not in pending_upload)
+    //   413 → JugglingUploadError.fileTooLarge (>100 MB)
+    //   415 → JugglingUploadError.unsupportedFormat (not mp4/mov/m4v)
+    //   401 → JugglingUploadError.unauthorized
+    //   network → JugglingUploadError.networkError
+    //
+    // Step 3 — completeUpload: POST /videos/{id}/complete
+    //   200 → JugglingCompleteResponse (analysis queued)
+    //   409 → JugglingUploadError.invalidState (not in 'uploaded' status)
+    //   401 → JugglingUploadError.unauthorized
+    //   network → JugglingUploadError.networkError
+
+    func uploadInit(sourceType: String, uploadSource: String) async throws -> JugglingUploadInitResponse {
+        let path = "/api/v1/users/me/juggling/videos/upload-init"
+        let body = JugglingUploadInitBody(sourceType: sourceType, uploadSource: uploadSource)
+        do {
+            return try await authManager.authenticatedPost(path: path, body: body)
+        } catch let err as APIError {
+            throw JugglingAnnotationAPIClient.mapUploadInitError(err)
+        }
+    }
+
+    func uploadVideoFile(videoId: String, fileURL: URL, mimeType: String) async throws -> JugglingUploadFileResponse {
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)/upload"
+        do {
+            return try await authManager.authenticatedMultipartUploadFile(
+                path: path, fileURL: fileURL, mimeType: mimeType, fieldName: "file"
+            )
+        } catch let err as APIError {
+            throw JugglingAnnotationAPIClient.mapUploadFileError(err)
+        }
+    }
+
+    func completeUpload(videoId: String) async throws -> JugglingCompleteResponse {
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)/complete"
+        do {
+            return try await authManager.authenticatedPost(path: path, body: EmptyBody())
+        } catch let err as APIError {
+            throw JugglingAnnotationAPIClient.mapCompleteError(err)
+        }
+    }
+
+    // MARK: — Video media delete (B-2)
+    //
+    // DELETE /api/v1/users/me/juggling/videos/{videoId}
+    // 204 → success (files deleted, status set to media_deleted on server)
+    // 410 → idempotent success (media already deleted — no-throw)
+    // 404 → VideoDeleteError.notFound
+    // 401 → VideoDeleteError.unauthorized
+    // 403 → VideoDeleteError.permissionDenied
+    // network → VideoDeleteError.networkError
+
+    func deleteVideo(videoId: String) async throws {
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)"
+        do {
+            try await authManager.authenticatedDeleteNoContent(path: path)
+        } catch let err as APIError {
+            switch err {
+            case .httpError(statusCode: 410, _):
+                return
+            case .httpError(statusCode: 404, _):
+                throw VideoDeleteError.notFound
+            case .httpError(statusCode: 401, _), .unauthorized:
+                throw VideoDeleteError.unauthorized
+            case .httpError(statusCode: 403, let detail):
+                throw VideoDeleteError.permissionDenied(detail: detail ?? "forbidden")
+            case .networkError(let e):
+                throw VideoDeleteError.networkError(e)
+            default:
+                throw VideoDeleteError.networkError(URLError(.badServerResponse))
+            }
+        }
+    }
+
+    // MARK: — Phase 2A: Pose Snapshot (non-throwing — upload failure must not block annotation)
+    //
+    // uploadPoseSnapshot: POST /contacts/{event_id}/pose-snapshot
+    //   201 → new snapshot (isNew = true)
+    //   200 → updated snapshot (isNew = false, idempotent retry)
+    //   503 → POSE_SNAPSHOT_ENABLED=false on server; silently ignored
+    //   Any other error → logged, not re-thrown
+    //
+    // fetchPoseSnapshots: GET /pose-snapshots
+    //   200 → [PoseSnapshotOut] ordered by timestamp_ms
+    //   503 → feature flag off; returns []
+    //   network failure → returns []
+
+    func uploadPoseSnapshot(
+        videoId:  String,
+        eventId:  UUID,
+        request:  PoseSnapshotUploadRequest
+    ) async {
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)/contacts/\(eventId.uuidString.lowercased())/pose-snapshot"
+        do {
+            let (_, statusCode) = try await authManager.authenticatedPostRaw(path: path, body: request)
+            guard statusCode == 200 || statusCode == 201 else {
+                print("[PoseSnapshot] upload unexpected status \(statusCode)")
+                return
+            }
+        } catch APIError.httpError(503, _) {
+            // POSE_SNAPSHOT_ENABLED=false — expected in most deployments, silent
+        } catch {
+            print("[PoseSnapshot] upload failed (non-blocking): \(error)")
+        }
+    }
+
+    // MARK: — User rotation persistence (non-throwing — display preference, never blocks annotation)
+    //
+    // patchRotation: PATCH /videos/{video_id}/rotation
+    //   200 → success
+    //   422 → invalid degrees value (impossible if caller validates)
+    //   Any error → logged, not re-thrown
+
+    func patchRotation(videoId: String, degrees: Int) async {
+        struct RotationBody: Encodable {
+            let rotationDegrees: Int
+            enum CodingKeys: String, CodingKey { case rotationDegrees = "rotation_degrees" }
+        }
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)/rotation"
+        do {
+            let (_, statusCode) = try await authManager.authenticatedPatchRaw(
+                path: path, body: RotationBody(rotationDegrees: degrees)
+            )
+            guard statusCode == 200 else {
+                print("[Rotation] patchRotation unexpected status \(statusCode) for videoId=\(videoId)")
+                return
+            }
+        } catch {
+            print("[Rotation] patchRotation failed (non-blocking): \(error)")
+        }
+    }
+
+    func fetchPoseSnapshots(videoId: String) async -> [PoseSnapshotOut] {
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)/pose-snapshots"
+        do {
+            let snapshots: [PoseSnapshotOut] = try await authManager.authenticatedGet(path: path)
+            return snapshots
+        } catch APIError.httpError(503, _) {
+            return []   // feature flag off
+        } catch {
+            print("[PoseSnapshot] fetchPoseSnapshots failed: \(error)")
+            return []
+        }
+    }
+
     // MARK: — Private helpers
 
     private func decodeEvent(_ data: Data) throws -> ContactEventOut {
@@ -166,6 +327,38 @@ final class JugglingAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
             return try isoDecoder.decode(ContactEventOut.self, from: data)
         } catch {
             throw AnnotationAPIError.decodeFailed(error)
+        }
+    }
+
+    // MARK: — Upload error mapping (internal static for unit testing)
+
+    internal static func mapUploadInitError(_ error: APIError) -> JugglingUploadError {
+        switch error {
+        case .httpError(401, _), .unauthorized:    return .unauthorized
+        case .httpError(403, _):                   return .noConsent
+        case .networkError(let e):                 return .networkError(e)
+        default:                                   return .networkError(URLError(.badServerResponse))
+        }
+    }
+
+    internal static func mapUploadFileError(_ error: APIError) -> JugglingUploadError {
+        switch error {
+        case .httpError(401, _), .unauthorized:    return .unauthorized
+        case .httpError(403, _):                   return .noConsent
+        case .httpError(409, let d):               return .invalidState(d)
+        case .httpError(413, _):                   return .fileTooLarge
+        case .httpError(415, _):                   return .unsupportedFormat
+        case .networkError(let e):                 return .networkError(e)
+        default:                                   return .networkError(URLError(.badServerResponse))
+        }
+    }
+
+    internal static func mapCompleteError(_ error: APIError) -> JugglingUploadError {
+        switch error {
+        case .httpError(401, _), .unauthorized:    return .unauthorized
+        case .httpError(409, let d):               return .invalidState(d)
+        case .networkError(let e):                 return .networkError(e)
+        default:                                   return .networkError(URLError(.badServerResponse))
         }
     }
 
@@ -232,5 +425,132 @@ enum AnnotationAPIError: Error, LocalizedError {
     var isRetryable: Bool {
         if case .retryable = self { return true }
         return false
+    }
+}
+
+// MARK: — Upload request / response types (B-3)
+
+private struct EmptyBody: Encodable {}
+
+struct JugglingUploadInitBody: Encodable {
+    let sourceType:   String
+    let uploadSource: String
+    enum CodingKeys: String, CodingKey {
+        case sourceType   = "source_type"
+        case uploadSource = "upload_source"
+    }
+}
+
+struct JugglingUploadInitResponse: Decodable {
+    let videoId:   String
+    let status:    String
+    let uploadUrl: String
+    enum CodingKeys: String, CodingKey {
+        case videoId   = "video_id"
+        case status
+        case uploadUrl = "upload_url"
+    }
+}
+
+struct JugglingUploadFileResponse: Decodable {
+    let videoId:        String
+    let status:         String
+    let fileSizeBytes:  Int
+    let checksumSha256: String
+    enum CodingKeys: String, CodingKey {
+        case videoId        = "video_id"
+        case status
+        case fileSizeBytes  = "file_size_bytes"
+        case checksumSha256 = "checksum_sha256"
+    }
+}
+
+struct JugglingCompleteResponse: Decodable {
+    let videoId: String
+    let status:  String
+    let message: String
+    enum CodingKeys: String, CodingKey {
+        case videoId = "video_id"
+        case status
+        case message
+    }
+}
+
+// MARK: — JugglingUploadError
+
+enum JugglingUploadError: Error, LocalizedError, Equatable {
+    case noConsent                    // 403 — service consent not given
+    case invalidState(String?)        // 409 — video not in expected status
+    case fileTooLarge                 // 413 — exceeds 100 MB server limit (applies to exported output)
+    case unsupportedFormat            // 415 — MIME not in {mp4, quicktime, m4v}
+    case unauthorized                 // 401 / session expired beyond recovery
+    case networkError(Error)          // URLError or transport failure
+
+    // Client-side 360p export (Commit 2) — see JugglingVideoExportService.
+    case exportUnsupported            // source has no compatible re-encoding preset
+    case exportFailed(String)         // AVAssetExportSession finished with status == .failed
+    case exportCancelled              // export cancelled by the user
+    case invalidExportOutput          // exported file failed post-export validation
+    case insufficientStorage          // export failed due to lack of free disk space
+
+    var errorDescription: String? {
+        switch self {
+        case .noConsent:              return "Juggling service consent required."
+        case .invalidState(let d):   return "Cannot upload: video in wrong state. \(d ?? "")".trimmingCharacters(in: .whitespaces)
+        case .fileTooLarge:          return "A videófájl túl nagy. A maximális méret 100 MB."
+        case .unsupportedFormat:     return "Unsupported video format. Use MP4 or MOV."
+        case .unauthorized:          return "Session expired. Please log in again."
+        case .networkError:          return "Network error. Please try again."
+        case .exportUnsupported:     return "A videó formátuma nem támogatja a tömörítést. Válassz másik videót."
+        case .exportFailed:          return "A videó tömörítése sikertelen. Próbáld újra."
+        case .exportCancelled:       return "A feldolgozás megszakítva."
+        case .invalidExportOutput:   return "A tömörített videó érvénytelen. Próbálj másik videót."
+        case .insufficientStorage:   return "Nincs elég szabad tárhely a videó feldolgozásához."
+        }
+    }
+
+    static func == (lhs: JugglingUploadError, rhs: JugglingUploadError) -> Bool {
+        switch (lhs, rhs) {
+        case (.noConsent,       .noConsent):       return true
+        case (.fileTooLarge,    .fileTooLarge):    return true
+        case (.unsupportedFormat, .unsupportedFormat): return true
+        case (.unauthorized,    .unauthorized):    return true
+        case (.invalidState(let a), .invalidState(let b)): return a == b
+        case (.networkError,    .networkError):    return true
+        case (.exportUnsupported, .exportUnsupported): return true
+        case (.exportFailed,    .exportFailed):    return true
+        case (.exportCancelled, .exportCancelled): return true
+        case (.invalidExportOutput, .invalidExportOutput): return true
+        case (.insufficientStorage, .insufficientStorage): return true
+        default:                                   return false
+        }
+    }
+}
+
+// MARK: — VideoDeleteError
+
+enum VideoDeleteError: Error, LocalizedError, Equatable {
+    case notFound                          // 404
+    case unauthorized                      // 401 / session expired
+    case permissionDenied(detail: String)  // 403
+    case networkError(Error)               // URLError or transport failure
+
+    var errorDescription: String? {
+        switch self {
+        case .notFound:                    return "Video not found."
+        case .unauthorized:                return "Session expired. Please log in again."
+        case .permissionDenied(let d):     return "Permission denied: \(d)"
+        case .networkError:                return "Network error. Please try again."
+        }
+    }
+
+    static func == (lhs: VideoDeleteError, rhs: VideoDeleteError) -> Bool {
+        switch (lhs, rhs) {
+        case (.notFound, .notFound):                           return true
+        case (.unauthorized, .unauthorized):                   return true
+        case (.permissionDenied(let a), .permissionDenied(let b)): return a == b
+        case (.networkError, .networkError):                   return true
+        default:                                               return false
+        }
     }
 }

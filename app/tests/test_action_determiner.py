@@ -15,6 +15,7 @@ from app.services.action_determiner import (
     QuizActionHandler,
     CertificateActionHandler,
     TournamentActionHandler,
+    JugglingActionHandler,
     DefaultActionHandler,
 )
 from app.models.audit_log import AuditAction
@@ -241,6 +242,59 @@ class TestTournamentActionHandler:
         assert action == "POST_/tournaments"
 
 
+class TestJugglingActionHandler:
+    """Test juggling annotation audit actions (AN-3B2A addition)."""
+
+    _VIDEO  = "319eb833-f716-4f4e-8c93-b823c3781088"
+    _EVENT  = "4d866695-e292-4819-b020-1d654ce11ee4"
+
+    def setup_method(self):
+        self.handler = JugglingActionHandler()
+
+    def test_can_handle_juggling_paths(self):
+        assert self.handler.can_handle(f"/api/v1/users/me/juggling/videos/{self._VIDEO}/contacts") is True
+        assert self.handler.can_handle(f"/api/v1/users/me/juggling/videos/{self._VIDEO}/contacts/{self._EVENT}/pose-snapshot") is True
+        assert self.handler.can_handle("/api/v1/projects") is False
+        assert self.handler.can_handle("/api/v1/licenses") is False
+
+    def test_contact_created(self):
+        path = f"/api/v1/users/me/juggling/videos/{self._VIDEO}/contacts"
+        assert self.handler.determine_action("POST", path, 201) == AuditAction.JUGGLING_CONTACT_CREATED
+
+    def test_contact_updated_patch(self):
+        path = f"/api/v1/users/me/juggling/videos/{self._VIDEO}/contacts/{self._EVENT}"
+        assert self.handler.determine_action("PATCH", path, 200) == AuditAction.JUGGLING_CONTACT_UPDATED
+
+    def test_contact_updated_put(self):
+        path = f"/api/v1/users/me/juggling/videos/{self._VIDEO}/contacts/{self._EVENT}"
+        assert self.handler.determine_action("PUT", path, 200) == AuditAction.JUGGLING_CONTACT_UPDATED
+
+    def test_contact_soft_deleted(self):
+        path = f"/api/v1/users/me/juggling/videos/{self._VIDEO}/contacts/{self._EVENT}"
+        assert self.handler.determine_action("DELETE", path, 200) == AuditAction.JUGGLING_CONTACT_SOFT_DELETED
+
+    def test_annotation_finished(self):
+        path = f"/api/v1/users/me/juggling/videos/{self._VIDEO}/finish"
+        assert self.handler.determine_action("POST", path, 200) == AuditAction.JUGGLING_ANNOTATION_FINISHED
+
+    def test_pose_snapshot_created_201(self):
+        path = f"/api/v1/users/me/juggling/videos/{self._VIDEO}/contacts/{self._EVENT}/pose-snapshot"
+        assert self.handler.determine_action("POST", path, 201) == AuditAction.JUGGLING_POSE_SNAPSHOT_CREATED
+
+    def test_pose_snapshot_updated_200(self):
+        path = f"/api/v1/users/me/juggling/videos/{self._VIDEO}/contacts/{self._EVENT}/pose-snapshot"
+        assert self.handler.determine_action("POST", path, 200) == AuditAction.JUGGLING_POSE_SNAPSHOT_UPDATED
+
+    def test_pose_snapshot_action_fits_varchar_255(self):
+        """Regression: action string must fit VARCHAR(255) — was causing StringDataRightTruncation."""
+        path = f"/api/v1/users/me/juggling/videos/{self._VIDEO}/contacts/{self._EVENT}/pose-snapshot"
+        action = self.handler.determine_action("POST", path, 201)
+        assert len(action) <= 255, f"action too long for VARCHAR(255): {len(action)} chars"
+        # Prove the OLD fallback would have exceeded VARCHAR(100)
+        old_fallback = f"POST_{path}"
+        assert len(old_fallback) > 100, "test assumption: old fallback was indeed > 100 chars"
+
+
 class TestDefaultActionHandler:
     """Test fallback handler for unrecognized paths."""
 
@@ -301,6 +355,22 @@ class TestActionDeterminer:
         response = create_mock_response(200)
         action = self.determiner.determine_action(request, response)
         assert action == AuditAction.TOURNAMENT_ENROLLED
+
+    def test_juggling_contact_path_routed_to_juggling_handler(self):
+        path = "/api/v1/users/me/juggling/videos/319eb833-f716-4f4e-8c93-b823c3781088/contacts"
+        request = create_mock_request("POST", path)
+        response = create_mock_response(201)
+        action = self.determiner.determine_action(request, response)
+        assert action == AuditAction.JUGGLING_CONTACT_CREATED
+
+    def test_juggling_pose_snapshot_path_routed_to_juggling_handler(self):
+        """Regression: pose-snapshot path previously hit DefaultActionHandler → VARCHAR(100) overflow."""
+        path = "/api/v1/users/me/juggling/videos/319eb833-f716-4f4e-8c93-b823c3781088/contacts/4d866695-e292-4819-b020-1d654ce11ee4/pose-snapshot"
+        request = create_mock_request("POST", path)
+        response = create_mock_response(201)
+        action = self.determiner.determine_action(request, response)
+        assert action == AuditAction.JUGGLING_POSE_SNAPSHOT_CREATED
+        assert len(action) <= 100  # fits even the old VARCHAR(100) now
 
     def test_unknown_path_routed_to_default_handler(self):
         request = create_mock_request("GET", "/api/v1/unknown/endpoint")
@@ -376,6 +446,15 @@ class TestActionDeterminer:
     # Tournaments (P0 addition)
     ("POST", "/tournaments/123/enroll", 200, AuditAction.TOURNAMENT_ENROLLED),
     ("DELETE", "/tournaments/123/enroll", 200, AuditAction.TOURNAMENT_UNENROLLED),
+
+    # Juggling — contacts
+    ("POST", "/api/v1/users/me/juggling/videos/vid-uuid/contacts", 201, AuditAction.JUGGLING_CONTACT_CREATED),
+    ("PATCH", "/api/v1/users/me/juggling/videos/vid-uuid/contacts/evt-uuid", 200, AuditAction.JUGGLING_CONTACT_UPDATED),
+    ("DELETE", "/api/v1/users/me/juggling/videos/vid-uuid/contacts/evt-uuid", 200, AuditAction.JUGGLING_CONTACT_SOFT_DELETED),
+    ("POST", "/api/v1/users/me/juggling/videos/vid-uuid/finish", 200, AuditAction.JUGGLING_ANNOTATION_FINISHED),
+    # Juggling — pose snapshot (201 = created, 200 = upsert)
+    ("POST", "/api/v1/users/me/juggling/videos/319eb833-f716-4f4e-8c93-b823c3781088/contacts/4d866695-e292-4819-b020-1d654ce11ee4/pose-snapshot", 201, AuditAction.JUGGLING_POSE_SNAPSHOT_CREATED),
+    ("POST", "/api/v1/users/me/juggling/videos/319eb833-f716-4f4e-8c93-b823c3781088/contacts/4d866695-e292-4819-b020-1d654ce11ee4/pose-snapshot", 200, AuditAction.JUGGLING_POSE_SNAPSHOT_UPDATED),
 
     # Fallback
     ("GET", "/unknown/endpoint", 200, "GET_/unknown/endpoint"),

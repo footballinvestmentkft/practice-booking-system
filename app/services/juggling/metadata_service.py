@@ -128,24 +128,38 @@ def extract_server_metadata(probe_data: Dict[str, Any]) -> Dict[str, Any]:
         except (ValueError, TypeError):
             pass
 
-    # Rotation — stored in side_data or tags
+    # Rotation — tags.rotate is authoritative; side_data_list is fallback only.
+    #
+    # Raw iPhone .MOV files contain BOTH tags.rotate=90 AND a Display Matrix
+    # with side_data.rotation=-90 (opposite sign convention). Reading side_data
+    # after tags would overwrite the correct +90 with -90, producing an unknown
+    # rotation value that build_transcode_command cannot map to a transpose filter.
+    #
+    # iOS AVAssetExport output files contain only side_data (no tags.rotate) with
+    # a positive rotation value, so the fallback branch handles them correctly.
     rotation: int = 0
     if video_stream:
         tags = video_stream.get("tags", {})
-        raw_rot = tags.get("rotate", tags.get("rotation", "0"))
-        try:
-            rotation = int(raw_rot)
-        except (ValueError, TypeError):
-            rotation = 0
-        # Also check side_data_list
-        for sd in video_stream.get("side_data_list", []):
-            if sd.get("side_data_type") == "Display Matrix":
-                rot = sd.get("rotation")
-                if rot is not None:
-                    try:
-                        rotation = int(rot)
-                    except (ValueError, TypeError):
-                        pass
+        raw_rot = tags.get("rotate", None)
+        if raw_rot is not None:
+            # tags.rotate is direct and correctly signed (e.g. "90" = rotate 90° CW).
+            try:
+                rotation = int(raw_rot)
+            except (ValueError, TypeError):
+                rotation = 0
+        else:
+            # Fallback: Display Matrix side_data when tags.rotate is absent.
+            # Normalize to 0–360 so downstream code only sees standard angles
+            # (handles the rare case where ffprobe emits a negative value here).
+            for sd in video_stream.get("side_data_list", []):
+                if sd.get("side_data_type") == "Display Matrix":
+                    rot = sd.get("rotation")
+                    if rot is not None:
+                        try:
+                            rotation = int(rot) % 360
+                        except (ValueError, TypeError):
+                            pass
+                    break
 
     # Audio
     has_audio: bool = len(audio_streams) > 0

@@ -339,7 +339,7 @@ class TestActionDeterminer:
         assert result == AuditAction.LOGIN_FAILED
 
     def test_determiner_has_seven_handlers(self):
-        assert len(self.d.handlers) == 7
+        assert len(self.d.handlers) == 8
 
     def test_last_handler_is_default(self):
         assert isinstance(self.d.handlers[-1], DefaultActionHandler)

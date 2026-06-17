@@ -25,7 +25,7 @@ class AuditLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    action = Column(String(100), nullable=False, index=True)
+    action = Column(String(255), nullable=False, index=True)
     resource_type = Column(String(50), nullable=True)
     resource_id = Column(Integer, nullable=True)
     details = Column(JSON, nullable=True)
@@ -132,9 +132,11 @@ class AuditAction:
     AL_OPTION_UPDATED        = "AL_OPTION_UPDATED"
 
     # Juggling Contact Annotation (PR-1)
-    JUGGLING_CONTACT_CREATED       = "JUGGLING_CONTACT_CREATED"
-    JUGGLING_CONTACT_UPDATED       = "JUGGLING_CONTACT_UPDATED"
-    JUGGLING_CONTACT_SOFT_DELETED  = "JUGGLING_CONTACT_SOFT_DELETED"
-    JUGGLING_CONTACT_REVIEWED      = "JUGGLING_CONTACT_REVIEWED"
-    JUGGLING_CONTACT_TAXONOMY_SET  = "JUGGLING_CONTACT_TAXONOMY_SET"
-    JUGGLING_ANNOTATION_FINISHED   = "JUGGLING_ANNOTATION_FINISHED"
+    JUGGLING_CONTACT_CREATED          = "JUGGLING_CONTACT_CREATED"
+    JUGGLING_CONTACT_UPDATED          = "JUGGLING_CONTACT_UPDATED"
+    JUGGLING_CONTACT_SOFT_DELETED     = "JUGGLING_CONTACT_SOFT_DELETED"
+    JUGGLING_CONTACT_REVIEWED         = "JUGGLING_CONTACT_REVIEWED"
+    JUGGLING_CONTACT_TAXONOMY_SET     = "JUGGLING_CONTACT_TAXONOMY_SET"
+    JUGGLING_ANNOTATION_FINISHED      = "JUGGLING_ANNOTATION_FINISHED"
+    JUGGLING_POSE_SNAPSHOT_CREATED    = "JUGGLING_POSE_SNAPSHOT_CREATED"
+    JUGGLING_POSE_SNAPSHOT_UPDATED    = "JUGGLING_POSE_SNAPSHOT_UPDATED"

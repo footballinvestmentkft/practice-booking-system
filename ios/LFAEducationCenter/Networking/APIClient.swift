@@ -6,6 +6,14 @@ import Foundation
 // Base URL sourced from APIConfig — one place to change for all environments.
 enum APIClient {
 
+    // MARK: — Test session override (DEBUG only)
+    // Register MockURLProtocol in a URLSessionConfiguration, then assign here.
+    // Must be cleared in tearDown to avoid leaking state between tests.
+    // Both perform() and performUploadTask() honour this override.
+    #if DEBUG
+    static var _testURLSession: URLSession? = nil
+    #endif
+
     // MARK: — POST (JSON)
 
     static func post<B: Encodable, T: Decodable>(
@@ -18,8 +26,8 @@ enum APIClient {
         return try await execute(request)
     }
 
-    // MARK: — POST (Multipart/form-data)
-    // Used for file upload endpoints (e.g. POST /api/v1/users/me/profile-photo).
+    // MARK: — POST (Multipart/form-data — Data)
+    // Used for image upload endpoints (e.g. POST /api/v1/users/me/profile-photo).
     // fieldName must match the FastAPI File(...) parameter name.
 
     static func multipartPost<T: Decodable>(
@@ -36,6 +44,43 @@ enum APIClient {
             fieldName: fieldName, boundary: boundary
         )
         return try await execute(request)
+    }
+
+    // MARK: — POST (Multipart/form-data — file URL, streaming)
+    // Used for video upload (POST .../upload). Writes multipart envelope to a temp
+    // file and uses uploadTask(with:fromFile:) so the video is never fully loaded
+    // into memory — the OS streams it from disk. fieldName must be "file" for the
+    // juggling upload endpoint (FastAPI: file: UploadFile = File(...)).
+
+    static func multipartUploadFromFile<T: Decodable>(
+        path:      String,
+        fileURL:   URL,
+        mimeType:  String,
+        fieldName: String = "file",
+        token:     String? = nil
+    ) async throws -> T {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        let request  = try buildMultipartRequest(path: path, boundary: boundary, token: token)
+
+        let tempFile = try buildMultipartTempFile(
+            from: fileURL, mimeType: mimeType, fieldName: fieldName, boundary: boundary
+        )
+        defer { try? FileManager.default.removeItem(at: tempFile) }
+
+        let (data, response) = try await performUploadTask(request, fromFile: tempFile)
+
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError.networkError(URLError(.badServerResponse))
+        }
+        guard (200...299).contains(http.statusCode) else {
+            let detail = try? JSONDecoder().decode(ErrorBody.self, from: data)
+            throw APIError.httpError(statusCode: http.statusCode, detail: detail?.detail)
+        }
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            throw APIError.decodingError
+        }
     }
 
     // MARK: — POST (Form-encoded)
@@ -246,9 +291,95 @@ enum APIClient {
 
     // URLSession.data(for:) async is iOS 15+.
     // This continuation wrapper is iOS 13+ compatible.
+    // Uses _testURLSession (DEBUG only) when set, so tests can intercept calls
+    // via MockURLProtocol without touching URLSession.shared.
     private static func perform(_ request: URLRequest) async throws -> (Data, URLResponse) {
-        try await withCheckedThrowingContinuation { continuation in
-            URLSession.shared.dataTask(with: request) { data, response, error in
+        #if DEBUG
+        print("[APIClient] ▶ \(request.httpMethod ?? "?") \(request.url?.absoluteString ?? "nil")")
+        let activeSession = _testURLSession ?? URLSession.shared
+        #else
+        let activeSession = URLSession.shared
+        #endif
+        return try await withCheckedThrowingContinuation { continuation in
+            activeSession.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    #if DEBUG
+                    let urlErr = error as? URLError
+                    print("[APIClient] ✖ code=\(urlErr?.code.rawValue ?? -99999) type=\(type(of: error)) msg=\(error.localizedDescription)")
+                    #endif
+                    continuation.resume(throwing: APIError.networkError(error))
+                } else if let data = data, let response = response {
+                    #if DEBUG
+                    if let http = response as? HTTPURLResponse {
+                        print("[APIClient] ✔ status=\(http.statusCode)")
+                    }
+                    #endif
+                    continuation.resume(returning: (data, response))
+                } else {
+                    #if DEBUG
+                    print("[APIClient] ✖ no-data-no-error (unknown state)")
+                    #endif
+                    continuation.resume(throwing: APIError.networkError(URLError(.unknown)))
+                }
+            }.resume()
+        }
+    }
+
+    // Builds a temp file containing the complete multipart body:
+    //   boundary preamble → video bytes (1 MB chunks) → boundary epilogue.
+    // Uses FileHandle so the source video is never fully loaded into memory.
+    // Internal visibility allows direct testing of multipart construction.
+    internal static func buildMultipartTempFile(
+        from sourceURL: URL,
+        mimeType:       String,
+        fieldName:      String,
+        boundary:       String
+    ) throws -> URL {
+        let tempFile = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".multipart")
+
+        guard FileManager.default.createFile(atPath: tempFile.path, contents: nil) else {
+            throw APIError.networkError(URLError(.cannotCreateFile))
+        }
+        let writer = try FileHandle(forWritingTo: tempFile)
+        defer { writer.closeFile() }
+
+        let crlf = "\r\n"
+        let preamble = "--\(boundary)\(crlf)"
+            + "Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(sourceURL.lastPathComponent)\"\(crlf)"
+            + "Content-Type: \(mimeType)\(crlf)"
+            + crlf
+        writer.write(Data(preamble.utf8))
+
+        let reader = try FileHandle(forReadingFrom: sourceURL)
+        defer { reader.closeFile() }
+        let chunkSize = 1024 * 1024   // 1 MB — never holds the full video in memory
+        while true {
+            let chunk = reader.readData(ofLength: chunkSize)
+            if chunk.isEmpty { break }
+            writer.write(chunk)
+        }
+
+        writer.write(Data((crlf + "--\(boundary)--" + crlf).utf8))
+        return tempFile
+    }
+
+    // URLSession.uploadTask(with:fromFile:) continuation wrapper — iOS 7+ compatible.
+    // (URLSession.upload(for:fromFile:) async is iOS 15+.)
+    // Streams the multipart temp file as the HTTP body without buffering.
+    // Uses _testURLSession when set so MockURLProtocol can intercept upload tasks.
+    private static func performUploadTask(
+        _ request: URLRequest,
+        fromFile fileURL: URL
+    ) async throws -> (Data, URLResponse) {
+        #if DEBUG
+        print("[APIClient] ⬆ uploadTask \(request.url?.absoluteString ?? "nil")")
+        let activeSession = _testURLSession ?? URLSession.shared
+        #else
+        let activeSession = URLSession.shared
+        #endif
+        return try await withCheckedThrowingContinuation { continuation in
+            activeSession.uploadTask(with: request, fromFile: fileURL) { data, response, error in
                 if let error = error {
                     continuation.resume(throwing: APIError.networkError(error))
                 } else if let data = data, let response = response {

@@ -76,19 +76,25 @@ def test_jtt01_record_not_found_returns_failed():
 
 
 def test_jtt02_file_not_found_applies_failure():
-    """JTT-02: storage_path points to missing file → apply_transcode_failure called."""
+    """JTT-02: storage_path points to missing file → both apply_transcode_failure
+    and apply_failure are called so video.status reaches 'failed'."""
     video, _ = _make_mock_video(storage_path="/tmp/nonexistent_99999.mp4")
+    transcode_failure_mock = MagicMock()
     failure_mock = MagicMock()
 
     with patch("app.tasks.juggling_transcode_task.SessionLocal",
                return_value=_mock_db(video)), \
          patch("app.tasks.juggling_transcode_task.video_service.set_transcode_processing"), \
          patch("app.tasks.juggling_transcode_task.video_service.apply_transcode_failure",
+               transcode_failure_mock), \
+         patch("app.tasks.juggling_transcode_task.video_service.apply_failure",
                failure_mock):
         from app.tasks.juggling_transcode_task import transcode_video_task
         result = transcode_video_task.apply(args=["test-uuid"])
 
     assert result.result["status"] == "failed"
+    transcode_failure_mock.assert_called_once()
+    failure_mock.assert_called_once()
 
 
 def test_jtt03_done_status_dispatches_analyze():
@@ -195,9 +201,11 @@ def test_jtt05_failed_status_blocks_analyze():
 
 
 def test_jtt06_probe_error_exhausts_retries():
-    """JTT-06: VideoProbeError → max_retries path → apply_transcode_failure called."""
+    """JTT-06: VideoProbeError → max_retries path → both apply_transcode_failure
+    and apply_failure called so video.status reaches 'failed'."""
     video, _ = _make_mock_video()
     video.storage_path = "/tmp/fake.mp4"
+    transcode_failure_mock = MagicMock()
     failure_mock = MagicMock()
 
     from app.services.juggling.metadata_service import VideoProbeError
@@ -215,13 +223,14 @@ def test_jtt06_probe_error_exhausts_retries():
                side_effect=VideoProbeError("ffprobe failed")), \
          patch("app.tasks.juggling_transcode_task.video_service.set_transcode_processing"), \
          patch("app.tasks.juggling_transcode_task.video_service.apply_transcode_failure",
+               transcode_failure_mock), \
+         patch("app.tasks.juggling_transcode_task.video_service.apply_failure",
                failure_mock):
 
         from app.tasks.juggling_transcode_task import transcode_video_task
         original_retry = transcode_video_task.retry
         original_max = transcode_video_task.MaxRetriesExceededError
 
-        # Patch retry to immediately raise MaxRetriesExceededError
         transcode_video_task.retry = fake_retry
         transcode_video_task.MaxRetriesExceededError = FakeMaxRetriesExceeded
         try:
@@ -230,15 +239,18 @@ def test_jtt06_probe_error_exhausts_retries():
             transcode_video_task.retry = original_retry
             transcode_video_task.MaxRetriesExceededError = original_max
 
+    transcode_failure_mock.assert_called_once()
     failure_mock.assert_called_once()
-    call_args = failure_mock.call_args[0]
+    call_args = transcode_failure_mock.call_args[0]
     assert call_args[1] == "probe_failed"
 
 
 def test_jtt08_outer_exception_handler_applies_failure():
-    """JTT-08: unexpected exception during transcode_service → outer except Exception → failure."""
+    """JTT-08: unexpected exception during transcode_service → outer except Exception →
+    both apply_transcode_failure and apply_failure called."""
     video, _ = _make_mock_video()
     video.storage_path = "/tmp/fake.mp4"
+    transcode_failure_mock = MagicMock()
     failure_mock = MagicMock()
 
     class FakeMaxRetriesExceeded(Exception):
@@ -259,6 +271,8 @@ def test_jtt08_outer_exception_handler_applies_failure():
                side_effect=RuntimeError("unexpected crash")), \
          patch("app.tasks.juggling_transcode_task.video_service.set_transcode_processing"), \
          patch("app.tasks.juggling_transcode_task.video_service.apply_transcode_failure",
+               transcode_failure_mock), \
+         patch("app.tasks.juggling_transcode_task.video_service.apply_failure",
                failure_mock):
 
         from app.tasks.juggling_transcode_task import transcode_video_task
@@ -272,8 +286,9 @@ def test_jtt08_outer_exception_handler_applies_failure():
             transcode_video_task.retry = original_retry
             transcode_video_task.MaxRetriesExceededError = original_max
 
+    transcode_failure_mock.assert_called_once()
     failure_mock.assert_called_once()
-    call_args = failure_mock.call_args[0]
+    call_args = transcode_failure_mock.call_args[0]
     assert "task_exception" in call_args[1]
 
 

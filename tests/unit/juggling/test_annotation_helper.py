@@ -1011,11 +1011,11 @@ class TestHELP36_ProductionRouteCountUnchanged:
         assert snapshot_path.exists(), "OpenAPI snapshot missing"
 
     def test_production_route_count_is_892(self):
-        """HELP-36c: Production OpenAPI snapshot has 897 routes after AN-1 (+5 juggling contact paths)."""
+        """HELP-36c: Production OpenAPI snapshot has 901 routes after Phase 2A (+3 pose/rotation paths)."""
         snapshot_path = helper.ROOT / "tests/snapshots/openapi_snapshot.json"
         snapshot = json.loads(snapshot_path.read_text())
         route_count = len(snapshot.get("paths", {}))
-        assert route_count == 897, f"Unexpected production route count: {route_count}"
+        assert route_count == 901, f"Unexpected production route count: {route_count}"
 
     def test_helper_routes_not_in_production_snapshot(self):
         """HELP-36d: Annotation helper routes (/api/taxonomy etc.) not in production snapshot."""

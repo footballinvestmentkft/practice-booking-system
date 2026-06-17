@@ -152,6 +152,7 @@ class JugglingVideoItemOut(BaseModel):
     upload_source:              str
     source_type:                str
     annotation_status:          Optional[str] = None
+    user_rotation_degrees:      int = 0
 
 
 class JugglingVideoListOut(BaseModel):
@@ -159,6 +160,18 @@ class JugglingVideoListOut(BaseModel):
     total:  int
     limit:  int
     offset: int
+
+
+# ── User rotation persistence (PATCH /videos/{id}/rotation) ──────────────────
+
+class JugglingRotationPatchRequest(BaseModel):
+    rotation_degrees: Literal[0, 90, 180, 270]
+
+
+class JugglingRotationPatchOut(BaseModel):
+    video_id:             str
+    user_rotation_degrees: int
+    model_config = {"from_attributes": True}
 
 
 # ── AN-1: Contact event schemas ───────────────────────────────────────────────
@@ -315,3 +328,52 @@ class FinishAnnotationOut(BaseModel):
     total_juggling_count:  int
     contact_event_count:   int
     annotation_finished_at: datetime
+
+
+# ── Phase 2A: Pose Snapshot schemas ──────────────────────────────────────────
+
+class PoseSnapshotCreateRequest(BaseModel):
+    """
+    iOS uploads this after capturing VNHumanBodyPoseObservation on the video frame.
+
+    keypoints must contain a "body" key (list; may be empty if no person detected).
+    capture_source must be "ios_realtime" (new FAB tap) or "ios_retroactive"
+    (retroactive generation for pre-existing events) for iOS uploads.
+    captured_at_ms should match the contact event's timestamp_ms (echo for audit).
+    """
+    model_config = {"protected_namespaces": ()}
+
+    keypoints:            Dict[str, Any]
+    model_version:        str = Field(..., min_length=1, max_length=40,
+                                      description="e.g. 'apple_vision_v1'")
+    capture_source:       Literal["ios_realtime", "ios_retroactive", "backend_task"]
+    captured_at_ms:       int  = Field(..., ge=0)
+    image_width_px:       Optional[int]   = Field(None, gt=0)
+    image_height_px:      Optional[int]   = Field(None, gt=0)
+    inference_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
+
+    @field_validator("keypoints")
+    @classmethod
+    def _validate_keypoints(cls, v: Dict[str, Any]) -> Dict[str, Any]:
+        if "body" not in v:
+            raise ValueError("keypoints must contain a 'body' key")
+        if not isinstance(v["body"], list):
+            raise ValueError("keypoints['body'] must be a list")
+        return v
+
+
+class PoseSnapshotOut(BaseModel):
+    """Returned by GET /pose-snapshots and POST (upsert response)."""
+    id:                   uuid.UUID
+    contact_event_id:     uuid.UUID
+    video_id:             uuid.UUID
+    timestamp_ms:         int
+    keypoints:            Dict[str, Any]
+    model_version:        str
+    capture_source:       str
+    inference_confidence: Optional[float]
+    image_width_px:       Optional[int]
+    image_height_px:      Optional[int]
+    created_at:           datetime
+
+    model_config = {"from_attributes": True, "protected_namespaces": ()}

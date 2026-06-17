@@ -1,0 +1,197 @@
+name: iOS CI — Build + Unit Tests
+
+# ── Purpose ────────────────────────────────────────────────────────────────────
+# Blocks merge if the iOS build fails or any unit test regresses.
+# Runs on every PR that touches ios/** so orientation bugs, ViewModel
+# breakage, and API contract drift are caught before device testing.
+#
+# What is checked:
+#   1. Clean working tree  — no generated files accidentally committed
+#   2. Build provenance    — commit SHA, branch, Xcode version in job summary
+#   3. xcodebuild build    — compile error free (iOS 15 min-target)
+#   4. xcodebuild test     — LFAEducationCenterTests: JM-*, ARC-*, BV-*, B3-*, AN-*
+#
+# What is NOT checked (requires physical device or Xcode Cloud):
+#   - UI / XCUITest (no simulator video rendering available on GHA runners)
+#   - Network / staging integration tests
+#   - Celery worker state (backend concern)
+#
+# Runner:  macos-15  (Apple Silicon, runner-default Xcode)
+# Target:  iOS Simulator — newest available runtime (dynamic, not hardcoded)
+# Timeout: 30 min hard limit
+# ──────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-ci.yml'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'manual verification'
+
+jobs:
+  ios-build-and-test:
+    name: iOS Build + Unit Tests (iOS 15 min-target)
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Build provenance (commit SHA, branch, Xcode version) ──────────────
+      - name: Report build provenance
+        run: |
+          XCODE_VER=$(xcodebuild -version | head -1)
+          echo "### iOS CI Build Provenance" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit SHA** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Triggered by** | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Runner Xcode** | ${XCODE_VER} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Recent commits:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          git log --oneline -5 >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      # ── 3. Clean working tree guard ───────────────────────────────────────────
+      - name: Assert clean working tree
+        run: |
+          DIRTY=$(git status --porcelain)
+          if [[ -n "$DIRTY" ]]; then
+            echo "ERROR: Dirty working tree. Generated or uncommitted files must not be present."
+            git status --porcelain
+            exit 1
+          fi
+          echo "Working tree is clean ✓"
+
+      # ── 4. Report active Xcode version ───────────────────────────────────────
+      - name: Report active Xcode version
+        run: |
+          # Do NOT force a specific Xcode path. The macos-15 runner (2026) ships
+          # with Xcode 17.x and iOS 26.x simulator runtimes. Forcing Xcode 16.2
+          # (iOS 18.2 SDK) caused a runtime mismatch because iOS 18.x simulator
+          # is not pre-installed — only iOS 16.5-17.2 and iOS 26.x are present.
+          # The runner's default Xcode is always compatible with available runtimes.
+          xcodebuild -version
+          echo "Active toolchain: $(xcode-select -p)"
+
+      # ── 5. Boot simulator (runs while build is warming up cache) ──────────────
+      - name: Discover and boot best available iPhone simulator
+        run: |
+          # Pick the newest available iOS runtime, then take the first iPhone on it.
+          # Avoids hardcoding "iPhone 16" (iOS 18 runtime) which may not be present
+          # on this runner image. Xcode 16.2 can test against any runtime >= iOS 15.0.
+          NEWEST_IOS=$(xcrun simctl list runtimes available \
+            | grep -E 'iOS [0-9]' \
+            | tail -1 \
+            | grep -oE 'iOS [0-9]+\.[0-9.]+' \
+            | head -1)
+          if [[ -z "$NEWEST_IOS" ]]; then
+            echo "ERROR: No iOS simulator runtime found on this runner."
+            xcrun simctl list runtimes
+            exit 1
+          fi
+          echo "Newest available iOS runtime: $NEWEST_IOS"
+
+          SIMLINE=$(xcrun simctl list devices "$NEWEST_IOS" available \
+            | grep -E 'iPhone' \
+            | head -1)
+          UDID=$(echo "$SIMLINE" \
+            | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}')
+          DEVICE_NAME=$(echo "$SIMLINE" \
+            | sed 's/^ *//' | cut -d'(' -f1 | sed 's/ *$//')
+
+          if [[ -z "$UDID" ]]; then
+            echo "ERROR: No iPhone simulator found for $NEWEST_IOS"
+            xcrun simctl list devices "$NEWEST_IOS" available
+            exit 1
+          fi
+
+          echo "Selected simulator: $DEVICE_NAME on $NEWEST_IOS (UDID: $UDID)"
+          xcrun simctl boot "$UDID" 2>/dev/null || true
+          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
+
+      # ── 6. Build ──────────────────────────────────────────────────────────────
+      - name: Build (Debug, best available simulator)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project ios/LFAEducationCenter.xcodeproj \
+            -scheme LFAEducationCenter \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=${{ env.SIMULATOR_UDID }}" \
+            -derivedDataPath /tmp/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            | xcpretty --color 2>/dev/null || true
+
+      # ── 7. Run unit tests ─────────────────────────────────────────────────────
+      - name: Run unit tests (LFAEducationCenterTests)
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project ios/LFAEducationCenter.xcodeproj \
+            -scheme LFAEducationCenter \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=${{ env.SIMULATOR_UDID }}" \
+            -derivedDataPath /tmp/DerivedData \
+            -resultBundlePath /tmp/TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            | xcpretty --color --report junit --output /tmp/test-results.xml 2>/dev/null || \
+          xcodebuild test \
+            -project ios/LFAEducationCenter.xcodeproj \
+            -scheme LFAEducationCenter \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=${{ env.SIMULATOR_UDID }}" \
+            -derivedDataPath /tmp/DerivedData \
+            -resultBundlePath /tmp/TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+      # ── 8. Publish test results to PR ─────────────────────────────────────────
+      - name: Publish test results
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: '/tmp/test-results.xml'
+          check_name: 'iOS Unit Tests'
+          fail_on_failure: true
+          require_tests: true
+
+      # ── 9. Upload xcresult bundle (downloadable artifact) ─────────────────────
+      - name: Upload xcresult bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcresult-${{ github.sha }}
+          path: /tmp/TestResults.xcresult
+          retention-days: 14
+
+      # ── 10. Test summary in job output ────────────────────────────────────────
+      - name: Add test summary
+        if: always()
+        run: |
+          if [[ -f /tmp/test-results.xml ]]; then
+            TESTS=$(grep -oE 'tests="[0-9]+"' /tmp/test-results.xml | head -1 | grep -oE '[0-9]+' || true)
+            FAILURES=$(grep -oE 'failures="[0-9]+"' /tmp/test-results.xml | head -1 | grep -oE '[0-9]+' || true)
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+            echo "- Tests run: ${TESTS:-unknown}" >> $GITHUB_STEP_SUMMARY
+            echo "- Failures: ${FAILURES:-unknown}" >> $GITHUB_STEP_SUMMARY
+          fi

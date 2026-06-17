@@ -7,10 +7,11 @@ Tables:
   juggling_contact_events — per-event annotation records (PR-1)
 
 State machine for juggling_videos.status:
-  pending_upload → uploaded → processing → analyzed
-                                        → rejected    (quality/codec/duration gate)
-                                        → failed      (ffprobe crash / timeout / corrupt)
-                                        → gdpr_deleted (P3: terminal; all data nulled)
+  pending_upload → uploaded → processing → analyzed ─┐
+                                        → rejected   ├──→ media_deleted (user: media files deleted,
+                                        → failed     ┘              analysis/annotation data preserved)
+                           → gdpr_deleted (P3: terminal; all data nulled — account/GDPR deletion only)
+  media_deleted            → gdpr_deleted (during account deletion after media already removed)
 
 Training eligibility dual-gate (JugglingContactEvent):
   Training use requires BOTH simultaneously:
@@ -34,6 +35,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    SmallInteger,
     String,
     UniqueConstraint,
 )
@@ -53,7 +55,8 @@ class JugglingVideoStatus(str, enum.Enum):
     analyzed       = "analyzed"
     rejected       = "rejected"
     failed         = "failed"
-    gdpr_deleted   = "gdpr_deleted"   # P3: terminal — all personal data nulled
+    media_deleted  = "media_deleted"  # user request: media files gone, analysis/annotation data preserved
+    gdpr_deleted   = "gdpr_deleted"   # P3: terminal — all personal data nulled (account/GDPR deletion)
 
 
 class JugglingVideoQualityStatus(str, enum.Enum):
@@ -264,6 +267,14 @@ class JugglingVideo(Base):
         ),
     )
 
+    # ── User rotation override ───────────────────────────────────────────────
+    # Display rotation chosen by the user via the rotate button.
+    # Not a transcode parameter — the processed file is never re-encoded.
+    user_rotation_degrees = Column(
+        SmallInteger, nullable=False, default=0, server_default="0",
+        comment="User display rotation override (0/90/180/270). Not a transcode parameter.",
+    )
+
     # ── Timestamps ───────────────────────────────────────────────────────────
     created_at = Column(DateTime(timezone=True), nullable=False, index=True,
                         default=lambda: datetime.now(timezone.utc))
@@ -434,6 +445,63 @@ class JugglingContactEvent(Base):
                                   remote_side="JugglingContactEvent.id")
 
 
+class JugglingPoseSnapshot(Base):
+    """
+    Per-event pose snapshot captured by iOS Vision at annotation timestamp.
+
+    Phase 2A: iOS-native only (Apple Vision VNHumanBodyPoseObservation, 19 joints).
+    Backend ML fallback (MediaPipe) is Phase 2A-B, not implemented here.
+
+    Keypoints JSONB format:
+      {
+        "schema_version": "1",
+        "body": [{"name": "left_ankle", "x": 0.41, "y": 0.83, "confidence": 0.97}, ...],
+        "left_hand": [],
+        "right_hand": []
+      }
+      Coordinates: screen-normalized [0,1], origin top-left, y = 1 - vision_y.
+      Only joints with confidence >= 0.3 are stored; others are omitted.
+
+    Privacy: excluded_from_training is always implicit (Policy B).
+    POSE_SNAPSHOT_ENABLED must be True for endpoints to accept uploads.
+    """
+    __tablename__ = "juggling_pose_snapshots"
+
+    id                   = Column(UUID(as_uuid=True), primary_key=True,
+                                  default=_uuid_mod.uuid4)
+    contact_event_id     = Column(UUID(as_uuid=True),
+                                  ForeignKey("juggling_contact_events.id",
+                                             ondelete="CASCADE"),
+                                  nullable=False)
+    video_id             = Column(UUID(as_uuid=True),
+                                  ForeignKey("juggling_videos.id",
+                                             ondelete="CASCADE"),
+                                  nullable=False)
+    timestamp_ms         = Column(BigInteger, nullable=False)
+    keypoints            = Column(JSONB, nullable=False)
+    model_version        = Column(String(40), nullable=False)
+    capture_source       = Column(String(20), nullable=False)
+    inference_confidence = Column(Float, nullable=True)
+    image_width_px       = Column(Integer, nullable=True)
+    image_height_px      = Column(Integer, nullable=True)
+    created_at           = Column(DateTime(timezone=True), nullable=False,
+                                  default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        CheckConstraint(
+            "capture_source IN ('ios_realtime', 'ios_retroactive', 'backend_task')",
+            name="ck_juggling_pose_snapshots_capture_source",
+        ),
+        CheckConstraint(
+            "inference_confidence IS NULL OR "
+            "(inference_confidence >= 0.0 AND inference_confidence <= 1.0)",
+            name="ck_juggling_pose_snapshots_inference_confidence",
+        ),
+        UniqueConstraint("contact_event_id",
+                         name="ux_juggling_pose_snapshots_event"),
+    )
+
+
 class JugglingFileDeletionLog(Base):
     """
     Immutable audit trail for all file deletion and retention scan events.
@@ -454,8 +522,8 @@ class JugglingFileDeletionLog(Base):
                             comment="HMAC_SHA256(secret, str(user_id)) — never raw user_id")
     event_type     = Column(String(50), nullable=False,
                             comment=(
-                                "gdpr_delete | retention_expire | orphan_cleanup | "
-                                "missing_file_audit | temp_cleanup | "
+                                "gdpr_delete | user_media_delete | retention_expire | "
+                                "orphan_cleanup | missing_file_audit | temp_cleanup | "
                                 "dry_run_would_delete | scan_started | scan_completed"
                             ))
     file_type      = Column(String(30), nullable=True,

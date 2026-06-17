@@ -23,11 +23,11 @@ final class LocalAnnotationStoreTests: XCTestCase {
         super.tearDown()
     }
 
-    // AN2-T05: no file on disk → .empty
+    // AN2-T05: no file on disk → .notFound
     func test_AN2_T05_loadWithNoFileReturnsEmpty() {
         switch store.load(userId: 1, videoId: "vid-1") {
-        case .empty: break
-        default: XCTFail("Expected .empty")
+        case .notFound: break
+        default: XCTFail("Expected .notFound")
         }
     }
 
@@ -61,8 +61,8 @@ final class LocalAnnotationStoreTests: XCTestCase {
 
         // User 2 with the same videoId sees no session.
         switch store.load(userId: 2, videoId: "vid-shared") {
-        case .empty: break
-        default: XCTFail("Expected .empty for a different userId with the same videoId")
+        case .notFound: break
+        default: XCTFail("Expected .notFound for a different userId with the same videoId")
         }
 
         // User 1's session is unaffected.
@@ -112,7 +112,7 @@ final class LocalAnnotationStoreTests: XCTestCase {
         }
     }
 
-    // AN2-T10: delete removes the session file; subsequent load is .empty.
+    // AN2-T10: delete removes the session file; subsequent load is .notFound.
     func test_AN2_T10_deleteRemovesFile() throws {
         var session = store.emptySession(userId: 5, videoId: "vid-finish")
         session.drafts.append(.new(timestampMs: 1, contactType: "head", side: "center", annotationConfidence: "certain"))
@@ -121,8 +121,8 @@ final class LocalAnnotationStoreTests: XCTestCase {
         store.delete(userId: 5, videoId: "vid-finish")
 
         switch store.load(userId: 5, videoId: "vid-finish") {
-        case .empty: break
-        default: XCTFail("Expected .empty after delete")
+        case .notFound: break
+        default: XCTFail("Expected .notFound after delete")
         }
     }
 }

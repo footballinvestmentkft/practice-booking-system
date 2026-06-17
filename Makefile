@@ -10,8 +10,19 @@
 # =============================================================================
 
 .DEFAULT_GOAL := help
-.PHONY: help web worker-mood worker-all recover-mood recover-mood-execute \
-        migrate test-unit test-cc docker-up docker-down
+.PHONY: help web worker-mood worker-juggling worker-all \
+        recover-mood recover-mood-execute \
+        recover-juggling recover-juggling-execute \
+        migrate test-unit test-cc docker-up docker-down \
+        ios-build ios-install ios-launch ios-run
+
+# ── iOS config ────────────────────────────────────────────────────────────────
+IOS_DEVICE_UDID  := 339B8F67-79A2-5099-A110-ABAF9E9902F5
+IOS_BUNDLE_ID    := com.lovas-zoltan.lfa-education-center
+IOS_PROJECT      := ios/LFAEducationCenter.xcodeproj
+IOS_SCHEME       := LFAEducationCenter
+IOS_DERIVED_DATA := /tmp/lfa_ios_build
+IOS_APP          := $(IOS_DERIVED_DATA)/Build/Products/Debug-iphoneos/LFAEducationCenter.app
 
 # ── Help ──────────────────────────────────────────────────────────────────────
 help:
@@ -19,13 +30,16 @@ help:
 	@echo "  LFA Practice Booking System — dev commands"
 	@echo ""
 	@echo "  Dev servers:"
-	@echo "    make web              Start FastAPI dev server (port 8000)"
-	@echo "    make worker-mood      Start mood photo background removal worker"
-	@echo "    make worker-all       Start worker for ALL queues (mood + tournaments)"
+	@echo "    make web                  Start FastAPI dev server (port 8000)"
+	@echo "    make worker-mood          Start mood photo background removal worker"
+	@echo "    make worker-juggling      Start juggling video transcode + analyze worker"
+	@echo "    make worker-all           Start worker for ALL queues"
 	@echo ""
 	@echo "  Recovery:"
-	@echo "    make recover-mood         Dry-run: show stuck processing mood photos"
-	@echo "    make recover-mood-execute Execute: reset stuck processing mood photos"
+	@echo "    make recover-mood             Dry-run: show stuck processing mood photos"
+	@echo "    make recover-mood-execute     Execute: reset stuck processing mood photos"
+	@echo "    make recover-juggling         Dry-run: show stuck processing juggling videos"
+	@echo "    make recover-juggling-execute Execute: reset stuck processing juggling videos"
 	@echo ""
 	@echo "  Database:"
 	@echo "    make migrate          Run Alembic migrations"
@@ -37,6 +51,12 @@ help:
 	@echo "  Docker:"
 	@echo "    make docker-up        Start full dev stack (web + worker + redis + db)"
 	@echo "    make docker-down      Stop and remove docker-compose dev containers"
+	@echo ""
+	@echo "  iOS (no-debugger workflow):"
+	@echo "    make ios-run          Build + install + launch on iPhone without LLDB"
+	@echo "    make ios-build        xcodebuild Debug build only"
+	@echo "    make ios-install      Install last build to connected iPhone"
+	@echo "    make ios-launch       Launch installed app without debugger"
 	@echo ""
 
 # ── Dev servers ───────────────────────────────────────────────────────────────
@@ -52,10 +72,18 @@ worker-mood:
 		--concurrency=1 \
 		--loglevel=info
 
-worker-all:
-	@echo "Starting Celery worker for ALL queues (mood_photos + tournaments + default)..."
+worker-juggling:
+	@echo "Starting juggling_videos Celery worker (transcode + analyze)..."
 	celery -A app.celery_app worker \
-		-Q mood_photos,tournaments,default \
+		-Q juggling_videos,juggling_retention \
+		--pool=solo \
+		--concurrency=1 \
+		--loglevel=info
+
+worker-all:
+	@echo "Starting Celery worker for ALL queues..."
+	celery -A app.celery_app worker \
+		-Q mood_photos,tournaments,juggling_videos,juggling_retention,default \
 		--pool=prefork \
 		--concurrency=2 \
 		--loglevel=info
@@ -68,6 +96,39 @@ recover-mood:
 recover-mood-execute:
 	@echo "[EXECUTE] Resetting stuck processing mood photos..."
 	python scripts/recover_stuck_mood_photos.py --execute
+
+recover-juggling:
+	@echo "[DRY-RUN] Checking for stuck processing juggling videos..."
+	python scripts/recover_stuck_juggling.py
+
+recover-juggling-execute:
+	@echo "[EXECUTE] Resetting stuck processing juggling videos..."
+	python scripts/recover_stuck_juggling.py --execute
+
+# ── iOS — build + install + launch (no debugger attach) ──────────────────────
+ios-build:
+	xcodebuild build \
+		-scheme $(IOS_SCHEME) \
+		-project $(IOS_PROJECT) \
+		-destination "id=$(IOS_DEVICE_UDID)" \
+		-configuration Debug \
+		-derivedDataPath $(IOS_DERIVED_DATA) \
+		CODE_SIGN_STYLE=Automatic \
+		DEVELOPMENT_TEAM=4D7V9ZWVHY
+
+ios-install:
+	@echo "[ios-install] Installing $(IOS_APP) → $(IOS_DEVICE_UDID)"
+	xcrun devicectl device install app \
+		--device $(IOS_DEVICE_UDID) \
+		"$(IOS_APP)"
+
+ios-launch:
+	@echo "[ios-launch] Launching $(IOS_BUNDLE_ID) without debugger"
+	xcrun devicectl device process launch \
+		--device $(IOS_DEVICE_UDID) \
+		$(IOS_BUNDLE_ID)
+
+ios-run: ios-build ios-install ios-launch
 
 # ── Database ─────────────────────────────────────────────────────────────────
 migrate:
