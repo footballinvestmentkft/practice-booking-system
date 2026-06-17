@@ -394,10 +394,21 @@ class PoseSnapshotOut(BaseModel):
 
 
 class BallDetectionManualRequest(BaseModel):
-    """Manual ball position override by user or admin."""
-    ball_x:     float = Field(..., ge=0.0, le=1.0)
-    ball_y:     float = Field(..., ge=0.0, le=1.0)
-    confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
+    """Manual ball position override by user or admin.
+
+    no_ball_detected=False (default): ball_x and ball_y are required.
+    no_ball_detected=True:            ball_x and ball_y must be omitted / None.
+    """
+    ball_x:           Optional[float] = Field(None, ge=0.0, le=1.0)
+    ball_y:           Optional[float] = Field(None, ge=0.0, le=1.0)
+    confidence:       Optional[float] = Field(None, ge=0.0, le=1.0)
+    no_ball_detected: bool            = Field(False)
+
+    @model_validator(mode="after")
+    def _coords_required_unless_no_ball(self) -> "BallDetectionManualRequest":
+        if not self.no_ball_detected and (self.ball_x is None or self.ball_y is None):
+            raise ValueError("ball_x and ball_y are required when no_ball_detected=False")
+        return self
 
 
 class BallDetectionOut(BaseModel):
@@ -416,6 +427,10 @@ class BallDetectionOut(BaseModel):
     image_height_px:        Optional[int]
     no_ball_detected:       bool
     excluded_from_training: bool
+    # AN-3B2C-1 (Opció A): original automatic coordinates preserved on first manual override.
+    # None when detection was manual-first (auto pipeline never ran for this event).
+    auto_ball_x:            Optional[float]
+    auto_ball_y:            Optional[float]
     created_at:             datetime
     updated_at:             datetime
 
