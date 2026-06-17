@@ -38,6 +38,7 @@ from sqlalchemy import (
     SmallInteger,
     String,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
@@ -285,6 +286,12 @@ class JugglingVideo(Base):
     user_rotation_degrees = Column(
         SmallInteger, nullable=False, default=0, server_default="0",
         comment="User display rotation override (0/90/180/270). Not a transcode parameter.",
+    )
+
+    # ── Dense ball trajectory lifecycle (AN-3B2D-1) ────────────────────────
+    ball_trajectory_status = Column(
+        String(20), nullable=True, default=None,
+        comment="pending / processing / complete / failed — dense ball tracking lifecycle",
     )
 
     # ── Timestamps ───────────────────────────────────────────────────────────
@@ -577,6 +584,50 @@ class JugglingBallDetection(Base):
             "(no_ball_detected = true AND ball_x IS NULL AND ball_y IS NULL) "
             "OR (no_ball_detected = false AND ball_x IS NOT NULL AND ball_y IS NOT NULL)",
             name="ck_juggling_ball_detections_coords",
+        ),
+    )
+
+
+class JugglingBallTrajectory(Base):
+    """
+    Dense ball trajectory point — one row per (video, frame_ms).
+
+    Populated by dense_ball_trajectory_task at 10 FPS (100ms intervals).
+    tracking_state: detected (ONNX hit), predicted (Kalman extrapolation),
+    lost (too many misses), manual_seed (user-placed).
+    """
+    __tablename__ = "juggling_ball_trajectories"
+
+    id              = Column(UUID(as_uuid=True), primary_key=True,
+                             server_default=text("gen_random_uuid()"))
+    video_id        = Column(UUID(as_uuid=True),
+                             ForeignKey("juggling_videos.id", ondelete="CASCADE"),
+                             nullable=False)
+    frame_ms        = Column(Integer, nullable=False)
+    ball_x          = Column(Float, nullable=True)
+    ball_y          = Column(Float, nullable=True)
+    confidence      = Column(Float, nullable=True)
+    is_manual       = Column(Boolean, nullable=False, default=False,
+                             server_default="false")
+    tracking_state  = Column(String(20), nullable=False, default="detected",
+                             server_default=text("'detected'"))
+    model_version   = Column(String(60), nullable=True)
+    image_width_px  = Column(Integer, nullable=True)
+    image_height_px = Column(Integer, nullable=True)
+    created_at      = Column(DateTime(timezone=True), nullable=False,
+                             server_default=text("now()"))
+
+    __table_args__ = (
+        UniqueConstraint("video_id", "frame_ms",
+                         name="ux_ball_traj_video_frame"),
+        CheckConstraint(
+            "tracking_state IN ('detected', 'predicted', 'lost', 'manual_seed')",
+            name="ck_ball_traj_tracking_state",
+        ),
+        CheckConstraint(
+            "(tracking_state = 'lost' AND ball_x IS NULL AND ball_y IS NULL) "
+            "OR (tracking_state != 'lost' AND ball_x IS NOT NULL AND ball_y IS NOT NULL)",
+            name="ck_ball_traj_coords_state",
         ),
     )
 
