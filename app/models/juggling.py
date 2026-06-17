@@ -548,6 +548,11 @@ class JugglingBallDetection(Base):
                                   server_default="false")
     excluded_from_training = Column(Boolean, nullable=False, default=True,
                                     server_default="true")
+    # AN-3B2C-1 Opció A: original automatic coordinates frozen on first manual override.
+    # Populated only when detection_source transitions automatic→manual for the first time.
+    # NULL for manual-first events (auto pipeline never ran) and for pure automatic records.
+    auto_ball_x          = Column(Float, nullable=True)
+    auto_ball_y          = Column(Float, nullable=True)
     created_at           = Column(DateTime(timezone=True), nullable=False,
                                   default=lambda: datetime.now(timezone.utc))
     updated_at           = Column(DateTime(timezone=True), nullable=False,

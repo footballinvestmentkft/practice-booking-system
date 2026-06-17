@@ -69,18 +69,24 @@ def upsert_manual_detection(
         .first()
     )
     if existing:
-        existing.detection_source = "manual"
-        existing.ball_x = req.ball_x
-        existing.ball_y = req.ball_y
-        existing.confidence = req.confidence
-        existing.no_ball_detected = False
-        existing.model_version = None
-        existing.image_width_px = None
-        existing.image_height_px = None
+        # AN-3B2C-1 Opció A: freeze the original automatic coordinates on the
+        # FIRST manual override only (auto_ball_x is None signals not yet frozen).
+        if existing.detection_source == "automatic" and existing.auto_ball_x is None:
+            existing.auto_ball_x = existing.ball_x
+            existing.auto_ball_y = existing.ball_y
+        existing.detection_source  = "manual"
+        existing.ball_x            = req.ball_x
+        existing.ball_y            = req.ball_y
+        existing.confidence        = req.confidence
+        existing.no_ball_detected  = req.no_ball_detected
+        existing.model_version     = None
+        existing.image_width_px    = None
+        existing.image_height_px   = None
         db.commit()
         db.refresh(existing)
         return existing, False
 
+    # Manual-first: auto pipeline never ran for this event — auto coords stay NULL.
     detection = JugglingBallDetection(
         contact_event_id=event.id,
         video_id=video.id,
@@ -88,8 +94,10 @@ def upsert_manual_detection(
         ball_x=req.ball_x,
         ball_y=req.ball_y,
         confidence=req.confidence,
-        no_ball_detected=False,
+        no_ball_detected=req.no_ball_detected,
         excluded_from_training=True,
+        auto_ball_x=None,
+        auto_ball_y=None,
     )
     db.add(detection)
     db.commit()
