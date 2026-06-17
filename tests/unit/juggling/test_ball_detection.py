@@ -1260,3 +1260,97 @@ def test_bdt_nb04_auto_ball_xy_not_overwritten_on_second_manual_override(
     assert result.auto_ball_y == pytest.approx(0.20)
     assert result.ball_x == pytest.approx(0.60)       # latest correction
     assert result.ball_y == pytest.approx(0.70)
+
+
+# ── BDT-AC-01..03: auto_confidence (AN-3B2C-1 follow-up) ─────────────────────
+
+def test_bdt_ac01_auto_detection_sets_auto_confidence(
+    db_session, _juggling_video, monkeypatch, tmp_path,
+):
+    """BDT-AC-01: run_ball_detection_core sets auto_confidence = confidence via ORM listener."""
+    import numpy as np
+    from app.tasks.juggling_analysis_task import run_ball_detection_core
+    import app.tasks.juggling_analysis_task as task_mod
+
+    monkeypatch.setattr(task_mod.settings, "BALL_DETECTION_ENABLED", True)
+    monkeypatch.setattr(task_mod.settings, "BALL_DETECTION_MODEL_PATH", __file__)
+
+    video, event = _juggling_video
+    fake_video = tmp_path / "fake.mp4"
+    fake_video.write_bytes(b"fake")
+    video.processed_path = str(fake_video)
+    db_session.flush()
+
+    class MockDetector:
+        def detect(self, frame, target_class_id=37, confidence_threshold=0.3):
+            return (0.45, 0.67, 0.91)
+
+    run_ball_detection_core(
+        str(video.id), str(event.id), "juggling", db_session,
+        _extract_frame=lambda path, ms: (np.zeros((240, 320, 3), dtype=np.uint8), 320, 240),
+        _get_detector=lambda path: MockDetector(),
+    )
+
+    detection = (
+        db_session.query(JugglingBallDetection)
+        .filter(JugglingBallDetection.contact_event_id == event.id)
+        .one()
+    )
+    assert detection.confidence == pytest.approx(0.91)
+    assert detection.auto_confidence == pytest.approx(0.91), (
+        "auto_confidence must equal confidence for new auto detection rows"
+    )
+
+
+def test_bdt_ac02_manual_override_preserves_auto_confidence(
+    db_session, _juggling_video,
+):
+    """BDT-AC-02: manual override must not overwrite auto_confidence."""
+    from app.services.juggling.ball_detection_service import upsert_manual_detection
+    from app.schemas.juggling import BallDetectionManualRequest
+    video, event = _juggling_video
+
+    auto = JugglingBallDetection(
+        contact_event_id=event.id,
+        video_id=video.id,
+        detection_source="mobilenet_ssd_v1",
+        ball_x=0.30,
+        ball_y=0.70,
+        confidence=0.88,
+        no_ball_detected=False,
+        excluded_from_training=False,
+    )
+    db_session.add(auto)
+    db_session.commit()
+    db_session.refresh(auto)
+
+    # auto_confidence was set by the ORM listener at insert time.
+    assert auto.auto_confidence == pytest.approx(0.88)
+
+    # Manual override with no confidence value (typical user drag).
+    req = BallDetectionManualRequest(ball_x=0.50, ball_y=0.60, confidence=None, no_ball_detected=False)
+    result, _ = upsert_manual_detection(str(video.id), str(event.id), video.user_id, req, db_session)
+
+    assert result.detection_source == "manual"
+    assert result.confidence is None            # updated to manual (no confidence sent)
+    assert result.auto_confidence == pytest.approx(0.88), (
+        "auto_confidence must remain unchanged after manual override"
+    )
+
+
+def test_bdt_ac03_manual_first_auto_confidence_is_null(
+    db_session, _juggling_video,
+):
+    """BDT-AC-03: manual-first event (auto pipeline never ran) → auto_confidence IS NULL."""
+    from app.services.juggling.ball_detection_service import upsert_manual_detection
+    from app.schemas.juggling import BallDetectionManualRequest
+    video, event = _juggling_video
+
+    req = BallDetectionManualRequest(ball_x=0.40, ball_y=0.50, no_ball_detected=False)
+    result, created = upsert_manual_detection(str(video.id), str(event.id), video.user_id, req, db_session)
+
+    assert created is True
+    assert result.detection_source == "manual"
+    assert result.auto_confidence is None, (
+        "auto_confidence must be NULL for manual-first events (auto pipeline never ran)"
+    )

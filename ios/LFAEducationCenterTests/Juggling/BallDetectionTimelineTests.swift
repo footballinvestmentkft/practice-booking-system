@@ -41,7 +41,7 @@ final class BallDetectionTimelineTests: XCTestCase {
             worldXM: nil, worldYM: nil, modelVersion: nil,
             noBallDetected:       noBall,
             excludedFromTraining: false,
-            autoBallX: nil, autoBallY: nil,
+            autoBallX: nil, autoBallY: nil, autoBallConfidence: nil,
             createdAt: Date(), updatedAt: Date()
         )
     }

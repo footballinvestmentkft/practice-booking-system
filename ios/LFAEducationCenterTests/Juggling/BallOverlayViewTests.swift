@@ -20,7 +20,8 @@ final class BallOverlayViewTests: XCTestCase {
         confidence: Double? = 0.90,
         noBall: Bool    = false,
         autoBallX: Double? = nil,
-        autoBallY: Double? = nil
+        autoBallY: Double? = nil,
+        autoBallConfidence: Double? = nil
     ) -> BallDetectionOut {
         BallDetectionOut(
             id:                   UUID(),
@@ -37,6 +38,7 @@ final class BallOverlayViewTests: XCTestCase {
             excludedFromTraining: false,
             autoBallX:            autoBallX,
             autoBallY:            autoBallY,
+            autoBallConfidence:   autoBallConfidence,
             createdAt:            Date(),
             updatedAt:            Date()
         )

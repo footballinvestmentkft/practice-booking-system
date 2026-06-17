@@ -35,13 +35,15 @@ final class BallDetectionAPIClientTests: XCTestCase {
         confidence: Double? = 0.92,
         detectionSource: String = "mobilenet_ssd_v1",
         autoBallX: Double? = nil,
-        autoBallY: Double? = nil
+        autoBallY: Double? = nil,
+        autoConfidence: Double? = nil
     ) -> Data {
-        let bx  = ballX.map    { String($0) } ?? "null"
-        let by  = ballY.map    { String($0) } ?? "null"
-        let con = confidence.map { String($0) } ?? "null"
-        let abx = autoBallX.map { String($0) } ?? "null"
-        let aby = autoBallY.map { String($0) } ?? "null"
+        let bx  = ballX.map       { String($0) } ?? "null"
+        let by  = ballY.map       { String($0) } ?? "null"
+        let con = confidence.map  { String($0) } ?? "null"
+        let abx = autoBallX.map   { String($0) } ?? "null"
+        let aby = autoBallY.map   { String($0) } ?? "null"
+        let aconf = autoConfidence.map { String($0) } ?? "null"
         let json = """
         {
           "id": "11111111-0000-0000-0000-000000000001",
@@ -58,6 +60,7 @@ final class BallDetectionAPIClientTests: XCTestCase {
           "excluded_from_training": false,
           "auto_ball_x": \(abx),
           "auto_ball_y": \(aby),
+          "auto_confidence": \(aconf),
           "created_at": "2026-06-18T10:00:00.000000Z",
           "updated_at": "2026-06-18T10:01:00.000000Z"
         }
@@ -144,5 +147,25 @@ final class BallDetectionAPIClientTests: XCTestCase {
         // ball_x/ball_y may be absent or NSNull when nil; both are acceptable.
         let bx = obj["ball_x"]
         XCTAssertTrue(bx == nil || bx is NSNull, "ball_x must be nil or null when no_ball_detected=true")
+    }
+
+    // BD-AC-07: auto_confidence populated on auto detection decodes correctly.
+    func test_BD_AC_07_autoConfidenceDecodesWhenPresent() throws {
+        let data = makeJSON(confidence: 0.87, detectionSource: "mobilenet_ssd_v1", autoConfidence: 0.87)
+        let out = try isoDecoder.decode(BallDetectionOut.self, from: data)
+
+        XCTAssertNotNil(out.autoBallConfidence, "auto_confidence must decode to non-nil")
+        XCTAssertEqual(out.autoBallConfidence ?? 0, 0.87, accuracy: 0.001)
+        XCTAssertEqual(out.confidence ?? 0, 0.87, accuracy: 0.001,
+                       "confidence field must match original value before any override")
+    }
+
+    // BD-AC-08: auto_confidence is nil for pre-migration / manual-first rows.
+    func test_BD_AC_08_autoConfidenceNilForPreMigrationRows() throws {
+        let data = makeJSON(detectionSource: "mobilenet_ssd_v1", autoConfidence: nil)
+        let out = try isoDecoder.decode(BallDetectionOut.self, from: data)
+
+        XCTAssertNil(out.autoBallConfidence,
+                     "auto_confidence must be nil for pre-migration or manual-first rows")
     }
 }
