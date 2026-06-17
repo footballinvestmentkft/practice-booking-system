@@ -1918,6 +1918,67 @@
         }
       }
     },
+    "/api/v1/users/me/juggling/videos/{video_id}/rotation": {
+      "patch": {
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ],
+        "summary": "Persist user display rotation override",
+        "description": "Stores the user-chosen display rotation (0/90/180/270 degrees) for a video.\nThis is a display-only override — the processed file is never re-encoded.\nIdempotent: calling PATCH with the same value is a no-op.",
+        "operationId": "patch_rotation_api_v1_users_me_juggling_videos__video_id__rotation_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Video Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JugglingRotationPatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingRotationPatchOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/me/juggling/taxonomy": {
       "get": {
         "tags": [
@@ -2282,6 +2343,131 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FinishAnnotationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/juggling/videos/{video_id}/contacts/{event_id}/pose-snapshot": {
+      "post": {
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ],
+        "summary": "Upload a pose snapshot for a contact event (Phase 2A)",
+        "description": "Create or update the Vision pose snapshot for a single contact event.\n\n- 201: new snapshot created\n- 200: existing snapshot updated (idempotent retry)\n- 404: video or event not found / not owned by current user\n- 422: keypoints missing 'body' key or invalid inference_confidence range\n- 503: JUGGLING_POC_ENABLED=False or POSE_SNAPSHOT_ENABLED=False",
+        "operationId": "upsert_pose_snapshot_api_v1_users_me_juggling_videos__video_id__contacts__event_id__pose_snapshot_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Video Id"
+            }
+          },
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoseSnapshotCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoseSnapshotOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/juggling/videos/{video_id}/pose-snapshots": {
+      "get": {
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ],
+        "summary": "List pose snapshots for a video (Phase 2A)",
+        "description": "Returns all pose snapshots for the video, ordered by timestamp_ms.\nEmpty list if no snapshots have been uploaded yet.\n\n- 200: list (may be empty)\n- 404: video not found / not owned by current user\n- 503: JUGGLING_POC_ENABLED=False or POSE_SNAPSHOT_ENABLED=False",
+        "operationId": "list_pose_snapshots_api_v1_users_me_juggling_videos__video_id__pose_snapshots_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Video Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PoseSnapshotOut"
+                  },
+                  "title": "Response List Pose Snapshots Api V1 Users Me Juggling Videos  Video Id  Pose Snapshots Get"
                 }
               }
             }
@@ -46341,192 +46527,6 @@
           }
         }
       }
-    },
-    "/api/v1/users/me/juggling/videos/{video_id}/rotation": {
-      "patch": {
-        "tags": [
-          "users",
-          "users",
-          "juggling",
-          "juggling"
-        ],
-        "summary": "Persist user display rotation override",
-        "description": "Stores the user-chosen display rotation (0/90/180/270 degrees) for a video.\nThis is a display-only override — the processed file is never re-encoded.\nIdempotent: calling PATCH with the same value is a no-op.",
-        "operationId": "patch_rotation_api_v1_users_me_juggling_videos__video_id__rotation_patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "video_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Video Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/JugglingRotationPatchRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JugglingRotationPatchOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/users/me/juggling/videos/{video_id}/contacts/{event_id}/pose-snapshot": {
-      "post": {
-        "tags": [
-          "users",
-          "users",
-          "juggling",
-          "juggling"
-        ],
-        "summary": "Upload a pose snapshot for a contact event (Phase 2A)",
-        "description": "Create or update the Vision pose snapshot for a single contact event.\n\n- 201: new snapshot created\n- 200: existing snapshot updated (idempotent retry)\n- 404: video or event not found / not owned by current user\n- 422: keypoints missing 'body' key or invalid inference_confidence range\n- 503: JUGGLING_POC_ENABLED=False or POSE_SNAPSHOT_ENABLED=False",
-        "operationId": "upsert_pose_snapshot_api_v1_users_me_juggling_videos__video_id__contacts__event_id__pose_snapshot_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "video_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Video Id"
-            }
-          },
-          {
-            "name": "event_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Event Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PoseSnapshotCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PoseSnapshotOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/users/me/juggling/videos/{video_id}/pose-snapshots": {
-      "get": {
-        "tags": [
-          "users",
-          "users",
-          "juggling",
-          "juggling"
-        ],
-        "summary": "List pose snapshots for a video (Phase 2A)",
-        "description": "Returns all pose snapshots for the video, ordered by timestamp_ms.\nEmpty list if no snapshots have been uploaded yet.\n\n- 200: list (may be empty)\n- 404: video not found / not owned by current user\n- 503: JUGGLING_POC_ENABLED=False or POSE_SNAPSHOT_ENABLED=False",
-        "operationId": "list_pose_snapshots_api_v1_users_me_juggling_videos__video_id__pose_snapshots_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "video_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Video Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PoseSnapshotOut"
-                  },
-                  "title": "Response List Pose Snapshots Api V1 Users Me Juggling Videos  Video Id  Pose Snapshots Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -57052,6 +57052,43 @@
         ],
         "title": "JugglingQualityOut"
       },
+      "JugglingRotationPatchOut": {
+        "properties": {
+          "video_id": {
+            "type": "string",
+            "title": "Video Id"
+          },
+          "user_rotation_degrees": {
+            "type": "integer",
+            "title": "User Rotation Degrees"
+          }
+        },
+        "type": "object",
+        "required": [
+          "video_id",
+          "user_rotation_degrees"
+        ],
+        "title": "JugglingRotationPatchOut"
+      },
+      "JugglingRotationPatchRequest": {
+        "properties": {
+          "rotation_degrees": {
+            "type": "integer",
+            "enum": [
+              0,
+              90,
+              180,
+              270
+            ],
+            "title": "Rotation Degrees"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rotation_degrees"
+        ],
+        "title": "JugglingRotationPatchRequest"
+      },
       "JugglingUploadFileOut": {
         "properties": {
           "video_id": {
@@ -57262,6 +57299,11 @@
               }
             ],
             "title": "Annotation Status"
+          },
+          "user_rotation_degrees": {
+            "type": "integer",
+            "title": "User Rotation Degrees",
+            "default": 0
           }
         },
         "type": "object",
@@ -60328,6 +60370,170 @@
         ],
         "title": "PlayerRewardDetail",
         "description": "Individual player reward details"
+      },
+      "PoseSnapshotCreateRequest": {
+        "properties": {
+          "keypoints": {
+            "type": "object",
+            "title": "Keypoints"
+          },
+          "model_version": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Model Version",
+            "description": "e.g. 'apple_vision_v1'"
+          },
+          "capture_source": {
+            "type": "string",
+            "enum": [
+              "ios_realtime",
+              "ios_retroactive",
+              "backend_task"
+            ],
+            "title": "Capture Source"
+          },
+          "captured_at_ms": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Captured At Ms"
+          },
+          "image_width_px": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Width Px"
+          },
+          "image_height_px": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Height Px"
+          },
+          "inference_confidence": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inference Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "keypoints",
+          "model_version",
+          "capture_source",
+          "captured_at_ms"
+        ],
+        "title": "PoseSnapshotCreateRequest",
+        "description": "iOS uploads this after capturing VNHumanBodyPoseObservation on the video frame.\n\nkeypoints must contain a \"body\" key (list; may be empty if no person detected).\ncapture_source must be \"ios_realtime\" (new FAB tap) or \"ios_retroactive\"\n(retroactive generation for pre-existing events) for iOS uploads.\ncaptured_at_ms should match the contact event's timestamp_ms (echo for audit)."
+      },
+      "PoseSnapshotOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "contact_event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Contact Event Id"
+          },
+          "video_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Video Id"
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "title": "Timestamp Ms"
+          },
+          "keypoints": {
+            "type": "object",
+            "title": "Keypoints"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "capture_source": {
+            "type": "string",
+            "title": "Capture Source"
+          },
+          "inference_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inference Confidence"
+          },
+          "image_width_px": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Width Px"
+          },
+          "image_height_px": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Height Px"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "contact_event_id",
+          "video_id",
+          "timestamp_ms",
+          "keypoints",
+          "model_version",
+          "capture_source",
+          "inference_confidence",
+          "image_width_px",
+          "image_height_px",
+          "created_at"
+        ],
+        "title": "PoseSnapshotOut",
+        "description": "Returned by GET /pose-snapshots and POST (upsert response)."
       },
       "PositionCreate": {
         "properties": {
