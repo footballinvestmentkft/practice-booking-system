@@ -86,6 +86,12 @@ class JugglingUploadSource(str, enum.Enum):
     unknown = "unknown"
 
 
+class JugglingTrainingVideoType(str, enum.Enum):
+    juggling       = "juggling"
+    gan_footvolley = "gan_footvolley"
+    gan_foottennis = "gan_foottennis"
+
+
 class JugglingConsent(Base):
     """
     Per-user consent record for the juggling POC pipeline.
@@ -142,6 +148,12 @@ class JugglingVideo(Base):
                            comment="in_app_capture | uploaded_video")
     upload_source = Column(String(30), nullable=False, default="unknown",
                            comment="camera | gallery | file | unknown")
+    training_video_type = Column(
+        String(30), nullable=False,
+        default=JugglingTrainingVideoType.juggling.value,
+        server_default="juggling",
+        comment="Training activity type: juggling | gan_footvolley | gan_foottennis",
+    )
 
     # ── State machine ────────────────────────────────────────────────────────
     status = Column(String(30), nullable=False,
