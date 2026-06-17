@@ -17,7 +17,7 @@ name: iOS CI — Build + Unit Tests
 #   - Celery worker state (backend concern)
 #
 # Runner:  macos-15  (Apple Silicon, Xcode 16.2 pre-installed)
-# Target:  iOS Simulator iPhone 16, OS 18.2
+# Target:  iOS Simulator — newest available runtime (dynamic, not hardcoded)
 # Timeout: 30 min hard limit
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -86,21 +86,43 @@ jobs:
           xcodebuild -version
 
       # ── 5. Boot simulator (runs while build is warming up cache) ──────────────
-      - name: Boot iPhone 16 simulator
+      - name: Discover and boot best available iPhone simulator
         run: |
-          UDID=$(xcrun simctl list devices available | grep "iPhone 16 " | grep -v "Plus\|Pro" | head -1 | grep -oE '[A-F0-9-]{36}')
-          if [[ -z "$UDID" ]]; then
-            echo "Available devices:"
-            xcrun simctl list devices available | grep iPhone
-            echo "ERROR: iPhone 16 simulator not found"
+          # Pick the newest available iOS runtime, then take the first iPhone on it.
+          # Avoids hardcoding "iPhone 16" (iOS 18 runtime) which may not be present
+          # on this runner image. Xcode 16.2 can test against any runtime >= iOS 15.0.
+          NEWEST_IOS=$(xcrun simctl list runtimes available \
+            | grep -E 'iOS [0-9]' \
+            | tail -1 \
+            | grep -oE 'iOS [0-9]+\.[0-9.]+' \
+            | head -1)
+          if [[ -z "$NEWEST_IOS" ]]; then
+            echo "ERROR: No iOS simulator runtime found on this runner."
+            xcrun simctl list runtimes
             exit 1
           fi
-          echo "Booting simulator UDID: $UDID"
-          xcrun simctl boot "$UDID" || true
+          echo "Newest available iOS runtime: $NEWEST_IOS"
+
+          SIMLINE=$(xcrun simctl list devices "$NEWEST_IOS" available \
+            | grep -E 'iPhone' \
+            | head -1)
+          UDID=$(echo "$SIMLINE" \
+            | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}')
+          DEVICE_NAME=$(echo "$SIMLINE" \
+            | sed 's/^ *//' | cut -d'(' -f1 | sed 's/ *$//')
+
+          if [[ -z "$UDID" ]]; then
+            echo "ERROR: No iPhone simulator found for $NEWEST_IOS"
+            xcrun simctl list devices "$NEWEST_IOS" available
+            exit 1
+          fi
+
+          echo "Selected simulator: $DEVICE_NAME on $NEWEST_IOS (UDID: $UDID)"
+          xcrun simctl boot "$UDID" 2>/dev/null || true
           echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
 
       # ── 6. Build ──────────────────────────────────────────────────────────────
-      - name: Build (Debug, iPhone 16 Simulator)
+      - name: Build (Debug, best available simulator)
         run: |
           set -o pipefail
           xcodebuild build \
