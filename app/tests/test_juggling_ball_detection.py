@@ -1056,6 +1056,32 @@ def test_bdt_fr04_read_returns_false(monkeypatch):
         fe_mod.extract_frame_at_ms("/fake/path.mp4", 5000)
 
 
+def test_bdt_od07_second_detection_lower_score(monkeypatch):
+    """Cover onnx_ball_detector.py:60->58 — second detection not > best_score."""
+    import numpy as np
+    from app.services.juggling.onnx_ball_detector import OnnxBallDetector
+
+    mock_outputs = [
+        np.array([2.0]),
+        np.array([[[0.3, 0.4, 0.5, 0.6], [0.1, 0.2, 0.3, 0.4]]]),
+        np.array([[0.85, 0.60]]),
+        np.array([[37.0, 37.0]]),
+    ]
+
+    class MockSession:
+        def run(self, _, inputs): return mock_outputs
+
+    monkeypatch.setattr("app.services.juggling.onnx_ball_detector.ort.InferenceSession", lambda *a, **kw: MockSession())
+    monkeypatch.setattr("app.services.juggling.onnx_ball_detector.Path.is_file", lambda _: True)
+
+    detector = OnnxBallDetector("/fake/model.onnx")
+    frame = np.zeros((300, 300, 3), dtype=np.uint8)
+    result = detector.detect(frame, target_class_id=37, confidence_threshold=0.3)
+    assert result is not None
+    _, _, conf = result
+    assert conf == 0.85
+
+
 def test_bdt_vp03_video_path_prefers_processed(tmp_path):
     from app.tasks.juggling_analysis_task import _video_path
     from unittest.mock import MagicMock
