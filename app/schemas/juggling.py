@@ -388,3 +388,45 @@ class PoseSnapshotOut(BaseModel):
     created_at:           datetime
 
     model_config = {"from_attributes": True, "protected_namespaces": ()}
+
+
+# ── Ball detection schemas (AN-3B2B-1) ──────────────────────────────────────
+
+
+class BallDetectionManualRequest(BaseModel):
+    """Manual ball position override by user or admin."""
+    ball_x:     float = Field(..., ge=0.0, le=1.0)
+    ball_y:     float = Field(..., ge=0.0, le=1.0)
+    confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
+
+
+class BallDetectionOut(BaseModel):
+    """Returned by GET and POST ball-detection endpoints."""
+    id:                     uuid.UUID
+    contact_event_id:       uuid.UUID
+    video_id:               uuid.UUID
+    detection_source:       str
+    ball_x:                 Optional[float]
+    ball_y:                 Optional[float]
+    confidence:             Optional[float]
+    world_x_m:              Optional[float]
+    world_y_m:              Optional[float]
+    model_version:          Optional[str]
+    image_width_px:         Optional[int]
+    image_height_px:        Optional[int]
+    no_ball_detected:       bool
+    excluded_from_training: bool
+    created_at:             datetime
+    updated_at:             datetime
+
+    model_config = {"from_attributes": True, "protected_namespaces": ()}
+
+
+class BallDetectionTriggerResult(BaseModel):
+    """Response from admin trigger endpoint."""
+    video_id:               uuid.UUID
+    training_video_type:    str
+    model_used:             str
+    events_queued:          int
+    events_skipped:         int
+    skipped_reasons:        List[str]

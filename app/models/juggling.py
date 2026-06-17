@@ -514,6 +514,65 @@ class JugglingPoseSnapshot(Base):
     )
 
 
+class JugglingBallDetection(Base):
+    """
+    Per-event ball position detected by ONNX model or manual override.
+
+    detection_source: 'mobilenet_ssd_v2' (auto) | 'manual' (user override).
+    Coordinates: screen-normalized [0,1], origin top-left.
+    world_x_m / world_y_m: NULL until pitch_config is applied (AN-3B2B-2).
+    excluded_from_training always True (Policy B).
+    """
+    __tablename__ = "juggling_ball_detections"
+
+    id                   = Column(UUID(as_uuid=True), primary_key=True,
+                                  default=_uuid_mod.uuid4)
+    contact_event_id     = Column(UUID(as_uuid=True),
+                                  ForeignKey("juggling_contact_events.id",
+                                             ondelete="CASCADE"),
+                                  nullable=False)
+    video_id             = Column(UUID(as_uuid=True),
+                                  ForeignKey("juggling_videos.id",
+                                             ondelete="CASCADE"),
+                                  nullable=False, index=True)
+    detection_source     = Column(String(40), nullable=False)
+    ball_x               = Column(Float, nullable=True)
+    ball_y               = Column(Float, nullable=True)
+    confidence           = Column(Float, nullable=True)
+    world_x_m            = Column(Float, nullable=True)
+    world_y_m            = Column(Float, nullable=True)
+    model_version        = Column(String(60), nullable=True)
+    image_width_px       = Column(Integer, nullable=True)
+    image_height_px      = Column(Integer, nullable=True)
+    no_ball_detected     = Column(Boolean, nullable=False, default=False,
+                                  server_default="false")
+    excluded_from_training = Column(Boolean, nullable=False, default=True,
+                                    server_default="true")
+    created_at           = Column(DateTime(timezone=True), nullable=False,
+                                  default=lambda: datetime.now(timezone.utc))
+    updated_at           = Column(DateTime(timezone=True), nullable=False,
+                                  default=lambda: datetime.now(timezone.utc),
+                                  onupdate=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        UniqueConstraint("contact_event_id",
+                         name="ux_juggling_ball_detections_event"),
+        CheckConstraint(
+            "detection_source IN ('mobilenet_ssd_v2', 'manual')",
+            name="ck_juggling_ball_detections_source",
+        ),
+        CheckConstraint(
+            "confidence IS NULL OR (confidence >= 0.0 AND confidence <= 1.0)",
+            name="ck_juggling_ball_detections_confidence",
+        ),
+        CheckConstraint(
+            "(no_ball_detected = true AND ball_x IS NULL AND ball_y IS NULL) "
+            "OR (no_ball_detected = false AND ball_x IS NOT NULL AND ball_y IS NOT NULL)",
+            name="ck_juggling_ball_detections_coords",
+        ),
+    )
+
+
 class JugglingFileDeletionLog(Base):
     """
     Immutable audit trail for all file deletion and retention scan events.
