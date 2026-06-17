@@ -71,7 +71,8 @@ def upsert_manual_detection(
     if existing:
         # AN-3B2C-1 Opció A: freeze the original automatic coordinates on the
         # FIRST manual override only (auto_ball_x is None signals not yet frozen).
-        if existing.detection_source == "automatic" and existing.auto_ball_x is None:
+        # Any non-manual source is considered "automatic" (future model names included).
+        if existing.detection_source != "manual" and existing.auto_ball_x is None:
             existing.auto_ball_x = existing.ball_x
             existing.auto_ball_y = existing.ball_y
         existing.detection_source  = "manual"

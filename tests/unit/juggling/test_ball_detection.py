@@ -1151,3 +1151,112 @@ def test_bdt_vp03_video_path_prefers_processed(tmp_path):
     video.processed_path = str(processed)
     video.storage_path = "/other/path.mp4"
     assert _video_path(video) == str(processed)
+
+
+# ── BDT-NB-01..BDT-NB-04: no_ball_detected + auto_ball_x/y (AN-3B2C-1) ──────
+
+def test_bdt_nb01_post_no_ball_detected_marks_correctly(
+    client, student_token, _juggling_video,
+):
+    """BDT-NB-01: POST no_ball_detected=True sets the flag and nulls coords."""
+    video, event = _juggling_video
+    r = client.post(
+        f"/api/v1/users/me/juggling/videos/{video.id}/contacts/{event.id}/ball-detection",
+        headers=_auth(student_token),
+        json={"no_ball_detected": True},
+    )
+    assert r.status_code == 201
+    data = r.json()
+    assert data["no_ball_detected"] is True
+    assert data["ball_x"] is None
+    assert data["ball_y"] is None
+    assert data["detection_source"] == "manual"
+    assert data["excluded_from_training"] is True
+
+
+def test_bdt_nb02_post_no_ball_missing_coords_422(
+    client, student_token, _juggling_video,
+):
+    """BDT-NB-02: POST no_ball_detected=False without coords → 422 from validator."""
+    video, event = _juggling_video
+    r = client.post(
+        f"/api/v1/users/me/juggling/videos/{video.id}/contacts/{event.id}/ball-detection",
+        headers=_auth(student_token),
+        json={"no_ball_detected": False},
+    )
+    assert r.status_code == 422
+
+
+def test_bdt_nb03_auto_ball_xy_frozen_on_first_manual_override(
+    db_session, _juggling_video,
+):
+    """BDT-NB-03: auto_ball_x/y are frozen from existing automatic detection on first override."""
+    from app.services.juggling.ball_detection_service import upsert_manual_detection
+    from app.schemas.juggling import BallDetectionManualRequest
+    video, event = _juggling_video
+
+    # Insert a fake automatic detection directly via ORM.
+    auto = JugglingBallDetection(
+        contact_event_id=event.id,
+        video_id=video.id,
+        detection_source="mobilenet_ssd_v1",
+        ball_x=0.30,
+        ball_y=0.70,
+        confidence=0.88,
+        no_ball_detected=False,
+        excluded_from_training=False,
+        auto_ball_x=None,
+        auto_ball_y=None,
+    )
+    db_session.add(auto)
+    db_session.commit()
+
+    # First manual override should freeze auto coords.
+    req = BallDetectionManualRequest(ball_x=0.50, ball_y=0.60, no_ball_detected=False)
+    result, created = upsert_manual_detection(
+        str(video.id), str(event.id), video.user_id, req, db_session
+    )
+    assert created is False
+    assert result.auto_ball_x == pytest.approx(0.30)
+    assert result.auto_ball_y == pytest.approx(0.70)
+    assert result.ball_x == pytest.approx(0.50)
+    assert result.ball_y == pytest.approx(0.60)
+    assert result.detection_source == "manual"
+
+
+def test_bdt_nb04_auto_ball_xy_not_overwritten_on_second_manual_override(
+    db_session, _juggling_video,
+):
+    """BDT-NB-04: Second manual correction must not overwrite the frozen auto coords."""
+    from app.services.juggling.ball_detection_service import upsert_manual_detection
+    from app.schemas.juggling import BallDetectionManualRequest
+    video, event = _juggling_video
+
+    # Insert a fake automatic detection, then apply first manual override.
+    auto = JugglingBallDetection(
+        contact_event_id=event.id,
+        video_id=video.id,
+        detection_source="mobilenet_ssd_v1",
+        ball_x=0.10,
+        ball_y=0.20,
+        confidence=0.75,
+        no_ball_detected=False,
+        excluded_from_training=False,
+        auto_ball_x=None,
+        auto_ball_y=None,
+    )
+    db_session.add(auto)
+    db_session.commit()
+
+    req1 = BallDetectionManualRequest(ball_x=0.40, ball_y=0.50, no_ball_detected=False)
+    upsert_manual_detection(str(video.id), str(event.id), video.user_id, req1, db_session)
+
+    # Second manual correction: auto_ball_x/y must stay as set by first override.
+    req2 = BallDetectionManualRequest(ball_x=0.60, ball_y=0.70, no_ball_detected=False)
+    result, _ = upsert_manual_detection(
+        str(video.id), str(event.id), video.user_id, req2, db_session
+    )
+    assert result.auto_ball_x == pytest.approx(0.10)  # unchanged from first freeze
+    assert result.auto_ball_y == pytest.approx(0.20)
+    assert result.ball_x == pytest.approx(0.60)       # latest correction
+    assert result.ball_y == pytest.approx(0.70)
