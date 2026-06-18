@@ -38,6 +38,7 @@ from sqlalchemy import (
     SmallInteger,
     String,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
@@ -285,6 +286,12 @@ class JugglingVideo(Base):
     user_rotation_degrees = Column(
         SmallInteger, nullable=False, default=0, server_default="0",
         comment="User display rotation override (0/90/180/270). Not a transcode parameter.",
+    )
+
+    # ── Dense ball trajectory lifecycle (AN-3B2D-1) ────────────────────────
+    ball_trajectory_status = Column(
+        String(20), nullable=True, default=None,
+        comment="pending / processing / complete / failed — dense ball tracking lifecycle",
     )
 
     # ── Timestamps ───────────────────────────────────────────────────────────
@@ -581,6 +588,50 @@ class JugglingBallDetection(Base):
     )
 
 
+class JugglingBallTrajectory(Base):
+    """
+    Dense ball trajectory point — one row per (video, frame_ms).
+
+    Populated by dense_ball_trajectory_task at 10 FPS (100ms intervals).
+    tracking_state: detected (ONNX hit), predicted (Kalman extrapolation),
+    lost (too many misses), manual_seed (user-placed).
+    """
+    __tablename__ = "juggling_ball_trajectories"
+
+    id              = Column(UUID(as_uuid=True), primary_key=True,
+                             server_default=text("gen_random_uuid()"))
+    video_id        = Column(UUID(as_uuid=True),
+                             ForeignKey("juggling_videos.id", ondelete="CASCADE"),
+                             nullable=False)
+    frame_ms        = Column(Integer, nullable=False)
+    ball_x          = Column(Float, nullable=True)
+    ball_y          = Column(Float, nullable=True)
+    confidence      = Column(Float, nullable=True)
+    is_manual       = Column(Boolean, nullable=False, default=False,
+                             server_default="false")
+    tracking_state  = Column(String(20), nullable=False, default="detected",
+                             server_default=text("'detected'"))
+    model_version   = Column(String(60), nullable=True)
+    image_width_px  = Column(Integer, nullable=True)
+    image_height_px = Column(Integer, nullable=True)
+    created_at      = Column(DateTime(timezone=True), nullable=False,
+                             server_default=text("now()"))
+
+    __table_args__ = (
+        UniqueConstraint("video_id", "frame_ms",
+                         name="ux_ball_traj_video_frame"),
+        CheckConstraint(
+            "tracking_state IN ('detected', 'predicted', 'lost', 'manual_seed')",
+            name="ck_ball_traj_tracking_state",
+        ),
+        CheckConstraint(
+            "(tracking_state = 'lost' AND ball_x IS NULL AND ball_y IS NULL) "
+            "OR (tracking_state != 'lost' AND ball_x IS NOT NULL AND ball_y IS NOT NULL)",
+            name="ck_ball_traj_coords_state",
+        ),
+    )
+
+
 class JugglingFileDeletionLog(Base):
     """
     Immutable audit trail for all file deletion and retention scan events.
@@ -631,3 +682,146 @@ from sqlalchemy import event as _sa_event  # noqa: E402
 def _freeze_auto_confidence_on_insert(mapper, connection, target):  # noqa: ANN001
     if target.detection_source != "manual" and target.auto_confidence is None:
         target.auto_confidence = target.confidence
+
+
+# ── AN-3B2D-B0: User-assisted ball model training ─────────────────────────────
+
+
+class BallFeedbackDecision(str, enum.Enum):
+    confirm   = "confirm"
+    reject    = "reject"
+    no_ball   = "no_ball"
+    corrected = "corrected"
+
+
+class BallFeedbackApprovalState(str, enum.Enum):
+    pending      = "pending"
+    approved     = "approved"
+    needs_review = "needs_review"
+    rejected     = "rejected"
+    spam         = "spam"
+
+
+class JugglingBallFeedback(Base):
+    """Per-user per-frame ball detection feedback. One row per (user, video, frame_ms)."""
+
+    __tablename__ = "juggling_ball_feedback"
+
+    id                    = Column(UUID(as_uuid=True), primary_key=True,
+                                   default=_uuid_mod.uuid4)
+    video_id              = Column(UUID(as_uuid=True),
+                                   ForeignKey("juggling_videos.id", ondelete="CASCADE"),
+                                   nullable=False, index=True)
+    frame_ms              = Column(Integer, nullable=False)
+    trajectory_point_id   = Column(UUID(as_uuid=True),
+                                   ForeignKey("juggling_ball_trajectories.id",
+                                              ondelete="SET NULL"),
+                                   nullable=True)
+    user_id               = Column(Integer,
+                                   ForeignKey("users.id", ondelete="CASCADE"),
+                                   nullable=False, index=True)
+    # Decision
+    decision              = Column(String(20), nullable=False)
+    corrected_x           = Column(Float, nullable=True)
+    corrected_y           = Column(Float, nullable=True)
+    correction_method     = Column(String(20), nullable=True)
+    # Model context snapshot at submit time
+    model_predicted_x     = Column(Float, nullable=True)
+    model_predicted_y     = Column(Float, nullable=True)
+    model_confidence      = Column(Float, nullable=True)
+    model_tracking_state  = Column(String(20), nullable=True)
+    # Reliability (score at submit; not updated in B0)
+    user_reliability_at_submit  = Column(Float, nullable=True, default=0.5)
+    weighted_vote_contribution  = Column(Float, nullable=True)
+    # State
+    approval_state    = Column(String(20), nullable=False, default="pending")
+    is_gold_standard  = Column(Boolean, nullable=False, default=False)
+    is_control_sample = Column(Boolean, nullable=False, default=False)
+    spam_flags        = Column(JSONB, nullable=False, default=list)
+    # Timestamps
+    created_at          = Column(DateTime(timezone=True), nullable=False,
+                                 default=lambda: datetime.now(timezone.utc))
+    reviewed_at         = Column(DateTime(timezone=True), nullable=True)
+    reviewed_by_user_id = Column(Integer,
+                                  ForeignKey("users.id", ondelete="SET NULL"),
+                                  nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "video_id", "frame_ms",
+                         name="uq_ball_feedback_user_video_frame"),
+        CheckConstraint(
+            "decision IN ('confirm','reject','no_ball','corrected')",
+            name="ck_ball_feedback_decision",
+        ),
+        CheckConstraint(
+            "decision != 'corrected' OR "
+            "(corrected_x IS NOT NULL AND corrected_y IS NOT NULL)",
+            name="ck_ball_feedback_corrected_coords",
+        ),
+    )
+
+
+class FrameGroundTruthDecision(str, enum.Enum):
+    ball_present = "ball_present"
+    no_ball      = "no_ball"
+    uncertain    = "uncertain"
+
+
+class JugglingFrameGroundTruth(Base):
+    """Aggregated majority-vote ground truth per (video, frame_ms). Populated by B2+."""
+
+    __tablename__ = "juggling_frame_ground_truth"
+
+    id       = Column(UUID(as_uuid=True), primary_key=True, default=_uuid_mod.uuid4)
+    video_id = Column(UUID(as_uuid=True),
+                      ForeignKey("juggling_videos.id", ondelete="CASCADE"),
+                      nullable=False)
+    frame_ms = Column(Integer, nullable=False)
+    # Ground truth (populated B2)
+    gt_decision    = Column(String(20), nullable=False, default="uncertain")
+    gt_x           = Column(Float, nullable=True)
+    gt_y           = Column(Float, nullable=True)
+    gt_bbox_width  = Column(Float, nullable=True)
+    gt_bbox_height = Column(Float, nullable=True)
+    # Vote aggregates (populated B2)
+    confidence_score = Column(Float,   nullable=False, default=0.0)
+    agreement_rate   = Column(Float,   nullable=False, default=0.0)
+    vote_count       = Column(Integer, nullable=False, default=0)
+    yes_votes        = Column(Integer, nullable=False, default=0)
+    no_votes         = Column(Integer, nullable=False, default=0)
+    no_ball_votes    = Column(Integer, nullable=False, default=0)
+    correction_count = Column(Integer, nullable=False, default=0)
+    # Training eligibility (never True in B0)
+    training_eligible = Column(Boolean,              nullable=False, default=False)
+    dataset_version   = Column(String(20),           nullable=True)
+    exported_at       = Column(DateTime(timezone=True), nullable=True)
+    # Metadata
+    is_gold_standard = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), nullable=False,
+                        default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False,
+                        default=lambda: datetime.now(timezone.utc),
+                        onupdate=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        UniqueConstraint("video_id", "frame_ms",
+                         name="uq_frame_ground_truth_video_frame"),
+    )
+
+
+class UserAnnotationReliability(Base):
+    """Per-user annotation quality tracking. Populated by B2+."""
+
+    __tablename__ = "user_annotation_reliability"
+
+    user_id = Column(Integer,
+                     ForeignKey("users.id", ondelete="CASCADE"),
+                     primary_key=True)
+    ball_annotation_reliability = Column(Float,   nullable=False, default=0.5)
+    total_feedbacks             = Column(Integer, nullable=False, default=0)
+    correct_feedbacks           = Column(Integer, nullable=False, default=0)
+    gold_attempts               = Column(Integer, nullable=False, default=0)
+    gold_correct                = Column(Integer, nullable=False, default=0)
+    spam_flags_count            = Column(Integer, nullable=False, default=0)
+    last_updated = Column(DateTime(timezone=True), nullable=False,
+                          default=lambda: datetime.now(timezone.utc))

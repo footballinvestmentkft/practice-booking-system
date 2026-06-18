@@ -294,7 +294,7 @@ class TestS109S110RouteAndSnapshot:
         """S1-09 (updated Phase 2A): route count is 901 (+3 Phase 2A pose/rotation endpoints)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 903, (
+        assert len(paths) == 907, (
             f"Expected 901 routes (898 prior + 3 Phase 2A pose/rotation endpoints), got {len(paths)}"
         )
 

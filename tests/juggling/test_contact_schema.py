@@ -473,9 +473,9 @@ def test_cm19_production_route_count_unchanged():
     """CM-19: Route count tracks cumulative endpoint additions."""
     from app.main import app
     routes = [r for r in app.routes if hasattr(r, "methods")]
-    assert len(routes) == 1024, (
-        f"Route count changed: expected 1024, got {len(routes)}. "
-        "AN-3B2B added 3 ball detection endpoints (2 user + 1 admin)."
+    assert len(routes) == 1028, (
+        f"Route count changed: expected 1028, got {len(routes)}. "
+        "AN-3B2D-B0 added 2 ball feedback endpoints (POST + GET queue)."
     )
 
 

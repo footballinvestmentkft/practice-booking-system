@@ -2359,6 +2359,393 @@
         "title": "BallDetectionTriggerResult",
         "type": "object"
       },
+      "BallFeedbackOut": {
+        "properties": {
+          "approval_state": {
+            "title": "Approval State",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "frame_ms": {
+            "title": "Frame Ms",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "video_id": {
+            "format": "uuid",
+            "title": "Video Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "video_id",
+          "frame_ms",
+          "decision",
+          "approval_state",
+          "created_at"
+        ],
+        "title": "BallFeedbackOut",
+        "type": "object"
+      },
+      "BallFeedbackQueueItem": {
+        "properties": {
+          "existing_feedback_count": {
+            "title": "Existing Feedback Count",
+            "type": "integer"
+          },
+          "frame_ms": {
+            "title": "Frame Ms",
+            "type": "integer"
+          },
+          "model_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Confidence"
+          },
+          "model_predicted_x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Predicted X"
+          },
+          "model_predicted_y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Predicted Y"
+          },
+          "model_tracking_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Tracking State"
+          },
+          "priority_score": {
+            "title": "Priority Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "frame_ms",
+          "priority_score",
+          "model_predicted_x",
+          "model_predicted_y",
+          "model_confidence",
+          "model_tracking_state",
+          "existing_feedback_count"
+        ],
+        "title": "BallFeedbackQueueItem",
+        "type": "object"
+      },
+      "BallFeedbackQueueResponse": {
+        "properties": {
+          "max_per_session": {
+            "default": 3,
+            "title": "Max Per Session",
+            "type": "integer"
+          },
+          "queue_items": {
+            "items": {
+              "$ref": "#/components/schemas/BallFeedbackQueueItem"
+            },
+            "title": "Queue Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "video_id": {
+            "title": "Video Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "video_id",
+          "queue_items",
+          "total"
+        ],
+        "title": "BallFeedbackQueueResponse",
+        "type": "object"
+      },
+      "BallFeedbackRequest": {
+        "properties": {
+          "corrected_x": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected X"
+          },
+          "corrected_y": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected Y"
+          },
+          "correction_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correction Method"
+          },
+          "decision": {
+            "description": "confirm | reject | no_ball | corrected",
+            "title": "Decision",
+            "type": "string"
+          },
+          "frame_ms": {
+            "minimum": 0.0,
+            "title": "Frame Ms",
+            "type": "integer"
+          },
+          "model_confidence": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Confidence"
+          },
+          "model_predicted_x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Predicted X"
+          },
+          "model_predicted_y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Predicted Y"
+          },
+          "model_tracking_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Tracking State"
+          }
+        },
+        "required": [
+          "frame_ms",
+          "decision"
+        ],
+        "title": "BallFeedbackRequest",
+        "type": "object"
+      },
+      "BallTrajectoryManualSeedOut": {
+        "properties": {
+          "ball_x": {
+            "title": "Ball X",
+            "type": "number"
+          },
+          "ball_y": {
+            "title": "Ball Y",
+            "type": "number"
+          },
+          "frame_ms": {
+            "title": "Frame Ms",
+            "type": "integer"
+          },
+          "is_manual": {
+            "title": "Is Manual",
+            "type": "boolean"
+          },
+          "tracking_state": {
+            "title": "Tracking State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "frame_ms",
+          "ball_x",
+          "ball_y",
+          "tracking_state",
+          "is_manual"
+        ],
+        "title": "BallTrajectoryManualSeedOut",
+        "type": "object"
+      },
+      "BallTrajectoryManualSeedRequest": {
+        "properties": {
+          "ball_x": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Ball X",
+            "type": "number"
+          },
+          "ball_y": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Ball Y",
+            "type": "number"
+          },
+          "frame_ms": {
+            "minimum": 0.0,
+            "title": "Frame Ms",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "frame_ms",
+          "ball_x",
+          "ball_y"
+        ],
+        "title": "BallTrajectoryManualSeedRequest",
+        "type": "object"
+      },
+      "BallTrajectoryPointOut": {
+        "properties": {
+          "ball_x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ball X"
+          },
+          "ball_y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ball Y"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "frame_ms": {
+            "title": "Frame Ms",
+            "type": "integer"
+          },
+          "is_manual": {
+            "title": "Is Manual",
+            "type": "boolean"
+          },
+          "tracking_state": {
+            "title": "Tracking State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "frame_ms",
+          "ball_x",
+          "ball_y",
+          "confidence",
+          "is_manual",
+          "tracking_state"
+        ],
+        "title": "BallTrajectoryPointOut",
+        "type": "object"
+      },
+      "BallTrajectoryResponse": {
+        "properties": {
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/BallTrajectoryPointOut"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "points"
+        ],
+        "title": "BallTrajectoryResponse",
+        "type": "object"
+      },
       "BatchCreatePlayersRequest": {
         "properties": {
           "players": {
@@ -62900,6 +63287,260 @@
           }
         ],
         "summary": "Delete juggling video media (storage release)",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ]
+      }
+    },
+    "/api/v1/users/me/juggling/videos/{video_id}/ball-feedback": {
+      "post": {
+        "operationId": "post_ball_feedback_api_v1_users_me_juggling_videos__video_id__ball_feedback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BallFeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BallFeedbackOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Submit ball detection feedback for a trajectory frame",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ]
+      }
+    },
+    "/api/v1/users/me/juggling/videos/{video_id}/ball-feedback/queue": {
+      "get": {
+        "operationId": "get_feedback_queue_api_v1_users_me_juggling_videos__video_id__ball_feedback_queue_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "title": "Video Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BallFeedbackQueueResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get prioritized feedback queue for a video",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ]
+      }
+    },
+    "/api/v1/users/me/juggling/videos/{video_id}/ball-trajectory": {
+      "get": {
+        "operationId": "get_ball_trajectory_api_v1_users_me_juggling_videos__video_id__ball_trajectory_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "title": "Video Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from_ms",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "From Ms",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to_ms",
+            "required": false,
+            "schema": {
+              "default": 60000,
+              "minimum": 0,
+              "title": "To Ms",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BallTrajectoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get dense ball trajectory window",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ]
+      }
+    },
+    "/api/v1/users/me/juggling/videos/{video_id}/ball-trajectory/manual-seed": {
+      "post": {
+        "operationId": "post_manual_seed_api_v1_users_me_juggling_videos__video_id__ball_trajectory_manual_seed_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BallTrajectoryManualSeedRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BallTrajectoryManualSeedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Manual ball position seed",
         "tags": [
           "users",
           "users",
