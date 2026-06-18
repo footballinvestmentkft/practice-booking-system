@@ -1061,6 +1061,23 @@ final class JugglingAnnotationViewModel: ObservableObject {
         }
     }
 
+    // Fetch ball detections for all synced events visible on the main annotation screen.
+    // Called from JugglingAnnotationScreen.onAppear() and onChange(of: activeEvents) so
+    // timeline badges populate without requiring the user to open EventLabelDetailView first.
+    // Sequential — avoids spawning multiple competing polling tasks.
+    // Exits early if the feature flag is disabled (first .featureDisabled response is global).
+    func bulkFetchBallDetections() async {
+        for draft in activeEvents {
+            guard let serverEventId = draft.serverEventId else { continue }
+            switch ballDetections[serverEventId] {
+            case .loaded, .featureDisabled: continue
+            default: break
+            }
+            await fetchBallDetection(videoId: videoId, eventId: serverEventId)
+            if case .featureDisabled = ballDetections[serverEventId] { return }
+        }
+    }
+
     private let ballDetectionMaxPollingAttempts:    Int    = 5
     private let ballDetectionPollingIntervalSeconds: Double = 30.0
 }

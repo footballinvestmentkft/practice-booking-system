@@ -147,6 +147,52 @@ final class BallDetectionVMTests: XCTestCase {
             try await vm.markNoBall(videoId: "vid-bd-test", eventId: eventId)
         )
     }
+
+    // BD-VM-11: bulkFetchBallDetections with mock client is a safe no-op.
+    // With MockAnnotationAPIClient, fetchBallDetection exits early (guard cast fails)
+    // and ballDetections stays empty — same as individual fetchBallDetection calls.
+    func test_BD_VM_11_bulkFetchBallDetectionsWithMockIsNoOp() async {
+        let vm = makeViewModel()
+        await vm.onAppear()
+        await vm.bulkFetchBallDetections()
+        XCTAssertTrue(vm.ballDetections.isEmpty,
+                      "bulkFetchBallDetections must be a no-op with a mock client — guard cast fails")
+    }
+
+    // BD-VM-12: bulkFetchBallDetections skips drafts without serverEventId.
+    // A .localOnly draft (never synced) has serverEventId == nil;
+    // bulkFetchBallDetections must ignore it and leave ballDetections empty.
+    func test_BD_VM_12_bulkFetchSkipsEventsWithoutServerEventId() async {
+        let vm = makeViewModel()
+        await vm.onAppear()
+        let created = vm.addEvent(
+            timestampMs: 1000, contactType: "right_instep",
+            side: "right", annotationConfidence: "certain"
+        )
+        XCTAssertNotNil(created, "addEvent must succeed")
+        await vm.bulkFetchBallDetections()
+        XCTAssertTrue(vm.ballDetections.isEmpty,
+                      "Draft without serverEventId must be skipped by bulkFetchBallDetections")
+    }
+
+    // BD-VM-13: bulkFetchBallDetections is idempotent — multiple calls are safe.
+    func test_BD_VM_13_bulkFetchIsIdempotent() async {
+        let vm = makeViewModel()
+        await vm.onAppear()
+        await vm.bulkFetchBallDetections()
+        await vm.bulkFetchBallDetections()
+        await vm.bulkFetchBallDetections()
+        XCTAssertTrue(vm.ballDetections.isEmpty,
+                      "Repeated bulkFetchBallDetections calls must remain safe with a mock client")
+    }
+
+    // BD-VM-14: bulkFetchBallDetections on an empty session is safe.
+    func test_BD_VM_14_bulkFetchOnEmptySessionIsNoOp() async {
+        let vm = makeViewModel()
+        // Session not loaded (no onAppear) — activeEvents is empty.
+        await vm.bulkFetchBallDetections()
+        XCTAssertTrue(vm.ballDetections.isEmpty)
+    }
 }
 
 // MARK: — Async XCTest helper

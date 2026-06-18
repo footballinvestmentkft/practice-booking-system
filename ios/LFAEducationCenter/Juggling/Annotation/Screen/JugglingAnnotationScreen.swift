@@ -58,6 +58,10 @@ struct JugglingAnnotationScreen: View {
     @State private var showSkeletonOverlay   = false
     // AN-3B2D-2: continuous skeleton extraction (separate ViewModel)
     @StateObject private var denseSkeletonVM: DenseSkeletonViewModel
+    // AN-3B2C-1: ball detection overlay on main video (event-level granularity, ±500ms window)
+    @State private var showBallOverlay        = false
+    @State private var isBallSelecting        = false
+    @State private var ballSelectionDragPoint: CGPoint? = nil
 
     // Phase 2A patch: retroactive pose generation for pre-existing events.
     // isGeneratingPoses gates the banner spinner; poseGenProgress drives the
@@ -222,7 +226,10 @@ struct JugglingAnnotationScreen: View {
             // fires in a detached Task so it does not block the dismiss animation.
             .sheet(isPresented: $showLabeling, onDismiss: {
                 vm.exitLabelingMode()
-                Task { await vm.flushPending() }
+                Task {
+                    await vm.flushPending()
+                    await vm.bulkFetchBallDetections()
+                }
             }) {
                 LabelingOverviewView(
                     vm:       vm,
@@ -268,6 +275,7 @@ struct JugglingAnnotationScreen: View {
                         poseSnapshots = await vm.fetchPoseSnapshots()
                     }
                 }
+                Task { await vm.bulkFetchBallDetections() }
             }
             #if DEBUG
             .onChange(of: scenePhase) { newPhase in
@@ -347,6 +355,35 @@ struct JugglingAnnotationScreen: View {
                     }
                 }
 
+                // Ball detection overlay — three states:
+                //   1. isBallSelecting: interactive crosshair + tap-to-mark gesture
+                //   2. auto detection found: read-only BallVideoOverlayView
+                //   3. no detection: status banner with "Megjelölöm" correction button
+                if showBallOverlay {
+                    if isBallSelecting {
+                        ballSelectionOverlay
+                            .frame(width: renderSize.width, height: renderSize.height)
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { v in ballSelectionDragPoint = v.location }
+                                    .onEnded { v in
+                                        let np = CGPoint(
+                                            x: v.location.x / renderSize.width,
+                                            y: v.location.y / renderSize.height
+                                        )
+                                        handleBallSelection(normalizedPoint: np)
+                                    }
+                            )
+                    } else if let bd = closestBallDetection(toMs: playback.currentTimestampMs) {
+                        BallVideoOverlayView(detection: bd)
+                            .frame(width: renderSize.width, height: renderSize.height)
+                    } else {
+                        ballOverlayStatusBanner
+                            .frame(width: renderSize.width, height: renderSize.height)
+                    }
+                }
+
                 // Dense skeleton progress banner
                 if denseSkeletonVM.progress > 0, denseSkeletonVM.progress < 1.0 {
                     VStack {
@@ -369,29 +406,29 @@ struct JugglingAnnotationScreen: View {
                     .allowsHitTesting(false)
                 }
 
-                if !poseSnapshots.isEmpty || denseSkeletonVM.frameCount > 0 {
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Button {
-                                showSkeletonOverlay.toggle()
-                            } label: {
-                                Image(systemName: showSkeletonOverlay
-                                      ? "figure.walk.circle.fill"
-                                      : "figure.walk.circle")
-                                    .font(.title3)
-                                    .foregroundColor(.white)
-                                    .padding(8)
-                                    .background(Color.black.opacity(0.45))
-                                    .clipShape(Circle())
-                            }
-                            .padding(8)
-                            .accessibilityLabel(showSkeletonOverlay
-                                                ? "Csontváz elrejtése"
-                                                : "Csontváz megjelenítése")
-                        }
+                // Overlay toggle controls — skeleton + ball
+                VStack {
+                    HStack {
                         Spacer()
+                        HStack(spacing: 4) {
+                            overlayToggleButton(
+                                icon:        showBallOverlay ? "viewfinder.circle.fill" : "viewfinder.circle",
+                                isOn:        showBallOverlay,
+                                accessLabel: showBallOverlay ? "Labda overlay elrejtése" : "Labda overlay megjelenítése"
+                            ) {
+                                showBallOverlay.toggle()
+                                if !showBallOverlay { isBallSelecting = false; ballSelectionDragPoint = nil }
+                            }
+
+                            overlayToggleButton(
+                                icon:        showSkeletonOverlay ? "figure.walk.circle.fill" : "figure.walk.circle",
+                                isOn:        showSkeletonOverlay,
+                                accessLabel: showSkeletonOverlay ? "Csontváz elrejtése" : "Csontváz megjelenítése"
+                            ) { showSkeletonOverlay.toggle() }
+                        }
+                        .padding(8)
                     }
+                    Spacer()
                 }
             } else {
                 loaderPlaceholder
@@ -725,6 +762,7 @@ struct JugglingAnnotationScreen: View {
     private func onAppear() async {
         await vm.onAppear()
         await loader.load(videoId: video.videoId, userId: vm.userId)
+        await vm.bulkFetchBallDetections()
     }
 
     private func onDisappear() {
@@ -876,6 +914,185 @@ struct JugglingAnnotationScreen: View {
         guard !poseSnapshots.isEmpty else { return nil }
         let best = poseSnapshots.min(by: { abs($0.timestampMs - ms) < abs($1.timestampMs - ms) })!
         return abs(best.timestampMs - ms) <= 500 ? best : nil
+    }
+
+    private func closestBallDetection(toMs ms: Int) -> BallDetectionOut? {
+        vm.activeEvents
+            .compactMap { draft -> (distance: Int, detection: BallDetectionOut)? in
+                guard let serverId = draft.serverEventId,
+                      case .loaded(let d) = vm.ballDetections[serverId],
+                      !d.noBallDetected,
+                      d.ballX != nil, d.ballY != nil else { return nil }
+                let dist = abs(draft.timestampMs - ms)
+                guard dist <= 500 else { return nil }
+                return (dist, d)
+            }
+            .min(by: { $0.distance < $1.distance })
+            .map(\.detection)
+    }
+
+    @ViewBuilder
+    private func overlayToggleButton(
+        icon:        String,
+        isOn:        Bool,
+        accessLabel: String,
+        action:      @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.white)
+                .padding(8)
+                .background(Color.black.opacity(isOn ? 0.65 : 0.45))
+                .clipShape(Circle())
+        }
+        .accessibilityLabel(accessLabel)
+    }
+
+    // MARK: — Skeleton status helpers (AN-3B2C-2)
+
+    static func skeletonStatusText(snapshotsEmpty: Bool, hasNearby: Bool) -> String {
+        if snapshotsEmpty { return "Nincs skeleton adat ehhez a videóhoz" }
+        if !hasNearby     { return "Nincs skeleton adat ehhez az időponthoz" }
+        return ""
+    }
+
+    private var skeletonStatusBanner: some View {
+        let text = JugglingAnnotationScreen.skeletonStatusText(
+            snapshotsEmpty: poseSnapshots.isEmpty,
+            hasNearby:      closestSnapshot(toMs: playback.currentTimestampMs) != nil
+        )
+        return VStack {
+            Spacer()
+            Text(text)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white.opacity(0.85))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color.black.opacity(0.60))
+                .cornerRadius(6)
+                .padding(.bottom, 60)
+        }
+        .allowsHitTesting(false)
+    }
+
+    // MARK: — Ball overlay helpers (AN-3B2C-1)
+
+    private var ballOverlayStatusBanner: some View {
+        VStack {
+            Spacer()
+            VStack(spacing: 8) {
+                Text(ballOverlayStatusText)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white.opacity(0.85))
+                if nearestEventForBallSelection() != nil {
+                    Button("Megjelölöm") { isBallSelecting = true }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color.black)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 7)
+                        .background(Color.yellow)
+                        .cornerRadius(8)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(Color.black.opacity(0.62))
+            .cornerRadius(10)
+            .padding(.bottom, 10)
+        }
+        .allowsHitTesting(true)
+    }
+
+    private var ballOverlayStatusText: String {
+        if vm.activeEvents.isEmpty {
+            return "Rögzíts kontakt eseményt a labda jelöléséhez"
+        }
+        let syncedCount = vm.activeEvents.filter { $0.serverEventId != nil }.count
+        if syncedCount == 0 {
+            return "Labda detektálás szinkronizálás után lesz elérhető"
+        }
+        if vm.ballDetections.isEmpty {
+            return "Labda detektálás betöltés alatt…"
+        }
+        let hasFetching = vm.ballDetections.values.contains {
+            if case .fetching = $0 { return true }; return false
+        }
+        if hasFetching { return "Labda detektálás betöltés alatt…" }
+        let hasFeatureDisabled = vm.ballDetections.values.contains {
+            if case .featureDisabled = $0 { return true }; return false
+        }
+        if hasFeatureDisabled { return "Labda detektálás nem elérhető" }
+        if nearestEventForBallSelection() == nil { return "Nincs esemény ±2s ablakban" }
+        return "Nincs auto-detektálás — jelöld meg manuálisan"
+    }
+
+    @ViewBuilder
+    private var ballSelectionOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.01)
+            if let pt = ballSelectionDragPoint {
+                ZStack {
+                    Circle()
+                        .strokeBorder(Color.yellow, lineWidth: 2.5)
+                        .frame(width: 36, height: 36)
+                    Circle()
+                        .fill(Color.yellow.opacity(0.18))
+                        .frame(width: 36, height: 36)
+                }
+                .position(pt)
+                .allowsHitTesting(false)
+            }
+            VStack {
+                Text("Koppints a labda helyére")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.black.opacity(0.68))
+                    .cornerRadius(7)
+                    .padding(.top, 10)
+                Spacer()
+                Button("Mégsem") {
+                    isBallSelecting = false
+                    ballSelectionDragPoint = nil
+                }
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 7)
+                .background(Color.black.opacity(0.55))
+                .cornerRadius(8)
+                .padding(.bottom, 10)
+            }
+        }
+        .allowsHitTesting(true)
+    }
+
+    private func nearestEventForBallSelection() -> ContactEventDraft? {
+        let ms = playback.currentTimestampMs
+        guard let nearest = vm.activeEvents
+            .filter({ $0.serverEventId != nil })
+            .min(by: { abs($0.timestampMs - ms) < abs($1.timestampMs - ms) }),
+              abs(nearest.timestampMs - ms) <= 2000
+        else { return nil }
+        return nearest
+    }
+
+    private func handleBallSelection(normalizedPoint np: CGPoint) {
+        guard let draft = nearestEventForBallSelection(),
+              let serverId = draft.serverEventId else {
+            isBallSelecting = false
+            ballSelectionDragPoint = nil
+            return
+        }
+        isBallSelecting = false
+        ballSelectionDragPoint = nil
+        let x = Double(min(max(np.x, 0), 1))
+        let y = Double(min(max(np.y, 0), 1))
+        Task {
+            try? await vm.postManualBallPosition(videoId: vm.videoId, eventId: serverId, x: x, y: y)
+        }
     }
 
     private func typeLabel(for key: String?) -> String {
