@@ -10,7 +10,7 @@
 # =============================================================================
 
 .DEFAULT_GOAL := help
-.PHONY: help web worker-mood worker-juggling worker-all \
+.PHONY: help web worker-mood worker-juggling worker-ball-feedback worker-all \
         recover-mood recover-mood-execute \
         recover-juggling recover-juggling-execute \
         migrate test-unit test-cc docker-up docker-down \
@@ -33,7 +33,8 @@ help:
 	@echo "    make web                  Start FastAPI dev server (port 8000)"
 	@echo "    make worker-mood          Start mood photo background removal worker"
 	@echo "    make worker-juggling      Start juggling video transcode + analyze worker"
-	@echo "    make worker-all           Start worker for ALL queues"
+	@echo "    make worker-ball-feedback Start ball feedback consensus worker (AN-3B2B2)"
+	@echo "    make worker-all           Start worker for ALL queues (incl. ball_feedback)"
 	@echo ""
 	@echo "  Recovery:"
 	@echo "    make recover-mood             Dry-run: show stuck processing mood photos"
@@ -80,10 +81,18 @@ worker-juggling:
 		--concurrency=1 \
 		--loglevel=info
 
-worker-all:
-	@echo "Starting Celery worker for ALL queues..."
+worker-ball-feedback:
+	@echo "Starting ball_feedback Celery worker (AN-3B2B2 consensus + auto-approve)..."
 	celery -A app.celery_app worker \
-		-Q mood_photos,tournaments,juggling_videos,juggling_retention,default \
+		-Q ball_feedback \
+		--pool=solo \
+		--concurrency=1 \
+		--loglevel=info
+
+worker-all:
+	@echo "Starting Celery worker for ALL queues (incl. ball_feedback)..."
+	celery -A app.celery_app worker \
+		-Q mood_photos,tournaments,juggling_videos,juggling_retention,ball_feedback,default \
 		--pool=prefork \
 		--concurrency=2 \
 		--loglevel=info

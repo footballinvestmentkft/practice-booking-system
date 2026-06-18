@@ -29338,7 +29338,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BallFeedbackOut"
+                  "$ref": "#/components/schemas/BallFeedbackAdminItem"
                 }
               }
             }
@@ -49619,6 +49619,17 @@
               }
             ],
             "title": "Reviewed At"
+          },
+          "reviewed_by_user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By User Id"
           }
         },
         "type": "object",

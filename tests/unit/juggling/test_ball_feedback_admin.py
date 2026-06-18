@@ -251,6 +251,8 @@ def test_BFA_05_patch_approve(client, admin_token, db_session, admin_user):
     assert resp.status_code == 200
     data = resp.json()
     assert data["approval_state"] == "approved"
+    assert data["reviewed_at"] is not None, "PATCH response must include reviewed_at (BallFeedbackAdminItem)"
+    assert data["reviewed_by_user_id"] == admin_user.id, "PATCH response must include reviewer admin ID"
 
     db_session.refresh(fb)
     assert fb.reviewed_at is not None
@@ -270,7 +272,10 @@ def test_BFA_06_patch_reject(client, admin_token, db_session, admin_user):
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert resp.status_code == 200
-    assert resp.json()["approval_state"] == "rejected"
+    data = resp.json()
+    assert data["approval_state"] == "rejected"
+    assert data["reviewed_at"] is not None, "PATCH response must include reviewed_at (BallFeedbackAdminItem)"
+    assert data["reviewed_by_user_id"] == admin_user.id, "PATCH response must include reviewer admin ID"
     db_session.refresh(fb)
     assert fb.reviewed_at is not None
 
@@ -308,6 +313,32 @@ def test_BFA_08_double_approve_returns_409(client, admin_token, db_session, admi
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert resp.status_code == 409
+
+
+def test_BFA_09_queue_item_reviewed_by_is_null_for_pending(client, admin_token, db_session, admin_user):
+    """GET review-queue pending items have reviewed_by_user_id=null (not yet reviewed).
+
+    Also serves as backwards-compat check: reviewed_by_user_id is Optional[int]=None,
+    so existing clients that ignore unknown fields or receive null are unaffected.
+    """
+    video = _make_video(db_session, admin_user)
+    _make_feedback(db_session, video.id, admin_user.id, 1000, approval_state="needs_review")
+    db_session.commit()
+
+    resp = client.get(
+        "/api/v1/admin/juggling/ball-feedback/review-queue",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total"] == 1
+    item = data["items"][0]
+    assert item["reviewed_by_user_id"] is None, (
+        "Pending queue items must have reviewed_by_user_id=null before any admin action"
+    )
+    assert "reviewed_by_user_id" in item, (
+        "reviewed_by_user_id must be present in queue response (Optional field, null default)"
+    )
 
 
 # ── BFX: Export tests ──────────────────────────────────────────────────────────

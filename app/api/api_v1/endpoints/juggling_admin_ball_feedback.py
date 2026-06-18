@@ -32,7 +32,6 @@ from app.models.user import User
 from app.schemas.juggling import (
     BallFeedbackAdminItem,
     BallFeedbackAdminQueueResponse,
-    BallFeedbackOut,
     BallFeedbackReviewAction,
     TrainingExportFrame,
     TrainingExportResponse,
@@ -80,7 +79,7 @@ def get_review_queue(
 
 @router.patch(
     "/ball-feedback/{feedback_id}/review",
-    response_model=BallFeedbackOut,
+    response_model=BallFeedbackAdminItem,
     summary="Approve, reject, or escalate a feedback row",
     tags=_TAG,
 )
@@ -89,7 +88,7 @@ def patch_feedback_review(
     body: BallFeedbackReviewAction,
     db: Session = Depends(get_db),
     admin: User = Depends(get_current_admin_user),
-) -> BallFeedbackOut:
+) -> BallFeedbackAdminItem:
     row = db.get(JugglingBallFeedback, feedback_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Feedback record not found.")
@@ -116,7 +115,7 @@ def patch_feedback_review(
 
     db.commit()
     db.refresh(row)
-    return BallFeedbackOut.model_validate(row)
+    return BallFeedbackAdminItem.model_validate(row)
 
 
 @router.get(

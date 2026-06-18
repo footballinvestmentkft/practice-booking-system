@@ -562,17 +562,18 @@ class BallFeedbackQueueResponse(BaseModel):
 
 class BallFeedbackAdminItem(BaseModel):
     """Extended feedback row for admin review queue."""
-    id:             uuid.UUID
-    video_id:       uuid.UUID
-    frame_ms:       int
-    user_id:        int
-    decision:       str
-    corrected_x:    Optional[float] = None
-    corrected_y:    Optional[float] = None
-    approval_state: str
-    spam_flags:     List[str] = []
-    created_at:     datetime
-    reviewed_at:    Optional[datetime] = None
+    id:                   uuid.UUID
+    video_id:             uuid.UUID
+    frame_ms:             int
+    user_id:              int
+    decision:             str
+    corrected_x:          Optional[float] = None
+    corrected_y:          Optional[float] = None
+    approval_state:       str
+    spam_flags:           List[str] = []
+    created_at:           datetime
+    reviewed_at:          Optional[datetime] = None
+    reviewed_by_user_id:  Optional[int] = None
 
     model_config = {"from_attributes": True}
 
