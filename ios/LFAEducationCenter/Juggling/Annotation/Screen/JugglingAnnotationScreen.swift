@@ -64,6 +64,10 @@ struct JugglingAnnotationScreen: View {
     @State private var showBallOverlay        = false
     @State private var isBallSelecting        = false
     @State private var ballSelectionDragPoint: CGPoint? = nil
+    // AN-3B2B1: ball feedback mode (mutually exclusive with isBallSelecting)
+    @StateObject private var feedbackVM: BallFeedbackViewModel
+    @State private var isFeedbackMode         = false
+    @State private var isFeedbackCorrecting   = false
 
     // Phase 2A patch: retroactive pose generation for pre-existing events.
     // isGeneratingPoses gates the banner spinner; poseGenProgress drives the
@@ -116,9 +120,14 @@ struct JugglingAnnotationScreen: View {
             authManager: authManager
         ))
         _denseSkeletonVM = StateObject(wrappedValue: DenseSkeletonViewModel(videoId: video.videoId))
+        let sharedAPIClient = JugglingAnnotationAPIClient(authManager: authManager)
         _ballTrajectoryVM = StateObject(wrappedValue: BallTrajectoryViewModel(
             videoId: video.videoId,
-            apiClient: JugglingAnnotationAPIClient(authManager: authManager)
+            apiClient: sharedAPIClient
+        ))
+        _feedbackVM = StateObject(wrappedValue: BallFeedbackViewModel(
+            videoId: video.videoId,
+            apiClient: sharedAPIClient
         ))
         #if DEBUG
         AnnotationDiagnosticsLog.log("Screen init — userId=\(userId) videoId=\(video.videoId)")
@@ -131,6 +140,17 @@ struct JugglingAnnotationScreen: View {
                 VStack(spacing: 0) {
                     videoArea(in: geo)
                         .accessibilityLabel("Video")
+
+                    if isFeedbackMode {
+                        BallFeedbackPanel(
+                            vm:        feedbackVM,
+                            onConfirm: { Task { await feedbackVM.submitFeedback(decision: "confirm") } },
+                            onNoBall:  { Task { await feedbackVM.submitFeedback(decision: "no_ball") } },
+                            onCorrect: { isFeedbackCorrecting = true },
+                            onSkip:    { feedbackVM.skip() },
+                            onClose:   { isFeedbackMode = false; isFeedbackCorrecting = false }
+                        )
+                    }
 
                     PlaybackControlBar(controller: playback, isEnabled: loaderReady)
                         .padding(.horizontal, 12)
@@ -309,6 +329,21 @@ struct JugglingAnnotationScreen: View {
             UserDefaults.standard.set(degrees, forKey: JugglingAnnotationScreen.rotationKey(video.videoId))
             Task { await vm.patchRotation(degrees: degrees) }
         }
+        // AN-3B2B1: mutual exclusion — isBallSelecting and isFeedbackMode cannot coexist
+        .onChange(of: isBallSelecting) { selecting in
+            if selecting {
+                isFeedbackMode = false
+                isFeedbackCorrecting = false
+            }
+        }
+        .onChange(of: isFeedbackMode) { feedbackOn in
+            if feedbackOn {
+                isBallSelecting = false
+                ballSelectionDragPoint = nil
+            } else {
+                isFeedbackCorrecting = false
+            }
+        }
     }
 
     // MARK: — Video area
@@ -445,7 +480,36 @@ struct JugglingAnnotationScreen: View {
                     .allowsHitTesting(false)
                 }
 
-                // Overlay toggle controls — skeleton + ball
+                // AN-3B2B1: feedback correction tap overlay (above all other overlays)
+                if isFeedbackMode && isFeedbackCorrecting {
+                    BallFeedbackOverlayView(item: feedbackVM.currentItem, isCorrecting: true)
+                        .frame(width: renderSize.width, height: renderSize.height)
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onEnded { v in
+                                    let np = CGPoint(
+                                        x: max(0, min(1, v.location.x / renderSize.width)),
+                                        y: max(0, min(1, v.location.y / renderSize.height))
+                                    )
+                                    isFeedbackCorrecting = false
+                                    Task {
+                                        await feedbackVM.submitFeedback(
+                                            decision: "corrected",
+                                            correctedX: np.x,
+                                            correctedY: np.y,
+                                            correctionMethod: "tap"
+                                        )
+                                    }
+                                }
+                        )
+                } else if isFeedbackMode, let item = feedbackVM.currentItem {
+                    // Reference circle when not correcting
+                    BallFeedbackOverlayView(item: item, isCorrecting: false)
+                        .frame(width: renderSize.width, height: renderSize.height)
+                }
+
+                // Overlay toggle controls — skeleton + ball + feedback
                 VStack {
                     HStack {
                         Spacer()
@@ -464,6 +528,23 @@ struct JugglingAnnotationScreen: View {
                                 isOn:        showSkeletonOverlay,
                                 accessLabel: showSkeletonOverlay ? "Csontváz elrejtése" : "Csontváz megjelenítése"
                             ) { showSkeletonOverlay.toggle() }
+
+                            // AN-3B2B1: feedback toggle (D2 — mutually exclusive with isBallSelecting)
+                            overlayToggleButton(
+                                icon:        isFeedbackMode ? "hand.thumbsup.circle.fill" : "hand.thumbsup.circle",
+                                isOn:        isFeedbackMode,
+                                accessLabel: isFeedbackMode ? "Visszajelzés mód kikapcsolása" : "Visszajelzés mód bekapcsolása"
+                            ) {
+                                if !isFeedbackMode {
+                                    isBallSelecting = false
+                                    ballSelectionDragPoint = nil
+                                    isFeedbackCorrecting = false
+                                    Task { await feedbackVM.loadQueue() }
+                                } else {
+                                    isFeedbackCorrecting = false
+                                }
+                                isFeedbackMode.toggle()
+                            }
                         }
                         .padding(8)
                     }
