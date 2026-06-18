@@ -58,6 +58,8 @@ struct JugglingAnnotationScreen: View {
     @State private var showSkeletonOverlay   = false
     // AN-3B2D-2: continuous skeleton extraction (separate ViewModel)
     @StateObject private var denseSkeletonVM: DenseSkeletonViewModel
+    // AN-3B2D-3: dense ball trajectory overlay (separate ViewModel)
+    @StateObject private var ballTrajectoryVM: BallTrajectoryViewModel
     // AN-3B2C-1: ball detection overlay on main video (event-level granularity, ±500ms window)
     @State private var showBallOverlay        = false
     @State private var isBallSelecting        = false
@@ -114,6 +116,10 @@ struct JugglingAnnotationScreen: View {
             authManager: authManager
         ))
         _denseSkeletonVM = StateObject(wrappedValue: DenseSkeletonViewModel(videoId: video.videoId))
+        _ballTrajectoryVM = StateObject(wrappedValue: BallTrajectoryViewModel(
+            videoId: video.videoId,
+            apiClient: JugglingAnnotationAPIClient(authManager: authManager)
+        ))
         #if DEBUG
         AnnotationDiagnosticsLog.log("Screen init — userId=\(userId) videoId=\(video.videoId)")
         #endif
@@ -246,6 +252,9 @@ struct JugglingAnnotationScreen: View {
                     Task { poseSnapshots = await vm.fetchPoseSnapshots() }
                     // AN-3B2D-2: start continuous skeleton extraction
                     denseSkeletonVM.startExtraction(asset: asset)
+                    // AN-3B2D-3: fetch dense ball trajectory
+                    let durMs = Int(CMTimeGetSeconds(asset.duration) * 1000)
+                    Task { await ballTrajectoryVM.fetchTrajectory(durationMs: durMs > 0 ? durMs : nil) }
                 }
             })
             .onChange(of: vm.activeEvents) { events in
@@ -359,6 +368,7 @@ struct JugglingAnnotationScreen: View {
                 //   1. isBallSelecting: interactive crosshair + tap-to-mark gesture
                 //   2. auto detection found: read-only BallVideoOverlayView
                 //   3. no detection: status banner with "Megjelölöm" correction button
+                // Ball overlay — priority: manual tap > trajectory > event-snapshot > banner
                 if showBallOverlay {
                     if isBallSelecting {
                         ballSelectionOverlay
@@ -375,6 +385,13 @@ struct JugglingAnnotationScreen: View {
                                         handleBallSelection(normalizedPoint: np)
                                     }
                             )
+                    } else if ballTrajectoryVM.status == .complete {
+                        BallTrajectoryOverlayView(
+                            currentPoint: ballTrajectoryVM.point(atMs: playback.currentTimestampMs),
+                            trail: ballTrajectoryVM.trail(beforeMs: playback.currentTimestampMs),
+                            trackingLost: ballTrajectoryVM.point(atMs: playback.currentTimestampMs) == nil
+                        )
+                        .frame(width: renderSize.width, height: renderSize.height)
                     } else if let bd = closestBallDetection(toMs: playback.currentTimestampMs) {
                         BallVideoOverlayView(detection: bd)
                             .frame(width: renderSize.width, height: renderSize.height)
@@ -382,6 +399,28 @@ struct JugglingAnnotationScreen: View {
                         ballOverlayStatusBanner
                             .frame(width: renderSize.width, height: renderSize.height)
                     }
+                }
+
+                // Ball trajectory processing banner
+                if ballTrajectoryVM.status == .processing {
+                    VStack {
+                        Spacer()
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                                .tint(.white)
+                            Text("Labda: feldolgozás...")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.white.opacity(0.85))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.black.opacity(0.55))
+                        .cornerRadius(6)
+                        .padding(.bottom, 28)
+                    }
+                    .frame(width: renderSize.width, height: renderSize.height)
+                    .allowsHitTesting(false)
                 }
 
                 // Dense skeleton progress banner
@@ -772,6 +811,7 @@ struct JugglingAnnotationScreen: View {
         loader.cancel()
         playback.pause()
         denseSkeletonVM.cancel()
+        ballTrajectoryVM.cancel()
     }
 
     // Explicit save-then-close path for the X button and "Mentés és
@@ -1092,6 +1132,12 @@ struct JugglingAnnotationScreen: View {
         let y = Double(min(max(np.y, 0), 1))
         Task {
             try? await vm.postManualBallPosition(videoId: vm.videoId, eventId: serverId, x: x, y: y)
+            // AN-3B2D-3: also seed the dense trajectory if available
+            if ballTrajectoryVM.status == .complete {
+                await ballTrajectoryVM.postManualSeed(
+                    frameMs: playback.currentTimestampMs, ballX: x, ballY: y
+                )
+            }
         }
     }
 
