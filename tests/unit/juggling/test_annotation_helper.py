@@ -1015,7 +1015,7 @@ class TestHELP36_ProductionRouteCountUnchanged:
         snapshot_path = helper.ROOT / "tests/snapshots/openapi_snapshot.json"
         snapshot = json.loads(snapshot_path.read_text())
         route_count = len(snapshot.get("paths", {}))
-        assert route_count == 907, f"Unexpected production route count: {route_count}"
+        assert route_count == 910, f"Unexpected production route count: {route_count}"
 
     def test_helper_routes_not_in_production_snapshot(self):
         """HELP-36d: Annotation helper routes (/api/taxonomy etc.) not in production snapshot."""

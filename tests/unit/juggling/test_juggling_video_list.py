@@ -463,7 +463,7 @@ def test_jvl25_openapi_path_and_route_delta(client):
         if hasattr(r, "methods") and hasattr(r, "path")
         for m in (r.methods or [])
     ]
-    assert len(routes) == 1032, f"Expected 1032 routes, got {len(routes)}"
+    assert len(routes) == 1035, f"Expected 1035 routes, got {len(routes)}"
     get_list = [r for r in routes if r[0] == "GET" and r[1] == "/api/v1/users/me/juggling/videos"]
     assert len(get_list) == 1
 

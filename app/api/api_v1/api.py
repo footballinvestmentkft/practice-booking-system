@@ -205,5 +205,11 @@ api_router.include_router(
     prefix="/admin/juggling",
     tags=["admin", "juggling"],
 )
+from .endpoints import juggling_admin_ball_feedback
+api_router.include_router(
+    juggling_admin_ball_feedback.router,
+    prefix="/admin/juggling",
+    tags=["admin", "juggling"],
+)
 api_router.include_router(sandbox.router, prefix="/sandbox", tags=["sandbox-testing"])
 api_router.include_router(sandbox_data.router, prefix="/sandbox", tags=["sandbox-data"])

@@ -1,18 +1,24 @@
 """
-Ball feedback service — AN-3B2D-B0.
+Ball feedback service — AN-3B2B2 (B0 + B2 spam detection + D5 Celery dispatch).
 
-submit_feedback(): persist one user feedback record.
+submit_feedback(): persist one user feedback record, detect spam signals,
+  dispatch compute_frame_consensus asynchronously after commit.
 get_feedback_queue(): return prioritized uncertain frames for a video.
 
-B0 scope:
-  - No reliability score updates (B2).
-  - No consensus/majority vote compute (B2).
-  - No credit grants (B2).
-  - No spam detection (B2).
-  - training_eligible is never set True here.
+Spam signals (synchronous, checked after flush before commit):
+  velocity     — >10 submissions for this user+video in the last 60 seconds
+  uniform_rate — >90% same decision across >20 total submissions for this user+video
+
+Spam rows are NOT deleted. approval_state is set to "spam" and spam_flags
+records which signals fired. Admin can override via the review queue.
+
+Celery dispatch: compute_frame_consensus fires 2s after commit so the
+  transaction is guaranteed visible to the task's DB session.
+  Spam rows do NOT trigger consensus dispatch (their vote is excluded anyway).
 """
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import HTTPException
@@ -26,6 +32,11 @@ from app.models.juggling import (
     UserAnnotationReliability,
 )
 from app.schemas.juggling import BallFeedbackQueueItem, BallFeedbackRequest
+
+_VELOCITY_WINDOW_SECS = 60
+_VELOCITY_THRESHOLD   = 10   # >10 submissions in window → velocity spam
+_UNIFORM_MIN_SAMPLES  = 20   # need >20 submissions before uniform-rate check
+_UNIFORM_RATE_LIMIT   = 0.90 # >90% same decision → uniform_rate spam
 
 
 def _get_user_reliability(db: Session, user_id: int) -> float:
@@ -51,6 +62,44 @@ def _resolve_trajectory_point_id(
         )
     ).scalar_one_or_none()
     return row
+
+
+def _detect_spam_signals(
+    db: Session, user_id: int, video_id: str, decision: str
+) -> list[str]:
+    """
+    Check lightweight spam signals. Called after flush() so the current
+    submission is already visible in the session.
+
+    Returns a list of signal names, empty if no spam detected.
+    """
+    flags: list[str] = []
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=_VELOCITY_WINDOW_SECS)
+
+    # Velocity: >10 submissions in last 60s for this user+video
+    recent_count = db.execute(
+        select(func.count(JugglingBallFeedback.id)).where(
+            JugglingBallFeedback.user_id == user_id,
+            JugglingBallFeedback.video_id == video_id,
+            JugglingBallFeedback.created_at >= cutoff,
+        )
+    ).scalar() or 0
+    if recent_count > _VELOCITY_THRESHOLD:
+        flags.append("velocity")
+
+    # Uniform rate: >90% same decision across >20 submissions for this user+video
+    all_decisions: list[str] = db.execute(
+        select(JugglingBallFeedback.decision).where(
+            JugglingBallFeedback.user_id == user_id,
+            JugglingBallFeedback.video_id == video_id,
+        )
+    ).scalars().all()
+    if len(all_decisions) > _UNIFORM_MIN_SAMPLES:
+        same_count = sum(1 for d in all_decisions if d == decision)
+        if same_count / len(all_decisions) > _UNIFORM_RATE_LIMIT:
+            flags.append("uniform_rate")
+
+    return flags
 
 
 def submit_feedback(
@@ -93,7 +142,7 @@ def submit_feedback(
     # 4. Trajectory point FK (optional)
     traj_id = _resolve_trajectory_point_id(db, video_id, req.frame_ms)
 
-    # 5. Persist
+    # 5. Persist (flush only — spam check reads session state)
     record = JugglingBallFeedback(
         video_id=video_id,
         frame_ms=req.frame_ms,
@@ -109,10 +158,32 @@ def submit_feedback(
         model_tracking_state=req.model_tracking_state,
         user_reliability_at_submit=reliability,
         approval_state="pending",
+        spam_flags=[],
     )
     db.add(record)
+    db.flush()
+
+    # 6. Spam detection (after flush, current row visible in session)
+    spam_signals = _detect_spam_signals(db, user_id, video_id, req.decision)
+    if spam_signals:
+        record.approval_state = "spam"
+        record.spam_flags     = spam_signals
+
     db.commit()
     db.refresh(record)
+
+    # Dispatch consensus task only for non-spam rows
+    if record.approval_state != "spam":
+        try:
+            from app.tasks.juggling_feedback_task import compute_frame_consensus
+            compute_frame_consensus.apply_async(
+                args=[str(video_id), req.frame_ms],
+                countdown=2,
+            )
+        except Exception:
+            # Celery unavailable (test / dev without broker) — safe to ignore
+            pass
+
     return record
 
 
