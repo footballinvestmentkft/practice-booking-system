@@ -15,7 +15,7 @@ import Foundation
 // changes annotation persistence/lifecycle behaviour, so the overlay can
 // confirm which source revision produced the running binary.
 enum AnnotationBuildInfo {
-    static let tag = "P1-pose-decode-fix"
+    static let tag = "AN3B2D-3-ball-trajectory-overlay"
 }
 
 // Lightweight diagnostic logger. Prints to the Xcode console with a
