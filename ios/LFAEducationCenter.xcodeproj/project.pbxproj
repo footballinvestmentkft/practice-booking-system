@@ -136,6 +136,7 @@
 		EE200004000000000000002 /* ContinuousSkeletonOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200003000000000000002 /* ContinuousSkeletonOverlayView.swift */; };
 		EE300004000000000000001 /* DensePoseExtractionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE300003000000000000001 /* DensePoseExtractionTests.swift */; };
 		EE300004000000000000002 /* BallTrajectoryOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE300003000000000000002 /* BallTrajectoryOverlayTests.swift */; };
+		EE400004000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE400003000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift */; };
 		CC400004000000000000010 /* EditEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000010 /* EditEventTests.swift */; };
 		CC400004000000000000011 /* FlushPendingEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000011 /* FlushPendingEditTests.swift */; };
 		CC400004000000000000012 /* PlaybackControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000012 /* PlaybackControllerTests.swift */; };
@@ -308,6 +309,7 @@
 		EE200003000000000000002 /* ContinuousSkeletonOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinuousSkeletonOverlayView.swift; sourceTree = "<group>"; };
 		EE300003000000000000001 /* DensePoseExtractionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseExtractionTests.swift; sourceTree = "<group>"; };
 		EE300003000000000000002 /* BallTrajectoryOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrajectoryOverlayTests.swift; sourceTree = "<group>"; };
+		EE400003000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRecordingBallTrajectoryIndependenceTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000010 /* AnnotationDebugOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationDebugOverlay.swift; sourceTree = "<group>"; };
 		BB200003000000000000011 /* EventLabelDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLabelDetailView.swift; sourceTree = "<group>"; };
 		BB200003000000000000012 /* BodyZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyZone.swift; sourceTree = "<group>"; };
@@ -793,6 +795,7 @@
 				CC300003000000000000039 /* BallDetectionTimelineTests.swift */,
 				EE300003000000000000001 /* DensePoseExtractionTests.swift */,
 				EE300003000000000000002 /* BallTrajectoryOverlayTests.swift */,
+				EE400003000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift */,
 				CC300003000000000000040 /* SkeletonOverlayTests.swift */,
 				BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */,
 				BB100003000000000000005 /* PlaybackBarTests.swift */,
@@ -1096,6 +1099,7 @@
 				CC400004000000000000039 /* BallDetectionTimelineTests.swift in Sources */,
 				EE300004000000000000001 /* DensePoseExtractionTests.swift in Sources */,
 				EE300004000000000000002 /* BallTrajectoryOverlayTests.swift in Sources */,
+				EE400004000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift in Sources */,
 				CC400004000000000000040 /* SkeletonOverlayTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
