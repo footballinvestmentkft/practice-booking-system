@@ -127,6 +127,7 @@
 		AA100004000000000000013 /* PoseSnapshotDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000013 /* PoseSnapshotDTO.swift */; };
 		AA100004000000000000014 /* PoseSnapshotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000014 /* PoseSnapshotService.swift */; };
 		EE100004000000000000001 /* DensePoseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000001 /* DensePoseDTO.swift */; };
+		EE100004000000000000004 /* BallTrajectoryDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000004 /* BallTrajectoryDTO.swift */; };
 		EE100004000000000000002 /* DensePoseCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000002 /* DensePoseCache.swift */; };
 		EE100004000000000000003 /* DensePoseExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000003 /* DensePoseExtractor.swift */; };
 		EE200004000000000000001 /* DenseSkeletonViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200003000000000000001 /* DenseSkeletonViewModel.swift */; };
@@ -297,6 +298,7 @@
 		EE100003000000000000001 /* DensePoseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseDTO.swift; sourceTree = "<group>"; };
 		EE100003000000000000002 /* DensePoseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseCache.swift; sourceTree = "<group>"; };
 		EE100003000000000000003 /* DensePoseExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseExtractor.swift; sourceTree = "<group>"; };
+		EE100003000000000000004 /* BallTrajectoryDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrajectoryDTO.swift; sourceTree = "<group>"; };
 		EE200003000000000000001 /* DenseSkeletonViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DenseSkeletonViewModel.swift; sourceTree = "<group>"; };
 		EE200003000000000000002 /* ContinuousSkeletonOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinuousSkeletonOverlayView.swift; sourceTree = "<group>"; };
 		EE300003000000000000001 /* DensePoseExtractionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseExtractionTests.swift; sourceTree = "<group>"; };
@@ -668,6 +670,7 @@
 				EE100003000000000000001 /* DensePoseDTO.swift */,
 				EE100003000000000000002 /* DensePoseCache.swift */,
 				EE100003000000000000003 /* DensePoseExtractor.swift */,
+				EE100003000000000000004 /* BallTrajectoryDTO.swift */,
 				BB100003000000000000002 /* AnnotationVideoLoader.swift */,
 				BB200002000000000000001 /* Screen */,
 				AA100002000000000000002 /* Resources */,
@@ -1014,6 +1017,7 @@
 				EE100004000000000000001 /* DensePoseDTO.swift in Sources */,
 				EE100004000000000000002 /* DensePoseCache.swift in Sources */,
 				EE100004000000000000003 /* DensePoseExtractor.swift in Sources */,
+				EE100004000000000000004 /* BallTrajectoryDTO.swift in Sources */,
 				EE200004000000000000001 /* DenseSkeletonViewModel.swift in Sources */,
 				EE200004000000000000002 /* ContinuousSkeletonOverlayView.swift in Sources */,
 				BB100004000000000000001 /* AVPlayerLayerView.swift in Sources */,
