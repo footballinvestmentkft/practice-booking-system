@@ -434,9 +434,10 @@ class TestCE217RouteCount:
         901 → 903: AN-3B2B ball detection (user ball-detection + admin trigger)
         903 → 905: AN-3B2D-1 ball trajectory (GET /ball-trajectory + POST /manual-seed)
         905 → 907: AN-3B2D-B0 ball feedback (POST /ball-feedback + GET /ball-feedback/queue)
+        907 → 910: AN-3B2B2 admin feedback review (GET review-queue + PATCH review + GET training-export)
         """
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 907, (
-            f"Expected 907 routes (901 prior + 2 ball-detection + 2 trajectory + 2 feedback), got {len(paths)}."
+        assert len(paths) == 910, (
+            f"Expected 910 routes (907 prior + 3 admin feedback review), got {len(paths)}."
         )
