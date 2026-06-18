@@ -41,12 +41,17 @@ final class JugglingAnnotationAPIClientFeedbackTests: XCTestCase {
 
         XCTAssertEqual(json["frame_ms"] as? Int,    4230)
         XCTAssertEqual(json["decision"] as? String, "corrected")
-        XCTAssertEqual(json["corrected_x"] as? Double, 0.35, accuracy: 0.001)
-        XCTAssertEqual(json["corrected_y"] as? Double, 0.60, accuracy: 0.001)
+        let correctedX  = try XCTUnwrap(json["corrected_x"]       as? Double)
+        let correctedY  = try XCTUnwrap(json["corrected_y"]       as? Double)
+        let modelX      = try XCTUnwrap(json["model_predicted_x"] as? Double)
+        let modelY      = try XCTUnwrap(json["model_predicted_y"] as? Double)
+        let confidence  = try XCTUnwrap(json["model_confidence"]  as? Double)
+        XCTAssertEqual(correctedX,  0.35, accuracy: 0.001)
+        XCTAssertEqual(correctedY,  0.60, accuracy: 0.001)
         XCTAssertEqual(json["correction_method"] as? String, "tap")
-        XCTAssertEqual(json["model_predicted_x"] as? Double, 0.40, accuracy: 0.001)
-        XCTAssertEqual(json["model_predicted_y"] as? Double, 0.55, accuracy: 0.001)
-        XCTAssertEqual(json["model_confidence"] as? Double, 0.42, accuracy: 0.001)
+        XCTAssertEqual(modelX,      0.40, accuracy: 0.001)
+        XCTAssertEqual(modelY,      0.55, accuracy: 0.001)
+        XCTAssertEqual(confidence,  0.42, accuracy: 0.001)
         XCTAssertEqual(json["model_tracking_state"] as? String, "detected")
     }
 }

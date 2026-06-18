@@ -99,10 +99,7 @@ final class BallFeedbackViewModel: ObservableObject {
               currentIndex < items.count else { return }
 
         if decision == "corrected" {
-            guard correctedX != nil, correctedY != nil else {
-                assertionFailure("BallFeedbackViewModel: corrected requires correctedX/Y")
-                return
-            }
+            guard correctedX != nil, correctedY != nil else { return }
         }
 
         let item            = items[currentIndex]

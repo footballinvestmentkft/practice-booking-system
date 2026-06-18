@@ -42,7 +42,7 @@ final class BallFeedbackVMTests: XCTestCase {
         return BallFeedbackViewModel(videoId: "test-video", apiClient: client)
     }
 
-    private static func makeFeedbackOut() -> BallFeedbackOut {
+    nonisolated private static func makeFeedbackOut() -> BallFeedbackOut {
         BallFeedbackOut(
             id: UUID(),
             videoId: UUID(),

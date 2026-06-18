@@ -68,6 +68,12 @@ final class MockAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
     func postBallDetection(videoId: String, eventId: UUID, request: BallDetectionManualRequest) async throws -> BallDetectionOut {
         try postBallDetectionResult.get()
     }
+
+    // AN-3B2B1 stubs
+    func fetchFeedbackQueue(videoId: String, limit: Int) async -> BallFeedbackQueueResponse? { nil }
+    func submitBallFeedback(videoId: String, request: BallFeedbackRequest) async throws -> BallFeedbackOut {
+        throw BallFeedbackAPIError.unavailable
+    }
 }
 
 // MARK: — AN2-T17..T25: AnnotationSyncEngine state transitions

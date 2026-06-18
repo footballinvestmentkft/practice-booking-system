@@ -891,4 +891,10 @@ final class MockUploadClient: JugglingAnnotationAPIClientProtocol {
     func postBallDetection(videoId: String, eventId: UUID, request: BallDetectionManualRequest) async throws -> BallDetectionOut {
         throw AnnotationAPIError.unauthorized
     }
+
+    // AN-3B2B1 stubs
+    func fetchFeedbackQueue(videoId: String, limit: Int) async -> BallFeedbackQueueResponse? { nil }
+    func submitBallFeedback(videoId: String, request: BallFeedbackRequest) async throws -> BallFeedbackOut {
+        throw BallFeedbackAPIError.unavailable
+    }
 }
