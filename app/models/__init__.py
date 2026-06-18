@@ -81,6 +81,7 @@ from .juggling import (
     JugglingAnnotationReviewStatus,
     JugglingTaxonomyReviewStatus,
     JugglingVideoAnnotationStatus,
+    JugglingBallTrajectory,
 )
 
 # 🎓 New Track-Based Modular Education System

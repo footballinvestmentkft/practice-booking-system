@@ -418,6 +418,11 @@ class Settings(BaseSettings):
     BALL_DETECTION_ENABLED: bool = False
     BALL_DETECTION_MODEL_PATH: str = "app/ml_models/ssd_mobilenet_v1_12.onnx"
 
+    # BALL_TRAJECTORY_ENABLED — AN-3B2D-1 dense ball tracking.
+    #   OFF by default. When OFF, trajectory endpoints return HTTP 503.
+    #   Turn ON per-deployment in .env: BALL_TRAJECTORY_ENABLED=true
+    BALL_TRAJECTORY_ENABLED: bool = False
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

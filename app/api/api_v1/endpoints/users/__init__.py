@@ -21,6 +21,7 @@ from . import (
     juggling_taxonomy,
     juggling_pose_snapshots,
     juggling_ball_detection,
+    juggling_ball_trajectory,
 )
 
 # Create main router
@@ -66,6 +67,8 @@ router.include_router(juggling_contacts.router, tags=["users", "juggling"])
 router.include_router(juggling_pose_snapshots.router, tags=["users", "juggling"])
 # Phase 2B: ball detection (BALL_DETECTION_ENABLED gated; 503 when off)
 router.include_router(juggling_ball_detection.router, tags=["users", "juggling"])
+# AN-3B2D-1: dense ball trajectory (BALL_TRAJECTORY_ENABLED gated; 503 when off)
+router.include_router(juggling_ball_trajectory.router, tags=["users", "juggling"])
 
 # CRUD endpoints (should be last due to /{user_id} catch-all)
 router.include_router(crud.router, tags=["users"])

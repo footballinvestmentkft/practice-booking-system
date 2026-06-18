@@ -68,6 +68,7 @@ from app.services.juggling.media_service import (
     resolve_media_path,
     resolve_thumbnail_path,
 )
+from app.config import settings
 from app.tasks.juggling_transcode_task import transcode_video_task
 
 router = APIRouter()
@@ -320,6 +321,12 @@ def complete(
     # only when transcode_status=done or skipped.
     video_service.set_processing(video_id, db)
     transcode_video_task.delay(video_id)
+
+    if settings.BALL_TRAJECTORY_ENABLED:
+        from app.tasks.juggling_trajectory_task import dense_ball_trajectory_task
+        dense_ball_trajectory_task.apply_async(args=[video_id], countdown=120)
+        video.ball_trajectory_status = "pending"
+        db.commit()
 
     return JugglingCompleteOut(
         video_id=video_id,

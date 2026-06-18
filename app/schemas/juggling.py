@@ -449,3 +449,37 @@ class BallDetectionTriggerResult(BaseModel):
     skipped_reasons:        List[str]
 
     model_config = {"protected_namespaces": ()}
+
+
+# ── Dense ball trajectory schemas (AN-3B2D-1) ───────────────────────────────
+
+class BallTrajectoryPointOut(BaseModel):
+    frame_ms:       int
+    ball_x:         Optional[float]
+    ball_y:         Optional[float]
+    confidence:     Optional[float]
+    is_manual:      bool
+    tracking_state: str
+
+    model_config = {"from_attributes": True}
+
+
+class BallTrajectoryResponse(BaseModel):
+    status: str
+    points: List[BallTrajectoryPointOut]
+
+
+class BallTrajectoryManualSeedRequest(BaseModel):
+    frame_ms: int   = Field(..., ge=0)
+    ball_x:   float = Field(..., ge=0.0, le=1.0)
+    ball_y:   float = Field(..., ge=0.0, le=1.0)
+
+
+class BallTrajectoryManualSeedOut(BaseModel):
+    frame_ms:       int
+    ball_x:         float
+    ball_y:         float
+    tracking_state: str
+    is_manual:      bool
+
+    model_config = {"from_attributes": True}
