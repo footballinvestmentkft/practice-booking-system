@@ -430,9 +430,13 @@ class TestCE216WelcomeEditorUnchanged:
 
 class TestCE217RouteCount:
     def test_openapi_snapshot_route_count_unchanged(self):
-        """AN-3B2B ball detection adds 2 paths (901 → 903): user ball-detection + admin trigger."""
+        """Route count history:
+        901 → 903: AN-3B2B ball detection (user ball-detection + admin trigger)
+        903 → 905: AN-3B2D-1 ball trajectory (GET /ball-trajectory + POST /manual-seed)
+        905 → 907: AN-3B2D-B0 ball feedback (POST /ball-feedback + GET /ball-feedback/queue)
+        """
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 903, (
-            f"Expected 903 routes (901 prior + 2 AN-3B2B ball detection paths), got {len(paths)}."
+        assert len(paths) == 907, (
+            f"Expected 907 routes (901 prior + 2 ball-detection + 2 trajectory + 2 feedback), got {len(paths)}."
         )
