@@ -19,7 +19,7 @@ enum BallTrajectoryStatus: Equatable {
 final class BallTrajectoryViewModel: ObservableObject {
 
     @Published private(set) var status: BallTrajectoryStatus = .idle
-    @Published private(set) var points: [BallTrajectoryPointDTO] = []
+    @Published internal var points: [BallTrajectoryPointDTO] = []
 
     let videoId: String
     private var pollingTask: Task<Void, Never>?
