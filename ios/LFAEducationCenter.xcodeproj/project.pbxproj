@@ -184,6 +184,14 @@
 		BB200004000000000000021 /* BallOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000021 /* BallOverlayView.swift */; };
 		BB200004000000000000022 /* BallVideoOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000022 /* BallVideoOverlayView.swift */; };
 		CC400004000000000000040 /* SkeletonOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000040 /* SkeletonOverlayTests.swift */; };
+		BF100004000000000000001 /* BallFeedbackDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF100003000000000000001 /* BallFeedbackDTO.swift */; };
+		BF200004000000000000001 /* BallFeedbackViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF200003000000000000001 /* BallFeedbackViewModel.swift */; };
+		BF300004000000000000001 /* BallFeedbackOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF300003000000000000001 /* BallFeedbackOverlayView.swift */; };
+		BF400004000000000000001 /* BallFeedbackPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF400003000000000000001 /* BallFeedbackPanel.swift */; };
+		BF500004000000000000001 /* BallFeedbackVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF500003000000000000001 /* BallFeedbackVMTests.swift */; };
+		BF600004000000000000001 /* BallFeedbackPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF600003000000000000001 /* BallFeedbackPanelTests.swift */; };
+		BF700004000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF700003000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift */; };
+		BF800004000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF800003000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift */; };
 		BB200004000000000000003 /* EventTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000003 /* EventTimelineView.swift */; };
 		BB200004000000000000006 /* PlaybackControllerLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */; };
 		BB200004000000000000009 /* EventTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000009 /* EventTimelineTests.swift */; };
@@ -333,6 +341,14 @@
 		BB200003000000000000021 /* BallOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallOverlayView.swift; sourceTree = "<group>"; };
 		BB200003000000000000022 /* BallVideoOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallVideoOverlayView.swift; sourceTree = "<group>"; };
 		CC300003000000000000040 /* SkeletonOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonOverlayTests.swift; sourceTree = "<group>"; };
+		BF100003000000000000001 /* BallFeedbackDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackDTO.swift; sourceTree = "<group>"; };
+		BF200003000000000000001 /* BallFeedbackViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackViewModel.swift; sourceTree = "<group>"; };
+		BF300003000000000000001 /* BallFeedbackOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackOverlayView.swift; sourceTree = "<group>"; };
+		BF400003000000000000001 /* BallFeedbackPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackPanel.swift; sourceTree = "<group>"; };
+		BF500003000000000000001 /* BallFeedbackVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackVMTests.swift; sourceTree = "<group>"; };
+		BF600003000000000000001 /* BallFeedbackPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackPanelTests.swift; sourceTree = "<group>"; };
+		BF700003000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallFeedbackAnnotationIndependenceTests.swift; sourceTree = "<group>"; };
+		BF800003000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationAPIClientFeedbackTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000003 /* EventTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineView.swift; sourceTree = "<group>"; };
 		BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControllerLayoutTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000009 /* EventTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineTests.swift; sourceTree = "<group>"; };
@@ -679,6 +695,8 @@
 				EE100003000000000000002 /* DensePoseCache.swift */,
 				EE100003000000000000003 /* DensePoseExtractor.swift */,
 				EE100003000000000000004 /* BallTrajectoryDTO.swift */,
+				BF100003000000000000001 /* BallFeedbackDTO.swift */,
+				BF200003000000000000001 /* BallFeedbackViewModel.swift */,
 				BB100003000000000000002 /* AnnotationVideoLoader.swift */,
 				BB200002000000000000001 /* Screen */,
 				AA100002000000000000002 /* Resources */,
@@ -705,6 +723,8 @@
 				EE200003000000000000003 /* BallTrajectoryViewModel.swift */,
 				EE200003000000000000004 /* BallTrajectoryOverlayView.swift */,
 				EE200003000000000000002 /* ContinuousSkeletonOverlayView.swift */,
+				BF300003000000000000001 /* BallFeedbackOverlayView.swift */,
+				BF400003000000000000001 /* BallFeedbackPanel.swift */,
 			);
 			path = Screen;
 			sourceTree = "<group>";
@@ -797,6 +817,10 @@
 				EE300003000000000000002 /* BallTrajectoryOverlayTests.swift */,
 				EE400003000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift */,
 				CC300003000000000000040 /* SkeletonOverlayTests.swift */,
+				BF500003000000000000001 /* BallFeedbackVMTests.swift */,
+				BF600003000000000000001 /* BallFeedbackPanelTests.swift */,
+				BF700003000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift */,
+				BF800003000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift */,
 				BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */,
 				BB100003000000000000005 /* PlaybackBarTests.swift */,
 				BB100003000000000000006 /* AVPlayerLayerViewTests.swift */,
@@ -1030,10 +1054,14 @@
 				EE100004000000000000002 /* DensePoseCache.swift in Sources */,
 				EE100004000000000000003 /* DensePoseExtractor.swift in Sources */,
 				EE100004000000000000004 /* BallTrajectoryDTO.swift in Sources */,
+				BF100004000000000000001 /* BallFeedbackDTO.swift in Sources */,
+				BF200004000000000000001 /* BallFeedbackViewModel.swift in Sources */,
 				EE200004000000000000001 /* DenseSkeletonViewModel.swift in Sources */,
 				EE200004000000000000003 /* BallTrajectoryViewModel.swift in Sources */,
 				EE200004000000000000004 /* BallTrajectoryOverlayView.swift in Sources */,
 				EE200004000000000000002 /* ContinuousSkeletonOverlayView.swift in Sources */,
+				BF300004000000000000001 /* BallFeedbackOverlayView.swift in Sources */,
+				BF400004000000000000001 /* BallFeedbackPanel.swift in Sources */,
 				BB100004000000000000001 /* AVPlayerLayerView.swift in Sources */,
 				BB100004000000000000002 /* AnnotationVideoLoader.swift in Sources */,
 				BB100004000000000000003 /* PlaybackControlBar.swift in Sources */,
@@ -1101,6 +1129,10 @@
 				EE300004000000000000002 /* BallTrajectoryOverlayTests.swift in Sources */,
 				EE400004000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift in Sources */,
 				CC400004000000000000040 /* SkeletonOverlayTests.swift in Sources */,
+				BF500004000000000000001 /* BallFeedbackVMTests.swift in Sources */,
+				BF600004000000000000001 /* BallFeedbackPanelTests.swift in Sources */,
+				BF700004000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift in Sources */,
+				BF800004000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
