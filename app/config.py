@@ -423,6 +423,11 @@ class Settings(BaseSettings):
     #   Turn ON per-deployment in .env: BALL_TRAJECTORY_ENABLED=true
     BALL_TRAJECTORY_ENABLED: bool = False
 
+    # BALL_FEEDBACK_ENABLED — AN-3B2D-B0 user-assisted ball annotation feedback.
+    #   OFF by default. When OFF, feedback endpoints return HTTP 503.
+    #   Turn ON per-deployment in .env: BALL_FEEDBACK_ENABLED=true
+    BALL_FEEDBACK_ENABLED: bool = False
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal
