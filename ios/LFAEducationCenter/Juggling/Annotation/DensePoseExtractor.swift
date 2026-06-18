@@ -172,25 +172,16 @@ final class DensePoseExtractor {
             return DensePoseFrame(timestampMs: timestampMs, keypoints: .empty(), confidence: nil, syntheticFeet: nil)
         }
 
-        let allPoints: [VNHumanBodyPoseObservation.JointName: VNRecognizedPoint]
-        do {
-            allPoints = try observation.recognizedPoints(.all)
-        } catch {
-            return DensePoseFrame(
-                timestampMs: timestampMs, keypoints: .empty(),
-                confidence: Float(observation.confidence), syntheticFeet: nil
-            )
-        }
-
-        let landmarks: [BodyLandmarkDTO] = allPoints.compactMap { (key, point) in
-            guard point.confidence >= config.confidenceThreshold else { return nil }
-            let jsonName = Self.jointNameMap[key.rawValue.rawValue] ?? key.rawValue.rawValue
-            return BodyLandmarkDTO(
+        var landmarks: [BodyLandmarkDTO] = []
+        for (joint, jsonName) in Self.jointList {
+            guard let point = try? observation.recognizedPoint(joint),
+                  point.confidence >= config.confidenceThreshold else { continue }
+            landmarks.append(BodyLandmarkDTO(
                 name: jsonName,
                 x: Double(point.location.x),
                 y: Double(1.0 - point.location.y),
                 confidence: Double(point.confidence)
-            )
+            ))
         }
 
         let keypoints = PoseKeypointsDTO(schemaVersion: "1", body: landmarks, leftHand: [], rightHand: [])
@@ -210,9 +201,34 @@ final class DensePoseExtractor {
         )
     }
 
-    // MARK: — Joint name mapping
-    // Duplicated from PoseSnapshotService — intentionally independent.
+    // MARK: — Joint enumeration
+    // Uses typed VNHumanBodyPoseObservation.JointName enum values
+    // instead of string-based rawValue lookup. This guarantees correct
+    // mapping regardless of iOS version differences in rawValue strings.
 
+    static let jointList: [(VNHumanBodyPoseObservation.JointName, String)] = [
+        (.nose,           "nose"),
+        (.leftEye,        "left_eye"),
+        (.rightEye,       "right_eye"),
+        (.leftEar,        "left_ear"),
+        (.rightEar,       "right_ear"),
+        (.neck,           "neck"),
+        (.leftShoulder,   "left_shoulder"),
+        (.rightShoulder,  "right_shoulder"),
+        (.leftElbow,      "left_elbow"),
+        (.rightElbow,     "right_elbow"),
+        (.leftWrist,      "left_wrist"),
+        (.rightWrist,     "right_wrist"),
+        (.root,           "root"),
+        (.leftHip,        "left_hip"),
+        (.rightHip,       "right_hip"),
+        (.leftKnee,       "left_knee"),
+        (.rightKnee,      "right_knee"),
+        (.leftAnkle,      "left_ankle"),
+        (.rightAnkle,     "right_ankle"),
+    ]
+
+    // Kept for reference / fallback — not used in the primary path.
     static let jointNameMap: [String: String] = {
         var m: [String: String] = [:]
         m["nose"] = "nose"

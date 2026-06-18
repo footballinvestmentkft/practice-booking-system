@@ -35,6 +35,8 @@ struct ContinuousSkeletonOverlayView: View {
                 let h = geo.size.height
                 let byName = Dictionary(uniqueKeysWithValues: frame.keypoints.body.map { ($0.name, $0) })
 
+                let _ = Self.debugLogOnce(byName: byName, w: w, h: h)
+
                 ZStack {
                     realBoneLayer(byName: byName, w: w, h: h)
 
@@ -161,6 +163,23 @@ struct ContinuousSkeletonOverlayView: View {
             ))
         }
         return segments
+    }
+
+    private static var _didLog = false
+    static func debugLogOnce(byName: [String: BodyLandmarkDTO], w: CGFloat, h: CGFloat) {
+        guard !_didLog else { return }
+        _didLog = true
+        let names = byName.keys.sorted()
+        print("[ContinuousSkeleton] joint names (\(names.count)): \(names)")
+        let segs = realBoneSegments(byName: byName, w: w, h: h)
+        print("[ContinuousSkeleton] bone segments: \(segs.count) / \(bones.count)")
+        for (a, b) in bones {
+            let hasA = byName[a] != nil
+            let hasB = byName[b] != nil
+            if !hasA || !hasB {
+                print("[ContinuousSkeleton] MISSING bone \(a)-\(b): hasA=\(hasA) hasB=\(hasB)")
+            }
+        }
     }
 
     static func jointColor(confidence: Double) -> Color {
