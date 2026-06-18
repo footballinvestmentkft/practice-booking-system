@@ -452,6 +452,114 @@ Meglévő `BallTrajectoryViewModel` kód nil-t kap ezekre régi API-val → műk
 
 ---
 
+## 8. Risk / Decision Matrix: iOS Vision vs. Server-Side MediaPipe
+
+### 8.1 Mikor maradjunk iOS Vision alapon?
+
+Az iOS Vision pipeline (`VNDetectHumanBodyPoseRequest` / `VNDetectHumanBodyPosesRequest`) akkor preferált, ha:
+
+| Feltétel | Indok |
+|---|---|
+| Egy játékos van a képkockán | A jelenlegi API biztonsággal detektálja, nincs multi-person kétértelműség |
+| Deployment target iOS 17.0+ elfogadható | `VNDetectHumanBodyPosesRequest` (multi-person) csak iOS 17-től érhető el |
+| On-device privacy kötelező | Videó frame-ek nem hagyhatják el az eszközt (pl. adatkezelési megfontolás) |
+| Hálózati kapcsolat nem garantált | Offline annotáció marad lehetséges |
+| Alacsony infrastruktúra-komplexitás a cél | Nincs szerver oldali ML pipeline, worker, GPU-igény |
+
+### 8.2 Mikor kell server-side MediaPipe?
+
+| Feltétel | Indok |
+|---|---|
+| Két vagy több játékos egyidejű követése, és iOS 17 nem garantált | Vision multi-person iOS 17+ — régebbi eszközök kiesnek |
+| Pontosság kritikus (pl. biomechanikai elemzés) | MediaPipe Pose Landmarker (Heavy) lényegesen pontosabb, mint a Vision 2D API, különösen részleges takarás esetén |
+| 3D skeleton rekonstrukció szükséges | Server-side pipeline könnyebben integrál camera intrinsics-szel és stereo triangulációval |
+| Modell frissíthetőség fontos | Server-side modellcsere deploy nélkül lehetséges; iOS Vision verzió az OS-sel kötött |
+| Nagy tömegű retroaktív feldolgozás szükséges | Batch server task gyorsabb, mint on-device frame-by-frame |
+
+### 8.3 iOS verziókorlátok és teljesítménykockázatok
+
+| Kockázat | Hatás | Súlyosság |
+|---|---|---|
+| `VNDetectHumanBodyPoseRequest` csak 1 személyt detektál | Multi-player QA-n false single-player eredmény | Magas (multi-player esetén) |
+| `VNDetectHumanBodyPosesRequest` iOS 17.0+ | Régebbi eszközökön (iOS 15–16) silent fallback szükséges | Közepes |
+| Dense extraction főszálon blokkoló | `DensePoseExtractor` háttér task-ban fut — ha nem, UI freeze | Kezelt (jelenleg async) |
+| Memóriaigény hosszú videókon | `DensePoseCache` teljes videó frame sorozatot tárol — ~21s @ 10 FPS = 210 frame in-memory | Közepes (hosszú videókon monitorálni) |
+| Confidence degradáció alacsony fényen | Vision API gyengébben teljesít rossz megvilágítás esetén | Alacsony (QA-s videókon kontrollált) |
+
+### 8.4 Pontossági kockázatok
+
+| Szituáció | Vision 2D API | MediaPipe Heavy |
+|---|---|---|
+| Frontális, teljes test, jó fény | Megfelelő (19 joint) | Kiváló (33 landmark) |
+| Részleges takarás (pl. háló mögött) | Gyenge — hiányzó jointok | Közepes — jobban becsül |
+| Két játékos közel egymáshoz | Nem megbízható — összevonhat | Megfelelő — külön track |
+| Gyors mozgás (juggling) | Elfogadható blur handling | Jobb motion blur kezelés |
+| Lábfej / cipő detekció | Nem elérhető (ankle a legalsó) | Elérhető (foot landmark) |
+
+### 8.5 Fallback stratégia régebbi iOS esetén
+
+```
+iOS 17.0+:   VNDetectHumanBodyPosesRequest (multi-person, max 4)
+iOS 15–16:   VNDetectHumanBodyPoseRequest  (single-person fallback)
+             + UI banner: "Több játékos követéséhez iOS 17 szükséges"
+Mindkettő:   Server-side MediaPipe eredmény lekérhető, ha backend pipeline aktív
+             → server eredmény felülírja az on-device eredményt, ha elérhető
+```
+
+iOS verziótól független fallback sorrend a `DenseSkeletonViewModel`-ben:
+
+```
+1. Server-side skeleton (ha MULTI_PLAYER_ENABLED és backend complete)
+2. On-device Vision multi-person (ha iOS 17+ és több player detektált)
+3. On-device Vision single-person (jelenlegi implementáció, iOS 15+)
+4. Event-szintű PoseSnapshotOverlayView (ha dense extraction sikertelen)
+5. Nincs overlay
+```
+
+---
+
+## 9. Migration Acceptance Criteria
+
+### 9.1 Meglévő single-player adatok változatlan lekérhetősége
+
+**AC-M01:** `GET /me/juggling/videos/{video_id}/ball-trajectory` a migration után ugyanazt a JSON választ adja vissza, mint előtte — ha az új `object_id` és `camera_id` paramétereket nem küldi a kliens, a backend `WHERE object_id = 'ball_0' AND camera_id = 'camera_0'` defaultot alkalmaz.
+
+**AC-M02:** A visszaadott `BallTrajectoryPointOut` JSON struktúra megegyezik a migráció előttivel. Az újonnan hozzáadott `object_id`, `track_id`, `camera_id` mezők opcionálisak a response-ban, és ha jelen vannak, értékük `"ball_0"` / `"track_0"` / `"camera_0"`.
+
+**AC-M03:** A meglévő iOS kliens (`BallTrajectoryPointDTO`) változtatás nélkül dekódolja a migration utáni API választ. Az opcionális új mezők `nil`-t kapnak, nem crash-elnek.
+
+### 9.2 Ball trajectory backfill
+
+**AC-M04:** A migration lefutása után a `juggling_ball_trajectories` táblában egyetlen sor sem marad `NULL` `object_id`, `track_id`, vagy `camera_id` értékkel — minden meglévő sor `'ball_0'`, `'track_0'`, `'camera_0'` defaultot kap.
+
+**AC-M05:** A `(video_id, frame_ms, object_id, camera_id)` compound unique constraint teljesül az összes meglévő sorra — mivel minden meglévő sor azonos `'ball_0'` / `'camera_0'` defaultot kap, a régi `(video_id, frame_ms)` unique-ság megőrződik.
+
+**AC-M06:** A migration rollback-je (downgrade) visszaállítja az eredeti `UNIQUE (video_id, frame_ms)` constraint-et, és eltávolítja az új oszlopokat anélkül, hogy adatvesztés következne be.
+
+### 9.3 Pose snapshot backfill
+
+**AC-M07:** A `juggling_pose_snapshots` táblában minden meglévő sor `player_id = 'player_0'` és `camera_id = 'camera_0'` defaultot kap a migration után.
+
+**AC-M08:** `GET /me/juggling/videos/{video_id}/pose-snapshots` a migration után ugyanazt a választ adja vissza. Az új `player_id` mező opcionálisan jelen lehet `"player_0"` értékkel.
+
+### 9.4 Endpoint backward-compatibility
+
+**AC-M09:** Minden meglévő endpoint (ball trajectory GET/POST, pose snapshot GET/POST, ball detection GET/POST) változatlan HTTP metódussal és URL-lel hívható a migration után. Nem kerül eltávolításra kötelező query paraméter vagy request body mező.
+
+**AC-M10:** A migration utáni OpenAPI snapshot path count nem csökken — csak új opcionális paraméterekkel bővülhetnek az endpointok.
+
+**AC-M11:** Az összes meglévő CI teszt (BFB-01..18, BT-01..14, BTR-01..12 stb.) változtatás nélkül zöld marad a migration után.
+
+### 9.5 Régi iOS kliens + új multi-track adat koegzisztencia
+
+**AC-M12:** Ha a backend már tartalmaz `object_id='ball_1'` adatokat (második labda) egy videóhoz, az `object_id` paramétert nem küldő régi iOS kliens ezeket **nem kapja meg** — a default szűrés kizárólag `'ball_0'` adatot ad vissza. A régi kliens UI-ja nem jelenít meg nem várt extra pontokat.
+
+**AC-M13:** Ha a backend már tartalmaz `player_id='player_1'` skeleton adatokat, a régi iOS kliens `player_id` nélkül hívva kizárólag `'player_0'` adatot kap — két skeleton nem jelenik meg véletlenül egy single-skeleton overlay-en.
+
+**AC-M14:** Az `object_id` / `player_id` / `camera_id` paraméterek a régi kliens által ismeretlen, opcionális query paraméterek — megadásuk nélkül a válasz azonos az M01–M03 feltételekkel leírtakkal.
+
+---
+
 ## Összefoglalás
 
 | Réteg | Változás típusa | Meglévő adatok | Backward-compat |
