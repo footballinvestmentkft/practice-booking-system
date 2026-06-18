@@ -556,3 +556,63 @@ class BallFeedbackQueueResponse(BaseModel):
     queue_items:     List[BallFeedbackQueueItem]
     total:           int
     max_per_session: int = 3
+
+
+# ── B2 Admin review schemas ───────────────────────────────────────────────────
+
+class BallFeedbackAdminItem(BaseModel):
+    """Extended feedback row for admin review queue."""
+    id:             uuid.UUID
+    video_id:       uuid.UUID
+    frame_ms:       int
+    user_id:        int
+    decision:       str
+    corrected_x:    Optional[float] = None
+    corrected_y:    Optional[float] = None
+    approval_state: str
+    spam_flags:     List[str] = []
+    created_at:     datetime
+    reviewed_at:    Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+class BallFeedbackAdminQueueResponse(BaseModel):
+    items: List[BallFeedbackAdminItem]
+    total: int
+
+
+class BallFeedbackReviewAction(BaseModel):
+    action: str  # "approve" | "reject" | "escalate_to_review"
+
+    @field_validator("action")
+    @classmethod
+    def action_must_be_valid(cls, v: str) -> str:
+        allowed = {"approve", "reject", "escalate_to_review"}
+        if v not in allowed:
+            raise ValueError(f"action must be one of {sorted(allowed)}")
+        return v
+
+
+# ── B2 Training export schemas ────────────────────────────────────────────────
+
+class TrainingExportFrame(BaseModel):
+    video_id:       uuid.UUID
+    frame_ms:       int
+    gt_decision:    str
+    gt_x:           Optional[float] = None
+    gt_y:           Optional[float] = None
+    confidence_score: float
+    agreement_rate: float
+    vote_count:     int
+    correction_count: int
+    is_gold_standard: bool
+
+    model_config = {"from_attributes": True}
+
+
+class TrainingExportResponse(BaseModel):
+    version:      str
+    exported_at:  datetime
+    frame_count:  int
+    frames:       List[TrainingExportFrame]
