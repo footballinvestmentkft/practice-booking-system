@@ -36,6 +36,7 @@ def create_celery() -> Celery:
             "app.tasks.juggling_retention_task",
             "app.tasks.juggling_analysis_task",
             "app.tasks.juggling_trajectory_task",
+            "app.tasks.juggling_feedback_task",
         ],
     )
 
@@ -77,6 +78,7 @@ def create_celery() -> Celery:
             "app.tasks.juggling_retention_task.run_retention_task":                 {"queue": "juggling_retention"},
             "app.tasks.juggling_analysis_task.detect_ball_for_event":               {"queue": "analysis"},
             "app.tasks.juggling_trajectory_task.dense_ball_trajectory_task":        {"queue": "analysis"},
+            "app.tasks.juggling_feedback_task.compute_frame_consensus":             {"queue": "ball_feedback"},
         },
         # Queues
         task_default_queue="default",
@@ -88,6 +90,7 @@ def create_celery() -> Celery:
             "juggling_videos":      {},
             "juggling_retention":   {},
             "analysis":             {},
+            "ball_feedback":        {},
         },
         # Rate limiting (protect DB under heavy load)
         task_annotations={
