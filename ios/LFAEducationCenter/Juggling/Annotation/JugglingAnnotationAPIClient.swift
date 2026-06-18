@@ -358,6 +358,46 @@ final class JugglingAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
         }
     }
 
+    // MARK: — AN-3B2D-3: Dense Ball Trajectory
+    //
+    // fetchBallTrajectory: GET /ball-trajectory?from_ms=X&to_ms=Y
+    //   200 → BallTrajectoryResponseDTO (status + points)
+    //   404 → nil (no trajectory data)
+    //   503 → nil (BALL_TRAJECTORY_ENABLED=false)
+    //
+    // postManualBallSeed: POST /ball-trajectory/manual-seed
+    //   200/201 → true
+    //   else → false
+
+    func fetchBallTrajectory(videoId: String, fromMs: Int, toMs: Int) async -> BallTrajectoryResponseDTO? {
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)/ball-trajectory?from_ms=\(fromMs)&to_ms=\(toMs)"
+        do {
+            let response: BallTrajectoryResponseDTO = try await authManager.authenticatedGet(path: path)
+            return response
+        } catch {
+            print("[BallTrajectory] fetchBallTrajectory failed: \(error)")
+            return nil
+        }
+    }
+
+    func postManualBallSeed(videoId: String, frameMs: Int, ballX: Double, ballY: Double) async -> Bool {
+        let path = "/api/v1/users/me/juggling/videos/\(videoId)/ball-trajectory/manual-seed"
+        struct SeedBody: Encodable {
+            let frame_ms: Int
+            let ball_x: Double
+            let ball_y: Double
+        }
+        do {
+            let (_, _) = try await authManager.authenticatedPostRaw(
+                path: path, body: SeedBody(frame_ms: frameMs, ball_x: ballX, ball_y: ballY)
+            )
+            return true
+        } catch {
+            print("[BallTrajectory] postManualBallSeed failed: \(error)")
+            return false
+        }
+    }
+
     // MARK: — Private helpers
 
     private func decodeEvent(_ data: Data) throws -> ContactEventOut {

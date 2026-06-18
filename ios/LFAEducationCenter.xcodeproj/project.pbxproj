@@ -126,6 +126,17 @@
 		AA100004000000000000012 /* EventStillFrameGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000012 /* EventStillFrameGenerator.swift */; };
 		AA100004000000000000013 /* PoseSnapshotDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000013 /* PoseSnapshotDTO.swift */; };
 		AA100004000000000000014 /* PoseSnapshotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000014 /* PoseSnapshotService.swift */; };
+		EE100004000000000000001 /* DensePoseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000001 /* DensePoseDTO.swift */; };
+		EE100004000000000000004 /* BallTrajectoryDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000004 /* BallTrajectoryDTO.swift */; };
+		EE100004000000000000002 /* DensePoseCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000002 /* DensePoseCache.swift */; };
+		EE100004000000000000003 /* DensePoseExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000003 /* DensePoseExtractor.swift */; };
+		EE200004000000000000001 /* DenseSkeletonViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200003000000000000001 /* DenseSkeletonViewModel.swift */; };
+		EE200004000000000000003 /* BallTrajectoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200003000000000000003 /* BallTrajectoryViewModel.swift */; };
+		EE200004000000000000004 /* BallTrajectoryOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200003000000000000004 /* BallTrajectoryOverlayView.swift */; };
+		EE200004000000000000002 /* ContinuousSkeletonOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200003000000000000002 /* ContinuousSkeletonOverlayView.swift */; };
+		EE300004000000000000001 /* DensePoseExtractionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE300003000000000000001 /* DensePoseExtractionTests.swift */; };
+		EE300004000000000000002 /* BallTrajectoryOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE300003000000000000002 /* BallTrajectoryOverlayTests.swift */; };
+		EE400004000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE400003000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift */; };
 		CC400004000000000000010 /* EditEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000010 /* EditEventTests.swift */; };
 		CC400004000000000000011 /* FlushPendingEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000011 /* FlushPendingEditTests.swift */; };
 		CC400004000000000000012 /* PlaybackControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000012 /* PlaybackControllerTests.swift */; };
@@ -171,6 +182,8 @@
 		BB200004000000000000001 /* JugglingAnnotationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000001 /* JugglingAnnotationScreen.swift */; };
 		BB200004000000000000020 /* PoseSnapshotOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000020 /* PoseSnapshotOverlayView.swift */; };
 		BB200004000000000000021 /* BallOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000021 /* BallOverlayView.swift */; };
+		BB200004000000000000022 /* BallVideoOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000022 /* BallVideoOverlayView.swift */; };
+		CC400004000000000000040 /* SkeletonOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000040 /* SkeletonOverlayTests.swift */; };
 		BB200004000000000000003 /* EventTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000003 /* EventTimelineView.swift */; };
 		BB200004000000000000006 /* PlaybackControllerLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */; };
 		BB200004000000000000009 /* EventTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB200003000000000000009 /* EventTimelineTests.swift */; };
@@ -286,6 +299,17 @@
 		AA100003000000000000012 /* EventStillFrameGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStillFrameGenerator.swift; sourceTree = "<group>"; };
 		AA100003000000000000013 /* PoseSnapshotDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotDTO.swift; sourceTree = "<group>"; };
 		AA100003000000000000014 /* PoseSnapshotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotService.swift; sourceTree = "<group>"; };
+		EE100003000000000000001 /* DensePoseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseDTO.swift; sourceTree = "<group>"; };
+		EE100003000000000000002 /* DensePoseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseCache.swift; sourceTree = "<group>"; };
+		EE100003000000000000003 /* DensePoseExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseExtractor.swift; sourceTree = "<group>"; };
+		EE100003000000000000004 /* BallTrajectoryDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrajectoryDTO.swift; sourceTree = "<group>"; };
+		EE200003000000000000001 /* DenseSkeletonViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DenseSkeletonViewModel.swift; sourceTree = "<group>"; };
+		EE200003000000000000003 /* BallTrajectoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrajectoryViewModel.swift; sourceTree = "<group>"; };
+		EE200003000000000000004 /* BallTrajectoryOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrajectoryOverlayView.swift; sourceTree = "<group>"; };
+		EE200003000000000000002 /* ContinuousSkeletonOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinuousSkeletonOverlayView.swift; sourceTree = "<group>"; };
+		EE300003000000000000001 /* DensePoseExtractionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseExtractionTests.swift; sourceTree = "<group>"; };
+		EE300003000000000000002 /* BallTrajectoryOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrajectoryOverlayTests.swift; sourceTree = "<group>"; };
+		EE400003000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRecordingBallTrajectoryIndependenceTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000010 /* AnnotationDebugOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationDebugOverlay.swift; sourceTree = "<group>"; };
 		BB200003000000000000011 /* EventLabelDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLabelDetailView.swift; sourceTree = "<group>"; };
 		BB200003000000000000012 /* BodyZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyZone.swift; sourceTree = "<group>"; };
@@ -307,6 +331,8 @@
 		BB200003000000000000001 /* JugglingAnnotationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingAnnotationScreen.swift; sourceTree = "<group>"; };
 		BB200003000000000000020 /* PoseSnapshotOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseSnapshotOverlayView.swift; sourceTree = "<group>"; };
 		BB200003000000000000021 /* BallOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallOverlayView.swift; sourceTree = "<group>"; };
+		BB200003000000000000022 /* BallVideoOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallVideoOverlayView.swift; sourceTree = "<group>"; };
+		CC300003000000000000040 /* SkeletonOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonOverlayTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000003 /* EventTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineView.swift; sourceTree = "<group>"; };
 		BB200003000000000000006 /* PlaybackControllerLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControllerLayoutTests.swift; sourceTree = "<group>"; };
 		BB200003000000000000009 /* EventTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTimelineTests.swift; sourceTree = "<group>"; };
@@ -649,6 +675,10 @@
 				AA100003000000000000012 /* EventStillFrameGenerator.swift */,
 				AA100003000000000000013 /* PoseSnapshotDTO.swift */,
 				AA100003000000000000014 /* PoseSnapshotService.swift */,
+				EE100003000000000000001 /* DensePoseDTO.swift */,
+				EE100003000000000000002 /* DensePoseCache.swift */,
+				EE100003000000000000003 /* DensePoseExtractor.swift */,
+				EE100003000000000000004 /* BallTrajectoryDTO.swift */,
 				BB100003000000000000002 /* AnnotationVideoLoader.swift */,
 				BB200002000000000000001 /* Screen */,
 				AA100002000000000000002 /* Resources */,
@@ -662,6 +692,7 @@
 				BB200003000000000000001 /* JugglingAnnotationScreen.swift */,
 				BB200003000000000000020 /* PoseSnapshotOverlayView.swift */,
 				BB200003000000000000021 /* BallOverlayView.swift */,
+				BB200003000000000000022 /* BallVideoOverlayView.swift */,
 				BB200003000000000000003 /* EventTimelineView.swift */,
 				BB200003000000000000010 /* AnnotationDebugOverlay.swift */,
 				BB200003000000000000011 /* EventLabelDetailView.swift */,
@@ -670,6 +701,10 @@
 				BB200003000000000000016 /* EmojiBodyZonePickerView.swift */,
 				BB200003000000000000014 /* LabelingOverviewView.swift */,
 				BB200003000000000000015 /* EventPreviewSession.swift */,
+				EE200003000000000000001 /* DenseSkeletonViewModel.swift */,
+				EE200003000000000000003 /* BallTrajectoryViewModel.swift */,
+				EE200003000000000000004 /* BallTrajectoryOverlayView.swift */,
+				EE200003000000000000002 /* ContinuousSkeletonOverlayView.swift */,
 			);
 			path = Screen;
 			sourceTree = "<group>";
@@ -758,6 +793,10 @@
 				CC300003000000000000037 /* BallDetectionVMTests.swift */,
 				CC300003000000000000038 /* BallOverlayViewTests.swift */,
 				CC300003000000000000039 /* BallDetectionTimelineTests.swift */,
+				EE300003000000000000001 /* DensePoseExtractionTests.swift */,
+				EE300003000000000000002 /* BallTrajectoryOverlayTests.swift */,
+				EE400003000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift */,
+				CC300003000000000000040 /* SkeletonOverlayTests.swift */,
 				BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */,
 				BB100003000000000000005 /* PlaybackBarTests.swift */,
 				BB100003000000000000006 /* AVPlayerLayerViewTests.swift */,
@@ -987,12 +1026,21 @@
 				AA100004000000000000012 /* EventStillFrameGenerator.swift in Sources */,
 				AA100004000000000000013 /* PoseSnapshotDTO.swift in Sources */,
 				AA100004000000000000014 /* PoseSnapshotService.swift in Sources */,
+				EE100004000000000000001 /* DensePoseDTO.swift in Sources */,
+				EE100004000000000000002 /* DensePoseCache.swift in Sources */,
+				EE100004000000000000003 /* DensePoseExtractor.swift in Sources */,
+				EE100004000000000000004 /* BallTrajectoryDTO.swift in Sources */,
+				EE200004000000000000001 /* DenseSkeletonViewModel.swift in Sources */,
+				EE200004000000000000003 /* BallTrajectoryViewModel.swift in Sources */,
+				EE200004000000000000004 /* BallTrajectoryOverlayView.swift in Sources */,
+				EE200004000000000000002 /* ContinuousSkeletonOverlayView.swift in Sources */,
 				BB100004000000000000001 /* AVPlayerLayerView.swift in Sources */,
 				BB100004000000000000002 /* AnnotationVideoLoader.swift in Sources */,
 				BB100004000000000000003 /* PlaybackControlBar.swift in Sources */,
 				BB200004000000000000001 /* JugglingAnnotationScreen.swift in Sources */,
 				BB200004000000000000020 /* PoseSnapshotOverlayView.swift in Sources */,
 				BB200004000000000000021 /* BallOverlayView.swift in Sources */,
+				BB200004000000000000022 /* BallVideoOverlayView.swift in Sources */,
 				BB200004000000000000003 /* EventTimelineView.swift in Sources */,
 				BB200004000000000000010 /* AnnotationDebugOverlay.swift in Sources */,
 				BB200004000000000000011 /* EventLabelDetailView.swift in Sources */,
@@ -1049,6 +1097,10 @@
 				CC400004000000000000037 /* BallDetectionVMTests.swift in Sources */,
 				CC400004000000000000038 /* BallOverlayViewTests.swift in Sources */,
 				CC400004000000000000039 /* BallDetectionTimelineTests.swift in Sources */,
+				EE300004000000000000001 /* DensePoseExtractionTests.swift in Sources */,
+				EE300004000000000000002 /* BallTrajectoryOverlayTests.swift in Sources */,
+				EE400004000000000000001 /* EventRecordingBallTrajectoryIndependenceTests.swift in Sources */,
+				CC400004000000000000040 /* SkeletonOverlayTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
