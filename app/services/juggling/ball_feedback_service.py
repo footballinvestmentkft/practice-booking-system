@@ -1,7 +1,8 @@
 """
-Ball feedback service — AN-3B2B2 (B0 + B2 spam detection).
+Ball feedback service — AN-3B2B2 (B0 + B2 spam detection + D5 Celery dispatch).
 
-submit_feedback(): persist one user feedback record, detect spam signals.
+submit_feedback(): persist one user feedback record, detect spam signals,
+  dispatch compute_frame_consensus asynchronously after commit.
 get_feedback_queue(): return prioritized uncertain frames for a video.
 
 Spam signals (synchronous, checked after flush before commit):
@@ -11,7 +12,9 @@ Spam signals (synchronous, checked after flush before commit):
 Spam rows are NOT deleted. approval_state is set to "spam" and spam_flags
 records which signals fired. Admin can override via the review queue.
 
-Celery dispatch (D5): compute_frame_consensus is called after commit.
+Celery dispatch: compute_frame_consensus fires 2s after commit so the
+  transaction is guaranteed visible to the task's DB session.
+  Spam rows do NOT trigger consensus dispatch (their vote is excluded anyway).
 """
 from __future__ import annotations
 
@@ -168,6 +171,19 @@ def submit_feedback(
 
     db.commit()
     db.refresh(record)
+
+    # Dispatch consensus task only for non-spam rows
+    if record.approval_state != "spam":
+        try:
+            from app.tasks.juggling_feedback_task import compute_frame_consensus
+            compute_frame_consensus.apply_async(
+                args=[str(video_id), req.frame_ms],
+                countdown=2,
+            )
+        except Exception:
+            # Celery unavailable (test / dev without broker) — safe to ignore
+            pass
+
     return record
 
 
