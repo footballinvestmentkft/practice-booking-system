@@ -483,3 +483,76 @@ class BallTrajectoryManualSeedOut(BaseModel):
     is_manual:      bool
 
     model_config = {"from_attributes": True}
+
+
+# ── AN-3B2D-B0: Ball feedback schemas ────────────────────────────────────────
+
+
+class BallFeedbackRequest(BaseModel):
+    model_config = {"protected_namespaces": ()}
+
+    frame_ms:          int   = Field(..., ge=0)
+    decision:          str   = Field(..., description="confirm | reject | no_ball | corrected")
+    corrected_x:       Optional[float] = Field(None, ge=0.0, le=1.0)
+    corrected_y:       Optional[float] = Field(None, ge=0.0, le=1.0)
+    correction_method: Optional[str]   = Field(None)
+    # Model context snapshot sent from iOS
+    model_predicted_x:    Optional[float] = Field(None)
+    model_predicted_y:    Optional[float] = Field(None)
+    model_confidence:     Optional[float] = Field(None, ge=0.0, le=1.0)
+    model_tracking_state: Optional[str]   = Field(None)
+
+    @field_validator("decision")
+    @classmethod
+    def decision_must_be_valid(cls, v: str) -> str:
+        allowed = {"confirm", "reject", "no_ball", "corrected"}
+        if v not in allowed:
+            raise ValueError(f"decision must be one of {sorted(allowed)}")
+        return v
+
+    @field_validator("correction_method")
+    @classmethod
+    def correction_method_valid(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in {"tap", "drag"}:
+            raise ValueError("correction_method must be 'tap' or 'drag'")
+        return v
+
+    @model_validator(mode="after")
+    def corrected_requires_coords(self) -> "BallFeedbackRequest":
+        if self.decision == "corrected" and (
+            self.corrected_x is None or self.corrected_y is None
+        ):
+            raise ValueError(
+                "corrected_x and corrected_y are required when decision='corrected'"
+            )
+        return self
+
+
+class BallFeedbackOut(BaseModel):
+    id:             uuid.UUID
+    video_id:       uuid.UUID
+    frame_ms:       int
+    decision:       str
+    approval_state: str
+    created_at:     datetime
+
+    model_config = {"from_attributes": True}
+
+
+class BallFeedbackQueueItem(BaseModel):
+    model_config = {"protected_namespaces": ()}
+
+    frame_ms:                int
+    priority_score:          float
+    model_predicted_x:       Optional[float]
+    model_predicted_y:       Optional[float]
+    model_confidence:        Optional[float]
+    model_tracking_state:    Optional[str]
+    existing_feedback_count: int
+
+
+class BallFeedbackQueueResponse(BaseModel):
+    video_id:        str
+    queue_items:     List[BallFeedbackQueueItem]
+    total:           int
+    max_per_session: int = 3
