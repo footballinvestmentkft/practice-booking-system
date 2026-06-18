@@ -471,13 +471,13 @@ def test_jvl25_openapi_path_and_route_delta(client):
 # ── JVL-26: Alembic head unchanged ───────────────────────────────────────────
 
 def test_jvl26_alembic_head_unchanged():
-    """JVL-26: Alembic head is 2026_06_18_1400 (AN-3B2C-1 follow-up — auto_confidence)."""
+    """JVL-26: Alembic head is 2026_06_18_2000 (AN-3B2D-B0 ball feedback tables)."""
     from alembic.config import Config
     from alembic.script import ScriptDirectory
     import os
     cfg = Config(os.path.join(os.path.dirname(__file__), "..", "..", "..", "alembic.ini"))
     heads = ScriptDirectory.from_config(cfg).get_heads()
-    assert heads == ["2026_06_18_1400"], f"Unexpected Alembic heads: {heads}"
+    assert heads == ["2026_06_18_2000"], f"Unexpected Alembic heads: {heads}"
 
 
 # ── JVL-27: P4 thumbnail/media regression ────────────────────────────────────
