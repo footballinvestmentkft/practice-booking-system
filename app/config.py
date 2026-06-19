@@ -428,6 +428,19 @@ class Settings(BaseSettings):
     #   Turn ON per-deployment in .env: BALL_FEEDBACK_ENABLED=true
     BALL_FEEDBACK_ENABLED: bool = False
 
+    # ── AN-3B2F: Global Ball Training Hub (PR-1A) ─────────────────────────────
+    # BALL_TRAINING_ALLOWED_USER_IDS — comma-separated integer user IDs that may
+    #   access the global training hub in addition to ADMIN users.
+    #   Empty string (default) = hub accessible to ADMIN only.
+    #   Example: BALL_TRAINING_ALLOWED_USER_IDS=42,107,251
+    #   No DB migration required — parsed at request time from this config value.
+    BALL_TRAINING_ALLOWED_USER_IDS: str = ""
+
+    # BALL_TRAINING_ASSIGNMENT_TTL_SECONDS — how long an assignment stays valid
+    #   before the client must request a fresh queue.
+    #   Default: 3600 (1 hour). Lower values reduce orphaned-assignment accumulation.
+    BALL_TRAINING_ASSIGNMENT_TTL_SECONDS: int = 3600
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

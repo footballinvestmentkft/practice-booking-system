@@ -617,3 +617,58 @@ class TrainingExportResponse(BaseModel):
     exported_at:  datetime
     frame_count:  int
     frames:       List[TrainingExportFrame]
+
+
+# ── AN-3B2F: Global Ball Training Hub schemas (PR-1A) ─────────────────────────
+
+
+class GlobalTrainingQueueItem(BaseModel):
+    """One frame task returned by GET /me/ball-training/queue.
+
+    Privacy invariant: video_id, frame_ms, storage_path, and the video owner's
+    identity are NEVER included. The client only receives assignment_id (opaque UUID4)
+    and model metadata needed to render the UI.
+    """
+    model_config = {"protected_namespaces": ()}
+
+    assignment_id:           uuid.UUID
+    model_predicted_x:       Optional[float]
+    model_predicted_y:       Optional[float]
+    model_confidence:        Optional[float]
+    model_tracking_state:    Optional[str]
+    existing_feedback_count: int
+    priority_score:          float
+    expires_at:              datetime
+
+
+class GlobalTrainingQueueResponse(BaseModel):
+    tasks:           List[GlobalTrainingQueueItem]
+    max_per_session: int = 3
+    total_in_queue:  int
+
+
+class BallTrainingFeedbackRequest(BaseModel):
+    """Submit a training feedback decision via assignment_id.
+
+    Only 'confirm' and 'no_ball' are accepted in PR-1A.
+    'corrected' (tap/drag position override) is deferred to PR-1B.
+    """
+    assignment_id: uuid.UUID
+    decision:      str = Field(..., description="confirm | no_ball")
+
+    @field_validator("decision")
+    @classmethod
+    def decision_must_be_valid(cls, v: str) -> str:
+        allowed = {"confirm", "no_ball"}
+        if v not in allowed:
+            raise ValueError(
+                f"decision must be one of {sorted(allowed)}. "
+                "'corrected' is not available in this version."
+            )
+        return v
+
+
+class BallTrainingFeedbackResponse(BaseModel):
+    assignment_id: uuid.UUID
+    decision:      str
+    submitted_at:  datetime

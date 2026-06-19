@@ -91,6 +91,32 @@ def get_current_pitch_manager_user(current_user: User = Depends(get_current_user
     return current_user
 
 
+def get_ball_training_poc_user(current_user: User = Depends(get_current_user)) -> User:
+    """ADMIN users or explicitly allowlisted user IDs may access the Ball Training Hub.
+
+    Allowlist is read from BALL_TRAINING_ALLOWED_USER_IDS (comma-separated integers).
+    Empty string → only ADMIN can access.
+    """
+    from .config import settings
+    if current_user.role == UserRole.ADMIN:
+        return current_user
+    raw = settings.BALL_TRAINING_ALLOWED_USER_IDS.strip()
+    if raw:
+        try:
+            allowed = {int(x.strip()) for x in raw.split(",") if x.strip()}
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="BALL_TRAINING_ALLOWED_USER_IDS is misconfigured (non-integer value)",
+            )
+        if current_user.id in allowed:
+            return current_user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Access to the ball training hub is not enabled for this account",
+    )
+
+
 async def get_current_user_optional(
     request: Request,
     db: Session = Depends(get_db)

@@ -23,6 +23,7 @@ from . import (
     juggling_ball_detection,
     juggling_ball_trajectory,
     juggling_ball_feedback,
+    juggling_ball_training,
 )
 
 # Create main router
@@ -72,6 +73,8 @@ router.include_router(juggling_ball_detection.router, tags=["users", "juggling"]
 router.include_router(juggling_ball_trajectory.router, tags=["users", "juggling"])
 # AN-3B2D-B0: user-assisted ball feedback (BALL_FEEDBACK_ENABLED gated; 503 when off)
 router.include_router(juggling_ball_feedback.router, tags=["users", "juggling"])
+# AN-3B2F: Global Ball Training Hub (BALL_FEEDBACK_ENABLED + allowlist gated; 503/403 when off)
+router.include_router(juggling_ball_training.router, tags=["users", "juggling"])
 
 # CRUD endpoints (should be last due to /{user_id} catch-all)
 router.include_router(crud.router, tags=["users"])

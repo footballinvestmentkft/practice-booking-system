@@ -26,7 +26,9 @@ from app.celery_app import celery_app
 from app.database import SessionLocal
 from app.models.juggling import (
     JugglingBallFeedback,
+    JugglingConsent,
     JugglingFrameGroundTruth,
+    JugglingVideo,
     UserAnnotationReliability,
 )
 
@@ -61,7 +63,35 @@ def _update_reliability(
 def run_compute_frame_consensus(
     db: Session, video_id: str, frame_ms: int
 ) -> None:
-    """Core consensus logic — callable directly in tests without Celery."""
+    """Core consensus logic — callable directly in tests without Celery.
+
+    Live consent check (AN-3B2F PR-1A): if the video owner has revoked
+    training_consent, the GT row is not created or updated for this frame.
+    This prevents revoked-consent data from entering the training pipeline
+    even if feedback rows were already submitted before revocation.
+    """
+    video = db.execute(
+        select(JugglingVideo).where(JugglingVideo.id == video_id)
+    ).scalar_one_or_none()
+    if video is None or video.status == "gdpr_deleted":
+        logger.info(
+            "Consensus skipped: video %s not found or gdpr_deleted", video_id
+        )
+        return
+
+    consent = db.execute(
+        select(JugglingConsent).where(
+            JugglingConsent.user_id == video.user_id,
+            JugglingConsent.training_consent.is_(True),
+        )
+    ).scalar_one_or_none()
+    if consent is None:
+        logger.info(
+            "Consensus skipped: training_consent revoked for video %s (owner %s)",
+            video_id, video.user_id,
+        )
+        return
+
     rows = db.execute(
         select(JugglingBallFeedback).where(
             JugglingBallFeedback.video_id == video_id,

@@ -825,3 +825,39 @@ class UserAnnotationReliability(Base):
     spam_flags_count            = Column(Integer, nullable=False, default=0)
     last_updated = Column(DateTime(timezone=True), nullable=False,
                           default=lambda: datetime.now(timezone.utc))
+
+
+class BallTrainingAssignment(Base):
+    """
+    Short-lived task assignment for the Global Ball Training Hub (AN-3B2F).
+
+    Privacy invariant: the client receives only `id` (opaque UUID4).
+    `video_id` and `frame_ms` are NEVER returned to the client — they live
+    only in this DB row. The client cannot derive video_id from the assignment_id
+    because UUID4 is randomly generated with no relation to any payload.
+
+    Lifecycle:
+      consumed_at IS NULL + expires_at > now()  → pending (usable)
+      consumed_at IS NOT NULL                   → consumed (submitted or swept-expired)
+      consumed_at IS NULL + expires_at <= now() → expired-pending (swept at next queue request)
+
+    Partial unique index uix_bta_active_per_user_video_frame enforces at most one
+    active (consumed_at IS NULL) assignment per (user, video, frame) combination.
+    The queue service sweeps expired-pending rows before creating new ones.
+
+    display_mode: NULL in PR-1A; set by frame-serving endpoint in PR-1B.
+    """
+    __tablename__ = "ball_training_assignments"
+
+    id          = Column(UUID(as_uuid=True), primary_key=True, default=_uuid_mod.uuid4)
+    user_id     = Column(Integer, ForeignKey("users.id",         ondelete="CASCADE"),
+                         nullable=False, index=True)
+    video_id    = Column(UUID(as_uuid=True),
+                         ForeignKey("juggling_videos.id",        ondelete="CASCADE"),
+                         nullable=False)
+    frame_ms    = Column(Integer, nullable=False)
+    issued_at   = Column(DateTime(timezone=True), nullable=False,
+                         default=lambda: datetime.now(timezone.utc))
+    expires_at  = Column(DateTime(timezone=True), nullable=False)
+    consumed_at = Column(DateTime(timezone=True), nullable=True)
+    display_mode = Column(String(20), nullable=True)

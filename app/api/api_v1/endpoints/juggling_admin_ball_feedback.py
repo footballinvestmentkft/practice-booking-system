@@ -27,7 +27,12 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_admin_user
-from app.models.juggling import JugglingBallFeedback, JugglingFrameGroundTruth
+from app.models.juggling import (
+    JugglingBallFeedback,
+    JugglingConsent,
+    JugglingFrameGroundTruth,
+    JugglingVideo,
+)
 from app.models.user import User
 from app.schemas.juggling import (
     BallFeedbackAdminItem,
@@ -136,12 +141,19 @@ def get_training_export(
     now = datetime.now(timezone.utc)
 
     if version is not None:
-        # Idempotent re-export: return already-stamped rows for this version
+        # Idempotent re-export: return already-stamped rows for this version.
+        # Consent gate applied: exclude rows whose video owner has since revoked.
         rows = db.execute(
-            select(JugglingFrameGroundTruth).where(
+            select(JugglingFrameGroundTruth)
+            .join(JugglingVideo, JugglingVideo.id == JugglingFrameGroundTruth.video_id)
+            .join(JugglingConsent, JugglingConsent.user_id == JugglingVideo.user_id)
+            .where(
                 JugglingFrameGroundTruth.dataset_version == version,
                 JugglingFrameGroundTruth.exported_at.is_not(None),
-            ).limit(limit)
+                JugglingConsent.training_consent.is_(True),
+                JugglingVideo.status.notin_(["gdpr_deleted", "media_deleted"]),
+            )
+            .limit(limit)
         ).scalars().all()
         if not rows:
             raise HTTPException(
@@ -152,12 +164,18 @@ def get_training_export(
         export_time    = rows[0].exported_at
 
     else:
-        # Fresh export: only not-yet-exported eligible rows
+        # Fresh export: only not-yet-exported eligible rows whose owner still consents.
         rows = db.execute(
-            select(JugglingFrameGroundTruth).where(
+            select(JugglingFrameGroundTruth)
+            .join(JugglingVideo, JugglingVideo.id == JugglingFrameGroundTruth.video_id)
+            .join(JugglingConsent, JugglingConsent.user_id == JugglingVideo.user_id)
+            .where(
                 JugglingFrameGroundTruth.training_eligible.is_(True),
                 JugglingFrameGroundTruth.exported_at.is_(None),
-            ).limit(limit)
+                JugglingConsent.training_consent.is_(True),
+                JugglingVideo.status.notin_(["gdpr_deleted", "media_deleted"]),
+            )
+            .limit(limit)
         ).scalars().all()
 
         export_version = now.strftime("v1_%Y-%m-%d_%H%M")

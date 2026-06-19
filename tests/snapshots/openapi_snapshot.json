@@ -2865,6 +2865,110 @@
         }
       }
     },
+    "/api/v1/users/me/ball-training/queue": {
+      "get": {
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ],
+        "summary": "Get global ball training task queue",
+        "operationId": "get_ball_training_queue_api_v1_users_me_ball_training_queue_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10,
+              "minimum": 1,
+              "description": "Maximum tasks to return",
+              "default": 3,
+              "title": "Limit"
+            },
+            "description": "Maximum tasks to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlobalTrainingQueueResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/ball-training/feedback": {
+      "post": {
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ],
+        "summary": "Submit a ball training feedback decision",
+        "operationId": "post_ball_training_feedback_api_v1_users_me_ball_training_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BallTrainingFeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BallTrainingFeedbackResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/": {
       "post": {
         "tags": [
@@ -49925,6 +50029,52 @@
         ],
         "title": "BallFeedbackReviewAction"
       },
+      "BallTrainingFeedbackRequest": {
+        "properties": {
+          "assignment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assignment Id"
+          },
+          "decision": {
+            "type": "string",
+            "title": "Decision",
+            "description": "confirm | no_ball"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assignment_id",
+          "decision"
+        ],
+        "title": "BallTrainingFeedbackRequest",
+        "description": "Submit a training feedback decision via assignment_id.\n\nOnly 'confirm' and 'no_ball' are accepted in PR-1A.\n'corrected' (tap/drag position override) is deferred to PR-1B."
+      },
+      "BallTrainingFeedbackResponse": {
+        "properties": {
+          "assignment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assignment Id"
+          },
+          "decision": {
+            "type": "string",
+            "title": "Decision"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Submitted At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assignment_id",
+          "decision",
+          "submitted_at"
+        ],
+        "title": "BallTrainingFeedbackResponse"
+      },
       "BallTrajectoryManualSeedOut": {
         "properties": {
           "frame_ms": {
@@ -56675,6 +56825,111 @@
         ],
         "title": "GeneratedSemesterInfo",
         "description": "Information about a generated semester"
+      },
+      "GlobalTrainingQueueItem": {
+        "properties": {
+          "assignment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assignment Id"
+          },
+          "model_predicted_x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Predicted X"
+          },
+          "model_predicted_y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Predicted Y"
+          },
+          "model_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Confidence"
+          },
+          "model_tracking_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Tracking State"
+          },
+          "existing_feedback_count": {
+            "type": "integer",
+            "title": "Existing Feedback Count"
+          },
+          "priority_score": {
+            "type": "number",
+            "title": "Priority Score"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assignment_id",
+          "model_predicted_x",
+          "model_predicted_y",
+          "model_confidence",
+          "model_tracking_state",
+          "existing_feedback_count",
+          "priority_score",
+          "expires_at"
+        ],
+        "title": "GlobalTrainingQueueItem",
+        "description": "One frame task returned by GET /me/ball-training/queue.\n\nPrivacy invariant: video_id, frame_ms, storage_path, and the video owner's\nidentity are NEVER included. The client only receives assignment_id (opaque UUID4)\nand model metadata needed to render the UI."
+      },
+      "GlobalTrainingQueueResponse": {
+        "properties": {
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/GlobalTrainingQueueItem"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "max_per_session": {
+            "type": "integer",
+            "title": "Max Per Session",
+            "default": 3
+          },
+          "total_in_queue": {
+            "type": "integer",
+            "title": "Total In Queue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tasks",
+          "total_in_queue"
+        ],
+        "title": "GlobalTrainingQueueResponse"
       },
       "Group": {
         "properties": {
