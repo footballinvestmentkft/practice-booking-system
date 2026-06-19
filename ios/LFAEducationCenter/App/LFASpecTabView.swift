@@ -21,6 +21,9 @@ struct LFASpecTabView: View {
             JugglingVideoListView()
                 .tabItem { Label("Training", systemImage: "video.fill") }
 
+            BallTrainingHubView()
+                .tabItem { Label("Train AI", systemImage: "brain.head.profile") }
+
             LFAProfileTab(onReturnToHub: { presentationMode.wrappedValue.dismiss() })
                 .tabItem { Label("Profile", systemImage: "person.fill") }
         }

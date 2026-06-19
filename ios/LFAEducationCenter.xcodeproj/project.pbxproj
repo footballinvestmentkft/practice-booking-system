@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BT000004000000000000001 /* BallTrainingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000001 /* BallTrainingModels.swift */; };
+		BT000004000000000000002 /* BallTrainingAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000002 /* BallTrainingAPIClient.swift */; };
+		BT000004000000000000003 /* BallTrainingHubViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000003 /* BallTrainingHubViewModel.swift */; };
+		BT000004000000000000004 /* BallTrainingHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000004 /* BallTrainingHubView.swift */; };
+		BT000004000000000000005 /* BallTrainingFrameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000005 /* BallTrainingFrameView.swift */; };
+		BT500004000000000000001 /* BallTrainingHubVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT500003000000000000001 /* BallTrainingHubVMTests.swift */; };
 		36CB92D674607508AC4335E1 /* JugglingVideoListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */; };
 		3A252E40BD69018C7269AAF2 /* JugglingVideoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */; };
 		7FC19EF38DE99E82AE19FBE0 /* JugglingVideoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */; };
@@ -198,6 +204,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		BT000003000000000000001 /* BallTrainingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingModels.swift; sourceTree = "<group>"; };
+		BT000003000000000000002 /* BallTrainingAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingAPIClient.swift; sourceTree = "<group>"; };
+		BT000003000000000000003 /* BallTrainingHubViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingHubViewModel.swift; sourceTree = "<group>"; };
+		BT000003000000000000004 /* BallTrainingHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingHubView.swift; sourceTree = "<group>"; };
+		BT000003000000000000005 /* BallTrainingFrameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingFrameView.swift; sourceTree = "<group>"; };
+		BT500003000000000000001 /* BallTrainingHubVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingHubVMTests.swift; sourceTree = "<group>"; };
 		20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListViewModel.swift; sourceTree = "<group>"; };
 		89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListView.swift; sourceTree = "<group>"; };
 		BB000003000000000000001 /* LFAEducationCenterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAEducationCenterApp.swift; sourceTree = "<group>"; };
@@ -567,6 +579,11 @@
 		BB000002000000000000012 /* Training */ = {
 			isa = PBXGroup;
 			children = (
+				BT000003000000000000001 /* BallTrainingModels.swift */,
+				BT000003000000000000002 /* BallTrainingAPIClient.swift */,
+				BT000003000000000000003 /* BallTrainingHubViewModel.swift */,
+				BT000003000000000000004 /* BallTrainingHubView.swift */,
+				BT000003000000000000005 /* BallTrainingFrameView.swift */,
 			);
 			path = Training;
 			sourceTree = "<group>";
@@ -821,6 +838,7 @@
 				BF600003000000000000001 /* BallFeedbackPanelTests.swift */,
 				BF700003000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift */,
 				BF800003000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift */,
+				BT500003000000000000001 /* BallTrainingHubVMTests.swift */,
 				BB100003000000000000004 /* AnnotationVideoLoaderTests.swift */,
 				BB100003000000000000005 /* PlaybackBarTests.swift */,
 				BB100003000000000000006 /* AVPlayerLayerViewTests.swift */,
@@ -1082,6 +1100,11 @@
 				BB300004000000000000003 /* JugglingVideoUploadView.swift in Sources */,
 				BB300004000000000000004 /* JugglingVideoUploadCoordinator.swift in Sources */,
 				BB300004000000000000005 /* JugglingVideoExportService.swift in Sources */,
+				BT000004000000000000001 /* BallTrainingModels.swift in Sources */,
+				BT000004000000000000002 /* BallTrainingAPIClient.swift in Sources */,
+				BT000004000000000000003 /* BallTrainingHubViewModel.swift in Sources */,
+				BT000004000000000000004 /* BallTrainingHubView.swift in Sources */,
+				BT000004000000000000005 /* BallTrainingFrameView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1133,6 +1156,7 @@
 				BF600004000000000000001 /* BallFeedbackPanelTests.swift in Sources */,
 				BF700004000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift in Sources */,
 				BF800004000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift in Sources */,
+				BT500004000000000000001 /* BallTrainingHubVMTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
