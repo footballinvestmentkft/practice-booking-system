@@ -204,6 +204,18 @@ local_models/cvlface_*/
 # Contains face photos of real individuals used for accuracy benchmarking.
 scripts/test_images/
 
+# Biometric uploads and profile photos — NEVER commit (GDPR: personal biometric data)
+# biometric and profile images contain personal data (face photos of real individuals).
+# none of these files may be committed.
+app/uploads/biometric/
+app/static/uploads/profile_photos/
+
+# MediaPipe task model binaries — NEVER commit (generated/downloadable binaries)
+# MediaPipe task models are generated/downloadable binaries; not source code.
+# none of these files may be committed.
+# Note: path-specific rule only — global *.task is intentionally avoided.
+app/static/mediapipe/*.task
+
 # Xcode per-developer data — editor state, breakpoints, layout (never shared)
 xcuserdata/
 
