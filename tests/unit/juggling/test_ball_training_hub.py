@@ -10,7 +10,7 @@ Coverage:
   BTH-06   Non-existent assignment UUID → 404
   BTH-07   Valid confirm submit → 201, feedback row created, assignment consumed
   BTH-08   Valid no_ball submit → 201, correct decision persisted
-  BTH-09   corrected decision → 422 (deferred to PR-1B)
+  BTH-09   corrected without tap_x/tap_y → 422 (Pydantic model_validator; PR-1B)
   BTH-10   Queue excludes frames without training_consent (consent gate)
   BTH-11   Queue excludes user's own video frames
   BTH-12   Idempotent assignment creation — service-level advisory lock
@@ -378,9 +378,12 @@ def test_bth_08_valid_no_ball_submit(db, client, monkeypatch):
     assert resp.json()["decision"] == "no_ball"
 
 
-# ── BTH-09: corrected decision → 422 (deferred to PR-1B) ────────────────────
+# ── BTH-09: corrected without tap_x/tap_y → 422 (Pydantic model_validator) ──
+# PR-1B: 'corrected' is now a valid decision but requires tap_x + tap_y.
+# This test sends the old corrected_x/corrected_y fields (ignored by Pydantic)
+# without tap_x/tap_y, so the model_validator still raises 422.
 
-def test_bth_09_corrected_decision_422(db, client, monkeypatch):
+def test_bth_09_corrected_without_tap_coords_422(db, client, monkeypatch):
     _flags_on(monkeypatch)
     user = _make_user(db, "u9", UserRole.ADMIN)
     owner = _make_user(db, "ow9")
@@ -394,6 +397,7 @@ def test_bth_09_corrected_decision_422(db, client, monkeypatch):
         json={
             "assignment_id": str(assignment.id),
             "decision": "corrected",
+            # tap_x / tap_y intentionally omitted → model_validator raises 422
             "corrected_x": 0.5,
             "corrected_y": 0.4,
         },

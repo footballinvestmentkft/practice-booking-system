@@ -441,6 +441,22 @@ class Settings(BaseSettings):
     #   Default: 3600 (1 hour). Lower values reduce orphaned-assignment accumulation.
     BALL_TRAINING_ASSIGNMENT_TTL_SECONDS: int = 3600
 
+    # BALL_TRAINING_FRAME_ENABLED — AN-3B2F PR-1B privacy-safe frame serving.
+    #   OFF by default. When OFF, the frame endpoint returns HTTP 503.
+    #   Turn ON per-deployment in .env: BALL_TRAINING_FRAME_ENABLED=true
+    BALL_TRAINING_FRAME_ENABLED: bool = False
+
+    # BALL_TRAINING_FRAME_MARGIN_RATIO — half-side of the canonical context crop
+    #   expressed as margin_ratio * min(img_w, img_h) / 2 pixels from the ball
+    #   centre, clamped to image bounds.  0.70 → square side = 70 % of the
+    #   shorter dimension.
+    BALL_TRAINING_FRAME_MARGIN_RATIO: float = 0.70
+
+    # BALL_TRAINING_FULL_FRAME_CONFIDENCE_THRESHOLD — serve the full frame (not
+    #   a context crop) when trajectory confidence is below this value, or when
+    #   tracking_state == 'lost'.  Default 0.30.
+    BALL_TRAINING_FULL_FRAME_CONFIDENCE_THRESHOLD: float = 0.30
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

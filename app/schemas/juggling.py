@@ -650,25 +650,46 @@ class GlobalTrainingQueueResponse(BaseModel):
 class BallTrainingFeedbackRequest(BaseModel):
     """Submit a training feedback decision via assignment_id.
 
-    Only 'confirm' and 'no_ball' are accepted in PR-1A.
-    'corrected' (tap/drag position override) is deferred to PR-1B.
+    confirm   — model prediction is correct.
+    no_ball   — no ball is present in the frame.
+    corrected — user tapped the true ball position; tap_x and tap_y (both
+                normalised to [0, 1] relative to the displayed image) are
+                required.  The server back-calculates full-frame coordinates
+                from the crop metadata stored on the assignment.
     """
     assignment_id: uuid.UUID
-    decision:      str = Field(..., description="confirm | no_ball")
+    decision:      str = Field(..., description="confirm | no_ball | corrected")
+    tap_x: Optional[float] = Field(
+        None, ge=0.0, le=1.0,
+        description="Normalised x tap position within the displayed image (required for 'corrected')",
+    )
+    tap_y: Optional[float] = Field(
+        None, ge=0.0, le=1.0,
+        description="Normalised y tap position within the displayed image (required for 'corrected')",
+    )
 
     @field_validator("decision")
     @classmethod
     def decision_must_be_valid(cls, v: str) -> str:
-        allowed = {"confirm", "no_ball"}
+        allowed = {"confirm", "no_ball", "corrected"}
         if v not in allowed:
             raise ValueError(
-                f"decision must be one of {sorted(allowed)}. "
-                "'corrected' is not available in this version."
+                f"decision must be one of {sorted(allowed)}."
             )
         return v
+
+    @model_validator(mode="after")
+    def corrected_requires_tap_coords(self) -> "BallTrainingFeedbackRequest":
+        if self.decision == "corrected" and (self.tap_x is None or self.tap_y is None):
+            raise ValueError(
+                "tap_x and tap_y are required when decision is 'corrected'."
+            )
+        return self
 
 
 class BallTrainingFeedbackResponse(BaseModel):
     assignment_id: uuid.UUID
     decision:      str
     submitted_at:  datetime
+    corrected_x:   Optional[float] = None
+    corrected_y:   Optional[float] = None

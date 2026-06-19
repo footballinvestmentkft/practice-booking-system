@@ -294,7 +294,7 @@ class TestS109S110RouteAndSnapshot:
         """S1-09 (updated AN-3B2B2): route count is 910 (+3 admin feedback review endpoints)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 912, (
+        assert len(paths) == 913, (
             f"Expected 910 routes (907 prior + 3 admin feedback review), got {len(paths)}"
         )
 

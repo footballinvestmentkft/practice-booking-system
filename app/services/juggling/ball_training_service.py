@@ -56,6 +56,11 @@ from app.schemas.juggling import (
     GlobalTrainingQueueItem,
     GlobalTrainingQueueResponse,
 )
+from app.services.juggling.coordinate_transform import (
+    canonical_crop_box,
+    clamp_unit,
+    tap_to_full_frame,
+)
 
 _MAX_FEEDBACKS_PER_FRAME = 3
 
@@ -318,12 +323,47 @@ def submit_training_feedback(
     reliability = _get_user_reliability(db, user_id)
     traj_id = trajectory.id if trajectory is not None else None
 
+    # Back-calculate full-frame corrected coordinates from tap position.
+    corrected_x: float | None = None
+    corrected_y: float | None = None
+    correction_method: str | None = None
+
+    if req.decision == "corrected":
+        if assignment.display_mode is None:
+            raise HTTPException(
+                422,
+                "Frame must be fetched via GET /me/ball-training/frame/{assignment_id} "
+                "before submitting a corrected decision.",
+            )
+        if assignment.display_mode == "context_crop" and trajectory is not None:
+            img_w = trajectory.image_width_px or 1920
+            img_h = trajectory.image_height_px or 1080
+            box = canonical_crop_box(
+                trajectory.ball_x,
+                trajectory.ball_y,
+                img_w,
+                img_h,
+                margin_ratio=settings.BALL_TRAINING_FRAME_MARGIN_RATIO,
+            )
+            corrected_x, corrected_y = tap_to_full_frame(
+                req.tap_x, req.tap_y, box, img_w, img_h
+            )
+            correction_method = "tap_in_crop"
+        else:
+            # full_frame mode: tap coords ARE full-frame coords (clamped).
+            corrected_x = clamp_unit(req.tap_x)
+            corrected_y = clamp_unit(req.tap_y)
+            correction_method = "tap_in_full_frame"
+
     feedback = JugglingBallFeedback(
         video_id=assignment.video_id,
         frame_ms=assignment.frame_ms,
         trajectory_point_id=traj_id,
         user_id=user_id,
         decision=req.decision,
+        corrected_x=corrected_x,
+        corrected_y=corrected_y,
+        correction_method=correction_method,
         model_predicted_x=trajectory.ball_x if trajectory else None,
         model_predicted_y=trajectory.ball_y if trajectory else None,
         model_confidence=trajectory.confidence if trajectory else None,
@@ -366,4 +406,6 @@ def submit_training_feedback(
         assignment_id=req.assignment_id,
         decision=req.decision,
         submitted_at=now,
+        corrected_x=corrected_x,
+        corrected_y=corrected_y,
     )

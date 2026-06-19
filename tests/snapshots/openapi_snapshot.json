@@ -47287,6 +47287,50 @@
           }
         }
       }
+    },
+    "/api/v1/users/me/ball-training/frame/{assignment_id}": {
+      "get": {
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "juggling"
+        ],
+        "summary": "Serve a privacy-safe training frame for an assignment",
+        "operationId": "get_ball_training_frame_api_v1_users_me_ball_training_frame__assignment_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assignment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assignment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -50039,7 +50083,35 @@
           "decision": {
             "type": "string",
             "title": "Decision",
-            "description": "confirm | no_ball"
+            "description": "confirm | no_ball | corrected"
+          },
+          "tap_x": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tap X",
+            "description": "Normalised x tap position within the displayed image (required for 'corrected')"
+          },
+          "tap_y": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tap Y",
+            "description": "Normalised y tap position within the displayed image (required for 'corrected')"
           }
         },
         "type": "object",
@@ -50048,7 +50120,7 @@
           "decision"
         ],
         "title": "BallTrainingFeedbackRequest",
-        "description": "Submit a training feedback decision via assignment_id.\n\nOnly 'confirm' and 'no_ball' are accepted in PR-1A.\n'corrected' (tap/drag position override) is deferred to PR-1B."
+        "description": "Submit a training feedback decision via assignment_id.\n\nconfirm   \u2014 model prediction is correct.\nno_ball   \u2014 no ball is present in the frame.\ncorrected \u2014 user tapped the true ball position; tap_x and tap_y (both\n            normalised to [0, 1] relative to the displayed image) are\n            required.  The server back-calculates full-frame coordinates\n            from the crop metadata stored on the assignment."
       },
       "BallTrainingFeedbackResponse": {
         "properties": {
@@ -50065,6 +50137,28 @@
             "type": "string",
             "format": "date-time",
             "title": "Submitted At"
+          },
+          "corrected_x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected X"
+          },
+          "corrected_y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected Y"
           }
         },
         "type": "object",
