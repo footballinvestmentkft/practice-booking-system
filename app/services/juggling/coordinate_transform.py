@@ -39,7 +39,7 @@ def canonical_crop_box(
     ball_y: float,
     img_w: int,
     img_h: int,
-    margin_ratio: float = 0.40,
+    margin_ratio: float = 0.70,
 ) -> CropBox:
     """Return a square CropBox centred on the ball position.
 

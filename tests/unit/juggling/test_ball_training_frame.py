@@ -228,17 +228,17 @@ def _flags_on(monkeypatch):
 
 def test_crop_01_centred_ball_1920x1080():
     """CROP-01: centred ball (0.5, 0.5) → symmetric crop in 1920×1080."""
-    box = canonical_crop_box(0.5, 0.5, 1920, 1080, margin_ratio=0.40)
-    # half = 0.40 * 1080 / 2 = 216
-    assert box.left == pytest.approx(960 - 216)
-    assert box.top == pytest.approx(540 - 216)
-    assert box.right == pytest.approx(960 + 216)
-    assert box.bottom == pytest.approx(540 + 216)
+    box = canonical_crop_box(0.5, 0.5, 1920, 1080, margin_ratio=0.70)
+    # half = 0.70 * 1080 / 2 = 378
+    assert box.left == pytest.approx(960 - 378)
+    assert box.top == pytest.approx(540 - 378)
+    assert box.right == pytest.approx(960 + 378)
+    assert box.bottom == pytest.approx(540 + 378)
 
 
 def test_crop_02_ball_near_corner_clamped():
     """CROP-02: ball at (0.01, 0.01) → left/top clamped to 0."""
-    box = canonical_crop_box(0.01, 0.01, 1920, 1080, margin_ratio=0.40)
+    box = canonical_crop_box(0.01, 0.01, 1920, 1080, margin_ratio=0.70)
     assert box.left == 0.0
     assert box.top == 0.0
     assert box.right > 0.0
@@ -247,7 +247,7 @@ def test_crop_02_ball_near_corner_clamped():
 
 def test_crop_03_tap_centre_returns_ball_coords():
     """CROP-03: centre tap in centred crop → back-projects to (0.5, 0.5)."""
-    box = canonical_crop_box(0.5, 0.5, 1920, 1080, margin_ratio=0.40)
+    box = canonical_crop_box(0.5, 0.5, 1920, 1080, margin_ratio=0.70)
     full_x, full_y = tap_to_full_frame(0.5, 0.5, box, 1920, 1080)
     assert full_x == pytest.approx(0.5, abs=1e-9)
     assert full_y == pytest.approx(0.5, abs=1e-9)
@@ -255,7 +255,7 @@ def test_crop_03_tap_centre_returns_ball_coords():
 
 def test_crop_04_topleft_tap():
     """CROP-04: top-left tap (0.0, 0.0) → box.left/top normalised."""
-    box = canonical_crop_box(0.5, 0.5, 1920, 1080, margin_ratio=0.40)
+    box = canonical_crop_box(0.5, 0.5, 1920, 1080, margin_ratio=0.70)
     full_x, full_y = tap_to_full_frame(0.0, 0.0, box, 1920, 1080)
     assert full_x == pytest.approx(box.left / 1920, abs=1e-9)
     assert full_y == pytest.approx(box.top / 1080, abs=1e-9)
@@ -263,7 +263,7 @@ def test_crop_04_topleft_tap():
 
 def test_crop_05_out_of_range_tap_clamped():
     """CROP-05: tap outside [0, 1] is clamped; output always in [0, 1]."""
-    box = canonical_crop_box(0.5, 0.5, 1920, 1080, margin_ratio=0.40)
+    box = canonical_crop_box(0.5, 0.5, 1920, 1080, margin_ratio=0.70)
     for tap_x, tap_y in [(-0.5, 1.5), (2.0, -1.0), (1.0, 1.0)]:
         fx, fy = tap_to_full_frame(tap_x, tap_y, box, 1920, 1080)
         assert 0.0 <= fx <= 1.0
@@ -274,7 +274,7 @@ def test_crop_06_roundtrip_error_less_than_1px():
     """CROP-06: back-projecting the ball position yields < 1 pixel error."""
     ball_x, ball_y = 0.35, 0.60
     img_w, img_h = 1920, 1080
-    box = canonical_crop_box(ball_x, ball_y, img_w, img_h, margin_ratio=0.40)
+    box = canonical_crop_box(ball_x, ball_y, img_w, img_h, margin_ratio=0.70)
     crop_w = box.right - box.left
     crop_h = box.bottom - box.top
     # Determine ball tap in crop space.
@@ -298,17 +298,17 @@ def test_crop_07_clamp_unit():
 
 def test_crop_08_portrait_image():
     """CROP-08: portrait (1080×1920) — half_side derived from shorter dim (1080)."""
-    box = canonical_crop_box(0.5, 0.5, 1080, 1920, margin_ratio=0.40)
-    # half = 0.40 * 1080 / 2 = 216
-    assert box.left == pytest.approx(540 - 216)
-    assert box.top == pytest.approx(960 - 216)
-    assert box.right == pytest.approx(540 + 216)
-    assert box.bottom == pytest.approx(960 + 216)
+    box = canonical_crop_box(0.5, 0.5, 1080, 1920, margin_ratio=0.70)
+    # half = 0.70 * 1080 / 2 = 378
+    assert box.left == pytest.approx(540 - 378)
+    assert box.top == pytest.approx(960 - 378)
+    assert box.right == pytest.approx(540 + 378)
+    assert box.bottom == pytest.approx(960 + 378)
 
 
 def test_crop_09_all_edges_clamped_at_corner():
     """CROP-09: ball at image corner (0.0, 0.0) — all four edges clamped ≥ 0."""
-    box = canonical_crop_box(0.0, 0.0, 1920, 1080, margin_ratio=0.40)
+    box = canonical_crop_box(0.0, 0.0, 1920, 1080, margin_ratio=0.70)
     assert box.left == 0.0
     assert box.top == 0.0
     assert box.right > 0.0
@@ -316,7 +316,7 @@ def test_crop_09_all_edges_clamped_at_corner():
     assert box.right <= 1920
     assert box.bottom <= 1080
     # Similarly at bottom-right corner
-    box2 = canonical_crop_box(1.0, 1.0, 1920, 1080, margin_ratio=0.40)
+    box2 = canonical_crop_box(1.0, 1.0, 1920, 1080, margin_ratio=0.70)
     assert box2.right == 1920.0
     assert box2.bottom == 1080.0
     assert box2.left >= 0.0

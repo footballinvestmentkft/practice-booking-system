@@ -448,9 +448,9 @@ class Settings(BaseSettings):
 
     # BALL_TRAINING_FRAME_MARGIN_RATIO — half-side of the canonical context crop
     #   expressed as margin_ratio * min(img_w, img_h) / 2 pixels from the ball
-    #   centre, clamped to image bounds.  0.40 → square side ≈ 80 % of the
+    #   centre, clamped to image bounds.  0.70 → square side = 70 % of the
     #   shorter dimension.
-    BALL_TRAINING_FRAME_MARGIN_RATIO: float = 0.40
+    BALL_TRAINING_FRAME_MARGIN_RATIO: float = 0.70
 
     # BALL_TRAINING_FULL_FRAME_CONFIDENCE_THRESHOLD — serve the full frame (not
     #   a context crop) when trajectory confidence is below this value, or when
