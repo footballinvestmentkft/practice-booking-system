@@ -12,6 +12,8 @@
 		BT000004000000000000003 /* BallTrainingHubViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000003 /* BallTrainingHubViewModel.swift */; };
 		BT000004000000000000004 /* BallTrainingHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000004 /* BallTrainingHubView.swift */; };
 		BT000004000000000000005 /* BallTrainingFrameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000005 /* BallTrainingFrameView.swift */; };
+		BT000004000000000000006 /* RewardBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000006 /* RewardBadgeView.swift */; };
+		BT000004000000000000007 /* DailyProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000007 /* DailyProgressView.swift */; };
 		BT500004000000000000001 /* BallTrainingHubVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT500003000000000000001 /* BallTrainingHubVMTests.swift */; };
 		36CB92D674607508AC4335E1 /* JugglingVideoListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */; };
 		3A252E40BD69018C7269AAF2 /* JugglingVideoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */; };
@@ -209,6 +211,8 @@
 		BT000003000000000000003 /* BallTrainingHubViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingHubViewModel.swift; sourceTree = "<group>"; };
 		BT000003000000000000004 /* BallTrainingHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingHubView.swift; sourceTree = "<group>"; };
 		BT000003000000000000005 /* BallTrainingFrameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingFrameView.swift; sourceTree = "<group>"; };
+		BT000003000000000000006 /* RewardBadgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardBadgeView.swift; sourceTree = "<group>"; };
+		BT000003000000000000007 /* DailyProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyProgressView.swift; sourceTree = "<group>"; };
 		BT500003000000000000001 /* BallTrainingHubVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingHubVMTests.swift; sourceTree = "<group>"; };
 		20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListViewModel.swift; sourceTree = "<group>"; };
 		89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListView.swift; sourceTree = "<group>"; };
@@ -584,6 +588,8 @@
 				BT000003000000000000003 /* BallTrainingHubViewModel.swift */,
 				BT000003000000000000004 /* BallTrainingHubView.swift */,
 				BT000003000000000000005 /* BallTrainingFrameView.swift */,
+				BT000003000000000000006 /* RewardBadgeView.swift */,
+				BT000003000000000000007 /* DailyProgressView.swift */,
 			);
 			path = Training;
 			sourceTree = "<group>";
@@ -1105,6 +1111,8 @@
 				BT000004000000000000003 /* BallTrainingHubViewModel.swift in Sources */,
 				BT000004000000000000004 /* BallTrainingHubView.swift in Sources */,
 				BT000004000000000000005 /* BallTrainingFrameView.swift in Sources */,
+				BT000004000000000000006 /* RewardBadgeView.swift in Sources */,
+				BT000004000000000000007 /* DailyProgressView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

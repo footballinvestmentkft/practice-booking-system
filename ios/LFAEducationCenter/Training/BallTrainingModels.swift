@@ -60,12 +60,16 @@ struct BallTrainingFeedbackRequest: Encodable {
     }
 }
 
-struct BallTrainingFeedbackResponse: Decodable {
+struct BallTrainingFeedbackResponse: Decodable, Equatable {
     let assignmentId:   UUID
     let decision:       String
     let submittedAt:    String    // ISO-8601
     let correctedX:     Double?
     let correctedY:     Double?
+    let xpAwarded:      Int
+    let creditAwarded:  Int
+    let dailyXpTotal:   Int
+    let dailyTasksDone: Int
 
     enum CodingKeys: String, CodingKey {
         case assignmentId   = "assignment_id"
@@ -73,7 +77,41 @@ struct BallTrainingFeedbackResponse: Decodable {
         case submittedAt    = "submitted_at"
         case correctedX     = "corrected_x"
         case correctedY     = "corrected_y"
+        case xpAwarded      = "xp_awarded"
+        case creditAwarded  = "credit_awarded"
+        case dailyXpTotal   = "daily_xp_total"
+        case dailyTasksDone = "daily_tasks_done"
     }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        assignmentId   = try c.decode(UUID.self, forKey: .assignmentId)
+        decision       = try c.decode(String.self, forKey: .decision)
+        submittedAt    = try c.decode(String.self, forKey: .submittedAt)
+        correctedX     = try c.decodeIfPresent(Double.self, forKey: .correctedX)
+        correctedY     = try c.decodeIfPresent(Double.self, forKey: .correctedY)
+        xpAwarded      = try c.decodeIfPresent(Int.self, forKey: .xpAwarded) ?? 0
+        creditAwarded  = try c.decodeIfPresent(Int.self, forKey: .creditAwarded) ?? 0
+        dailyXpTotal   = try c.decodeIfPresent(Int.self, forKey: .dailyXpTotal) ?? 0
+        dailyTasksDone = try c.decodeIfPresent(Int.self, forKey: .dailyTasksDone) ?? 0
+    }
+
+    init(assignmentId: UUID, decision: String, submittedAt: String,
+         correctedX: Double? = nil, correctedY: Double? = nil,
+         xpAwarded: Int = 0, creditAwarded: Int = 0,
+         dailyXpTotal: Int = 0, dailyTasksDone: Int = 0) {
+        self.assignmentId   = assignmentId
+        self.decision       = decision
+        self.submittedAt    = submittedAt
+        self.correctedX     = correctedX
+        self.correctedY     = correctedY
+        self.xpAwarded      = xpAwarded
+        self.creditAwarded  = creditAwarded
+        self.dailyXpTotal   = dailyXpTotal
+        self.dailyTasksDone = dailyTasksDone
+    }
+
+    var hasReward: Bool { xpAwarded > 0 || creditAwarded > 0 }
 }
 
 // MARK: — BallTrainingAPIError
