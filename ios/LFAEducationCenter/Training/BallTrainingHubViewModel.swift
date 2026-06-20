@@ -38,6 +38,8 @@ final class BallTrainingHubViewModel: ObservableObject {
     @Published var isInCorrectionMode:  Bool = false
     @Published var frameErrorMessage:   String? = nil
     @Published var lastErrorMessage:    String? = nil
+    @Published var pendingTapX:         Double? = nil
+    @Published var pendingTapY:         Double? = nil
 
     private(set) var maxPerSession: Int = 5
 
@@ -62,6 +64,8 @@ final class BallTrainingHubViewModel: ObservableObject {
               currentIndex < items.count else { return nil }
         return items[currentIndex]
     }
+
+    var hasPendingTap: Bool { pendingTapX != nil }
 
     var progressText: String {
         guard case .ready(let items) = sessionState else { return "" }
@@ -125,15 +129,35 @@ final class BallTrainingHubViewModel: ObservableObject {
 
     func enterCorrectionMode() {
         isInCorrectionMode = true
+        clearPendingTap()
     }
 
     func cancelCorrectionMode() {
         isInCorrectionMode = false
+        clearPendingTap()
+    }
+
+    func setPendingTap(x: Double, y: Double) {
+        pendingTapX = x
+        pendingTapY = y
+    }
+
+    func confirmCorrection() async {
+        guard let x = pendingTapX, let y = pendingTapY, !isSubmitting else { return }
+        clearPendingTap()
+        isInCorrectionMode = false
+        await submitDecision("corrected", tapX: x, tapY: y)
+    }
+
+    func clearPendingTap() {
+        pendingTapX = nil
+        pendingTapY = nil
     }
 
     func skip() {
         guard !isSubmitting else { return }
         isInCorrectionMode = false
+        clearPendingTap()
         guard case .ready(let items) = sessionState else { return }
         let next = currentIndex + 1
         if next >= items.count {
@@ -153,6 +177,8 @@ final class BallTrainingHubViewModel: ObservableObject {
         currentIndex        = 0
         frameData           = nil
         lastErrorMessage    = nil
+        isInCorrectionMode  = false
+        clearPendingTap()
 
         do {
             let response    = try await apiClient!.fetchQueue()

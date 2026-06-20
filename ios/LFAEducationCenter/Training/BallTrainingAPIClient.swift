@@ -24,7 +24,7 @@ final class BallTrainingAPIClient: BallTrainingAPIClientProtocol {
     func fetchQueue() async throws -> GlobalTrainingQueueResponse {
         do {
             return try await authManager.authenticatedGet(
-                path: "/api/v1/users/me/ball-training/queue"
+                path: "/api/v1/users/me/ball-training/queue?limit=5"
             )
         } catch APIError.httpError(503, _) {
             throw BallTrainingAPIError.unavailable

@@ -397,4 +397,148 @@ final class BallTrainingHubVMTests: XCTestCase {
         await vm.corrected(tapX: 0.5, tapY: 0.5)
         XCTAssertFalse(vm.isInCorrectionMode)
     }
+
+    // BTH-VM-31: setPendingTap sets pendingTapX/Y without POST
+    func test_BTH_VM_31_setPendingTap_setsPendingWithoutPOST() async {
+        let (vm, mock) = makeVM(queueCount: 1)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.setPendingTap(x: 0.42, y: 0.67)
+        XCTAssertEqual(vm.pendingTapX ?? -1, 0.42, accuracy: 0.0001)
+        XCTAssertEqual(vm.pendingTapY ?? -1, 0.67, accuracy: 0.0001)
+        XCTAssertEqual(mock.submitCallCount, 0, "setPendingTap must not call submitFeedback")
+    }
+
+    // BTH-VM-32: confirmCorrection sends exactly 1 POST with decision="corrected"
+    func test_BTH_VM_32_confirmCorrection_submitsOnce() async {
+        let (vm, mock) = makeVM(queueCount: 1)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.setPendingTap(x: 0.5, y: 0.5)
+        await vm.confirmCorrection()
+        XCTAssertEqual(mock.submitCallCount, 1)
+        XCTAssertEqual(mock.lastSubmittedRequest?.decision, "corrected")
+    }
+
+    // BTH-VM-33: confirmCorrection sends pending coords as tap_x / tap_y
+    func test_BTH_VM_33_confirmCorrection_sendsPendingCoords() async {
+        let (vm, mock) = makeVM(queueCount: 1)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.setPendingTap(x: 0.38, y: 0.72)
+        await vm.confirmCorrection()
+        XCTAssertEqual(mock.lastSubmittedRequest?.tapX ?? -1, 0.38, accuracy: 0.0001)
+        XCTAssertEqual(mock.lastSubmittedRequest?.tapY ?? -1, 0.72, accuracy: 0.0001)
+    }
+
+    // BTH-VM-34: confirmCorrection clears pending after submit
+    func test_BTH_VM_34_confirmCorrection_clearsPendingAfterSubmit() async {
+        let (vm, _) = makeVM(queueCount: 1)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.setPendingTap(x: 0.5, y: 0.5)
+        await vm.confirmCorrection()
+        XCTAssertNil(vm.pendingTapX)
+        XCTAssertNil(vm.pendingTapY)
+    }
+
+    // BTH-VM-35: confirmCorrection exits correction mode
+    func test_BTH_VM_35_confirmCorrection_exitsCorrectionMode() async {
+        let (vm, _) = makeVM(queueCount: 2)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.enterCorrectionMode()
+        vm.setPendingTap(x: 0.5, y: 0.5)
+        await vm.confirmCorrection()
+        XCTAssertFalse(vm.isInCorrectionMode)
+    }
+
+    // BTH-VM-36: confirmCorrection without pending → 0 POST
+    func test_BTH_VM_36_confirmCorrection_withoutPending_noSubmit() async {
+        let (vm, mock) = makeVM(queueCount: 1)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.enterCorrectionMode()
+        // No setPendingTap called
+        await vm.confirmCorrection()
+        XCTAssertEqual(mock.submitCallCount, 0,
+                       "confirmCorrection must not submit when pendingTap is nil")
+    }
+
+    // BTH-VM-37: clearPendingTap → pending nil, 0 POST
+    func test_BTH_VM_37_clearPendingTap_noPOST() async {
+        let (vm, mock) = makeVM(queueCount: 1)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.setPendingTap(x: 0.5, y: 0.5)
+        vm.clearPendingTap()
+        XCTAssertNil(vm.pendingTapX)
+        XCTAssertNil(vm.pendingTapY)
+        XCTAssertEqual(mock.submitCallCount, 0)
+    }
+
+    // BTH-VM-38: cancelCorrectionMode clears pending + exits mode, 0 POST
+    func test_BTH_VM_38_cancelCorrectionMode_clearsPendingAndMode() async {
+        let (vm, mock) = makeVM(queueCount: 1)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.enterCorrectionMode()
+        vm.setPendingTap(x: 0.6, y: 0.4)
+        vm.cancelCorrectionMode()
+        XCTAssertNil(vm.pendingTapX)
+        XCTAssertNil(vm.pendingTapY)
+        XCTAssertFalse(vm.isInCorrectionMode)
+        XCTAssertEqual(mock.submitCallCount, 0)
+    }
+
+    // BTH-VM-39: setPendingTap twice → second overwrites first, still 0 POST
+    func test_BTH_VM_39_setPendingTap_overwritesPrevious() async {
+        let (vm, mock) = makeVM(queueCount: 1)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.setPendingTap(x: 0.3, y: 0.3)
+        vm.setPendingTap(x: 0.7, y: 0.8)
+        XCTAssertEqual(vm.pendingTapX ?? -1, 0.7, accuracy: 0.0001)
+        XCTAssertEqual(vm.pendingTapY ?? -1, 0.8, accuracy: 0.0001)
+        XCTAssertEqual(mock.submitCallCount, 0)
+    }
+
+    // BTH-VM-40: hasPendingTap is false before any tap
+    func test_BTH_VM_40_hasPendingTap_falseInitially() {
+        let vm = BallTrainingHubViewModel(apiClient: MockBallTrainingAPIClient())
+        XCTAssertFalse(vm.hasPendingTap)
+    }
+
+    // BTH-VM-41: hasPendingTap is true after setPendingTap
+    func test_BTH_VM_41_hasPendingTap_trueAfterSet() async {
+        let (vm, _) = makeVM(queueCount: 1)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.setPendingTap(x: 0.5, y: 0.5)
+        XCTAssertTrue(vm.hasPendingTap)
+    }
+
+    // BTH-VM-42: confirmCorrection blocked when isSubmitting=true (double-submit guard)
+    func test_BTH_VM_42_confirmCorrection_blockedWhileSubmitting() async {
+        let (vm, mock) = makeVM(queueCount: 2)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.setPendingTap(x: 0.5, y: 0.5)
+        vm.isSubmitting = true   // simulate in-flight request
+        await vm.confirmCorrection()
+        XCTAssertEqual(mock.submitCallCount, 0,
+                       "confirmCorrection must be blocked when isSubmitting=true")
+    }
+
+    // BTH-VM-43: sessionComplete fires after 5 submits when maxPerSession=5
+    func test_BTH_VM_43_sessionComplete_after5Submits_withLimit5() async {
+        let (vm, _) = makeVM(queueCount: 5, maxPerSession: 5)
+        await vm.loadQueue(authManager: AuthManager())
+        await vm.confirm()  // 1
+        await vm.confirm()  // 2
+        await vm.confirm()  // 3
+        await vm.noBall()   // 4
+        await vm.noBall()   // 5 → sessionComplete
+        XCTAssertEqual(vm.sessionState, .sessionComplete)
+        XCTAssertEqual(vm.submittedCount, 5)
+    }
+
+    // BTH-VM-44: submittedCount resets to 0 on reload
+    func test_BTH_VM_44_submittedCount_resetsOnReload() async {
+        let (vm, _) = makeVM(queueCount: 3, maxPerSession: 5)
+        await vm.loadQueue(authManager: AuthManager())
+        await vm.confirm()
+        XCTAssertEqual(vm.submittedCount, 1)
+        await vm.reload(authManager: AuthManager())
+        XCTAssertEqual(vm.submittedCount, 0)
+    }
 }
