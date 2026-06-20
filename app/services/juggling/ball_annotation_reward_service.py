@@ -172,6 +172,7 @@ def _award_credit_inline(
         {"uid": user_id},
     ).scalar() or 0
 
+    sp = db.begin_nested()
     db.add(CreditTransaction(
         user_id=user_id,
         transaction_type=TransactionType.BALL_ANNOTATION_REWARD.value,
@@ -181,12 +182,10 @@ def _award_credit_inline(
         idempotency_key=idempotency_key,
         created_at=datetime.now(timezone.utc),
     ))
-    sp = db.begin_nested()
     try:
         sp.commit()
     except IntegrityError:
         sp.rollback()
-        # Race between two sessions that both passed the check-first above.
         db.execute(
             text("UPDATE users SET credit_balance = credit_balance - 1 WHERE id = :uid"),
             {"uid": user_id},
