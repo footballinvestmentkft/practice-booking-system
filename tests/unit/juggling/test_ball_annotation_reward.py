@@ -25,6 +25,9 @@ Coverage:
   BAR-21   BTH-08 integration: no_ball submit → response xp_awarded=5
   BAR-22   Null/default reliability: no crash, uses 0.5 default
   BAR-23   Response backward compat: new fields default to 0 when not provided
+  BAR-24   96/100 XP + 10 XP corrected → exactly 4 XP (partial reward edge case)
+  BAR-25   XP cap full (100/100) + approved corrected → XP=0, credit=1 (independent caps)
+  BAR-26   30th/31st task boundary — 29 submitted → XP=5, 30 submitted → XP=0
   BAR-CC-1 Concurrent upfront submit → daily cap not exceeded
   BAR-CC-2 Consensus task run twice for same feedback_id → no duplicate XP/credit
 """
@@ -580,6 +583,68 @@ def test_bar_23_response_backward_compat(db):
     assert hasattr(r, "credit_awarded")
     assert r.xp_awarded == 0
     assert r.credit_awarded == 0
+
+
+# ── BAR-24: 96/100 XP + corrected (10 XP) → exactly 4 XP ────────────────────
+
+def test_bar_24_partial_reward_96_of_100(db):
+    user = _make_user(db)
+    assignment = _make_assignment(db, user)
+    _inject_daily_xp(db, user, 96)
+
+    xp, cr = award_annotation_upfront(
+        db, user.id, assignment.id, "corrected", 0.5
+    )
+
+    assert xp == 4  # min(10, 100-96) = 4
+    assert cr == 0
+
+
+# ── BAR-25: XP cap full + approved corrected → credit still awarded ─────────
+
+def test_bar_25_xp_cap_full_credit_independent(db):
+    """When XP cap is reached, credit should still be awarded independently."""
+    user = _make_user(db)
+    video = _make_video(db, user)
+    fb = _make_feedback(db, user, video, decision="corrected",
+                        approval_state="approved", reliability=0.5)
+    _inject_daily_xp(db, user, settings.BALL_ANNOTATION_MAX_XP_PER_DAY)
+
+    xp, cr = award_annotation_accuracy_bonus(
+        db, fb.id, user.id, "corrected", False, 0.5
+    )
+
+    assert xp == 0   # XP cap full
+    assert cr == 1    # credit cap independent — still awarded
+
+
+# ── BAR-26: 30th/31st task boundary ─────────────────────────────────────────
+
+def test_bar_26_task_boundary_29_and_30(db):
+    """29 existing feedbacks → 5 XP; 30 existing feedbacks → 0 XP.
+
+    daily_tasks_done = COUNT(feedback WHERE approval_state != 'spam' AND today).
+    In the real endpoint flow the current feedback is committed BEFORE the reward
+    check, so daily_count at reward time includes the current submission.
+    In this unit test we call award_annotation_upfront() directly (no feedback
+    commit), so the injected count IS the "at reward time" count.
+    """
+    user = _make_user(db)
+    video = _make_video(db, user)
+
+    # 29 feedbacks in DB → daily_count=29 → 29 < 30 → reward allowed
+    _inject_daily_feedbacks(db, user, video, 29)
+    a1 = _make_assignment(db, user, frame_ms=80001)
+    xp1, _ = award_annotation_upfront(db, user.id, a1.id, "confirm", 0.5)
+    assert xp1 == settings.BALL_ANNOTATION_XP_BASE
+
+    # Add 1 more feedback → 30 total → daily_count=30 → 30 >= 30 → blocked
+    video2 = _make_video(db, user)
+    _inject_daily_feedbacks(db, user, video2, 1)
+
+    a2 = _make_assignment(db, user, frame_ms=80002)
+    xp2, _ = award_annotation_upfront(db, user.id, a2.id, "confirm", 0.5)
+    assert xp2 == 0
 
 
 # ── BAR-CC-1: Concurrent upfront submit — cap not exceeded ───────────────────
