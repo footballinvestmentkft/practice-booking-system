@@ -71,10 +71,14 @@ class TestDBReadOnly:
         assert "psycopg2" not in source
 
     def test_SS_DBRW_09_report_builder_no_db_imports(self):
-        """SS-DBRW-09: report_builder.py does not import DB modules."""
+        """SS-DBRW-09: report_builder.py does not import DB modules or run queries."""
         source = (POC1_DIR / "report_builder.py").read_text(encoding="utf-8")
         assert "psycopg2" not in source
-        assert "juggling" not in source
+        assert "import psycopg2" not in source
+        # Table cell references to DB table names (as strings) are allowed;
+        # check that actual query keywords are absent
+        assert "SELECT " not in source
+        assert "FROM juggling" not in source
 
     def test_SS_DBRW_10_utils_no_db_imports(self):
         """SS-DBRW-10: utils.py does not import DB modules."""

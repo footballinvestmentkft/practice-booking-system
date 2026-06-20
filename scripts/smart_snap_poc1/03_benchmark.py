@@ -1,27 +1,32 @@
 #!/usr/bin/env python3
 """
-03_benchmark.py — Smart Snap POC-1
+03_benchmark.py — Smart Snap POC-1 v2
 
-Runs all 6 methods against the annotated ground truth and emits
-benchmark_results.json.
+Runs M1–M6 against the ground truth and emits benchmark_results.json.
+
+Baselines (separate, not interchangeable):
+  M1  Synthetic raw tap   — model_x/y + Gaussian noise (SYNTHETIC, σ=0.03)
+  M2_raw  Human raw tap   — mean of 3 reps from ground_truth.json (SIMULATED)
+  M2_loupe Human loupe tap — mean of 3 reps from ground_truth.json (SIMULATED)
 
 Methods:
-  M1  Synthetic raw tap   — model_predicted_x/y + Gaussian noise (100 draws)
-                            INPUT: model prediction + noise (SYNTHETIC)
-  M2  Human loupe tap     — human_loupe_tap from ground_truth.json
-                            Requires full annotation (loupe mode completed)
-  M3  Stored SSD          — model_predicted_x/y (no image processing)
-  M4  Local contour snap  — opencv findContours within ROI
-  M5  ROI Hough circles   — opencv HoughCircles within ROI
-  M6  Template matching   — synthetic circle template within ROI
+  M3  Stored SSD          — model_x/y unchanged (no image processing)
+  M4  Local contour snap  — Canny + findContours within ROI
+  M5  ROI Hough circles   — HoughCircles within ROI
+  M6  Template matching   — synthetic filled-circle template
 
-For frames where gt_final is available, pixel error vs GT is computed.
-For frames without gt_final (pending annotation), algorithms still run
-but no error metric is computed (latency only).
+Wrong-snap rate reported against BOTH M1 (synthetic) and M2_raw (simulated human).
+M2_loupe acts as the "aspirational" baseline — a snap must be competitive with
+a zoomed human tap to be considered useful.
+
+Separate aggregation is produced for tuning and holdout sets.
+Final verdict is based on holdout only.
+
+No DB access.
 
 Usage:
     python scripts/smart_snap_poc1/03_benchmark.py
-    python scripts/smart_snap_poc1/03_benchmark.py --no-m6   # skip template matching
+    python scripts/smart_snap_poc1/03_benchmark.py --no-m6
 """
 from __future__ import annotations
 
@@ -61,244 +66,285 @@ from scripts.smart_snap_poc1.metrics import (
 
 # ── Loaders ──────────────────────────────────────────────────────────────────
 
-def load_json(path: str) -> dict:
+def _load_json(path: str) -> dict:
     with open(path, encoding="utf-8") as fh:
         return json.load(fh)
 
 
-def load_image(frame_id: str) -> Optional[np.ndarray]:
+def _load_image(frame_id: str) -> Optional[np.ndarray]:
     path = os.path.join(DATASET_DIR, f"{frame_id}.jpg")
     if not os.path.isfile(path):
         return None
     return np.array(Image.open(path))
 
 
-# ── M1: synthetic raw tap ─────────────────────────────────────────────────────
+# ── M1 synthetic ─────────────────────────────────────────────────────────────
 
-def run_m1_synthetic(
-    model_x: float,
-    model_y: float,
-    gt_x: float,
-    gt_y: float,
-    img_w: int,
-    img_h: int,
+def _run_m1_synthetic(
+    model_x: float, model_y: float,
+    gt_x: float, gt_y: float,
+    img_w: int, img_h: int,
     rng: random.Random,
 ) -> dict:
-    """
-    Simulate N raw taps drawn from Normal(model_pred, σ) and compute
-    mean pixel error against GT.  Returns per-draw errors and aggregated stats.
-    """
     errors: list[float] = []
     for _ in range(M1_N_SIMULATIONS):
-        tx = model_x + rng.gauss(0, M1_SIGMA_NORM)
-        ty = model_y + rng.gauss(0, M1_SIGMA_NORM)
-        tx = max(0.0, min(1.0, tx))
-        ty = max(0.0, min(1.0, ty))
+        tx = max(0.0, min(1.0, model_x + rng.gauss(0, M1_SIGMA_NORM)))
+        ty = max(0.0, min(1.0, model_y + rng.gauss(0, M1_SIGMA_NORM)))
         errors.append(pixel_error(tx, ty, gt_x, gt_y, img_w, img_h))
-    stats = aggregate(errors)
     return {
         "method": "M1_synthetic_raw_tap",
         "data_source": "SYNTHETIC",
         "n_draws": M1_N_SIMULATIONS,
         "sigma_norm": M1_SIGMA_NORM,
-        **stats,
+        **aggregate(errors),
     }
 
 
-# ── Per-frame benchmark ────────────────────────────────────────────────────────
+# ── Per-frame benchmark ───────────────────────────────────────────────────────
 
 def benchmark_frame(
-    frame_id: str,
-    manifest_frame: dict,
+    frame: dict,
     gt_entry: Optional[dict],
     algorithms: list,
     rng: random.Random,
 ) -> dict:
-    img = load_image(frame_id)
-    img_w = manifest_frame.get("image_width_px") or 640
-    img_h = manifest_frame.get("image_height_px") or 480
+    frame_id = frame["frame_id"]
+    img_w = frame.get("image_width_px") or 640
+    img_h = frame.get("image_height_px") or 480
 
+    is_no_ball = frame.get("is_no_ball", False)
     has_gt = (
         gt_entry is not None
         and gt_entry.get("gt_final") is not None
-        and not gt_entry.get("is_no_ball", False)
+        and not is_no_ball
     )
-    is_no_ball = (gt_entry or {}).get("is_no_ball", False)
 
     gt_x = gt_entry["gt_final"]["x"] if has_gt else None
     gt_y = gt_entry["gt_final"]["y"] if has_gt else None
-    gt_provenance = (gt_entry or {}).get("gt_provenance", "none")
-    gt_agreement_px = (gt_entry or {}).get("gt_agreement_px")
-    gt_review_required = (gt_entry or {}).get("gt_review_required", False)
 
-    model_x = manifest_frame.get("model_x")
-    model_y = manifest_frame.get("model_y")
-    model_conf = manifest_frame.get("model_confidence")
+    model_x = frame.get("model_x")
+    model_y = frame.get("model_y")
+    model_conf = frame.get("model_confidence")
 
-    results: dict = {
+    result: dict = {
         "frame_id": frame_id,
-        "type": manifest_frame["type"],
-        "category": manifest_frame.get("category"),
-        "auto_category_hints": manifest_frame.get("auto_category_hints", []),
+        "type": frame["type"],
+        "video_id": frame.get("video_id", "")[:8],
+        "category": frame.get("category") or "unassigned",
+        "category_source": frame.get("category_source", "unknown"),
+        "split": frame.get("split"),
         "has_gt": has_gt,
         "is_no_ball": is_no_ball,
-        "gt_provenance": gt_provenance,
-        "gt_agreement_px": gt_agreement_px,
-        "gt_review_required": gt_review_required,
+        "gt_provenance": (gt_entry or {}).get("gt_provenance", "none"),
+        "gt_agreement_px": (gt_entry or {}).get("gt_agreement_px"),
+        "gt_review_required": (gt_entry or {}).get("gt_review_required", False),
         "img_w": img_w,
         "img_h": img_h,
         "methods": {},
     }
 
-    # ── M1: synthetic raw tap ────────────────────────────────────────────
+    # ── M1: synthetic raw tap ─────────────────────────────────────────────
     if has_gt and model_x is not None:
-        results["methods"]["M1_synthetic_raw_tap"] = run_m1_synthetic(
+        result["methods"]["M1_synthetic_raw_tap"] = _run_m1_synthetic(
             model_x, model_y, gt_x, gt_y, img_w, img_h, rng
         )
     else:
-        results["methods"]["M1_synthetic_raw_tap"] = {
-            "method": "M1_synthetic_raw_tap",
-            "skipped": True,
+        result["methods"]["M1_synthetic_raw_tap"] = {
+            "method": "M1_synthetic_raw_tap", "skipped": True,
             "reason": "no_model_prediction" if model_x is None else "no_gt",
         }
 
-    # ── M2: human loupe tap ──────────────────────────────────────────────
-    human_loupe = (gt_entry or {}).get("human_loupe_tap")
-    if human_loupe and has_gt:
-        err = pixel_error(human_loupe["x"], human_loupe["y"], gt_x, gt_y, img_w, img_h)
-        results["methods"]["M2_human_loupe_tap"] = {
-            "method": "M2_human_loupe_tap",
-            "data_source": "HUMAN_MEASURED",
-            "pixel_error": err,
-            "found": True,
-        }
+    # ── M2_raw: human raw tap (simulated) ────────────────────────────────
+    raw_tap = (gt_entry or {}).get("human_raw_tap")
+    if raw_tap and has_gt:
+        raw_x = raw_tap.get("x")
+        raw_y = raw_tap.get("y")
+        if raw_x is not None and raw_y is not None:
+            reps = raw_tap.get("reps", [])
+            rep_errors = [
+                pixel_error(r["x"], r["y"], gt_x, gt_y, img_w, img_h)
+                for r in reps if "x" in r and "y" in r
+            ]
+            mean_err = pixel_error(raw_x, raw_y, gt_x, gt_y, img_w, img_h)
+            result["methods"]["M2_human_raw_tap"] = {
+                "method": "M2_human_raw_tap",
+                "data_source": raw_tap.get("data_source", "SIMULATED"),
+                "x": raw_x, "y": raw_y,
+                "pixel_error": mean_err,
+                "rep_errors": rep_errors,
+                "n_reps": len(reps),
+            }
+        else:
+            result["methods"]["M2_human_raw_tap"] = {
+                "method": "M2_human_raw_tap", "skipped": True,
+                "reason": "no_coords",
+            }
     else:
-        results["methods"]["M2_human_loupe_tap"] = {
-            "method": "M2_human_loupe_tap",
-            "skipped": True,
-            "reason": "no_human_loupe_annotation" if not human_loupe else "no_gt",
+        result["methods"]["M2_human_raw_tap"] = {
+            "method": "M2_human_raw_tap", "skipped": True,
+            "reason": "no_raw_tap_annotation" if not raw_tap else "no_gt",
         }
 
-    # ── M3–M6: algorithm-based methods ──────────────────────────────────
-    # Use model prediction as the input "tap" for all algorithm methods
+    # ── M2_loupe: human loupe tap (simulated) ────────────────────────────
+    loupe_tap = (gt_entry or {}).get("human_loupe_tap")
+    if loupe_tap and has_gt:
+        lx = loupe_tap.get("x")
+        ly = loupe_tap.get("y")
+        if lx is not None and ly is not None:
+            loupe_err = pixel_error(lx, ly, gt_x, gt_y, img_w, img_h)
+            result["methods"]["M2_human_loupe_tap"] = {
+                "method": "M2_human_loupe_tap",
+                "data_source": loupe_tap.get("data_source", "SIMULATED"),
+                "x": lx, "y": ly,
+                "pixel_error": loupe_err,
+            }
+        else:
+            result["methods"]["M2_human_loupe_tap"] = {
+                "method": "M2_human_loupe_tap", "skipped": True,
+                "reason": "no_coords",
+            }
+    else:
+        result["methods"]["M2_human_loupe_tap"] = {
+            "method": "M2_human_loupe_tap", "skipped": True,
+            "reason": "no_loupe_annotation" if not loupe_tap else "no_gt",
+        }
+
+    # ── M3–M6: algorithm methods ──────────────────────────────────────────
+    img = _load_image(frame_id)
     tap_x = model_x if model_x is not None else 0.5
     tap_y = model_y if model_y is not None else 0.5
 
     for algo in algorithms:
-        algo_name = algo.name
+        name = algo.name
         if img is None:
-            results["methods"][algo_name] = {
-                "method": algo_name,
-                "skipped": True,
-                "reason": "image_not_extracted",
-            }
+            result["methods"][name] = {"method": name, "skipped": True, "reason": "image_not_extracted"}
             continue
 
-        snap_result: SnapResult = algo(
-            img,
-            tap_x,
-            tap_y,
-            model_x=model_x,
-            model_y=model_y,
-            model_confidence=model_conf,
-        )
-
+        snap: SnapResult = algo(img, tap_x, tap_y,
+                                model_x=model_x, model_y=model_y,
+                                model_confidence=model_conf)
         entry: dict = {
-            "method": algo_name,
+            "method": name,
             "data_source": "ALGORITHM",
-            "found": snap_result.found,
-            "refined_x": snap_result.refined_x,
-            "refined_y": snap_result.refined_y,
-            "confidence": snap_result.confidence,
-            "refusal_reason": snap_result.refusal_reason,
-            "latency_ms": snap_result.latency_ms,
+            "found": snap.found,
+            "refined_x": snap.refined_x,
+            "refined_y": snap.refined_y,
+            "confidence": snap.confidence,
+            "refusal_reason": snap.refusal_reason,
+            "latency_ms": snap.latency_ms,
         }
-
-        if has_gt and snap_result.found and snap_result.refined_x is not None:
+        if has_gt and snap.found and snap.refined_x is not None:
             entry["pixel_error"] = pixel_error(
-                snap_result.refined_x, snap_result.refined_y,
-                gt_x, gt_y, img_w, img_h,
+                snap.refined_x, snap.refined_y, gt_x, gt_y, img_w, img_h
             )
-
-        # For no-ball frames: track false positive
         if is_no_ball:
-            entry["false_positive"] = snap_result.found
+            entry["false_positive"] = snap.found
 
-        results["methods"][algo_name] = entry
+        result["methods"][name] = entry
 
-    return results
+    return result
 
 
-# ── Aggregate across all frames ────────────────────────────────────────────────
+# ── Aggregation helpers ───────────────────────────────────────────────────────
+
+def _agg_set(frame_results: list[dict], method: str, baseline_m1: str) -> dict:
+    """Aggregate metrics for one method over a set of frames."""
+    errors_all: list[float] = []
+    by_cat: dict[str, list[float]] = {}
+    by_vid: dict[str, list[float]] = {}
+    latencies: list[float] = []
+    no_ball_fp: list[bool] = []
+    found_flags: list[bool] = []
+
+    m1_baseline_per_frame: list[float | None] = []
+    m2_raw_baseline_per_frame: list[float | None] = []
+    m2_loupe_baseline_per_frame: list[float | None] = []
+    snap_err_per_frame: list[float | None] = []
+
+    for fr in frame_results:
+        m = fr["methods"].get(method, {})
+        if m.get("skipped"):
+            continue
+
+        lat = m.get("latency_ms")
+        if lat is not None:
+            latencies.append(lat)
+
+        if fr.get("is_no_ball"):
+            fp = m.get("false_positive")
+            if fp is not None:
+                no_ball_fp.append(fp)
+            continue
+
+        found = m.get("found")
+        if found is not None:
+            found_flags.append(bool(found))
+
+        err = m.get("pixel_error") or (m.get("mean") if method == "M1_synthetic_raw_tap" else None)
+        if err is not None and fr.get("has_gt"):
+            errors_all.append(err)
+            cat = fr.get("category") or "unassigned"
+            by_cat.setdefault(cat, []).append(err)
+            vid = fr.get("video_id", "unknown")
+            by_vid.setdefault(vid, []).append(err)
+
+            snap_err_per_frame.append(err)
+            # M1 baseline for this frame
+            m1_m = fr["methods"].get("M1_synthetic_raw_tap", {})
+            m1_baseline_per_frame.append(m1_m.get("mean") if not m1_m.get("skipped") else None)
+            # M2_raw baseline
+            m2r = fr["methods"].get("M2_human_raw_tap", {})
+            m2_raw_baseline_per_frame.append(m2r.get("pixel_error") if not m2r.get("skipped") else None)
+            # M2_loupe baseline
+            m2l = fr["methods"].get("M2_human_loupe_tap", {})
+            m2_loupe_baseline_per_frame.append(m2l.get("pixel_error") if not m2l.get("skipped") else None)
+
+    # Paired wrong-snap rates
+    def _paired_wsr(snaps, baselines):
+        pairs = [(s, b) for s, b in zip(snaps, baselines) if s is not None and b is not None]
+        if not pairs:
+            return None
+        return wrong_snap_rate([p[0] for p in pairs], [p[1] for p in pairs])
+
+    # Confidence distribution (M3–M6 only)
+    conf_values = [
+        fr["methods"].get(method, {}).get("confidence")
+        for fr in frame_results
+        if fr["methods"].get(method, {}).get("confidence") is not None
+    ]
+
+    return {
+        "overall": aggregate(errors_all),
+        "by_category": {c: aggregate(v) for c, v in by_cat.items() if v},
+        "by_video": {v: aggregate(e) for v, e in by_vid.items() if e},
+        "latency": latency_summary(latencies),
+        "wrong_snap_rate_vs_m1_synthetic": _paired_wsr(snap_err_per_frame, m1_baseline_per_frame),
+        "wrong_snap_rate_vs_m2_raw": _paired_wsr(snap_err_per_frame, m2_raw_baseline_per_frame),
+        "wrong_snap_rate_vs_m2_loupe": _paired_wsr(snap_err_per_frame, m2_loupe_baseline_per_frame),
+        "false_positive_rate": false_positive_rate(no_ball_fp) if no_ball_fp else None,
+        "false_refusal_rate": false_refusal_rate(found_flags) if found_flags else None,
+        "confidence_distribution": aggregate(conf_values) if conf_values else None,
+        "n_no_ball_frames_tested": len(no_ball_fp),
+    }
+
 
 def aggregate_results(frame_results: list[dict]) -> dict:
-    method_names = set()
-    for fr in frame_results:
-        method_names.update(fr["methods"].keys())
+    method_names = sorted({
+        name for fr in frame_results
+        for name, m in fr["methods"].items() if not m.get("skipped")
+    })
+
+    tuning = [fr for fr in frame_results if fr.get("split") == "tuning"]
+    holdout = [fr for fr in frame_results if fr.get("split") == "holdout"]
+    unsplit = [fr for fr in frame_results if fr.get("split") is None]
 
     aggregated: dict = {}
-    categories = list({fr.get("category") or "unassigned" for fr in frame_results})
-
-    for method in sorted(method_names):
-        errors_all: list[float] = []
-        errors_by_cat: dict[str, list[float]] = {c: [] for c in categories}
-        latencies: list[float] = []
-        no_ball_fp: list[bool] = []
-        positive_found: list[bool] = []
-        m1_means: list[float] = []  # for M1: use mean of simulation
-
-        for fr in frame_results:
-            m = fr["methods"].get(method, {})
-            if m.get("skipped"):
-                continue
-
-            lat = m.get("latency_ms")
-            if lat is not None:
-                latencies.append(lat)
-
-            if fr.get("is_no_ball"):
-                fp = m.get("false_positive")
-                if fp is not None:
-                    no_ball_fp.append(fp)
-                continue
-
-            if fr.get("has_gt"):
-                err = m.get("pixel_error") or m.get("mean")  # M1 uses 'mean'
-                if err is not None:
-                    errors_all.append(err)
-                    cat = fr.get("category") or "unassigned"
-                    errors_by_cat.setdefault(cat, []).append(err)
-
-            found = m.get("found")
-            if found is not None:
-                positive_found.append(bool(found))
-
-        # M1 baseline for wrong_snap comparison
-        m1_baseline = [
-            fr["methods"].get("M1_synthetic_raw_tap", {}).get("mean")
-            for fr in frame_results
-            if fr.get("has_gt") and not fr.get("is_no_ball")
-            and not fr["methods"].get(method, {}).get("skipped")
-        ]
-        snap_for_wsr = [
-            fr["methods"].get(method, {}).get("pixel_error")
-            or fr["methods"].get(method, {}).get("mean")
-            for fr in frame_results
-            if fr.get("has_gt") and not fr.get("is_no_ball")
-            and not fr["methods"].get(method, {}).get("skipped")
-        ]
-        # Filter paired None
-        paired = [(s, b) for s, b in zip(snap_for_wsr, m1_baseline) if s is not None and b is not None]
-        snap_list = [p[0] for p in paired]
-        base_list = [p[1] for p in paired]
-
+    for method in method_names:
         aggregated[method] = {
-            "overall": aggregate(errors_all),
-            "by_category": {cat: aggregate(vals) for cat, vals in errors_by_cat.items() if vals},
-            "latency": latency_summary(latencies),
-            "wrong_snap_rate_vs_m1": wrong_snap_rate(snap_list, base_list),
-            "false_positive_rate": false_positive_rate(no_ball_fp) if no_ball_fp else None,
-            "false_refusal_rate": false_refusal_rate(positive_found) if positive_found else None,
+            "all": _agg_set(frame_results, method, "M1_synthetic_raw_tap"),
+            "tuning": _agg_set(tuning, method, "M1_synthetic_raw_tap") if tuning else None,
+            "holdout": _agg_set(holdout, method, "M1_synthetic_raw_tap") if holdout else None,
+            "unsplit": _agg_set(unsplit, method, "M1_synthetic_raw_tap") if unsplit else None,
         }
 
     return aggregated
@@ -307,14 +353,13 @@ def aggregate_results(frame_results: list[dict]) -> dict:
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def run(include_m6: bool = True) -> None:
-    if not os.path.isfile(MANIFEST_PATH):
-        print("ERROR: manifest.json missing. Run 00_audit_eligible_frames.py.", file=sys.stderr)
-        sys.exit(1)
+    for path, name in [(MANIFEST_PATH, "manifest.json"), (GROUND_TRUTH_PATH, "ground_truth.json")]:
+        if not os.path.isfile(path):
+            print(f"ERROR: {name} missing. Run previous pipeline steps first.", file=sys.stderr)
+            sys.exit(1)
 
-    manifest = load_json(MANIFEST_PATH)
-    gt: dict = {}
-    if os.path.isfile(GROUND_TRUTH_PATH):
-        gt = load_json(GROUND_TRUTH_PATH).get("frames", {})
+    manifest = _load_json(MANIFEST_PATH)
+    gt: dict = _load_json(GROUND_TRUTH_PATH).get("frames", {})
 
     algorithms = [M3StoredSSD(), M4Contour(), M5Hough()]
     if include_m6:
@@ -324,23 +369,40 @@ def run(include_m6: bool = True) -> None:
     frame_results: list[dict] = []
 
     for frame in manifest["frames"]:
-        frame_id = frame["frame_id"]
-        gt_entry = gt.get(frame_id)
-        print(f"  Processing {frame_id} (type={frame['type']}, gt={'✓' if gt_entry else '—'})")
-        fr = benchmark_frame(frame_id, frame, gt_entry, algorithms, rng)
-        frame_results.append(fr)
+        fid = frame["frame_id"]
+        gt_entry = gt.get(fid)
+        print(f"  {fid}  type={frame['type']}  split={frame.get('split','?')}  "
+              f"cat={frame.get('category','?')}  gt={'✓' if gt_entry else '—'}")
+        frame_results.append(benchmark_frame(frame, gt_entry, algorithms, rng))
 
     agg = aggregate_results(frame_results)
+
+    # ── Summary counts ────────────────────────────────────────────────────
+    n_gt = sum(1 for fr in frame_results if fr["has_gt"])
+    n_no_ball = sum(1 for fr in frame_results if fr["is_no_ball"])
+    n_tuning = sum(1 for fr in frame_results if fr.get("split") == "tuning")
+    n_holdout = sum(1 for fr in frame_results if fr.get("split") == "holdout")
+    cat_counts: dict[str, int] = {}
+    for fr in frame_results:
+        cat_counts[fr["category"]] = cat_counts.get(fr["category"], 0) + 1
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "poc": "smart_snap_poc1",
-        "schema_version": "1.0",
+        "schema_version": "2.0",
+        "annotation_data_warning": (
+            "All M2_raw and M2_loupe baselines are PROVISIONAL SIMULATION "
+            "from 02b_seed_provisional_gt.py — not real human annotations."
+        ),
         "summary": {
             "total_frames": len(frame_results),
-            "frames_with_gt": sum(1 for fr in frame_results if fr["has_gt"]),
-            "no_ball_frames": sum(1 for fr in frame_results if fr["is_no_ball"]),
+            "frames_with_gt": n_gt,
+            "no_ball_frames": n_no_ball,
+            "tuning_frames": n_tuning,
+            "holdout_frames": n_holdout,
+            "unsplit_frames": len(frame_results) - n_tuning - n_holdout,
             "algorithms": [a.name for a in algorithms],
+            "category_distribution": cat_counts,
         },
         "per_frame": frame_results,
         "aggregated": agg,
@@ -350,19 +412,28 @@ def run(include_m6: bool = True) -> None:
         json.dump(output, fh, indent=2, default=str)
 
     print(f"\nBenchmark complete → benchmark_results.json")
-    print(f"  Frames: {output['summary']['total_frames']} total, "
-          f"{output['summary']['frames_with_gt']} with GT, "
-          f"{output['summary']['no_ball_frames']} no-ball")
-    print("\n  Method overview (mean pixel error on GT frames):")
+    print(f"  Frames: {len(frame_results)} total, {n_gt} with GT, {n_no_ball} no-ball")
+    print(f"  Split:  tuning={n_tuning}, holdout={n_holdout}")
+    print()
+
+    # Print method overview using holdout if available, else all
+    set_label = "holdout" if n_holdout > 0 else "all"
+    print(f"  Method overview ({set_label} set, mean pixel error vs GT):")
     for method, stats in agg.items():
-        overall = stats["overall"]
-        mean_str = f"{overall['mean']:.1f}px" if overall["mean"] is not None else "N/A"
-        wsr_str = f"{stats['wrong_snap_rate_vs_m1']:.1%}" if stats["wrong_snap_rate_vs_m1"] is not None else "N/A"
-        print(f"    {method:<30} mean={mean_str:<10} wrong_snap_rate={wsr_str}")
+        s = stats.get(set_label) or stats.get("all") or {}
+        overall = s.get("overall", {})
+        mean_str = f"{overall.get('mean', 0):.1f}px" if overall.get("mean") is not None else "N/A"
+        wsr_m1 = s.get("wrong_snap_rate_vs_m1_synthetic")
+        wsr_raw = s.get("wrong_snap_rate_vs_m2_raw")
+        fp = s.get("false_positive_rate")
+        print(f"    {method:<28} mean={mean_str:<10} "
+              f"wsr_vs_M1={f'{wsr_m1:.1%}' if wsr_m1 is not None else 'N/A':<8} "
+              f"wsr_vs_M2raw={f'{wsr_raw:.1%}' if wsr_raw is not None else 'N/A':<8} "
+              f"FP={'N/A' if fp is None else f'{fp:.1%}'}")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run Smart Snap POC-1 benchmark.")
-    parser.add_argument("--no-m6", action="store_true", help="Skip M6 template matching.")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--no-m6", action="store_true")
     args = parser.parse_args()
     run(include_m6=not args.no_m6)
