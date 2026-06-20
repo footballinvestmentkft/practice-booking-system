@@ -2298,10 +2298,13 @@
       "frame_id": "66ee1c8a_0009400ms",
       "type": "B",
       "is_no_ball": false,
-      "gt_final": null,
-      "gt_provenance": "human_ball_present",
-      "gt_agreement_px": null,
-      "gt_review_required": null,
+      "gt_final": {
+        "x": 0.7563525410164065,
+        "y": 0.5379268212139223
+      },
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 2.13,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.7614034271988562,
         "y": 0.49037359501324446,
@@ -2312,19 +2315,83 @@
         "y": 0.4795258408709248,
         "model_hidden": false
       },
-      "human_raw_tap": null,
-      "human_loupe_tap": null,
+      "human_raw_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.7551020408163265,
+            "y": 0.5395779671091737,
+            "annotated_at": "2026-06-20T13:26:59.344050+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.7559357076163798,
+            "y": 0.5428802588996763,
+            "annotated_at": "2026-06-20T13:27:01.142454+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.7551020408163265,
+            "y": 0.5428802588996763,
+            "annotated_at": "2026-06-20T13:27:02.891637+00:00"
+          }
+        ],
+        "mean_x": 0.7553799297496777,
+        "mean_y": 0.5417794949695088,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:27:02.891646+00:00"
+      },
+      "human_loupe_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.7551020408163265,
+            "y": 0.5346245294234198,
+            "annotated_at": "2026-06-20T13:27:05.132392+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.7576030412164865,
+            "y": 0.541229113004425,
+            "annotated_at": "2026-06-20T13:27:07.065561+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.7567693744164332,
+            "y": 0.5379268212139224,
+            "annotated_at": "2026-06-20T13:27:09.174160+00:00"
+          }
+        ],
+        "mean_x": 0.7564914854830821,
+        "mean_y": 0.5379268212139223,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:27:09.174167+00:00"
+      },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
       "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
-      "gt_round_1": null,
-      "completed_modes": [],
-      "gt_round_2": null,
-      "annotated_at": "2026-06-20T12:52:57.722624+00:00",
-      "annotation_needs_redo": true
+      "gt_round_1": {
+        "x": 0.7559357076163798,
+        "y": 0.536275675318671,
+        "annotated_at": "2026-06-20T13:26:49.393730+00:00",
+        "data_source": "human"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.7567693744164332,
+        "y": 0.5395779671091737,
+        "annotated_at": "2026-06-20T13:26:56.957489+00:00",
+        "data_source": "human"
+      },
+      "annotated_at": "2026-06-20T12:52:57.722624+00:00"
     },
     "a3d45095_0001500ms": {
       "frame_id": "a3d45095_0001500ms",
@@ -2914,45 +2981,179 @@
       "frame_id": "47466ee0_0000100ms",
       "type": "C",
       "is_no_ball": false,
-      "gt_final": null,
-      "gt_provenance": "human_ball_present",
-      "gt_agreement_px": null,
-      "gt_review_required": null,
+      "gt_final": {
+        "x": 0.22113845538215288,
+        "y": 0.7547022981654412
+      },
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 3.01,
+      "gt_review_required": "False",
       "annotation_round_1": null,
       "annotation_round_2": null,
-      "human_raw_tap": null,
-      "human_loupe_tap": null,
+      "human_raw_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.2207216219821262,
+            "y": 0.7596695145373863,
+            "annotated_at": "2026-06-20T13:24:34.235186+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.2215552887821796,
+            "y": 0.7646367309093315,
+            "annotated_at": "2026-06-20T13:24:42.002656+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.21822062158196615,
+            "y": 0.7679482084906283,
+            "annotated_at": "2026-06-20T13:24:45.289556+00:00"
+          }
+        ],
+        "mean_x": 0.22016584411542395,
+        "mean_y": 0.7640848179791154,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:24:45.289566+00:00"
+      },
+      "human_loupe_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.2240562891823396,
+            "y": 0.7596695145373863,
+            "annotated_at": "2026-06-20T13:24:56.928225+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.22238895558223293,
+            "y": 0.7646367309093315,
+            "annotated_at": "2026-06-20T13:25:00.596973+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.21822062158196615,
+            "y": 0.7596695145373863,
+            "annotated_at": "2026-06-20T13:25:03.940341+00:00"
+          }
+        ],
+        "mean_x": 0.22155528878217956,
+        "mean_y": 0.7613252533280347,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:25:03.940353+00:00"
+      },
       "db_reference": {
         "x": null,
         "y": null
       },
       "simulation_note": "No-ball frame. FP measured per algorithm.",
-      "gt_round_1": null,
-      "completed_modes": [],
-      "gt_round_2": null,
-      "annotation_needs_redo": true
+      "gt_round_1": {
+        "x": 0.22322262238228627,
+        "y": 0.7563580369560896,
+        "annotated_at": "2026-06-20T13:24:29.143829+00:00",
+        "data_source": "human"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.2190542883820195,
+        "y": 0.7530465593747928,
+        "annotated_at": "2026-06-20T13:24:31.651758+00:00",
+        "data_source": "human"
+      }
     },
     "47466ee0_0023000ms": {
       "frame_id": "47466ee0_0023000ms",
       "type": "C",
       "is_no_ball": false,
-      "gt_final": null,
-      "gt_provenance": "human_ball_present",
-      "gt_agreement_px": null,
-      "gt_review_required": null,
+      "gt_final": {
+        "x": 0.8047052154195012,
+        "y": 0.23824384122581074
+      },
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 2.15,
+      "gt_review_required": "False",
       "annotation_round_1": null,
       "annotation_round_2": null,
-      "human_raw_tap": null,
-      "human_loupe_tap": null,
+      "human_raw_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.8034547152194211,
+            "y": 0.2440228518591903,
+            "annotated_at": "2026-06-20T13:25:51.278104+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.7992863812191544,
+            "y": 0.25062743544019545,
+            "annotated_at": "2026-06-20T13:25:54.547350+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.8042883820194746,
+            "y": 0.24732514364969288,
+            "annotated_at": "2026-06-20T13:26:14.005530+00:00"
+          }
+        ],
+        "mean_x": 0.8023431594860168,
+        "mean_y": 0.2473251436496929,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:26:14.005538+00:00"
+      },
+      "human_loupe_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.807623049219688,
+            "y": 0.22916253880192847,
+            "annotated_at": "2026-06-20T13:26:23.529298+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.8034547152194211,
+            "y": 0.24072056006868772,
+            "annotated_at": "2026-06-20T13:26:25.385017+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.8117913832199546,
+            "y": 0.23576712238293376,
+            "annotated_at": "2026-06-20T13:26:27.931530+00:00"
+          }
+        ],
+        "mean_x": 0.807623049219688,
+        "mean_y": 0.23521674041784998,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:26:27.931552+00:00"
+      },
       "db_reference": {
         "x": null,
         "y": null
       },
       "simulation_note": "No-ball frame. FP measured per algorithm.",
-      "gt_round_1": null,
-      "completed_modes": [],
-      "gt_round_2": null,
-      "annotation_needs_redo": true
+      "gt_round_1": {
+        "x": 0.8051220488195279,
+        "y": 0.23576712238293376,
+        "annotated_at": "2026-06-20T13:25:34.650221+00:00",
+        "data_source": "human"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.8042883820194746,
+        "y": 0.24072056006868772,
+        "annotated_at": "2026-06-20T13:25:36.550452+00:00",
+        "data_source": "human"
+      }
     },
     "5416b28f_0000100ms": {
       "frame_id": "5416b28f_0000100ms",
@@ -3036,111 +3237,446 @@
       "frame_id": "66ee1c8a_0005900ms",
       "type": "C",
       "is_no_ball": false,
-      "gt_final": null,
-      "gt_provenance": "human_ball_present",
-      "gt_agreement_px": null,
-      "gt_review_required": null,
+      "gt_final": {
+        "x": 0.5204248366013071,
+        "y": 0.4165675979129515
+      },
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 3.18,
+      "gt_review_required": "False",
       "annotation_round_1": null,
       "annotation_round_2": null,
-      "human_raw_tap": null,
-      "human_loupe_tap": null,
+      "human_raw_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.5183406696011738,
+            "y": 0.4157420249653258,
+            "annotated_at": "2026-06-20T13:26:36.498500+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.5175070028011204,
+            "y": 0.4157420249653258,
+            "annotated_at": "2026-06-20T13:26:38.569547+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.5150060024009604,
+            "y": 0.4157420249653258,
+            "annotated_at": "2026-06-20T13:26:40.533106+00:00"
+          }
+        ],
+        "mean_x": 0.5169512249344183,
+        "mean_y": 0.4157420249653258,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:26:40.533116+00:00"
+      },
+      "human_loupe_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.5175070028011204,
+            "y": 0.42069546265107977,
+            "annotated_at": "2026-06-20T13:26:42.461211+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.5208416700013339,
+            "y": 0.42069546265107977,
+            "annotated_at": "2026-06-20T13:26:44.415262+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.5200080032012805,
+            "y": 0.42730004623208495,
+            "annotated_at": "2026-06-20T13:26:46.340314+00:00"
+          }
+        ],
+        "mean_x": 0.5194522253345782,
+        "mean_y": 0.4228969905114148,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:26:46.340323+00:00"
+      },
       "db_reference": {
         "x": null,
         "y": null
       },
       "simulation_note": "No-ball frame. FP measured per algorithm.",
-      "gt_round_1": null,
-      "completed_modes": [],
-      "gt_round_2": null,
-      "annotation_needs_redo": true
+      "gt_round_1": {
+        "x": 0.5208416700013339,
+        "y": 0.4190443167558285,
+        "annotated_at": "2026-06-20T13:26:32.432316+00:00",
+        "data_source": "human"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5200080032012805,
+        "y": 0.4140908790700745,
+        "annotated_at": "2026-06-20T13:26:34.547970+00:00",
+        "data_source": "human"
+      }
     },
     "8e39b06f_0000100ms": {
       "frame_id": "8e39b06f_0000100ms",
       "type": "C",
       "is_no_ball": false,
-      "gt_final": null,
-      "gt_provenance": "human_ball_present",
-      "gt_agreement_px": null,
-      "gt_review_required": null,
+      "gt_final": {
+        "x": 0.4258036547952515,
+        "y": 0.7203784426391916
+      },
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 1.04,
+      "gt_review_required": "False",
       "annotation_round_1": null,
       "annotation_round_2": null,
-      "human_raw_tap": null,
-      "human_loupe_tap": null,
+      "human_raw_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.4299719887955183,
+            "y": 0.7261574532725711,
+            "annotated_at": "2026-06-20T13:27:14.992425+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.4241363211951447,
+            "y": 0.7112971402153093,
+            "annotated_at": "2026-06-20T13:27:16.459154+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.4258036547952515,
+            "y": 0.7129482861105607,
+            "annotated_at": "2026-06-20T13:27:18.117016+00:00"
+          }
+        ],
+        "mean_x": 0.4266373215953048,
+        "mean_y": 0.716800959866147,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:27:18.117025+00:00"
+      },
+      "human_loupe_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.42496998799519814,
+            "y": 0.7063437025295555,
+            "annotated_at": "2026-06-20T13:27:19.875109+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.42496998799519814,
+            "y": 0.7129482861105607,
+            "annotated_at": "2026-06-20T13:27:21.803020+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.4283046551954115,
+            "y": 0.709645994320058,
+            "annotated_at": "2026-06-20T13:27:23.841704+00:00"
+          }
+        ],
+        "mean_x": 0.4260815437286026,
+        "mean_y": 0.709645994320058,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:27:23.841711+00:00"
+      },
       "db_reference": {
         "x": null,
         "y": null
       },
       "simulation_note": "No-ball frame. FP measured per algorithm.",
-      "gt_round_1": null,
-      "completed_modes": [],
-      "gt_round_2": null,
-      "annotation_needs_redo": true
+      "gt_round_1": {
+        "x": 0.4258036547952515,
+        "y": 0.719552869691566,
+        "annotated_at": "2026-06-20T13:27:11.842869+00:00",
+        "data_source": "human"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.4258036547952515,
+        "y": 0.7212040155868172,
+        "annotated_at": "2026-06-20T13:27:13.333007+00:00",
+        "data_source": "human"
+      }
     },
     "8e39b06f_0007500ms": {
       "frame_id": "8e39b06f_0007500ms",
       "type": "C",
       "is_no_ball": false,
-      "gt_final": null,
-      "gt_provenance": "human_ball_present",
-      "gt_agreement_px": null,
-      "gt_review_required": null,
+      "gt_final": {
+        "x": 0.4949979991996799,
+        "y": 0.6691929198864011
+      },
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 9.57,
+      "gt_review_required": "False",
       "annotation_round_1": null,
       "annotation_round_2": null,
-      "human_raw_tap": null,
-      "human_loupe_tap": null,
+      "human_raw_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.4933306655995732,
+            "y": 0.6799253682055345,
+            "annotated_at": "2026-06-20T13:27:40.484337+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.49583166599973333,
+            "y": 0.6716696387292781,
+            "annotated_at": "2026-06-20T13:27:41.954437+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.49166333199946644,
+            "y": 0.6799253682055345,
+            "annotated_at": "2026-06-20T13:27:43.553832+00:00"
+          }
+        ],
+        "mean_x": 0.49360855453292435,
+        "mean_y": 0.6771734583801158,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:27:43.553841+00:00"
+      },
+      "human_loupe_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.48916233159930644,
+            "y": 0.6815765141007859,
+            "annotated_at": "2026-06-20T13:27:45.045088+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.48916233159930644,
+            "y": 0.688181097681791,
+            "annotated_at": "2026-06-20T13:27:46.554654+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.49583166599973333,
+            "y": 0.6683673469387754,
+            "annotated_at": "2026-06-20T13:27:47.941479+00:00"
+          }
+        ],
+        "mean_x": 0.49138544306611537,
+        "mean_y": 0.6793749862404508,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:27:47.941485+00:00"
+      },
       "db_reference": {
         "x": null,
         "y": null
       },
       "simulation_note": "No-ball frame. FP measured per algorithm.",
-      "gt_round_1": null,
-      "completed_modes": [],
-      "gt_round_2": null,
-      "annotation_needs_redo": true
+      "gt_round_1": {
+        "x": 0.49666533279978664,
+        "y": 0.6766230764150319,
+        "annotated_at": "2026-06-20T13:27:37.430999+00:00",
+        "data_source": "human"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.4933306655995732,
+        "y": 0.6617627633577703,
+        "annotated_at": "2026-06-20T13:27:38.926406+00:00",
+        "data_source": "human"
+      }
     },
     "a3d45095_0000100ms": {
       "frame_id": "a3d45095_0000100ms",
       "type": "C",
       "is_no_ball": false,
-      "gt_final": null,
-      "gt_provenance": "human_ball_present",
-      "gt_agreement_px": null,
-      "gt_review_required": null,
+      "gt_final": {
+        "x": 0.5316793384020274,
+        "y": 0.2720923320784624
+      },
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 6.37,
+      "gt_review_required": "False",
       "annotation_round_1": null,
       "annotation_round_2": null,
-      "human_raw_tap": null,
-      "human_loupe_tap": null,
+      "human_raw_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.5441843404028278,
+            "y": 0.27374347797371373,
+            "annotated_at": "2026-06-20T13:27:54.369920+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.5358476724022943,
+            "y": 0.2687900402879597,
+            "annotated_at": "2026-06-20T13:27:56.116347+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.5416833400026677,
+            "y": 0.2786969156594676,
+            "annotated_at": "2026-06-20T13:27:57.701452+00:00"
+          }
+        ],
+        "mean_x": 0.5405717842692632,
+        "mean_y": 0.27374347797371373,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:27:57.701461+00:00"
+      },
+      "human_loupe_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.5458516740029344,
+            "y": 0.26383660260220587,
+            "annotated_at": "2026-06-20T13:27:59.232649+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.5441843404028278,
+            "y": 0.28199920744997015,
+            "annotated_at": "2026-06-20T13:28:00.938575+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.5400160064025611,
+            "y": 0.291906082821478,
+            "annotated_at": "2026-06-20T13:28:02.526995+00:00"
+          }
+        ],
+        "mean_x": 0.5433506736027746,
+        "mean_y": 0.27924729762455136,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:28:02.527005+00:00"
+      },
       "db_reference": {
         "x": null,
         "y": null
       },
       "simulation_note": "No-ball frame. FP measured per algorithm.",
-      "gt_round_1": null,
-      "completed_modes": [],
-      "gt_round_2": null,
-      "annotation_needs_redo": true
+      "gt_round_1": {
+        "x": 0.530845671601974,
+        "y": 0.26713889439270844,
+        "annotated_at": "2026-06-20T13:27:50.979310+00:00",
+        "data_source": "human"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5325130052020808,
+        "y": 0.2770457697642163,
+        "annotated_at": "2026-06-20T13:27:52.700742+00:00",
+        "data_source": "human"
+      }
     },
     "a3d45095_0001300ms": {
       "frame_id": "a3d45095_0001300ms",
       "type": "C",
       "is_no_ball": false,
-      "gt_final": null,
-      "gt_provenance": "human_ball_present",
-      "gt_agreement_px": null,
-      "gt_review_required": null,
+      "gt_final": {
+        "x": 0.41163131919434437,
+        "y": 0.6295654184003698
+      },
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 16.13,
+      "gt_review_required": "False",
       "annotation_round_1": null,
       "annotation_round_2": null,
-      "human_raw_tap": null,
-      "human_loupe_tap": null,
+      "human_raw_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.4166333199946645,
+            "y": 0.6353444290337493,
+            "annotated_at": "2026-06-20T13:28:08.211198+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.41496598639455784,
+            "y": 0.6436001585100058,
+            "annotated_at": "2026-06-20T13:28:09.722869+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.42246898759503804,
+            "y": 0.6502047420910111,
+            "annotated_at": "2026-06-20T13:28:11.148013+00:00"
+          }
+        ],
+        "mean_x": 0.41802276466142013,
+        "mean_y": 0.643049776544922,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:28:11.148021+00:00"
+      },
+      "human_loupe_tap": {
+        "reps": [
+          {
+            "rep": 1,
+            "x": 0.4091303187941844,
+            "y": 0.6402978667195033,
+            "annotated_at": "2026-06-20T13:28:12.562280+00:00"
+          },
+          {
+            "rep": 2,
+            "x": 0.4091303187941844,
+            "y": 0.6369955749290006,
+            "annotated_at": "2026-06-20T13:28:13.965885+00:00"
+          },
+          {
+            "rep": 3,
+            "x": 0.41163131919434437,
+            "y": 0.6221352618717388,
+            "annotated_at": "2026-06-20T13:28:15.575354+00:00"
+          }
+        ],
+        "mean_x": 0.4099639855942377,
+        "mean_y": 0.6331429011734142,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T13:28:15.575363+00:00"
+      },
       "db_reference": {
         "x": null,
         "y": null
       },
       "simulation_note": "No-ball frame. FP measured per algorithm.",
-      "gt_round_1": null,
-      "completed_modes": [],
-      "gt_round_2": null,
-      "annotation_needs_redo": true
+      "gt_round_1": {
+        "x": 0.40746298519407764,
+        "y": 0.6419490126147546,
+        "annotated_at": "2026-06-20T13:28:05.029541+00:00",
+        "data_source": "human"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.41579965319461115,
+        "y": 0.617181824185985,
+        "annotated_at": "2026-06-20T13:28:06.521166+00:00",
+        "data_source": "human"
+      }
     }
   }
 }

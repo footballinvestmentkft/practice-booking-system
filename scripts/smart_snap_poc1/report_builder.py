@@ -107,17 +107,28 @@ def build_report(
     max_agree = max(agreements) if agreements else None
 
     # ── Header ───────────────────────────────────────────────────────────────
+    anno_warning = results.get("annotation_data_warning", "")
+    is_provisional = "PROVISIONAL SIMULATION" in anno_warning or "provisional" in anno_warning.lower()
+    if is_provisional and "real human" not in anno_warning.lower():
+        warning_block = [
+            "> ⚠ **ANNOTATION WARNING**: All M2_raw, M2_loupe, and GT coordinates in",
+            "> this report are **PROVISIONAL SIMULATION** (02b_seed_provisional_gt.py),",
+            "> NOT real human annotation sessions. DB corrected coordinates are used",
+            "> as **reference only**, not as validated GT.",
+            "> Real human annotation requires running `02_annotate_ground_truth.py`.",
+        ]
+    else:
+        warning_block = [
+            f"> ℹ **ANNOTATION STATUS**: {anno_warning}",
+        ]
+
     lines += [
         "# Smart Snap POC-1 — Benchmark Report v2",
         "",
         f"Generated: {now}  ",
         "Source: `benchmark_results.json`",
         "",
-        "> ⚠ **ANNOTATION WARNING**: All M2_raw, M2_loupe, and GT coordinates in",
-        "> this report are **PROVISIONAL SIMULATION** (02b_seed_provisional_gt.py),",
-        "> NOT real human annotation sessions. DB corrected coordinates are used",
-        "> as **reference only**, not as validated GT.",
-        "> Real human annotation requires running `02_annotate_ground_truth.py`.",
+        *warning_block,
         "",
         "---",
         "",
@@ -162,6 +173,44 @@ def build_report(
         lines.append(f"| {vid} | {cnt} | {cnt / n_pos:.1%} |")
 
     # ── Section 2: Data sources ───────────────────────────────────────────────
+    real_human_gt = provenances.get("human_annotated", 0) + provenances.get("two_round_average", 0)
+    prov_sim_count = provenances.get("provisional_simulation", 0)
+
+    measured_items = [
+        "- Pixel error for M3/M4/M5/M6 vs GT on extracted JPEG frames",
+        "- False-positive rate from algorithm outputs on no-ball frames",
+        "- False-refusal rate per algorithm",
+        "- Python/OpenCV latency p50/p95",
+    ]
+    if real_human_gt > 0:
+        measured_items += [
+            f"- GT coordinates: {real_human_gt} frames annotated via 02_annotate_ground_truth.py "
+            "(model HIDDEN in GT_R1/GT_R2, independent rounds)",
+            "- M2_raw and M2_loupe: real human taps collected in same annotation session",
+        ]
+
+    if prov_sim_count > 0:
+        estimation_block = [
+            "### BECSLÉSEK (provisional simulation — NOT real human data)",
+            "",
+            "| Data | Provenance | Bias risk |",
+            "|------|-----------|-----------|",
+            f"| GT_final (R1+R2)/2 | DB corrected_x/y + σ=0.008 noise ({prov_sim_count} frames) | Both rounds derived from same reference |",
+            "| Human raw tap (M2_raw) | DB corrected_x/y + σ=0.030 noise | Not measured from real E2E tap logs |",
+            "| Human loupe tap (M2_loupe) | DB corrected_x/y + σ=0.006 noise | Not measured from real loupe interaction |",
+            "| M1 synthetic | model_predicted_x/y + σ=0.030 Monte Carlo | Not measured from real E2E tap logs |",
+            "| DB corrected_x/y (reference) | juggling_ball_feedback.corrected_x/y | Annotator may have seen model overlay |",
+        ]
+    else:
+        estimation_block = [
+            "### BECSLÉSEK",
+            "",
+            "| Data | Provenance | Bias risk |",
+            "|------|-----------|-----------|",
+            "| M1 synthetic | model_predicted_x/y + σ=0.030 Monte Carlo | Not measured from real E2E tap logs |",
+            "| DB corrected_x/y (Type A reference) | juggling_ball_feedback.corrected_x/y | Annotator may have seen model overlay — not used as GT |",
+        ]
+
     lines += [
         "",
         "---",
@@ -170,20 +219,9 @@ def build_report(
         "",
         "### TÉNYLEGESEN MÉRT (directly measured)",
         "",
-        "- Pixel error for M3/M4/M5/M6 vs GT on extracted JPEG frames",
-        "- False-positive rate from algorithm outputs on Type C frames",
-        "- False-refusal rate per algorithm",
-        "- Python/OpenCV latency p50/p95",
+        *measured_items,
         "",
-        "### BECSLÉSEK (provisional simulation — NOT real human data)",
-        "",
-        "| Data | Provenance | Bias risk |",
-        "|------|-----------|-----------|",
-        "| GT_final (R1+R2)/2 | DB corrected_x/y + σ=0.008 noise | Both rounds derived from same reference |",
-        "| Human raw tap (M2_raw) | DB corrected_x/y + σ=0.030 noise | Not measured from real E2E tap logs |",
-        "| Human loupe tap (M2_loupe) | DB corrected_x/y + σ=0.006 noise | Not measured from real loupe interaction |",
-        "| M1 synthetic | model_predicted_x/y + σ=0.030 Monte Carlo | Not measured from real E2E tap logs |",
-        "| DB corrected_x/y (reference) | juggling_ball_feedback.corrected_x/y | Annotator may have seen model overlay |",
+        *estimation_block,
         "",
         "### HIPOTÉZISEK (not measured)",
         "",
@@ -209,13 +247,26 @@ def build_report(
     for prov, cnt in sorted(provenances.items()):
         lines.append(f"| GT provenance — {prov} | {cnt} |")
 
+    real_human_count = provenances.get("human_annotated", 0) + provenances.get("two_round_average", 0)
+    prov_sim = provenances.get("provisional_simulation", 0)
+    if prov_sim == 0 and real_human_count > 0:
+        gt_status_block = [
+            f"> **GT independence status**: REAL HUMAN ANNOTATION — {real_human_count} frames.",
+            "> GT_R1 and GT_R2 annotated independently with model HIDDEN.",
+            "> gt_final = mean(R1, R2). Inter-round agreement computed per frame.",
+        ]
+    else:
+        gt_status_block = [
+            "> **GT independence status**: PROVISIONAL SIMULATION.",
+            "> R1 and R2 are generated from the same reference coordinate with different noise seeds.",
+            "> This produces non-zero inter-round agreement but does NOT represent independent human annotation.",
+            "> A real annotation session (02_annotate_ground_truth.py) with model hidden in R1",
+            "> is required before this data can be treated as validated GT.",
+        ]
+
     lines += [
         "",
-        "> **GT independence status**: PROVISIONAL SIMULATION.",
-        "> R1 and R2 are generated from the same reference coordinate with different noise seeds.",
-        "> This produces non-zero inter-round agreement but does NOT represent independent human annotation.",
-        "> A real annotation session (02_annotate_ground_truth.py) with model hidden in R1",
-        "> is required before this data can be treated as validated GT.",
+        *gt_status_block,
         "",
     ]
 

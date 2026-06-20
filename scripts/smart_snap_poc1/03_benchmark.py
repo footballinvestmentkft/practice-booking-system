@@ -112,11 +112,19 @@ def benchmark_frame(
     img_w = frame.get("image_width_px") or 640
     img_h = frame.get("image_height_px") or 480
 
-    is_no_ball = frame.get("is_no_ball", False)
+    # GT overrides manifest: if GT has is_no_ball, trust that over manifest type
+    gt_is_no_ball = gt_entry.get("is_no_ball") if gt_entry else None
+    is_no_ball = gt_is_no_ball if gt_is_no_ball is not None else frame.get("is_no_ball", False)
+    # Exclude unusable frames from both positive and no-ball benchmark categories
+    gt_prov = (gt_entry or {}).get("gt_provenance", "")
+    is_excluded = gt_prov == "human_unusable_quality"
+    if is_excluded:
+        is_no_ball = False  # won't count as no-ball FP test
     has_gt = (
         gt_entry is not None
         and gt_entry.get("gt_final") is not None
         and not is_no_ball
+        and not is_excluded
     )
 
     gt_x = gt_entry["gt_final"]["x"] if has_gt else None
@@ -350,6 +358,34 @@ def aggregate_results(frame_results: list[dict]) -> dict:
     return aggregated
 
 
+# ── Annotation warning ────────────────────────────────────────────────────────
+
+def _build_annotation_warning(gt: dict) -> str:
+    real_human = sum(
+        1 for e in gt.values()
+        if e.get("gt_provenance") in ("human_annotated", "two_round_average")
+        and e.get("gt_final") is not None
+    )
+    simulated = sum(
+        1 for e in gt.values()
+        if e.get("gt_provenance") == "provisional_simulation"
+    )
+    real_m2 = sum(
+        1 for e in gt.values()
+        if (e.get("human_raw_tap") or {}).get("data_source") == "human"
+    )
+    if simulated == 0 and real_human > 0:
+        return (
+            f"GT coordinates: {real_human} frames with real human annotation "
+            f"(02_annotate_ground_truth.py, model hidden in GT_R1/GT_R2). "
+            f"M2_raw/M2_loupe: {real_m2} frames with real human taps."
+        )
+    return (
+        f"MIXED: {real_human} real human GT frames, {simulated} provisional simulation frames. "
+        "Verify per-frame data_source before treating M2 baselines as ground truth."
+    )
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def run(include_m6: bool = True) -> None:
@@ -390,10 +426,7 @@ def run(include_m6: bool = True) -> None:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "poc": "smart_snap_poc1",
         "schema_version": "2.0",
-        "annotation_data_warning": (
-            "All M2_raw and M2_loupe baselines are PROVISIONAL SIMULATION "
-            "from 02b_seed_provisional_gt.py — not real human annotations."
-        ),
+        "annotation_data_warning": _build_annotation_warning(gt),
         "summary": {
             "total_frames": len(frame_results),
             "frames_with_gt": n_gt,
