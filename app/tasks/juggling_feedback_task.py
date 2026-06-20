@@ -209,7 +209,7 @@ def run_compute_frame_consensus(
                         user_id=r.user_id,
                         decision=r.decision,
                         is_gold_standard=r.is_gold_standard,
-                        reliability_at_submit=r.user_reliability_at_submit or 0.5,
+                        reliability_at_submit=r.user_reliability_at_submit if r.user_reliability_at_submit is not None else 0.5,
                     )
                 except Exception:
                     logger.exception(
