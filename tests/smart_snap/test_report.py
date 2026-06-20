@@ -133,7 +133,8 @@ class TestReportGenerationV2:
         """SS-REP-02: Report contains one of the three verdict strings."""
         from scripts.smart_snap_poc1.report_builder import build_report
         report = build_report(_make_results(), None, None)
-        verdicts = ["PROCEED TO POC-2", "NEED MORE DATA", "REJECT APPROACH"]
+        verdicts = ["PROCEED TO POC-2", "NEED MORE DATA", "REJECT APPROACH",
+                    "REJECT CURRENT SNAP METHODS"]
         assert any(v in report for v in verdicts)
 
     def test_SS_REP_03_report_has_measured_section(self):

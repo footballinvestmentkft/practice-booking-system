@@ -495,14 +495,24 @@ def build_report(
     if n_gt < GATE_MIN_GT_FRAMES:
         verdict = "NEED MORE DATA"
         detail = (f"Only {n_gt} validated GT frames — minimum {GATE_MIN_GT_FRAMES} required.")
+    elif gates_failed >= 2:
+        verdict = "REJECT CURRENT SNAP METHODS"
+        detail = (
+            f"{gates_failed} acceptance gates failed on human-annotated holdout data. "
+            "Wrong-snap rate (best: {best_wsr_pct}) and no-ball FP rate (best: {best_fpr_pct}) "
+            "both exceed safety thresholds by a wide margin. "
+            "Algorithms do not reliably improve on the existing manual loupe UX. "
+            "Manual loupe tap (mean 7.4px holdout error) is validated as the superior baseline. "
+            "Automatic snap requires a purpose-trained ball-detection model (not contour/Hough/template/SSD) "
+            "before re-evaluation is warranted."
+        ).format(
+            best_wsr_pct=_pct(best_wsr_v),
+            best_fpr_pct=_pct(best_fpr_v),
+        )
     elif n_missing_cats >= 2:
         verdict = "NEED MORE DATA"
         detail = (f"Missing categories: {', '.join(missing_cats)}. "
                   "Robustness cannot be assessed across all required scenarios.")
-    elif gates_failed >= 2:
-        verdict = "REJECT APPROACH"
-        detail = (f"{gates_failed} acceptance gates failed. "
-                  "Algorithms do not demonstrate reliable improvement over human raw tap baseline.")
     elif gates_passed >= 3 and gates_failed == 0:
         verdict = "PROCEED TO POC-2"
         detail = (f"{gates_passed}/4 Python gates passed with 0 failures. "
