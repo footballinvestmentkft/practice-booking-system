@@ -26,12 +26,12 @@
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5147027956152102,
-        "y": 0.3922231701212572
+        "x": 0.5087763798701298,
+        "y": 0.388002522954752
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 13.25,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 3.68,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5120916003661046,
         "y": 0.3945213929582537,
@@ -43,76 +43,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.594132292605789,
-            "y": 0.4127024056332384,
-            "pixel_error_vs_gt": 157.30957397900653
-          },
-          {
-            "rep": 2,
-            "x": 0.549468634373625,
-            "y": 0.48797578842595085,
-            "pixel_error_vs_gt": 192.35132305311177
-          },
-          {
-            "rep": 3,
-            "x": 0.5386113800919227,
-            "y": 0.3894685374343076,
-            "pixel_error_vs_gt": 46.19691290710755
-          }
-        ],
-        "mean_error_vs_gt": 131.95,
-        "median_error_vs_gt": 157.31,
-        "data_source": "SIMULATED",
-        "x": 0.5607374356904455,
-        "y": 0.4300489104978323
+        "x": 0.5087763798701299,
+        "y": 0.4018012242534534,
+        "annotated_at": "2026-06-20T12:09:35.205559+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.521908613287165,
-            "y": 0.4002886012859609,
-            "pixel_error_vs_gt": 20.550139359673537
-          },
-          {
-            "rep": 2,
-            "x": 0.519344703071847,
-            "y": 0.3971457059287596,
-            "pixel_error_vs_gt": 12.86235306401958
-          },
-          {
-            "rep": 3,
-            "x": 0.5122571077985955,
-            "y": 0.39400885136960245,
-            "pixel_error_vs_gt": 5.776486094177311
-          }
-        ],
-        "mean_error_vs_gt": 13.06,
-        "data_source": "SIMULATED",
-        "x": 0.5178368080525358,
-        "y": 0.3971477195281077
+        "x": 0.5087763798701299,
+        "y": 0.38394408139631053,
+        "annotated_at": "2026-06-20T12:09:37.426889+00:00"
       },
       "db_reference": {
         "x": 0.5166873377505864,
         "y": 0.3970914185047149,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5071834415584415,
+        "y": 0.3855674580196871,
+        "annotated_at": "2026-06-20T12:06:02.548217+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5103693181818181,
+        "y": 0.390437587889817,
+        "annotated_at": "2026-06-20T12:09:33.027593+00:00"
+      }
     },
     "8e39b06f_0005900ms": {
       "frame_id": "8e39b06f_0005900ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5370488606555042,
-        "y": 0.62332826482914
+        "x": 0.5199269480519481,
+        "y": 0.6185220034742326
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 40.86,
-      "gt_review_required": true,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 3.06,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5473131596069862,
         "y": 0.6204663684035308,
@@ -124,76 +97,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.49950326101246895,
-            "y": 0.6213149944636741,
-            "pixel_error_vs_gt": 72.18726974973359
-          },
-          {
-            "rep": 2,
-            "x": 0.48490604394307035,
-            "y": 0.6528678540687569,
-            "pixel_error_vs_gt": 114.54285225946595
-          },
-          {
-            "rep": 3,
-            "x": 0.5404218792121185,
-            "y": 0.6040011074813171,
-            "pixel_error_vs_gt": 36.98379907706582
-          }
-        ],
-        "mean_error_vs_gt": 74.57,
-        "median_error_vs_gt": 72.19,
-        "data_source": "SIMULATED",
-        "x": 0.5082770613892192,
-        "y": 0.6260613186712494
+        "x": 0.524705762987013,
+        "y": 0.5868661593183885,
+        "annotated_at": "2026-06-20T12:09:55.849075+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5273953220743457,
-            "y": 0.6260748427942636,
-            "pixel_error_vs_gt": 19.24355967606439
-          },
-          {
-            "rep": 2,
-            "x": 0.5361710187318577,
-            "y": 0.6184050646686837,
-            "pixel_error_vs_gt": 9.427201203663397
-          },
-          {
-            "rep": 3,
-            "x": 0.522247513576781,
-            "y": 0.625327450608332,
-            "pixel_error_vs_gt": 28.667094702124412
-          }
-        ],
-        "mean_error_vs_gt": 19.11,
-        "data_source": "SIMULATED",
-        "x": 0.5286046181276615,
-        "y": 0.6232691193570931
+        "x": 0.5231128246753246,
+        "y": 0.6193336917859209,
+        "annotated_at": "2026-06-20T12:09:58.358430+00:00"
       },
       "db_reference": {
         "x": 0.5295833834108684,
         "y": 0.624400082400943,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5199269480519481,
+        "y": 0.6209570684092975,
+        "annotated_at": "2026-06-20T12:06:07.405386+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5199269480519481,
+        "y": 0.6160869385391676,
+        "annotated_at": "2026-06-20T12:09:54.511630+00:00"
+      }
     },
     "8e39b06f_0006000ms": {
       "frame_id": "8e39b06f_0006000ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5071749608888829,
-        "y": 0.6268678227141307
+        "x": 0.515148133116883,
+        "y": 0.6282622632144924
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 28.97,
-      "gt_review_required": true,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 1.02,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5043295377439798,
         "y": 0.6339888969053397,
@@ -205,76 +151,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.4719497117428849,
-            "y": 0.6191287262759174,
-            "pixel_error_vs_gt": 69.18628386896256
-          },
-          {
-            "rep": 2,
-            "x": 0.5031975974817853,
-            "y": 0.6230771398860411,
-            "pixel_error_vs_gt": 10.455612017919233
-          },
-          {
-            "rep": 3,
-            "x": 0.4887927273699881,
-            "y": 0.6536638106585516,
-            "pixel_error_vs_gt": 61.597537231037904
-          }
-        ],
-        "mean_error_vs_gt": 47.08,
-        "median_error_vs_gt": 61.6,
-        "data_source": "SIMULATED",
-        "x": 0.4879800121982194,
-        "y": 0.63195655894017
+        "x": 0.5215198863636364,
+        "y": 0.5868661593183885,
+        "annotated_at": "2026-06-20T12:10:01.047478+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5193180105495038,
-            "y": 0.6387550132591991,
-            "pixel_error_vs_gt": 32.32847190289138
-          },
-          {
-            "rep": 2,
-            "x": 0.5158804858497159,
-            "y": 0.6277454205871363,
-            "pixel_error_vs_gt": 16.796185016179056
-          },
-          {
-            "rep": 3,
-            "x": 0.5203838572875813,
-            "y": 0.6370959372516781,
-            "pixel_error_vs_gt": 31.85134823609968
-          }
-        ],
-        "mean_error_vs_gt": 26.99,
-        "data_source": "SIMULATED",
-        "x": 0.5185274512289336,
-        "y": 0.6345321236993379
+        "x": 0.5167410714285714,
+        "y": 0.6290739515261807,
+        "annotated_at": "2026-06-20T12:10:02.028636+00:00"
       },
       "db_reference": {
         "x": 0.5158855776686042,
         "y": 0.6315683829196509,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.515148133116883,
+        "y": 0.6274505749028041,
+        "annotated_at": "2026-06-20T12:06:09.438513+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.515148133116883,
+        "y": 0.6290739515261807,
+        "annotated_at": "2026-06-20T12:09:59.705392+00:00"
+      }
     },
     "8e39b06f_0002900ms": {
       "frame_id": "8e39b06f_0002900ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5503733725539957,
-        "y": 0.3224758690450018
+        "x": 0.5661221590909091,
+        "y": 0.3141388865911158
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 19.38,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 2.04,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5553826327844982,
         "y": 0.32309896584043046,
@@ -286,76 +205,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.6036847100953593,
-            "y": 0.2919730201373837,
-            "pixel_error_vs_gt": 117.38658780037382
-          },
-          {
-            "rep": 2,
-            "x": 0.5430625461099076,
-            "y": 0.2959123369947721,
-            "pixel_error_vs_gt": 51.97694593895162
-          },
-          {
-            "rep": 3,
-            "x": 0.5741942601621906,
-            "y": 0.30944653845879433,
-            "pixel_error_vs_gt": 51.90721668413301
-          }
-        ],
-        "mean_error_vs_gt": 73.76,
-        "median_error_vs_gt": 51.98,
-        "data_source": "SIMULATED",
-        "x": 0.5736471721224858,
-        "y": 0.29911063186365006
+        "x": 0.5485998376623378,
+        "y": 0.3319960294482585,
+        "annotated_at": "2026-06-20T12:10:04.671583+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5582697500715703,
-            "y": 0.32212043730923845,
-            "pixel_error_vs_gt": 15.175825820297797
-          },
-          {
-            "rep": 2,
-            "x": 0.5539337356036719,
-            "y": 0.3194032291433767,
-            "pixel_error_vs_gt": 8.957695812015698
-          },
-          {
-            "rep": 3,
-            "x": 0.548232029302852,
-            "y": 0.32691277463422536,
-            "pixel_error_vs_gt": 9.31549752619288
-          }
-        ],
-        "mean_error_vs_gt": 11.15,
-        "data_source": "SIMULATED",
-        "x": 0.553478504992698,
-        "y": 0.32281214702894684
+        "x": 0.5709009740259741,
+        "y": 0.31251550996773914,
+        "annotated_at": "2026-06-20T12:10:05.724826+00:00"
       },
       "db_reference": {
         "x": 0.5541304913529951,
         "y": 0.3175750308451154,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5661221590909091,
+        "y": 0.31576226321449236,
+        "annotated_at": "2026-06-20T12:06:11.379498+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5661221590909091,
+        "y": 0.31251550996773914,
+        "annotated_at": "2026-06-20T12:10:03.536430+00:00"
+      }
     },
     "8e39b06f_0006800ms": {
       "frame_id": "8e39b06f_0006800ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5034125582232615,
-        "y": 0.6729040720628147
+        "x": 0.5032010957792208,
+        "y": 0.6672233021755313
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 26.23,
-      "gt_review_required": true,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 3.22,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.49895613550802437,
         "y": 0.6781791080226218,
@@ -367,76 +259,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.4927098457155614,
-            "y": 0.6811814354886042,
-            "pixel_error_vs_gt": 25.79651185270323
-          },
-          {
-            "rep": 2,
-            "x": 0.4565840322818321,
-            "y": 0.6378879727798752,
-            "pixel_error_vs_gt": 111.51695434375682
-          },
-          {
-            "rep": 3,
-            "x": 0.4851395761571433,
-            "y": 0.6125940000280707,
-            "pixel_error_vs_gt": 118.91740483781159
-          }
-        ],
-        "mean_error_vs_gt": 85.41,
-        "median_error_vs_gt": 111.52,
-        "data_source": "SIMULATED",
-        "x": 0.478144484718179,
-        "y": 0.6438878027655167
+        "x": 0.4976258116883117,
+        "y": 0.6177103151625443,
+        "annotated_at": "2026-06-20T12:10:08.604824+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.49797149100905697,
-            "y": 0.6650845964596412,
-            "pixel_error_vs_gt": 18.06004701188774
-          },
-          {
-            "rep": 2,
-            "x": 0.504425884305927,
-            "y": 0.6671146877697142,
-            "pixel_error_vs_gt": 11.079364476747218
-          },
-          {
-            "rep": 3,
-            "x": 0.5120480465457788,
-            "y": 0.6656275437310959,
-            "pixel_error_vs_gt": 21.51364863764792
-          }
-        ],
-        "mean_error_vs_gt": 16.88,
-        "data_source": "SIMULATED",
-        "x": 0.5048151406202542,
-        "y": 0.6659422759868171
+        "x": 0.5039975649350649,
+        "y": 0.6696583671105962,
+        "annotated_at": "2026-06-20T12:10:09.465970+00:00"
       },
       "db_reference": {
         "x": 0.5019006382639162,
         "y": 0.6662524314387193,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5024046266233767,
+        "y": 0.6696583671105962,
+        "annotated_at": "2026-06-20T12:06:12.967770+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5039975649350649,
+        "y": 0.6647882372404663,
+        "annotated_at": "2026-06-20T12:10:07.193721+00:00"
+      }
     },
     "8e39b06f_0008600ms": {
       "frame_id": "8e39b06f_0008600ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5060657848395916,
-        "y": 0.6706674625620825
+        "x": 0.5079799107142857,
+        "y": 0.6599181073703364
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 29.19,
-      "gt_review_required": true,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 6.2,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5076849288218588,
         "y": 0.6782357789687654,
@@ -448,76 +313,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.4898426395535645,
-            "y": 0.6158073631878421,
-            "pixel_error_vs_gt": 107.948025905407
-          },
-          {
-            "rep": 2,
-            "x": 0.5019903174549404,
-            "y": 0.7332128889649591,
-            "pixel_error_vs_gt": 118.09510455888592
-          },
-          {
-            "rep": 3,
-            "x": 0.5513382023178273,
-            "y": 0.6546175050808888,
-            "pixel_error_vs_gt": 92.03238043476357
-          }
-        ],
-        "mean_error_vs_gt": 106.03,
-        "median_error_vs_gt": 107.95,
-        "data_source": "SIMULATED",
-        "x": 0.5143903864421108,
-        "y": 0.6678792524112299
+        "x": 0.5071834415584415,
+        "y": 0.6030999255521546,
+        "annotated_at": "2026-06-20T12:10:12.143322+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.49664962731685974,
-            "y": 0.6530046224745343,
-            "pixel_error_vs_gt": 37.87077835837735
-          },
-          {
-            "rep": 2,
-            "x": 0.5044212148458334,
-            "y": 0.6551958317321985,
-            "pixel_error_vs_gt": 29.319078906051843
-          },
-          {
-            "rep": 3,
-            "x": 0.5047696538212555,
-            "y": 0.6464302372649589,
-            "pixel_error_vs_gt": 45.730694169363986
-          }
-        ],
-        "mean_error_vs_gt": 37.64,
-        "data_source": "SIMULATED",
-        "x": 0.5019468319946495,
-        "y": 0.6515435638238972
+        "x": 0.5039975649350649,
+        "y": 0.6599181073703365,
+        "annotated_at": "2026-06-20T12:10:13.053776+00:00"
       },
       "db_reference": {
         "x": 0.5026967421106778,
         "y": 0.6575291301206176,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5071834415584415,
+        "y": 0.6647882372404663,
+        "annotated_at": "2026-06-20T12:06:14.267191+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5087763798701299,
+        "y": 0.6550479775002066,
+        "annotated_at": "2026-06-20T12:10:10.728147+00:00"
+      }
     },
     "8e39b06f_0005100ms": {
       "frame_id": "8e39b06f_0005100ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5586413084396922,
-        "y": 0.6407180786108625
+        "x": 0.5621398133116883,
+        "y": 0.6388142112664404
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 28.57,
-      "gt_review_required": true,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 1.02,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5647778659551033,
         "y": 0.645006144564295,
@@ -529,76 +367,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.6222410626143334,
-            "y": 0.6415881694770572,
-            "pixel_error_vs_gt": 122.12253034843454
-          },
-          {
-            "rep": 2,
-            "x": 0.5962159865933738,
-            "y": 0.607601987565199,
-            "pixel_error_vs_gt": 95.37960452157864
-          },
-          {
-            "rep": 3,
-            "x": 0.5774488969966439,
-            "y": 0.6002078355293847,
-            "pixel_error_vs_gt": 84.43289519484489
-          }
-        ],
-        "mean_error_vs_gt": 100.65,
-        "median_error_vs_gt": 95.38,
-        "data_source": "SIMULATED",
-        "x": 0.5986353154014504,
-        "y": 0.6164659975238803
+        "x": 0.5581574675324675,
+        "y": 0.6160869385391676,
+        "annotated_at": "2026-06-20T12:10:15.612364+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5572706268881594,
-            "y": 0.6520777290232564,
-            "pixel_error_vs_gt": 21.56278218316698
-          },
-          {
-            "rep": 2,
-            "x": 0.5562503157977747,
-            "y": 0.6507612283202963,
-            "pixel_error_vs_gt": 19.470232382577727
-          },
-          {
-            "rep": 3,
-            "x": 0.5599952842016844,
-            "y": 0.6467367728908208,
-            "pixel_error_vs_gt": 11.633400400660761
-          }
-        ],
-        "mean_error_vs_gt": 17.56,
-        "data_source": "SIMULATED",
-        "x": 0.5578387422958729,
-        "y": 0.6498585767447912
+        "x": 0.5645292207792207,
+        "y": 0.6420609645131936,
+        "annotated_at": "2026-06-20T12:10:16.560574+00:00"
       },
       "db_reference": {
         "x": 0.5600385395228857,
         "y": 0.6427630435828078,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5629362824675325,
+        "y": 0.6388142112664404,
+        "annotated_at": "2026-06-20T12:06:15.791180+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5613433441558441,
+        "y": 0.6388142112664404,
+        "annotated_at": "2026-06-20T12:10:14.519896+00:00"
+      }
     },
     "8e39b06f_0002700ms": {
       "frame_id": "8e39b06f_0002700ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5383296757609555,
-        "y": 0.3782605135805491
+        "x": 0.5462104301948052,
+        "y": 0.3604051203573494
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 44.61,
-      "gt_review_required": true,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 1.44,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5491317204765719,
         "y": 0.3826176973797295,
@@ -610,76 +421,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5772523270429282,
-            "y": 0.41644297958496085,
-            "pixel_error_vs_gt": 103.72825116488873
-          },
-          {
-            "rep": 2,
-            "x": 0.5116407307636989,
-            "y": 0.4098298783953223,
-            "pixel_error_vs_gt": 78.50667350837351
-          },
-          {
-            "rep": 3,
-            "x": 0.5657134113668666,
-            "y": 0.35467026486060593,
-            "pixel_error_vs_gt": 68.84467059483661
-          }
-        ],
-        "mean_error_vs_gt": 83.69,
-        "median_error_vs_gt": 78.51,
-        "data_source": "SIMULATED",
-        "x": 0.5515354897244978,
-        "y": 0.3936477076136297
+        "x": 0.545413961038961,
+        "y": 0.3368661593183884,
+        "annotated_at": "2026-06-20T12:10:19.316816+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5416214184567155,
-            "y": 0.37495595678495236,
-            "pixel_error_vs_gt": 8.871563788789288
-          },
-          {
-            "rep": 2,
-            "x": 0.5378026384443252,
-            "y": 0.3799812487855804,
-            "pixel_error_vs_gt": 3.3961234783501504
-          },
-          {
-            "rep": 3,
-            "x": 0.5335290088027311,
-            "y": 0.37519713781188935,
-            "pixel_error_vs_gt": 10.875077851650484
-          }
-        ],
-        "mean_error_vs_gt": 7.71,
-        "data_source": "SIMULATED",
-        "x": 0.5376510219012572,
-        "y": 0.3767114477941407
+        "x": 0.545413961038961,
+        "y": 0.36608693853916763,
+        "annotated_at": "2026-06-20T12:10:20.330305+00:00"
       },
       "db_reference": {
         "x": 0.5375009090458693,
         "y": 0.37535253226605836,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.545413961038961,
+        "y": 0.3612168086690377,
+        "annotated_at": "2026-06-20T12:06:17.147468+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5470068993506494,
+        "y": 0.35959343204566113,
+        "annotated_at": "2026-06-20T12:10:17.868953+00:00"
+      }
     },
     "8e39b06f_0005200ms": {
       "frame_id": "8e39b06f_0005200ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5521379173964994,
-        "y": 0.6043747826749639
+        "x": 0.5565645292207793,
+        "y": 0.5998531723054015
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 12.43,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 4.08,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5497256461320593,
         "y": 0.6065745224134124,
@@ -691,76 +475,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5508936694504046,
-            "y": 0.6376271308379632,
-            "pixel_error_vs_gt": 62.69295683921793
-          },
-          {
-            "rep": 2,
-            "x": 0.5966234256168038,
-            "y": 0.5593697816370353,
-            "pixel_error_vs_gt": 120.3515095357098
-          },
-          {
-            "rep": 3,
-            "x": 0.6212249596233075,
-            "y": 0.597323241701621,
-            "pixel_error_vs_gt": 133.31073736380023
-          }
-        ],
-        "mean_error_vs_gt": 105.45,
-        "median_error_vs_gt": 120.35,
-        "data_source": "SIMULATED",
-        "x": 0.5895806848968387,
-        "y": 0.5981067180588732
+        "x": 0.5549715909090909,
+        "y": 0.6242038216560508,
+        "annotated_at": "2026-06-20T12:10:23.151748+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5611764102315527,
-            "y": 0.6013449747201267,
-            "pixel_error_vs_gt": 18.268583190498216
-          },
-          {
-            "rep": 2,
-            "x": 0.5548980721322255,
-            "y": 0.6000917582991752,
-            "pixel_error_vs_gt": 9.653856604445233
-          },
-          {
-            "rep": 3,
-            "x": 0.5587024109517849,
-            "y": 0.599591772307897,
-            "pixel_error_vs_gt": 15.493806622260578
-          }
-        ],
-        "mean_error_vs_gt": 14.47,
-        "data_source": "SIMULATED",
-        "x": 0.5582589644385211,
-        "y": 0.6003428351090663
+        "x": 0.5613433441558441,
+        "y": 0.6014765489287781,
+        "annotated_at": "2026-06-20T12:10:24.261655+00:00"
       },
       "db_reference": {
         "x": 0.5557663229287401,
         "y": 0.5998527985686737,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5533786525974025,
+        "y": 0.5998531723054015,
+        "annotated_at": "2026-06-20T12:06:18.597326+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5597504058441559,
+        "y": 0.5998531723054015,
+        "annotated_at": "2026-06-20T12:10:21.853768+00:00"
+      }
     },
     "8e39b06f_0002800ms": {
       "frame_id": "8e39b06f_0002800ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5401318177201924,
-        "y": 0.33624136310763086
+        "x": 0.5509892451298701,
+        "y": 0.33037265282488193
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 16.51,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 1.02,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5413791377401505,
         "y": 0.3404356350773753,
@@ -772,76 +529,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5582946558546562,
-            "y": 0.29779498997612225,
-            "pixel_error_vs_gt": 80.39052412433257
-          },
-          {
-            "rep": 2,
-            "x": 0.5752314869593373,
-            "y": 0.39388502235089917,
-            "pixel_error_vs_gt": 127.81118151672143
-          },
-          {
-            "rep": 3,
-            "x": 0.6172317622948444,
-            "y": 0.34771945045325126,
-            "pixel_error_vs_gt": 149.6030410256772
-          }
-        ],
-        "mean_error_vs_gt": 119.27,
-        "median_error_vs_gt": 127.81,
-        "data_source": "SIMULATED",
-        "x": 0.5835859683696126,
-        "y": 0.34646648759342424
+        "x": 0.5406351461038962,
+        "y": 0.34335966581189487,
+        "annotated_at": "2026-06-20T12:10:29.455514+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5310648339394209,
-            "y": 0.3289544275940948,
-            "pixel_error_vs_gt": 22.17056043275499
-          },
-          {
-            "rep": 2,
-            "x": 0.5499261182892853,
-            "y": 0.31818933964214297,
-            "pixel_error_vs_gt": 38.86272124688461
-          },
-          {
-            "rep": 3,
-            "x": 0.5551128785809356,
-            "y": 0.3273413321187659,
-            "pixel_error_vs_gt": 33.29416123946534
-          }
-        ],
-        "mean_error_vs_gt": 31.44,
-        "data_source": "SIMULATED",
-        "x": 0.545367943603214,
-        "y": 0.3248283664516679
+        "x": 0.5581574675324675,
+        "y": 0.3271258995781287,
+        "annotated_at": "2026-06-20T12:10:30.576529+00:00"
       },
       "db_reference": {
         "x": 0.5466181242648528,
         "y": 0.3303157160792534,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5501927759740259,
+        "y": 0.33037265282488193,
+        "annotated_at": "2026-06-20T12:06:20.026739+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5517857142857143,
+        "y": 0.33037265282488193,
+        "annotated_at": "2026-06-20T12:10:27.472279+00:00"
+      }
     },
     "8e39b06f_0007000ms": {
       "frame_id": "8e39b06f_0007000ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.4989367744042692,
-        "y": 0.6437552323638451
+        "x": 0.4968293425324675,
+        "y": 0.6444960294482586
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 11.52,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 1.44,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.4968651950016478,
         "y": 0.645967797609997,
@@ -853,76 +583,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.48725476559061554,
-            "y": 0.625966397037161,
-            "pixel_error_vs_gt": 40.32716012950601
-          },
-          {
-            "rep": 2,
-            "x": 0.5253675594393428,
-            "y": 0.6840421365642455,
-            "pixel_error_vs_gt": 91.30256827077129
-          },
-          {
-            "rep": 3,
-            "x": 0.5299961032037237,
-            "y": 0.6568425803980878,
-            "pixel_error_vs_gt": 64.530221676781
-          }
-        ],
-        "mean_error_vs_gt": 65.39,
-        "median_error_vs_gt": 64.53,
-        "data_source": "SIMULATED",
-        "x": 0.5142061427445607,
-        "y": 0.6556170379998315
+        "x": 0.49921874999999993,
+        "y": 0.6193336917859209,
+        "annotated_at": "2026-06-20T12:10:33.912286+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.49398700576761284,
-            "y": 0.6403921453669521,
-            "pixel_error_vs_gt": 11.422047841956248
-          },
-          {
-            "rep": 2,
-            "x": 0.49847637177729537,
-            "y": 0.6567510539228428,
-            "pixel_error_vs_gt": 24.500080067395025
-          },
-          {
-            "rep": 3,
-            "x": 0.49209615869663126,
-            "y": 0.6447398678817531,
-            "pixel_error_vs_gt": 13.264339793158168
-          }
-        ],
-        "mean_error_vs_gt": 16.4,
-        "data_source": "SIMULATED",
-        "x": 0.4948531787471799,
-        "y": 0.6472943557238494
+        "x": 0.49921874999999993,
+        "y": 0.6436843411365702,
+        "annotated_at": "2026-06-20T12:10:35.283450+00:00"
       },
       "db_reference": {
         "x": 0.5013656888869692,
         "y": 0.642863341945658,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.49603287337662333,
+        "y": 0.6453077177599469,
+        "annotated_at": "2026-06-20T12:06:21.536812+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.4976258116883117,
+        "y": 0.6436843411365702,
+        "annotated_at": "2026-06-20T12:10:32.684182+00:00"
+      }
     },
     "8e39b06f_0003100ms": {
       "frame_id": "8e39b06f_0003100ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5805315487219038,
-        "y": 0.3384995761366315
+        "x": 0.5820515422077921,
+        "y": 0.327937587889817
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 12.04,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 2.28,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5774298558465067,
         "y": 0.3380320930830718,
@@ -934,76 +637,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5962531914884687,
-            "y": 0.3451682808749808,
-            "pixel_error_vs_gt": 32.69583682556053
-          },
-          {
-            "rep": 2,
-            "x": 0.5832062443500939,
-            "y": 0.37876399835846913,
-            "pixel_error_vs_gt": 76.03180039696484
-          },
-          {
-            "rep": 3,
-            "x": 0.641572545492883,
-            "y": 0.3450416065475769,
-            "pixel_error_vs_gt": 117.84501987346276
-          }
-        ],
-        "mean_error_vs_gt": 75.52,
-        "median_error_vs_gt": 76.03,
-        "data_source": "SIMULATED",
-        "x": 0.6070106604438151,
-        "y": 0.35632462859367564
+        "x": 0.5485998376623378,
+        "y": 0.3271258995781287,
+        "annotated_at": "2026-06-20T12:10:38.946346+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5845847475312127,
-            "y": 0.3374770671459848,
-            "pixel_error_vs_gt": 8.017030207441865
-          },
-          {
-            "rep": 2,
-            "x": 0.5675943294706299,
-            "y": 0.329762798736188,
-            "pixel_error_vs_gt": 29.798210321482458
-          },
-          {
-            "rep": 3,
-            "x": 0.579462669510792,
-            "y": 0.33711524379739743,
-            "pixel_error_vs_gt": 3.318706764019298
-          }
-        ],
-        "mean_error_vs_gt": 13.71,
-        "data_source": "SIMULATED",
-        "x": 0.5772139155042115,
-        "y": 0.33478503655985675
+        "x": 0.5836444805194805,
+        "y": 0.3287492762015053,
+        "annotated_at": "2026-06-20T12:10:39.931430+00:00"
       },
       "db_reference": {
         "x": 0.5835988587068497,
         "y": 0.33513647005117847,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5804586038961038,
+        "y": 0.3271258995781287,
+        "annotated_at": "2026-06-20T12:06:23.279741+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5836444805194805,
+        "y": 0.3287492762015053,
+        "annotated_at": "2026-06-20T12:10:37.367872+00:00"
+      }
     },
     "8e39b06f_0006900ms": {
       "frame_id": "8e39b06f_0006900ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5016523202117313,
-        "y": 0.6602178782023952
+        "x": 0.503997564935065,
+        "y": 0.6469310943833235
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 43.3,
-      "gt_review_required": true,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 2.04,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5122614656189887,
         "y": 0.6641112860179175,
@@ -1015,76 +691,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.4849765100151268,
-            "y": 0.637628748835185,
-            "pixel_error_vs_gt": 53.25692815697285
-          },
-          {
-            "rep": 2,
-            "x": 0.49843458820485964,
-            "y": 0.6439993644206404,
-            "pixel_error_vs_gt": 31.173992746111207
-          },
-          {
-            "rep": 3,
-            "x": 0.5000750385590305,
-            "y": 0.6900714092087618,
-            "pixel_error_vs_gt": 56.325522831843735
-          }
-        ],
-        "mean_error_vs_gt": 46.92,
-        "median_error_vs_gt": 53.26,
-        "data_source": "SIMULATED",
-        "x": 0.49449537892633894,
-        "y": 0.6572331741548624
+        "x": 0.4976258116883117,
+        "y": 0.6177103151625443,
+        "annotated_at": "2026-06-20T12:10:44.230173+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.48668968817370684,
-            "y": 0.6637341379227409,
-            "pixel_error_vs_gt": 29.48216946632408
-          },
-          {
-            "rep": 2,
-            "x": 0.5017286291638048,
-            "y": 0.6606583711267673,
-            "pixel_error_vs_gt": 0.8427225629144484
-          },
-          {
-            "rep": 3,
-            "x": 0.49925605500823605,
-            "y": 0.6502719015052714,
-            "pixel_error_vs_gt": 19.29477964787372
-          }
-        ],
-        "mean_error_vs_gt": 16.54,
-        "data_source": "SIMULATED",
-        "x": 0.4958914574485826,
-        "y": 0.6582214701849266
+        "x": 0.5039975649350649,
+        "y": 0.6501778476300768,
+        "annotated_at": "2026-06-20T12:10:45.522824+00:00"
       },
       "db_reference": {
         "x": 0.5008307395100221,
         "y": 0.6545578866921885,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5055905032467533,
+        "y": 0.6469310943833235,
+        "annotated_at": "2026-06-20T12:06:25.033277+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5024046266233767,
+        "y": 0.6469310943833235,
+        "annotated_at": "2026-06-20T12:10:42.395805+00:00"
+      }
     },
     "8e39b06f_0002500ms": {
       "frame_id": "8e39b06f_0002500ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5204932132858231,
-        "y": 0.296002218321718
+        "x": 0.5286881087662337,
+        "y": 0.304398626850856
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 24.83,
-      "gt_review_required": true,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 1.02,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5180804529233971,
         "y": 0.2898890509525323,
@@ -1096,76 +745,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5505108231468733,
-            "y": 0.26491249303848335,
-            "pixel_error_vs_gt": 82.17333790601236
-          },
-          {
-            "rep": 2,
-            "x": 0.5965334355156041,
-            "y": 0.31932822333974237,
-            "pixel_error_vs_gt": 152.46789208777176
-          },
-          {
-            "rep": 3,
-            "x": 0.5339776008488601,
-            "y": 0.3163763996097269,
-            "pixel_error_vs_gt": 46.300089793028796
-          }
-        ],
-        "mean_error_vs_gt": 93.65,
-        "median_error_vs_gt": 82.17,
-        "data_source": "SIMULATED",
-        "x": 0.5603406198371125,
-        "y": 0.3002057053293175
+        "x": 0.5024046266233767,
+        "y": 0.39693109438332347,
+        "annotated_at": "2026-06-20T12:10:49.362780+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5190612027018995,
-            "y": 0.30133779150237405,
-            "pixel_error_vs_gt": 10.421451742424118
-          },
-          {
-            "rep": 2,
-            "x": 0.5241924525989109,
-            "y": 0.29813085949721413,
-            "pixel_error_vs_gt": 8.156534448351325
-          },
-          {
-            "rep": 3,
-            "x": 0.527155137576774,
-            "y": 0.3052188317678708,
-            "pixel_error_vs_gt": 21.56661645178564
-          }
-        ],
-        "mean_error_vs_gt": 13.38,
-        "data_source": "SIMULATED",
-        "x": 0.5234695976258615,
-        "y": 0.30156249425581966
+        "x": 0.5326704545454546,
+        "y": 0.304398626850856,
+        "annotated_at": "2026-06-20T12:10:50.492116+00:00"
       },
       "db_reference": {
         "x": 0.5231067302739508,
         "y": 0.30059609140191124,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5278916396103897,
+        "y": 0.304398626850856,
+        "annotated_at": "2026-06-20T12:06:26.789348+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5294845779220778,
+        "y": 0.304398626850856,
+        "annotated_at": "2026-06-20T12:10:47.899819+00:00"
+      }
     },
     "8e39b06f_0002400ms": {
       "frame_id": "8e39b06f_0002400ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.531717601970573,
-        "y": 0.29324855209414374
+        "x": 0.5215198863636363,
+        "y": 0.29709343204566113
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 4.31,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 2.28,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5306382647919332,
         "y": 0.29356406934633045,
@@ -1177,76 +799,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5145925279013487,
-            "y": 0.2935753138199433,
-            "pixel_error_vs_gt": 32.88590486526016
-          },
-          {
-            "rep": 2,
-            "x": 0.5071813939798261,
-            "y": 0.30993872473284717,
-            "pixel_error_vs_gt": 56.639649430611264
-          },
-          {
-            "rep": 3,
-            "x": 0.49822574161687666,
-            "y": 0.3074570096887021,
-            "pixel_error_vs_gt": 69.65355244722218
-          }
-        ],
-        "mean_error_vs_gt": 53.06,
-        "median_error_vs_gt": 56.64,
-        "data_source": "SIMULATED",
-        "x": 0.5066665544993505,
-        "y": 0.3036570160804975
+        "x": 0.5039975649350649,
+        "y": 0.39693109438332347,
+        "annotated_at": "2026-06-20T12:11:05.439648+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5253874032023771,
-            "y": 0.2883368973999987,
-            "pixel_error_vs_gt": 15.275719130289927
-          },
-          {
-            "rep": 2,
-            "x": 0.5304720487575132,
-            "y": 0.29624185719887625,
-            "pixel_error_vs_gt": 6.125502018727479
-          },
-          {
-            "rep": 3,
-            "x": 0.5302810210173637,
-            "y": 0.30354509693130416,
-            "pixel_error_vs_gt": 19.59380143728157
-          }
-        ],
-        "mean_error_vs_gt": 13.67,
-        "data_source": "SIMULATED",
-        "x": 0.528713490992418,
-        "y": 0.296041283843393
+        "x": 0.5231128246753246,
+        "y": 0.29628174373397287,
+        "annotated_at": "2026-06-20T12:11:06.355696+00:00"
       },
       "db_reference": {
         "x": 0.524711578404792,
         "y": 0.29896057738321963,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5199269480519481,
+        "y": 0.29628174373397287,
+        "annotated_at": "2026-06-20T12:06:28.346091+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5231128246753246,
+        "y": 0.2979051203573494,
+        "annotated_at": "2026-06-20T12:11:04.103764+00:00"
+      }
     },
     "8e39b06f_0008800ms": {
       "frame_id": "8e39b06f_0008800ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.4742461729158949,
-        "y": 0.5375301429225018
+        "x": 0.4856787743506492,
+        "y": 0.5300479775002066
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 18.09,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 3.68,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.4711103488574316,
         "y": 0.5411117895282511,
@@ -1258,76 +853,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.4531605769308903,
-            "y": 0.5483808095651138,
-            "pixel_error_vs_gt": 45.35288651420755
-          },
-          {
-            "rep": 2,
-            "x": 0.4336503813647915,
-            "y": 0.5408856277042111,
-            "pixel_error_vs_gt": 78.19986536214418
-          },
-          {
-            "rep": 3,
-            "x": 0.44491395725515603,
-            "y": 0.553011089715181,
-            "pixel_error_vs_gt": 63.42209627000739
-          }
-        ],
-        "mean_error_vs_gt": 62.32,
-        "median_error_vs_gt": 63.42,
-        "data_source": "SIMULATED",
-        "x": 0.4439083051836126,
-        "y": 0.5474258423281686
+        "x": 0.48806818181818173,
+        "y": 0.5625155099677391,
+        "annotated_at": "2026-06-20T12:11:09.439398+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.4771265820940367,
-            "y": 0.5286181483698167,
-            "pixel_error_vs_gt": 17.677553710415623
-          },
-          {
-            "rep": 2,
-            "x": 0.4742830664706377,
-            "y": 0.5292425476230097,
-            "pixel_error_vs_gt": 15.613990224233591
-          },
-          {
-            "rep": 3,
-            "x": 0.46409119346993655,
-            "y": 0.5332778316143288,
-            "pixel_error_vs_gt": 21.079294766729824
-          }
-        ],
-        "mean_error_vs_gt": 18.12,
-        "data_source": "SIMULATED",
-        "x": 0.47183361401153695,
-        "y": 0.5303795092023851
+        "x": 0.48806818181818173,
+        "y": 0.5268012242534534,
+        "annotated_at": "2026-06-20T12:11:10.383026+00:00"
       },
       "db_reference": {
         "x": 0.47719983414021294,
         "y": 0.5353411984572165,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.48328936688311674,
+        "y": 0.52842460087683,
+        "annotated_at": "2026-06-20T12:06:29.846136+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.48806818181818173,
+        "y": 0.5316713541235832,
+        "annotated_at": "2026-06-20T12:11:07.754849+00:00"
+      }
     },
     "8e39b06f_0002200ms": {
       "frame_id": "8e39b06f_0002200ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5089979453647796,
-        "y": 0.3529387249137482
+        "x": 0.5103693181818182,
+        "y": 0.34011291256514165
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 19.66,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 2.04,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5041930355176887,
         "y": 0.3547396249717074,
@@ -1339,76 +907,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5052882881539273,
-            "y": 0.37693038605315227,
-            "pixel_error_vs_gt": 45.75802422578262
-          },
-          {
-            "rep": 2,
-            "x": 0.5433206177223945,
-            "y": 0.3636233243128511,
-            "pixel_error_vs_gt": 68.90541655980886
-          },
-          {
-            "rep": 3,
-            "x": 0.4963348619008621,
-            "y": 0.3475617080040827,
-            "pixel_error_vs_gt": 26.33914940796663
-          }
-        ],
-        "mean_error_vs_gt": 47.0,
-        "median_error_vs_gt": 45.76,
-        "data_source": "SIMULATED",
-        "x": 0.514981255925728,
-        "y": 0.36270513945669536
+        "x": 0.5039975649350649,
+        "y": 0.39693109438332347,
+        "annotated_at": "2026-06-20T12:11:16.860658+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5083964252363238,
-            "y": 0.35272776049919435,
-            "pixel_error_vs_gt": 1.2213963783427697
-          },
-          {
-            "rep": 2,
-            "x": 0.49778407324399615,
-            "y": 0.34979260971225384,
-            "pixel_error_vs_gt": 22.33161170371129
-          },
-          {
-            "rep": 3,
-            "x": 0.5189145567274107,
-            "y": 0.3450973600755871,
-            "pixel_error_vs_gt": 24.099024182921763
-          }
-        ],
-        "mean_error_vs_gt": 15.88,
-        "data_source": "SIMULATED",
-        "x": 0.5083650184025769,
-        "y": 0.3492059100956784
+        "x": 0.5119622564935065,
+        "y": 0.34335966581189487,
+        "annotated_at": "2026-06-20T12:11:18.152531+00:00"
       },
       "db_reference": {
         "x": 0.5140125908658512,
         "y": 0.34802599794396727,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5087763798701299,
+        "y": 0.34011291256514165,
+        "annotated_at": "2026-06-20T12:06:32.242725+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.5119622564935065,
+        "y": 0.34011291256514165,
+        "annotated_at": "2026-06-20T12:11:15.437429+00:00"
+      }
     },
     "8e39b06f_0006600ms": {
       "frame_id": "8e39b06f_0006600ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.5090805532545231,
-        "y": 0.6364058946131494
+        "x": 0.5008116883116883,
+        "y": 0.6274505749028041
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 13.26,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 6.45,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.5124338011368695,
         "y": 0.6372459732824277,
@@ -1420,76 +961,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.4877962206294142,
-            "y": 0.6717542341756703,
-            "pixel_error_vs_gt": 78.13505433168433
-          },
-          {
-            "rep": 2,
-            "x": 0.46130301294853954,
-            "y": 0.6406017464653831,
-            "pixel_error_vs_gt": 92.07284930908195
-          },
-          {
-            "rep": 3,
-            "x": 0.5014515251070464,
-            "y": 0.6923885652556223,
-            "pixel_error_vs_gt": 106.48362361327912
-          }
-        ],
-        "mean_error_vs_gt": 92.23,
-        "median_error_vs_gt": 92.07,
-        "data_source": "SIMULATED",
-        "x": 0.4835169195616667,
-        "y": 0.6682481819655587
+        "x": 0.49603287337662333,
+        "y": 0.6160869385391676,
+        "annotated_at": "2026-06-20T12:11:22.398514+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.49808022780680095,
-            "y": 0.6387767464014283,
-            "pixel_error_vs_gt": 21.587775876355046
-          },
-          {
-            "rep": 2,
-            "x": 0.5083856357028387,
-            "y": 0.6408461796180757,
-            "pixel_error_vs_gt": 8.471230142098866
-          },
-          {
-            "rep": 3,
-            "x": 0.4987448899777278,
-            "y": 0.6337541460564937,
-            "pixel_error_vs_gt": 20.46367727992851
-          }
-        ],
-        "mean_error_vs_gt": 16.84,
-        "data_source": "SIMULATED",
-        "x": 0.5017369178291226,
-        "y": 0.6377923573586659
+        "x": 0.5024046266233767,
+        "y": 0.6485544710067002,
+        "annotated_at": "2026-06-20T12:11:23.155048+00:00"
       },
       "db_reference": {
         "x": 0.5035054863947573,
         "y": 0.6368800864939445,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.5055905032467533,
+        "y": 0.6258271982794273,
+        "annotated_at": "2026-06-20T12:06:33.727342+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.49603287337662333,
+        "y": 0.6290739515261807,
+        "annotated_at": "2026-06-20T12:11:20.609144+00:00"
+      }
     },
     "8e39b06f_0000400ms": {
       "frame_id": "8e39b06f_0000400ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.4831895210562266,
-        "y": 0.7023862074209115
+        "x": 0.4960328733766234,
+        "y": 0.6972557697079989
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 20.1,
-      "gt_review_required": true,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 2.04,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.4783670812569167,
         "y": 0.7003132482534224,
@@ -1501,76 +1015,49 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.5255114174834395,
-            "y": 0.7561054866604835,
-            "pixel_error_vs_gt": 129.79118156159487
-          },
-          {
-            "rep": 2,
-            "x": 0.47277844188872525,
-            "y": 0.7219922016062325,
-            "pixel_error_vs_gt": 41.99957336273049
-          },
-          {
-            "rep": 3,
-            "x": 0.4482148382696552,
-            "y": 0.7642491375578877,
-            "pixel_error_vs_gt": 134.51080235703316
-          }
-        ],
-        "mean_error_vs_gt": 102.1,
-        "median_error_vs_gt": 129.79,
-        "data_source": "SIMULATED",
-        "x": 0.4821682325472733,
-        "y": 0.7474489419415346
+        "x": 0.4673599837662338,
+        "y": 0.7021258995781287,
+        "annotated_at": "2026-06-20T12:11:26.828105+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.4821439202644333,
-            "y": 0.7016543827165159,
-            "pixel_error_vs_gt": 2.435414554187243
-          },
-          {
-            "rep": 2,
-            "x": 0.49321585539409524,
-            "y": 0.6966438942388116,
-            "pixel_error_vs_gt": 22.082220609492275
-          },
-          {
-            "rep": 3,
-            "x": 0.4906556027438497,
-            "y": 0.7023902915625297,
-            "pixel_error_vs_gt": 14.33487890532825
-          }
-        ],
-        "mean_error_vs_gt": 12.95,
-        "data_source": "SIMULATED",
-        "x": 0.4886717928007927,
-        "y": 0.7002295228392857
+        "x": 0.4944399350649351,
+        "y": 0.7021258995781287,
+        "annotated_at": "2026-06-20T12:11:27.645395+00:00"
       },
       "db_reference": {
         "x": 0.4855549672905157,
         "y": 0.7019238944515241,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.4976258116883117,
+        "y": 0.6972557697079989,
+        "annotated_at": "2026-06-20T12:06:35.093590+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.4944399350649351,
+        "y": 0.6972557697079989,
+        "annotated_at": "2026-06-20T12:11:24.892760+00:00"
+      }
     },
     "8e39b06f_0009100ms": {
       "frame_id": "8e39b06f_0009100ms",
       "type": "A",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.4624305270731126,
-        "y": 0.48486515012581427
+        "x": 0.45063413149350645,
+        "y": 0.4748531723054014
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 24.0,
-      "gt_review_required": true,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 2.28,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.4681953251098375,
         "y": 0.4873267568738216,
@@ -1582,74 +1069,44 @@
         "model_hidden": false
       },
       "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.43095440438377564,
-            "y": 0.41810524764516044,
-            "pixel_error_vs_gt": 139.54140199137757
-          },
-          {
-            "rep": 2,
-            "x": 0.48928148183335307,
-            "y": 0.4837259928114788,
-            "pixel_error_vs_gt": 51.59848609482305
-          },
-          {
-            "rep": 3,
-            "x": 0.45875700070766906,
-            "y": 0.47711766216087864,
-            "pixel_error_vs_gt": 16.211052885867588
-          }
-        ],
-        "mean_error_vs_gt": 69.12,
-        "median_error_vs_gt": 51.6,
-        "data_source": "SIMULATED",
-        "x": 0.4596642956415993,
-        "y": 0.4596496342058393
+        "x": 0.4801034902597402,
+        "y": 0.52842460087683,
+        "annotated_at": "2026-06-20T12:11:35.149496+00:00"
       },
       "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.45257210258352304,
-            "y": 0.4735318280019807,
-            "pixel_error_vs_gt": 28.533888829526767
-          },
-          {
-            "rep": 2,
-            "x": 0.4537505706089298,
-            "y": 0.4843828648833912,
-            "pixel_error_vs_gt": 16.690267743945338
-          },
-          {
-            "rep": 3,
-            "x": 0.4542538772193751,
-            "y": 0.4853428705236294,
-            "pixel_error_vs_gt": 15.724945548030533
-          }
-        ],
-        "mean_error_vs_gt": 20.32,
-        "data_source": "SIMULATED",
-        "x": 0.45352551680394265,
-        "y": 0.48108585446966706
+        "x": 0.45143060064935064,
+        "y": 0.47485317230540136,
+        "annotated_at": "2026-06-20T12:11:36.630702+00:00"
       },
       "db_reference": {
         "x": 0.4558196764314565,
         "y": 0.48561569774386526,
         "source": "db_corrected"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: db_corrected. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.44983766233766226,
+        "y": 0.4732297956820248,
+        "annotated_at": "2026-06-20T12:06:36.766520+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.45143060064935064,
+        "y": 0.47647654892877805,
+        "annotated_at": "2026-06-20T12:11:33.216133+00:00"
+      }
     },
     "47466ee0_0051200ms": {
       "frame_id": "47466ee0_0051200ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.8905050583974519,
-        "y": 0.49681090069684675
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 11.65,
       "gt_review_required": false,
       "annotation_round_1": {
@@ -1662,75 +1119,30 @@
         "y": 0.49628134293313614,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8920881655801132,
-            "y": 0.4754280478278876,
-            "pixel_error_vs_gt": 27.113310159042292
-          },
-          {
-            "rep": 2,
-            "x": 0.8606663821712829,
-            "y": 0.5353259699731988,
-            "pixel_error_vs_gt": 75.08153108131654
-          },
-          {
-            "rep": 3,
-            "x": 0.8452754975055302,
-            "y": 0.49464643670092273,
-            "pixel_error_vs_gt": 86.88357045692307
-          }
-        ],
-        "mean_error_vs_gt": 63.03,
-        "median_error_vs_gt": 75.08,
-        "data_source": "SIMULATED",
-        "x": 0.8660100150856421,
-        "y": 0.5018001515006697
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8860810579451183,
-            "y": 0.5002660855523542,
-            "pixel_error_vs_gt": 9.54477127373246
-          },
-          {
-            "rep": 2,
-            "x": 0.8794938962247929,
-            "y": 0.49279674190530803,
-            "pixel_error_vs_gt": 21.73802812317619
-          },
-          {
-            "rep": 3,
-            "x": 0.8881967832437832,
-            "y": 0.5015926271604682,
-            "pixel_error_vs_gt": 7.47943592508948
-          }
-        ],
-        "mean_error_vs_gt": 12.92,
-        "data_source": "SIMULATED",
-        "x": 0.8845905791378982,
-        "y": 0.4982184848727101
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:24:49.482600+00:00"
     },
     "47466ee0_0051100ms": {
       "frame_id": "47466ee0_0051100ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.8835524513645789,
-        "y": 0.4964517458683262
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 8.16,
       "gt_review_required": false,
       "annotation_round_1": {
@@ -1743,77 +1155,35 @@
         "y": 0.4942594845903739,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8710873608800904,
-            "y": 0.5239972659330845,
-            "pixel_error_vs_gt": 42.159076629051
-          },
-          {
-            "rep": 2,
-            "x": 0.8899765077328735,
-            "y": 0.4935533810824869,
-            "pixel_error_vs_gt": 12.863470071659435
-          },
-          {
-            "rep": 3,
-            "x": 0.9266345257341401,
-            "y": 0.5024707248184931,
-            "pixel_error_vs_gt": 83.06451857548498
-          }
-        ],
-        "mean_error_vs_gt": 46.03,
-        "median_error_vs_gt": 42.16,
-        "data_source": "SIMULATED",
-        "x": 0.895899464782368,
-        "y": 0.5066737906113549
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8832903524662262,
-            "y": 0.49243592119519025,
-            "pixel_error_vs_gt": 5.084901561760511
-          },
-          {
-            "rep": 2,
-            "x": 0.8840533158859291,
-            "y": 0.4963477780191857,
-            "pixel_error_vs_gt": 0.9705413917337573
-          },
-          {
-            "rep": 3,
-            "x": 0.8828835382983947,
-            "y": 0.49691539990739164,
-            "pixel_error_vs_gt": 1.4109410063829848
-          }
-        ],
-        "mean_error_vs_gt": 2.49,
-        "data_source": "SIMULATED",
-        "x": 0.8834090688835167,
-        "y": 0.4952330330405892
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:24:51.685395+00:00"
     },
     "47466ee0_0042700ms": {
       "frame_id": "47466ee0_0042700ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.03364255102972609,
-        "y": 0.40944670134419053
+        "x": 0.052444556451612945,
+        "y": 0.5635304659498207
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 11.51,
-      "gt_review_required": false,
+      "gt_provenance": "two_round_average",
+      "gt_agreement_px": 8.32,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.03557124753380882,
         "y": 0.4059516586507221,
@@ -1828,71 +1198,83 @@
         "reps": [
           {
             "rep": 1,
-            "x": 0.054387375587861525,
-            "y": 0.41470836102130004,
-            "pixel_error_vs_gt": 40.37804769894994
+            "x": 0.05494505494505495,
+            "y": 0.5634920634920634,
+            "annotated_at": "2026-06-20T12:50:06.787175+00:00"
           },
           {
             "rep": 2,
-            "x": 0.03338372412169731,
-            "y": 0.4101203253466743,
-            "pixel_error_vs_gt": 0.9835451772288585
+            "x": 0.05787916484550988,
+            "y": 0.5658017765310893,
+            "annotated_at": "2026-06-20T12:50:18.365988+00:00"
           },
           {
             "rep": 3,
-            "x": 0.0,
-            "y": 0.45478880602646116,
-            "pixel_error_vs_gt": 86.23400089010843
+            "x": 0.056198097031234254,
+            "y": 0.5674714486074935,
+            "annotated_at": "2026-06-20T12:50:21.216089+00:00"
           }
         ],
-        "mean_error_vs_gt": 42.53,
-        "median_error_vs_gt": 40.38,
-        "data_source": "SIMULATED",
-        "x": 0.02925703323651961,
-        "y": 0.42653916413147847
+        "mean_x": 0.056340772273933026,
+        "mean_y": 0.5655884295435487,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:50:21.216110+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.033284651977311196,
-            "y": 0.39911177247993546,
-            "pixel_error_vs_gt": 13.040128504318846
+            "x": 0.05535756312409643,
+            "y": 0.5574534161490683,
+            "annotated_at": "2026-06-20T12:50:24.610579+00:00"
           },
           {
             "rep": 2,
-            "x": 0.04347274331576782,
-            "y": 0.39722826920458926,
-            "pixel_error_vs_gt": 24.356511454515843
+            "x": 0.05787916484550988,
+            "y": 0.5691411206838977,
+            "annotated_at": "2026-06-20T12:50:27.892716+00:00"
           },
           {
             "rep": 3,
-            "x": 0.03345270392574213,
-            "y": 0.40396035507823724,
-            "pixel_error_vs_gt": 6.922399696789393
+            "x": 0.053676495309820806,
+            "y": 0.5674714486074935,
+            "annotated_at": "2026-06-20T12:50:30.749844+00:00"
           }
         ],
-        "mean_error_vs_gt": 14.77,
-        "data_source": "SIMULATED",
-        "x": 0.03673669973960705,
-        "y": 0.40010013225425395
+        "mean_x": 0.05563774109314237,
+        "mean_y": 0.5646886618134865,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:50:30.749857+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.05835853494623659,
+        "y": 0.567626728110599,
+        "annotated_at": "2026-06-20T12:06:42.632709+00:00"
+      },
+      "gt_round_2": {
+        "x": 0.0465305779569893,
+        "y": 0.5594342037890424,
+        "annotated_at": "2026-06-20T12:06:43.610622+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ]
     },
     "47466ee0_0051000ms": {
       "frame_id": "47466ee0_0051000ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.8897046013129102,
-        "y": 0.5012487234724633
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 14.09,
       "gt_review_required": false,
       "annotation_round_1": {
@@ -1905,77 +1287,35 @@
         "y": 0.49628530200490256,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8899013854959618,
-            "y": 0.4895869780405392,
-            "pixel_error_vs_gt": 14.69865600785855
-          },
-          {
-            "rep": 2,
-            "x": 0.9488616151879377,
-            "y": 0.4918751522851363,
-            "pixel_error_vs_gt": 114.19387983344497
-          },
-          {
-            "rep": 3,
-            "x": 0.8961346285574096,
-            "y": 0.481800188897541,
-            "pixel_error_vs_gt": 27.439345512611627
-          }
-        ],
-        "mean_error_vs_gt": 52.11,
-        "median_error_vs_gt": 27.44,
-        "data_source": "SIMULATED",
-        "x": 0.9116325430804363,
-        "y": 0.48775410640773886
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8938406687491046,
-            "y": 0.5080769932307687,
-            "pixel_error_vs_gt": 11.7083610539403
-          },
-          {
-            "rep": 2,
-            "x": 0.8726179495215269,
-            "y": 0.49753421353475075,
-            "pixel_error_vs_gt": 33.13854329183418
-          },
-          {
-            "rep": 3,
-            "x": 0.8882268949802208,
-            "y": 0.4938111289514758,
-            "pixel_error_vs_gt": 9.791437115413347
-          }
-        ],
-        "mean_error_vs_gt": 18.21,
-        "data_source": "SIMULATED",
-        "x": 0.8848951710836174,
-        "y": 0.4998074452389984
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:50:35.256818+00:00"
     },
     "47466ee0_0049400ms": {
       "frame_id": "47466ee0_0049400ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.8930875253836332,
-        "y": 0.49193414527534285
+        "x": 0.3808624138499486,
+        "y": 0.44427518423592427
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 11.24,
-      "gt_review_required": false,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 0.4,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.8930737910288223,
         "y": 0.4874750700481984,
@@ -1990,71 +1330,84 @@
         "reps": [
           {
             "rep": 1,
-            "x": 0.8868026965371419,
-            "y": 0.5111686889602978,
-            "pixel_error_vs_gt": 27.0734197902751
+            "x": 0.37995198079231696,
+            "y": 0.44381150518459805,
+            "annotated_at": "2026-06-20T12:50:42.110113+00:00"
           },
           {
             "rep": 2,
-            "x": 0.8904209286281658,
-            "y": 0.44740901429369667,
-            "pixel_error_vs_gt": 56.33480137017919
+            "x": 0.3807856475923703,
+            "y": 0.45041608876560324,
+            "annotated_at": "2026-06-20T12:50:44.478986+00:00"
           },
           {
             "rep": 3,
-            "x": 0.8815151412227576,
-            "y": 0.5699476865981619,
-            "pixel_error_vs_gt": 100.776958557252
+            "x": 0.3807856475923703,
+            "y": 0.45041608876560324,
+            "annotated_at": "2026-06-20T12:50:46.584191+00:00"
           }
         ],
-        "mean_error_vs_gt": 61.4,
-        "median_error_vs_gt": 56.33,
-        "data_source": "SIMULATED",
-        "x": 0.8862462554626885,
-        "y": 0.5095084632840521
+        "mean_x": 0.38050775865901915,
+        "mean_y": 0.4482145609052682,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:50:46.584201+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.8909796257700325,
-            "y": 0.4882612110330304,
-            "pixel_error_vs_gt": 6.147926057033163
+            "x": 0.3807856475923703,
+            "y": 0.4388580674988441,
+            "annotated_at": "2026-06-20T12:50:48.640164+00:00"
           },
           {
             "rep": 2,
-            "x": 0.8891382917640607,
-            "y": 0.49246020912573846,
-            "pixel_error_vs_gt": 7.611445110445715
+            "x": 0.37995198079231696,
+            "y": 0.4405092133940955,
+            "annotated_at": "2026-06-20T12:50:51.232153+00:00"
           },
           {
             "rep": 3,
-            "x": 0.8792005402643368,
-            "y": 0.5026084504510956,
-            "pixel_error_vs_gt": 29.86316423679099
+            "x": 0.3782846471922102,
+            "y": 0.448764942870352,
+            "annotated_at": "2026-06-20T12:50:55.066330+00:00"
           }
         ],
-        "mean_error_vs_gt": 14.54,
-        "data_source": "SIMULATED",
-        "x": 0.8864394859328101,
-        "y": 0.4944432902032882
+        "mean_x": 0.37967409185896583,
+        "mean_y": 0.4427107412544305,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:50:55.066340+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.3809391801075269,
+        "y": 0.44473886328725043,
+        "annotated_at": "2026-06-20T12:06:50.300403+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.3807856475923703,
+        "y": 0.44381150518459805,
+        "annotated_at": "2026-06-20T12:50:38.170837+00:00",
+        "data_source": "human"
+      }
     },
     "47466ee0_0050900ms": {
       "frame_id": "47466ee0_0050900ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.8822953137058857,
-        "y": 0.49305781565913076
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 20.16,
       "gt_review_required": true,
       "annotation_round_1": {
@@ -2067,75 +1420,30 @@
         "y": 0.4990850316851711,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8773363414564593,
-            "y": 0.4474612476802017,
-            "pixel_error_vs_gt": 58.235288216183505
-          },
-          {
-            "rep": 2,
-            "x": 0.8315981071631002,
-            "y": 0.521764664636777,
-            "pixel_error_vs_gt": 103.8418250105831
-          },
-          {
-            "rep": 3,
-            "x": 0.8344190631722719,
-            "y": 0.4785669927311408,
-            "pixel_error_vs_gt": 93.71818568322493
-          }
-        ],
-        "mean_error_vs_gt": 85.27,
-        "median_error_vs_gt": 93.72,
-        "data_source": "SIMULATED",
-        "x": 0.8477845039306104,
-        "y": 0.48259763501603975
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8825352151126533,
-            "y": 0.48747727425862275,
-            "pixel_error_vs_gt": 7.046552607447263
-          },
-          {
-            "rep": 2,
-            "x": 0.8789303611450118,
-            "y": 0.49785577890154864,
-            "pixel_error_vs_gt": 8.848052223724526
-          },
-          {
-            "rep": 3,
-            "x": 0.8755812962086039,
-            "y": 0.49746162345367834,
-            "pixel_error_vs_gt": 14.034415220018401
-          }
-        ],
-        "mean_error_vs_gt": 9.98,
-        "data_source": "SIMULATED",
-        "x": 0.8790156241554229,
-        "y": 0.4942648922046166
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:50:58.142454+00:00"
     },
     "47466ee0_0051300ms": {
       "frame_id": "47466ee0_0051300ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.8710442715113429,
-        "y": 0.49592075539649183
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 19.01,
       "gt_review_required": false,
       "annotation_round_1": {
@@ -2148,75 +1456,30 @@
         "y": 0.4954096404530159,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8923147954859761,
-            "y": 0.4903669388192395,
-            "pixel_error_vs_gt": 41.434604067285946
-          },
-          {
-            "rep": 2,
-            "x": 0.903488589463165,
-            "y": 0.502758000559546,
-            "pixel_error_vs_gt": 62.8859771335222
-          },
-          {
-            "rep": 3,
-            "x": 0.9061107646888874,
-            "y": 0.4837035254534702,
-            "pixel_error_vs_gt": 69.06504926164095
-          }
-        ],
-        "mean_error_vs_gt": 57.8,
-        "median_error_vs_gt": 62.89,
-        "data_source": "SIMULATED",
-        "x": 0.9006380498793428,
-        "y": 0.4922761549440852
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.875160923763403,
-            "y": 0.4893224566067007,
-            "pixel_error_vs_gt": 11.471398693578244
-          },
-          {
-            "rep": 2,
-            "x": 0.8836657581116352,
-            "y": 0.4929514381616731,
-            "pixel_error_vs_gt": 24.520363690372996
-          },
-          {
-            "rep": 3,
-            "x": 0.8824335114742935,
-            "y": 0.48823955038034816,
-            "pixel_error_vs_gt": 23.913394490580664
-          }
-        ],
-        "mean_error_vs_gt": 19.97,
-        "data_source": "SIMULATED",
-        "x": 0.8804200644497772,
-        "y": 0.49017114838290726
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:51:00.591213+00:00"
     },
     "47466ee0_0050800ms": {
       "frame_id": "47466ee0_0050800ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.8785055307565431,
-        "y": 0.49917591985512866
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 17.94,
       "gt_review_required": false,
       "annotation_round_1": {
@@ -2229,75 +1492,30 @@
         "y": 0.4928771865744965,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8549905982422886,
-            "y": 0.517131448101653,
-            "pixel_error_vs_gt": 50.49996297429082
-          },
-          {
-            "rep": 2,
-            "x": 0.8511130659005715,
-            "y": 0.4807249177462847,
-            "pixel_error_vs_gt": 57.50270758731598
-          },
-          {
-            "rep": 3,
-            "x": 0.8964026169706757,
-            "y": 0.46007999835346675,
-            "pixel_error_vs_gt": 60.06169619167214
-          }
-        ],
-        "mean_error_vs_gt": 56.02,
-        "median_error_vs_gt": 57.5,
-        "data_source": "SIMULATED",
-        "x": 0.867502093704512,
-        "y": 0.48597878806713485
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8721861696322386,
-            "y": 0.4927341035538232,
-            "pixel_error_vs_gt": 14.5977576566065
-          },
-          {
-            "rep": 2,
-            "x": 0.8903570846682552,
-            "y": 0.48972086843454793,
-            "pixel_error_vs_gt": 25.684967104914335
-          },
-          {
-            "rep": 3,
-            "x": 0.8819679395360384,
-            "y": 0.49305881087090886,
-            "pixel_error_vs_gt": 10.178409265073148
-          }
-        ],
-        "mean_error_vs_gt": 16.82,
-        "data_source": "SIMULATED",
-        "x": 0.8815037312788441,
-        "y": 0.49183792761976
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:51:01.763226+00:00"
     },
     "5416b28f_0004200ms": {
       "frame_id": "5416b28f_0004200ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.8764252478994631,
-        "y": 0.5135434592239492
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 33.19,
       "gt_review_required": true,
       "annotation_round_1": {
@@ -2310,75 +1528,30 @@
         "y": 0.5184053701947665,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8823642853884164,
-            "y": 0.5038563516852662,
-            "pixel_error_vs_gt": 34.97632295954744
-          },
-          {
-            "rep": 2,
-            "x": 0.8807610206278528,
-            "y": 0.48642723665118204,
-            "pixel_error_vs_gt": 92.93031934687225
-          },
-          {
-            "rep": 3,
-            "x": 0.8646653314900613,
-            "y": 0.519202637461416,
-            "pixel_error_vs_gt": 29.714414766462284
-          }
-        ],
-        "mean_error_vs_gt": 52.54,
-        "median_error_vs_gt": 34.98,
-        "data_source": "SIMULATED",
-        "x": 0.8759302125021101,
-        "y": 0.5031620752659548
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8772885542322197,
-            "y": 0.5176323286521859,
-            "pixel_error_vs_gt": 14.05475804969155
-          },
-          {
-            "rep": 2,
-            "x": 0.864978118420618,
-            "y": 0.5145595118733052,
-            "pixel_error_vs_gt": 22.250435089596447
-          },
-          {
-            "rep": 3,
-            "x": 0.8831798877874377,
-            "y": 0.5174718102916377,
-            "pixel_error_vs_gt": 18.65442968559559
-          }
-        ],
-        "mean_error_vs_gt": 18.32,
-        "data_source": "SIMULATED",
-        "x": 0.8751488534800919,
-        "y": 0.5165545502723763
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:51:03.289548+00:00"
     },
     "5416b28f_0008500ms": {
       "frame_id": "5416b28f_0008500ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.9063507747575582,
-        "y": 0.5432024353163032
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 42.99,
       "gt_review_required": true,
       "annotation_round_1": {
@@ -2391,75 +1564,30 @@
         "y": 0.5487003335972354,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.9198551524913414,
-            "y": 0.5254390341501448,
-            "pixel_error_vs_gt": 65.9436976363017
-          },
-          {
-            "rep": 2,
-            "x": 0.9116195258870553,
-            "y": 0.5012857905708,
-            "pixel_error_vs_gt": 143.43265557875378
-          },
-          {
-            "rep": 3,
-            "x": 0.9834753587887696,
-            "y": 0.5428453302544821,
-            "pixel_error_vs_gt": 148.08421803842086
-          }
-        ],
-        "mean_error_vs_gt": 119.15,
-        "median_error_vs_gt": 143.43,
-        "data_source": "SIMULATED",
-        "x": 0.9383166790557221,
-        "y": 0.5231900516584757
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.9112001845041491,
-            "y": 0.5453340615985768,
-            "pixel_error_vs_gt": 11.816585908926227
-          },
-          {
-            "rep": 2,
-            "x": 0.9104358089153339,
-            "y": 0.5404513585657066,
-            "pixel_error_vs_gt": 12.23500459414526
-          },
-          {
-            "rep": 3,
-            "x": 0.9088609297682938,
-            "y": 0.5444848761497445,
-            "pixel_error_vs_gt": 6.510696656873269
-          }
-        ],
-        "mean_error_vs_gt": 10.19,
-        "data_source": "SIMULATED",
-        "x": 0.9101656410625923,
-        "y": 0.5434234321046759
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:51:04.314439+00:00"
     },
     "5416b28f_0006200ms": {
       "frame_id": "5416b28f_0006200ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.924549696267853,
-        "y": 0.5334305655877172
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 16.65,
       "gt_review_required": false,
       "annotation_round_1": {
@@ -2472,75 +1600,30 @@
         "y": 0.5324673048601519,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.9211877215652932,
-            "y": 0.5190657697690617,
-            "pixel_error_vs_gt": 49.454907689218054
-          },
-          {
-            "rep": 2,
-            "x": 0.9519098786233181,
-            "y": 0.5962689102401868,
-            "pixel_error_vs_gt": 220.82744109061542
-          },
-          {
-            "rep": 3,
-            "x": 0.8840083617517326,
-            "y": 0.5440523006721819,
-            "pixel_error_vs_gt": 85.86867429286649
-          }
-        ],
-        "mean_error_vs_gt": 118.72,
-        "median_error_vs_gt": 85.87,
-        "data_source": "SIMULATED",
-        "x": 0.9190353206467813,
-        "y": 0.5531289935604767
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.9168196194584907,
-            "y": 0.5327299890139839,
-            "pixel_error_vs_gt": 15.033156366227397
-          },
-          {
-            "rep": 2,
-            "x": 0.9274043756458269,
-            "y": 0.5375574986870354,
-            "pixel_error_vs_gt": 15.11533797401969
-          },
-          {
-            "rep": 3,
-            "x": 0.9235339279260654,
-            "y": 0.5370955024823705,
-            "pixel_error_vs_gt": 12.660764125560823
-          }
-        ],
-        "mean_error_vs_gt": 14.27,
-        "data_source": "SIMULATED",
-        "x": 0.9225859743434609,
-        "y": 0.53579433006113
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:51:05.668428+00:00"
     },
     "5416b28f_0006900ms": {
       "frame_id": "5416b28f_0006900ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.9437380116099274,
-        "y": 0.5259379579561532
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 8.27,
       "gt_review_required": false,
       "annotation_round_1": {
@@ -2553,75 +1636,30 @@
         "y": 0.5268905147629303,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.9269147472579176,
-            "y": 0.5319407873163937,
-            "pixel_error_vs_gt": 38.251263914475594
-          },
-          {
-            "rep": 2,
-            "x": 0.950821232247922,
-            "y": 0.5412419842996047,
-            "pixel_error_vs_gt": 53.97903236202162
-          },
-          {
-            "rep": 3,
-            "x": 0.9510276409337803,
-            "y": 0.552288584548371,
-            "pixel_error_vs_gt": 91.02592301874061
-          }
-        ],
-        "mean_error_vs_gt": 61.09,
-        "median_error_vs_gt": 53.98,
-        "data_source": "SIMULATED",
-        "x": 0.9429212068132067,
-        "y": 0.5418237853881231
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.9502309253020784,
-            "y": 0.5207194977345653,
-            "pixel_error_vs_gt": 21.7414487393646
-          },
-          {
-            "rep": 2,
-            "x": 0.9410926856221846,
-            "y": 0.5314117108763234,
-            "pixel_error_vs_gt": 19.361786275779192
-          },
-          {
-            "rep": 3,
-            "x": 0.9224947798698063,
-            "y": 0.515733708935988,
-            "pixel_error_vs_gt": 53.6352844099392
-          }
-        ],
-        "mean_error_vs_gt": 31.58,
-        "data_source": "SIMULATED",
-        "x": 0.9379394635980232,
-        "y": 0.5226216391822923
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:51:06.496405+00:00"
     },
     "5416b28f_0007500ms": {
       "frame_id": "5416b28f_0007500ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.922687541247261,
-        "y": 0.5349472841874368
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 48.77,
       "gt_review_required": true,
       "annotation_round_1": {
@@ -2634,75 +1672,30 @@
         "y": 0.5411059438028347,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8874721526907406,
-            "y": 0.5642962533522102,
-            "pixel_error_vs_gt": 120.8601926792042
-          },
-          {
-            "rep": 2,
-            "x": 0.9706913164961026,
-            "y": 0.5405347729413337,
-            "pixel_error_vs_gt": 94.11982475410437
-          },
-          {
-            "rep": 3,
-            "x": 0.9270037622494669,
-            "y": 0.5743116551105156,
-            "pixel_error_vs_gt": 134.61903972596124
-          }
-        ],
-        "mean_error_vs_gt": 116.53,
-        "median_error_vs_gt": 120.86,
-        "data_source": "SIMULATED",
-        "x": 0.9283890771454367,
-        "y": 0.5597142271346865
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.9252097533290411,
-            "y": 0.5273335944995928,
-            "pixel_error_vs_gt": 26.435403081479517
-          },
-          {
-            "rep": 2,
-            "x": 0.9197180145468828,
-            "y": 0.5306137692141717,
-            "pixel_error_vs_gt": 15.852517523571944
-          },
-          {
-            "rep": 3,
-            "x": 0.9254309371580823,
-            "y": 0.5254609456662609,
-            "pixel_error_vs_gt": 32.80566048107106
-          }
-        ],
-        "mean_error_vs_gt": 25.03,
-        "data_source": "SIMULATED",
-        "x": 0.9234529016780021,
-        "y": 0.5278027697933418
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:51:07.334611+00:00"
     },
     "5416b28f_0003700ms": {
       "frame_id": "5416b28f_0003700ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.8829679166425719,
-        "y": 0.5167184073414686
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 72.91,
       "gt_review_required": true,
       "annotation_round_1": {
@@ -2715,75 +1708,30 @@
         "y": 0.5267900775821601,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8740595031839994,
-            "y": 0.5298100404490146,
-            "pixel_error_vs_gt": 47.84767807980558
-          },
-          {
-            "rep": 2,
-            "x": 0.8783706594347942,
-            "y": 0.5087960398012658,
-            "pixel_error_vs_gt": 28.44580377834855
-          },
-          {
-            "rep": 3,
-            "x": 0.8912002355730541,
-            "y": 0.49562856682235085,
-            "pixel_error_vs_gt": 73.70149171359989
-          }
-        ],
-        "mean_error_vs_gt": 50.0,
-        "median_error_vs_gt": 47.85,
-        "data_source": "SIMULATED",
-        "x": 0.8812101327306158,
-        "y": 0.5114115490242104
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.8700227886566487,
-            "y": 0.5158157801857175,
-            "pixel_error_vs_gt": 25.044875211796516
-          },
-          {
-            "rep": 2,
-            "x": 0.875812794135909,
-            "y": 0.5135794147372321,
-            "pixel_error_vs_gt": 17.422028745554478
-          },
-          {
-            "rep": 3,
-            "x": 0.8847053807309307,
-            "y": 0.5153487269280798,
-            "pixel_error_vs_gt": 5.743318277101456
-          }
-        ],
-        "mean_error_vs_gt": 16.07,
-        "data_source": "SIMULATED",
-        "x": 0.8768469878411628,
-        "y": 0.5149146406170098
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:51:08.180635+00:00"
     },
     "5416b28f_0007300ms": {
       "frame_id": "5416b28f_0007300ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.9337042874691452,
-        "y": 0.5296549957224935
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 74.85,
       "gt_review_required": true,
       "annotation_round_1": {
@@ -2796,75 +1744,30 @@
         "y": 0.540619389264403,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.9590454195396318,
-            "y": 0.5581258925066209,
-            "pixel_error_vs_gt": 108.68020670993317
-          },
-          {
-            "rep": 2,
-            "x": 0.8865586420046341,
-            "y": 0.45251929391874857,
-            "pixel_error_vs_gt": 278.41579806481235
-          },
-          {
-            "rep": 3,
-            "x": 0.9316228265588968,
-            "y": 0.5451639779586629,
-            "pixel_error_vs_gt": 53.08796228909031
-          }
-        ],
-        "mean_error_vs_gt": 146.73,
-        "median_error_vs_gt": 108.68,
-        "data_source": "SIMULATED",
-        "x": 0.9257422960343876,
-        "y": 0.5186030547946775
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.9283466437760026,
-            "y": 0.5351984191323081,
-            "pixel_error_vs_gt": 21.536964210297004
-          },
-          {
-            "rep": 2,
-            "x": 0.9237936195891584,
-            "y": 0.5302525822955799,
-            "pixel_error_vs_gt": 19.137496426516503
-          },
-          {
-            "rep": 3,
-            "x": 0.9306105197100384,
-            "y": 0.5253920506659655,
-            "pixel_error_vs_gt": 15.716593536157548
-          }
-        ],
-        "mean_error_vs_gt": 18.8,
-        "data_source": "SIMULATED",
-        "x": 0.9275835943583998,
-        "y": 0.5302810173646179
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:51:09.009938+00:00"
     },
     "5416b28f_0008600ms": {
       "frame_id": "5416b28f_0008600ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.9059243331276061,
-        "y": 0.5340902160309184
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 54.51,
       "gt_review_required": true,
       "annotation_round_1": {
@@ -2877,77 +1780,35 @@
         "y": 0.5264939943856685,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.9282889336509164,
-            "y": 0.5269567662719598,
-            "pixel_error_vs_gt": 49.36306851877587
-          },
-          {
-            "rep": 2,
-            "x": 0.8796350187175141,
-            "y": 0.5104919656163733,
-            "pixel_error_vs_gt": 95.05717583177328
-          },
-          {
-            "rep": 3,
-            "x": 0.9471250725998683,
-            "y": 0.533231887535644,
-            "pixel_error_vs_gt": 79.15965475354334
-          }
-        ],
-        "mean_error_vs_gt": 74.53,
-        "median_error_vs_gt": 79.16,
-        "data_source": "SIMULATED",
-        "x": 0.918349674989433,
-        "y": 0.5235602064746591
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.911318280804643,
-            "y": 0.5419977446956927,
-            "pixel_error_vs_gt": 28.909693203243968
-          },
-          {
-            "rep": 2,
-            "x": 0.9003716969521819,
-            "y": 0.5289130417007148,
-            "pixel_error_vs_gt": 20.63825033212799
-          },
-          {
-            "rep": 3,
-            "x": 0.9060619868936977,
-            "y": 0.5353522425846011,
-            "pixel_error_vs_gt": 4.315817458336339
-          }
-        ],
-        "mean_error_vs_gt": 17.95,
-        "data_source": "SIMULATED",
-        "x": 0.9059173215501742,
-        "y": 0.5354210096603362
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:51:10.178754+00:00"
     },
     "66ee1c8a_0008900ms": {
       "frame_id": "66ee1c8a_0008900ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.7772337683522701,
-        "y": 0.4919248356961873
+        "x": 0.7723500641042658,
+        "y": 0.48484925647774546
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 81.83,
-      "gt_review_required": true,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 0.34,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.7801391731597132,
         "y": 0.48216150939676444,
@@ -2962,73 +1823,89 @@
         "reps": [
           {
             "rep": 1,
-            "x": 0.7839171290752802,
-            "y": 0.47696939341000005,
-            "pixel_error_vs_gt": 63.39751964007353
+            "x": 0.772609043617447,
+            "y": 0.4850901525658807,
+            "annotated_at": "2026-06-20T12:51:16.611234+00:00"
           },
           {
             "rep": 2,
-            "x": 0.7863409845250223,
-            "y": 0.4617090149306934,
-            "pixel_error_vs_gt": 126.64938902631503
+            "x": 0.7717753768173936,
+            "y": 0.4850901525658807,
+            "annotated_at": "2026-06-20T12:51:19.244290+00:00"
           },
           {
             "rep": 3,
-            "x": 0.7802113453888201,
-            "y": 0.4522656703997541,
-            "pixel_error_vs_gt": 164.7383575200766
+            "x": 0.7734427104175002,
+            "y": 0.481787860775378,
+            "annotated_at": "2026-06-20T12:51:21.496596+00:00"
           }
         ],
-        "mean_error_vs_gt": 118.26,
-        "median_error_vs_gt": 126.65,
-        "data_source": "SIMULATED",
-        "x": 0.7834898196630409,
-        "y": 0.4636480262468159
+        "mean_x": 0.772609043617447,
+        "mean_y": 0.4839893886357131,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:51:21.496606+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.7764445332464008,
-            "y": 0.48643632099885575,
-            "pixel_error_vs_gt": 22.83508691103627
+            "x": 0.7734427104175002,
+            "y": 0.48839244435638324,
+            "annotated_at": "2026-06-20T12:51:26.739704+00:00"
           },
           {
             "rep": 2,
-            "x": 0.7772783023447216,
-            "y": 0.4876558136299899,
-            "pixel_error_vs_gt": 17.722416793094823
+            "x": 0.7709417100173402,
+            "y": 0.4900435902516345,
+            "annotated_at": "2026-06-20T12:51:28.961028+00:00"
           },
           {
             "rep": 3,
-            "x": 0.7840125827768589,
-            "y": 0.4927889364640104,
-            "pixel_error_vs_gt": 13.50061307874587
+            "x": 0.7734427104175002,
+            "y": 0.4900435902516345,
+            "annotated_at": "2026-06-20T12:51:32.133660+00:00"
           }
         ],
-        "mean_error_vs_gt": 18.02,
-        "data_source": "SIMULATED",
-        "x": 0.7792451394559938,
-        "y": 0.488960357030952
+        "mean_x": 0.772609043617447,
+        "mean_y": 0.4894932082865508,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:51:32.133667+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.7720910845910847,
+        "y": 0.4846083603896103,
+        "annotated_at": "2026-06-20T12:07:03.055219+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.772609043617447,
+        "y": 0.4850901525658807,
+        "annotated_at": "2026-06-20T12:51:13.512731+00:00",
+        "data_source": "human"
+      }
     },
     "66ee1c8a_0009000ms": {
       "frame_id": "66ee1c8a_0009000ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.7691739718313486,
-        "y": 0.4732176309418156
+        "x": 0.7634212263939154,
+        "y": 0.4799513573357409
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 20.4,
-      "gt_review_required": true,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 2.55,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.7713457070109313,
         "y": 0.4709754599484032,
@@ -3043,73 +1920,89 @@
         "reps": [
           {
             "rep": 1,
-            "x": 0.7842455416190721,
-            "y": 0.4996737888984233,
-            "pixel_error_vs_gt": 113.57702582046969
+            "x": 0.7651060424169668,
+            "y": 0.4751832771943728,
+            "annotated_at": "2026-06-20T12:51:50.756537+00:00"
           },
           {
             "rep": 2,
-            "x": 0.7498622431672977,
-            "y": 0.4637340140257343,
-            "pixel_error_vs_gt": 54.08141792931291
+            "x": 0.7659397092170201,
+            "y": 0.47353213129912153,
+            "annotated_at": "2026-06-20T12:51:52.952717+00:00"
           },
           {
             "rep": 3,
-            "x": 0.753405253770499,
-            "y": 0.4986715038550863,
-            "pixel_error_vs_gt": 109.91975385064738
+            "x": 0.7659397092170201,
+            "y": 0.4768344230896241,
+            "annotated_at": "2026-06-20T12:51:55.240959+00:00"
           }
         ],
-        "mean_error_vs_gt": 92.53,
-        "median_error_vs_gt": 109.92,
-        "data_source": "SIMULATED",
-        "x": 0.762504346185623,
-        "y": 0.48735976892641464
+        "mean_x": 0.765661820283669,
+        "mean_y": 0.47518327719437287,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:51:55.240968+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.7494063078397569,
-            "y": 0.4753625843856313,
-            "pixel_error_vs_gt": 38.984470998898594
+            "x": 0.7642723756169134,
+            "y": 0.47848556898487543,
+            "annotated_at": "2026-06-20T12:51:57.874202+00:00"
           },
           {
             "rep": 2,
-            "x": 0.7558785440352591,
-            "y": 0.47228883395712495,
-            "pixel_error_vs_gt": 25.816776254186006
+            "x": 0.7659397092170201,
+            "y": 0.481787860775378,
+            "annotated_at": "2026-06-20T12:52:01.366078+00:00"
           },
           {
             "rep": 3,
-            "x": 0.7621569202174753,
-            "y": 0.4641305253045659,
-            "pixel_error_vs_gt": 40.05742616653587
+            "x": 0.7651060424169668,
+            "y": 0.48674129846113195,
+            "annotated_at": "2026-06-20T12:52:03.930537+00:00"
           }
         ],
-        "mean_error_vs_gt": 34.95,
-        "data_source": "SIMULATED",
-        "x": 0.7558139240308304,
-        "y": 0.470593981215774
+        "mean_x": 0.7651060424169668,
+        "mean_y": 0.48233824274046183,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:52:03.930546+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.7650710775710774,
+        "y": 0.47811485389610386,
+        "annotated_at": "2026-06-20T12:07:04.892643+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.7617713752167534,
+        "y": 0.481787860775378,
+        "annotated_at": "2026-06-20T12:51:47.427294+00:00",
+        "data_source": "human"
+      }
     },
     "66ee1c8a_0000600ms": {
       "frame_id": "66ee1c8a_0000600ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.2988307315083274,
-        "y": 0.5030706460371792
+        "x": 0.7150916980223703,
+        "y": 0.445541101618273
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 35.99,
-      "gt_review_required": true,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 2.27,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.2992506771684913,
         "y": 0.49874006914180524,
@@ -3124,73 +2017,89 @@
         "reps": [
           {
             "rep": 1,
-            "x": 0.23628959068259037,
-            "y": 0.5169574817866485,
-            "pixel_error_vs_gt": 133.20055038853994
+            "x": 0.7150860344137655,
+            "y": 0.43885806749884415,
+            "annotated_at": "2026-06-20T12:52:16.315184+00:00"
           },
           {
             "rep": 2,
-            "x": 0.33603322406007385,
-            "y": 0.48613912953043903,
-            "pixel_error_vs_gt": 100.21261951180641
+            "x": 0.7142523676137121,
+            "y": 0.4355557757083415,
+            "annotated_at": "2026-06-20T12:52:18.192174+00:00"
           },
           {
             "rep": 3,
-            "x": 0.2637326091760259,
-            "y": 0.43883960379614134,
-            "pixel_error_vs_gt": 275.02924311026516
+            "x": 0.7142523676137121,
+            "y": 0.44546265107984934,
+            "annotated_at": "2026-06-20T12:52:20.241094+00:00"
           }
         ],
-        "mean_error_vs_gt": 169.48,
-        "median_error_vs_gt": 133.2,
-        "data_source": "SIMULATED",
-        "x": 0.27868514130623007,
-        "y": 0.48064540503774295
+        "mean_x": 0.7145302565470631,
+        "mean_y": 0.43995883142901165,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:52:20.241102+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.2954814820604067,
-            "y": 0.49690586364304845,
-            "pixel_error_vs_gt": 26.38771776545328
+            "x": 0.7159197012138189,
+            "y": 0.44050921339409543,
+            "annotated_at": "2026-06-20T12:52:22.547901+00:00"
           },
           {
             "rep": 2,
-            "x": 0.2949577064953072,
-            "y": 0.5056475913412921,
-            "pixel_error_vs_gt": 13.028439259482635
+            "x": 0.7175870348139255,
+            "y": 0.443811505184598,
+            "annotated_at": "2026-06-20T12:52:24.456792+00:00"
           },
           {
             "rep": 3,
-            "x": 0.2894793694822134,
-            "y": 0.4934426045025517,
-            "pixel_error_vs_gt": 43.816889429451045
+            "x": 0.7150860344137655,
+            "y": 0.44546265107984934,
+            "annotated_at": "2026-06-20T12:52:26.899199+00:00"
           }
         ],
-        "mean_error_vs_gt": 27.74,
-        "data_source": "SIMULATED",
-        "x": 0.29330618601264247,
-        "y": 0.4986653531622974
+        "mean_x": 0.71619759014717,
+        "mean_y": 0.4432611232195143,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:52:26.899210+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.7159310284310284,
+        "y": 0.447270698051948,
+        "annotated_at": "2026-06-20T12:07:06.731185+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.7142523676137121,
+        "y": 0.443811505184598,
+        "annotated_at": "2026-06-20T12:52:12.941108+00:00",
+        "data_source": "human"
+      }
     },
     "66ee1c8a_0000500ms": {
       "frame_id": "66ee1c8a_0000500ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.30356943289679816,
-        "y": 0.49810717276923133
+        "x": 0.7125030294673151,
+        "y": 0.4463527899299613
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 37.05,
-      "gt_review_required": true,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 3.25,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.3110213522588428,
         "y": 0.4952718051159717,
@@ -3205,71 +2114,84 @@
         "reps": [
           {
             "rep": 1,
-            "x": 0.3203599007988048,
-            "y": 0.4697261755923636,
-            "pixel_error_vs_gt": 122.15032399376408
+            "x": 0.7109177004134988,
+            "y": 0.44546265107984934,
+            "annotated_at": "2026-06-20T12:52:38.482269+00:00"
           },
           {
             "rep": 2,
-            "x": 0.32193096539373445,
-            "y": 0.505971705708326,
-            "pixel_error_vs_gt": 48.049715442478345
+            "x": 0.7142523676137121,
+            "y": 0.44546265107984934,
+            "annotated_at": "2026-06-20T12:52:40.657310+00:00"
           },
           {
             "rep": 3,
-            "x": 0.2899838017258294,
-            "y": 0.5406543232558592,
-            "pixel_error_vs_gt": 178.54385235924687
+            "x": 0.7134187008136588,
+            "y": 0.4421603592893467,
+            "annotated_at": "2026-06-20T12:52:42.670643+00:00"
           }
         ],
-        "mean_error_vs_gt": 116.25,
-        "median_error_vs_gt": 122.15,
-        "data_source": "SIMULATED",
-        "x": 0.31075822263945624,
-        "y": 0.505450734852183
+        "mean_x": 0.7128629229469565,
+        "mean_y": 0.4443618871496818,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:52:42.670651+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.3000116134117985,
-            "y": 0.4967004305244987,
-            "pixel_error_vs_gt": 8.987043898868066
+            "x": 0.7125850340136054,
+            "y": 0.43885806749884415,
+            "annotated_at": "2026-06-20T12:52:44.681684+00:00"
           },
           {
             "rep": 2,
-            "x": 0.29898477152520786,
-            "y": 0.49207841334666524,
-            "pixel_error_vs_gt": 26.530370682186096
+            "x": 0.7125850340136054,
+            "y": 0.44546265107984934,
+            "annotated_at": "2026-06-20T12:52:48.942327+00:00"
           },
           {
             "rep": 3,
-            "x": 0.3020253607626361,
-            "y": 0.5056340408323344,
-            "pixel_error_vs_gt": 31.38699719588615
+            "x": 0.7125850340136054,
+            "y": 0.443811505184598,
+            "annotated_at": "2026-06-20T12:52:50.897497+00:00"
           }
         ],
-        "mean_error_vs_gt": 22.3,
-        "data_source": "SIMULATED",
-        "x": 0.30034058189988083,
-        "y": 0.4981376282344994
+        "mean_x": 0.7125850340136054,
+        "mean_y": 0.4427107412544305,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:52:50.897504+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.712421024921025,
+        "y": 0.4488940746753246,
+        "annotated_at": "2026-06-20T12:07:09.448188+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.7125850340136054,
+        "y": 0.443811505184598,
+        "annotated_at": "2026-06-20T12:52:31.706695+00:00",
+        "data_source": "human"
+      }
     },
     "66ee1c8a_0000300ms": {
       "frame_id": "66ee1c8a_0000300ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.2964576342291576,
-        "y": 0.5011424609569675
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_unusable_quality",
       "gt_agreement_px": 14.69,
       "gt_review_required": false,
       "annotation_round_1": {
@@ -3282,75 +2204,30 @@
         "y": 0.5000918917743957,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.28233454873699815,
-            "y": 0.5090372785152328,
-            "pixel_error_vs_gt": 42.53752108115707
-          },
-          {
-            "rep": 2,
-            "x": 0.2773184746170355,
-            "y": 0.4736844342780899,
-            "pixel_error_vs_gt": 119.76477254436823
-          },
-          {
-            "rep": 3,
-            "x": 0.233629926476562,
-            "y": 0.5088826866190642,
-            "pixel_error_vs_gt": 124.83546977192887
-          }
-        ],
-        "mean_error_vs_gt": 95.71,
-        "median_error_vs_gt": 119.76,
-        "data_source": "SIMULATED",
-        "x": 0.2644276499435319,
-        "y": 0.4972014664707956
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.2966871481750946,
-            "y": 0.49955102161903603,
-            "pixel_error_vs_gt": 6.621303938931192
-          },
-          {
-            "rep": 2,
-            "x": 0.2962659056488636,
-            "y": 0.4938621108949022,
-            "pixel_error_vs_gt": 30.225532824330998
-          },
-          {
-            "rep": 3,
-            "x": 0.2933061305284999,
-            "y": 0.497895567953434,
-            "pixel_error_vs_gt": 14.774860567554141
-          }
-        ],
-        "mean_error_vs_gt": 17.21,
-        "data_source": "SIMULATED",
-        "x": 0.295419728117486,
-        "y": 0.49710290015579073
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": null,
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:52:54.654206+00:00"
     },
     "66ee1c8a_0000400ms": {
       "frame_id": "66ee1c8a_0000400ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.28738511265479366,
-        "y": 0.49575084978354167
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_unusable_quality",
       "gt_agreement_px": 16.47,
       "gt_review_required": false,
       "annotation_round_1": {
@@ -3363,75 +2240,30 @@
         "y": 0.49532236509291766,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.301142583422773,
-            "y": 0.48515966753878115,
-            "pixel_error_vs_gt": 51.29208371797095
-          },
-          {
-            "rep": 2,
-            "x": 0.24927266704736145,
-            "y": 0.49752303248414514,
-            "pixel_error_vs_gt": 73.54479213439045
-          },
-          {
-            "rep": 3,
-            "x": 0.30204634146271925,
-            "y": 0.5257907592934714,
-            "pixel_error_vs_gt": 127.84380599527535
-          }
-        ],
-        "mean_error_vs_gt": 84.23,
-        "median_error_vs_gt": 73.54,
-        "data_source": "SIMULATED",
-        "x": 0.28415386397761794,
-        "y": 0.5028244864387993
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.29708714746562065,
-            "y": 0.49133371309626,
-            "pixel_error_vs_gt": 26.139006276864468
-          },
-          {
-            "rep": 2,
-            "x": 0.2975891649453574,
-            "y": 0.5058026836642505,
-            "pixel_error_vs_gt": 46.09904311166909
-          },
-          {
-            "rep": 3,
-            "x": 0.3002580995398221,
-            "y": 0.4939538447807728,
-            "pixel_error_vs_gt": 25.81741481386706
-          }
-        ],
-        "mean_error_vs_gt": 32.69,
-        "data_source": "SIMULATED",
-        "x": 0.2983114706502667,
-        "y": 0.4970300805137611
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": null,
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:52:55.706389+00:00"
     },
     "66ee1c8a_0001100ms": {
       "frame_id": "66ee1c8a_0001100ms",
       "type": "B",
-      "is_no_ball": false,
-      "gt_final": {
-        "x": 0.29708877437674064,
-        "y": 0.5068426052127297
-      },
-      "gt_provenance": "provisional_simulation",
+      "is_no_ball": true,
+      "gt_final": null,
+      "gt_provenance": "human_no_ball_confirmed",
       "gt_agreement_px": 12.23,
       "gt_review_required": false,
       "annotation_round_1": {
@@ -3444,77 +2276,32 @@
         "y": 0.5053791478036807,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.3178918419691383,
-            "y": 0.43454373993274426,
-            "pixel_error_vs_gt": 302.7840300437705
-          },
-          {
-            "rep": 2,
-            "x": 0.28989509545419195,
-            "y": 0.47577289694741753,
-            "pixel_error_vs_gt": 129.71868399073568
-          },
-          {
-            "rep": 3,
-            "x": 0.2685234078150125,
-            "y": 0.44941765207911116,
-            "pixel_error_vs_gt": 244.61883190751377
-          }
-        ],
-        "mean_error_vs_gt": 225.71,
-        "median_error_vs_gt": 244.62,
-        "data_source": "SIMULATED",
-        "x": 0.2921034484127809,
-        "y": 0.4532447629864243
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.2956446594793498,
-            "y": 0.5092044375608697,
-            "pixel_error_vs_gt": 10.189302796210303
-          },
-          {
-            "rep": 2,
-            "x": 0.29934857710976615,
-            "y": 0.5058723386646278,
-            "pixel_error_vs_gt": 5.920260801706893
-          },
-          {
-            "rep": 3,
-            "x": 0.3070116300288575,
-            "y": 0.5049598309473126,
-            "pixel_error_vs_gt": 20.592838437472796
-          }
-        ],
-        "mean_error_vs_gt": 12.23,
-        "data_source": "SIMULATED",
-        "x": 0.3006682888726578,
-        "y": 0.5066788690576033
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": null,
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:52:56.741850+00:00"
     },
     "66ee1c8a_0009400ms": {
       "frame_id": "66ee1c8a_0009400ms",
       "type": "B",
       "is_no_ball": false,
-      "gt_final": {
-        "x": 0.7653366467754911,
-        "y": 0.48494971794208463
-      },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 47.5,
-      "gt_review_required": true,
+      "gt_final": null,
+      "gt_provenance": "human_ball_present",
+      "gt_agreement_px": null,
+      "gt_review_required": null,
       "annotation_round_1": {
         "x": 0.7614034271988562,
         "y": 0.49037359501324446,
@@ -3525,77 +2312,31 @@
         "y": 0.4795258408709248,
         "model_hidden": false
       },
-      "human_raw_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.7736368736807885,
-            "y": 0.4817750491055454,
-            "pixel_error_vs_gt": 20.679951444319553
-          },
-          {
-            "rep": 2,
-            "x": 0.7080530015617317,
-            "y": 0.43148734768664415,
-            "pixel_error_vs_gt": 247.69831711484971
-          },
-          {
-            "rep": 3,
-            "x": 0.7830834303720255,
-            "y": 0.46575608032994725,
-            "pixel_error_vs_gt": 86.65941129154592
-          }
-        ],
-        "mean_error_vs_gt": 118.35,
-        "median_error_vs_gt": 86.66,
-        "data_source": "SIMULATED",
-        "x": 0.7549244352048485,
-        "y": 0.45967282570737894
-      },
-      "human_loupe_tap": {
-        "reps": [
-          {
-            "rep": 1,
-            "x": 0.7621430275357743,
-            "y": 0.4798058302000099,
-            "pixel_error_vs_gt": 22.21700486824721
-          },
-          {
-            "rep": 2,
-            "x": 0.7539500138031239,
-            "y": 0.47641507546633716,
-            "pixel_error_vs_gt": 41.632533348898924
-          },
-          {
-            "rep": 3,
-            "x": 0.7642242496947301,
-            "y": 0.47934798377879073,
-            "pixel_error_vs_gt": 23.352640656180068
-          }
-        ],
-        "mean_error_vs_gt": 29.07,
-        "data_source": "SIMULATED",
-        "x": 0.7601057636778762,
-        "y": 0.4785229631483792
-      },
+      "human_raw_tap": null,
+      "human_loupe_tap": null,
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": null,
+      "completed_modes": [],
+      "gt_round_2": null,
+      "annotated_at": "2026-06-20T12:52:57.722624+00:00",
+      "annotation_needs_redo": true
     },
     "a3d45095_0001500ms": {
       "frame_id": "a3d45095_0001500ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.9851436635261028,
-        "y": 0.14400946479815047
+        "x": 0.9872782446311856,
+        "y": 0.13422164982497842
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 43.85,
-      "gt_review_required": true,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 5.49,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.9928491204397791,
         "y": 0.14874967963925856,
@@ -3610,73 +2351,90 @@
         "reps": [
           {
             "rep": 1,
-            "x": 0.9471311884580785,
-            "y": 0.17896441696341453,
-            "pixel_error_vs_gt": 139.86502845292463
+            "x": 0.9910297452314258,
+            "y": 0.12844263919159893,
+            "annotated_at": "2026-06-20T12:53:32.674510+00:00"
           },
           {
             "rep": 2,
-            "x": 0.9617746957702027,
-            "y": 0.14878688308128377,
-            "pixel_error_vs_gt": 47.73982212893533
+            "x": 0.9885287448312657,
+            "y": 0.14330295224886064,
+            "annotated_at": "2026-06-20T12:53:35.013971+00:00"
           },
           {
             "rep": 3,
-            "x": 0.936980343098382,
-            "y": 0.14346362583751252,
-            "pixel_error_vs_gt": 92.49234221696885
+            "x": 0.9876950780312124,
+            "y": 0.13834951456310662,
+            "annotated_at": "2026-06-20T12:53:37.045631+00:00"
           }
         ],
-        "mean_error_vs_gt": 93.37,
-        "median_error_vs_gt": 92.49,
-        "data_source": "SIMULATED",
-        "x": 0.9486287424422212,
-        "y": 0.15707164196073695
+        "mean_x": 0.989084522697968,
+        "mean_y": 0.1366983686678554,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:53:37.045642+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.9785073871250712,
-            "y": 0.13808641396638552,
-            "pixel_error_vs_gt": 23.897505633801792
+            "x": 0.9860277444311056,
+            "y": 0.12679149329634765,
+            "annotated_at": "2026-06-20T12:53:39.896521+00:00"
           },
           {
             "rep": 2,
-            "x": 0.9659767966895977,
-            "y": 0.13463237152954347,
-            "pixel_error_vs_gt": 48.77218079093905
+            "x": 0.9876950780312124,
+            "y": 0.1300937850868502,
+            "annotated_at": "2026-06-20T12:53:42.373903+00:00"
           },
           {
             "rep": 3,
-            "x": 0.9724784963880125,
-            "y": 0.1455687024729,
-            "pixel_error_vs_gt": 24.892733074513256
+            "x": 0.9885287448312657,
+            "y": 0.14495409814411192,
+            "annotated_at": "2026-06-20T12:53:45.100346+00:00"
           }
         ],
-        "mean_error_vs_gt": 32.52,
-        "data_source": "SIMULATED",
-        "x": 0.9723208934008939,
-        "y": 0.13942916265627633
+        "mean_x": 0.9874171890978612,
+        "mean_y": 0.13394645884243658,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:53:45.100354+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": {
+        "x": 0.9851940776310523,
+        "y": 0.1300937850868502,
+        "annotated_at": "2026-06-20T12:53:26.697230+00:00",
+        "data_source": "human"
+      },
+      "gt_round_2": {
+        "x": 0.9893624116313191,
+        "y": 0.13834951456310662,
+        "annotated_at": "2026-06-20T12:53:30.117996+00:00",
+        "data_source": "human"
+      }
     },
     "a3d45095_0001600ms": {
       "frame_id": "a3d45095_0001600ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.9854211830041644,
-        "y": 0.1378756625872307
+        "x": 0.9835267440309456,
+        "y": 0.1565121194108711
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 15.8,
-      "gt_review_required": false,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 2.2,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 0.9820578525565661,
         "y": 0.1392097193633941,
@@ -3691,73 +2449,90 @@
         "reps": [
           {
             "rep": 1,
-            "x": 0.9710457943043528,
-            "y": 0.1812851837921321,
-            "pixel_error_vs_gt": 150.71992418120152
+            "x": 0.9851940776310523,
+            "y": 0.15155868172511705,
+            "annotated_at": "2026-06-20T12:53:53.792335+00:00"
           },
           {
             "rep": 2,
-            "x": 0.9523995175843597,
-            "y": 0.11864014863113788,
-            "pixel_error_vs_gt": 91.27230272386474
+            "x": 0.986861411231159,
+            "y": 0.1565121194108711,
+            "annotated_at": "2026-06-20T12:53:56.177308+00:00"
           },
           {
             "rep": 3,
-            "x": 0.9704334984946101,
-            "y": 0.21225752119127766,
-            "pixel_error_vs_gt": 255.51565500096987
+            "x": 0.9860277444311056,
+            "y": 0.15816326530612237,
+            "annotated_at": "2026-06-20T12:54:59.701114+00:00"
           }
         ],
-        "mean_error_vs_gt": 165.84,
-        "median_error_vs_gt": 150.72,
-        "data_source": "SIMULATED",
-        "x": 0.9646262701277742,
-        "y": 0.17072761787151589
+        "mean_x": 0.9860277444311056,
+        "mean_y": 0.1554113554807035,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:54:59.701130+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.9843839658325848,
-            "y": 0.13529667436570086,
-            "pixel_error_vs_gt": 9.02539568597462
+            "x": 0.9860277444311056,
+            "y": 0.1548609735156198,
+            "annotated_at": "2026-06-20T12:55:02.445822+00:00"
           },
           {
             "rep": 2,
-            "x": 0.9868527907247936,
-            "y": 0.12712972075582754,
-            "pixel_error_vs_gt": 36.78232780537993
+            "x": 0.9860277444311056,
+            "y": 0.1466052440393632,
+            "annotated_at": "2026-06-20T12:55:05.664304+00:00"
           },
           {
             "rep": 3,
-            "x": 0.9769350898967898,
-            "y": 0.1345949605645475,
-            "pixel_error_vs_gt": 19.770424643057698
+            "x": 0.9851940776310523,
+            "y": 0.14990753582986577,
+            "annotated_at": "2026-06-20T12:55:08.099526+00:00"
           }
         ],
-        "mean_error_vs_gt": 21.86,
-        "data_source": "SIMULATED",
-        "x": 0.9827239488180561,
-        "y": 0.13234045189535862
+        "mean_x": 0.9857498554977545,
+        "mean_y": 0.1504579177949496,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:55:08.099532+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": {
+        "x": 0.9843604108309989,
+        "y": 0.15816326530612237,
+        "annotated_at": "2026-06-20T12:53:48.755092+00:00",
+        "data_source": "human"
+      },
+      "gt_round_2": {
+        "x": 0.9826930772308923,
+        "y": 0.1548609735156198,
+        "annotated_at": "2026-06-20T12:53:51.584683+00:00",
+        "data_source": "human"
+      }
     },
     "a3d45095_0001700ms": {
       "frame_id": "a3d45095_0001700ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.996396910961856,
-        "y": 0.1355680329208529
+        "x": 0.9656648265366752,
+        "y": 0.21642171776587943
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 56.53,
-      "gt_review_required": true,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 9.97,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 1.0,
         "y": 0.14359627047507237,
@@ -3772,73 +2547,89 @@
         "reps": [
           {
             "rep": 1,
-            "x": 1.0,
-            "y": 0.13861558012031228,
-            "pixel_error_vs_gt": 12.492617752388396
+            "x": 0.970188075230092,
+            "y": 0.21925566343042072,
+            "annotated_at": "2026-06-20T12:55:13.272610+00:00"
           },
           {
             "rep": 2,
-            "x": 0.962459064466158,
-            "y": 0.15159279099524584,
-            "pixel_error_vs_gt": 85.07506154633805
+            "x": 0.9743564092303586,
+            "y": 0.21925566343042072,
+            "annotated_at": "2026-06-20T12:55:15.669297+00:00"
           },
           {
             "rep": 3,
-            "x": 0.9833620128543589,
-            "y": 0.1938484460515178,
-            "pixel_error_vs_gt": 200.498592401852
+            "x": 0.9726890756302521,
+            "y": 0.21760451753516924,
+            "annotated_at": "2026-06-20T12:55:17.561139+00:00"
           }
         ],
-        "mean_error_vs_gt": 99.36,
-        "median_error_vs_gt": 85.08,
-        "data_source": "SIMULATED",
-        "x": 0.9819403591068389,
-        "y": 0.1613522723890253
+        "mean_x": 0.9724111866969009,
+        "mean_y": 0.21870528146533688,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:55:17.561148+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.9899229574284466,
-            "y": 0.12248441419140346,
-            "pixel_error_vs_gt": 46.35632421607866
+            "x": 0.9693544084300386,
+            "y": 0.21430222574466667,
+            "annotated_at": "2026-06-20T12:55:19.611842+00:00"
           },
           {
             "rep": 2,
-            "x": 0.9776446631736612,
-            "y": 0.13253311140205426,
-            "pixel_error_vs_gt": 37.46496700006085
+            "x": 0.9676870748299319,
+            "y": 0.2109999339541641,
+            "annotated_at": "2026-06-20T12:55:22.233340+00:00"
           },
           {
             "rep": 3,
-            "x": 0.9871715412037468,
-            "y": 0.13743709303721716,
-            "pixel_error_vs_gt": 18.82660316821086
+            "x": 0.9693544084300386,
+            "y": 0.21430222574466667,
+            "annotated_at": "2026-06-20T12:55:24.925305+00:00"
           }
         ],
-        "mean_error_vs_gt": 34.22,
-        "data_source": "SIMULATED",
-        "x": 0.9849130539352848,
-        "y": 0.13081820621022497
+        "mean_x": 0.9687986305633364,
+        "mean_y": 0.21320146181449914,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:55:24.925311+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.9661435786435786,
+        "y": 0.20863433441558427,
+        "annotated_at": "2026-06-20T12:07:22.526686+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.9651860744297718,
+        "y": 0.22420910111617456,
+        "annotated_at": "2026-06-20T12:55:10.653081+00:00",
+        "data_source": "human"
+      }
     },
     "a3d45095_0001900ms": {
       "frame_id": "a3d45095_0001900ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 1.0,
-        "y": 0.11741956850453389
+        "x": 0.8943514527022928,
+        "y": 0.3751388674677726
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 14.39,
-      "gt_review_required": false,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 3.49,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 1.0,
         "y": 0.11531176298924754,
@@ -3853,73 +2644,89 @@
         "reps": [
           {
             "rep": 1,
-            "x": 0.9887058229602362,
-            "y": 0.17322613707931778,
-            "pixel_error_vs_gt": 191.71673870409896
+            "x": 0.8934907296251833,
+            "y": 0.3761145234792945,
+            "annotated_at": "2026-06-20T12:55:29.535906+00:00"
           },
           {
             "rep": 2,
-            "x": 0.9520308037259915,
-            "y": 0.1016047714646212,
-            "pixel_error_vs_gt": 106.7545547833943
+            "x": 0.8918233960250765,
+            "y": 0.3662076481077866,
+            "annotated_at": "2026-06-20T12:55:31.783688+00:00"
           },
           {
             "rep": 3,
-            "x": 1.0,
-            "y": 0.09376297353986868,
-            "pixel_error_vs_gt": 80.74784414605725
+            "x": 0.8934907296251833,
+            "y": 0.3777656693745458,
+            "annotated_at": "2026-06-20T12:55:34.163044+00:00"
           }
         ],
-        "mean_error_vs_gt": 126.41,
-        "median_error_vs_gt": 106.75,
-        "data_source": "SIMULATED",
-        "x": 0.9802455422287425,
-        "y": 0.12286462736126923
+        "mean_x": 0.8929349517584809,
+        "mean_y": 0.37336261365387563,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:55:34.163053+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.9967341975990361,
-            "y": 0.13241495788530647,
-            "pixel_error_vs_gt": 51.56690693470607
+            "x": 0.8959917300253434,
+            "y": 0.3761145234792945,
+            "annotated_at": "2026-06-20T12:55:36.101277+00:00"
           },
           {
             "rep": 2,
-            "x": 0.9996101251164575,
-            "y": 0.11779142431477124,
-            "pixel_error_vs_gt": 1.4735611860045277
+            "x": 0.89515806322529,
+            "y": 0.38106796116504843,
+            "annotated_at": "2026-06-20T12:55:37.916100+00:00"
           },
           {
             "rep": 3,
-            "x": 0.9892514193898184,
-            "y": 0.12080477022785882,
-            "pixel_error_vs_gt": 23.65187135783701
+            "x": 0.89515806322529,
+            "y": 0.38767254474605367,
+            "annotated_at": "2026-06-20T12:55:39.701268+00:00"
           }
         ],
-        "mean_error_vs_gt": 25.56,
-        "data_source": "SIMULATED",
-        "x": 0.9951985807017708,
-        "y": 0.12367038414264551
+        "mean_x": 0.8954359521586411,
+        "mean_y": 0.38161834313013215,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:55:39.701278+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.896879509379509,
+        "y": 0.3774655032467532,
+        "annotated_at": "2026-06-20T12:07:24.274020+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.8918233960250765,
+        "y": 0.37281223168879196,
+        "annotated_at": "2026-06-20T12:55:27.617806+00:00",
+        "data_source": "human"
+      }
     },
     "a3d45095_0001800ms": {
       "frame_id": "a3d45095_0001800ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 0.9942379206267405,
-        "y": 0.12346152960015247
+        "x": 0.9575843216074307,
+        "y": 0.28098940273925094
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 54.65,
-      "gt_review_required": true,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 5.05,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 1.0,
         "y": 0.13078086842821932,
@@ -3934,73 +2741,89 @@
         "reps": [
           {
             "rep": 1,
-            "x": 1.0,
-            "y": 0.13143264863879928,
-            "pixel_error_vs_gt": 29.371315720015588
+            "x": 0.9485127384287048,
+            "y": 0.2935572287167293,
+            "annotated_at": "2026-06-20T12:55:46.134294+00:00"
           },
           {
             "rep": 2,
-            "x": 0.9966430693902808,
-            "y": 0.12470607108635651,
-            "pixel_error_vs_gt": 6.2746050475432025
+            "x": 0.9485127384287048,
+            "y": 0.28199920744997015,
+            "annotated_at": "2026-06-20T12:55:48.551175+00:00"
           },
           {
             "rep": 3,
-            "x": 1.0,
-            "y": 0.13114774417110667,
-            "pixel_error_vs_gt": 28.47282185037931
+            "x": 0.9501800720288115,
+            "y": 0.28860379103097544,
+            "annotated_at": "2026-06-20T12:55:50.762412+00:00"
           }
         ],
-        "mean_error_vs_gt": 21.37,
-        "median_error_vs_gt": 28.47,
-        "data_source": "SIMULATED",
-        "x": 0.9988810231300936,
-        "y": 0.1290954879654208
+        "mean_x": 0.949068516295407,
+        "mean_y": 0.2880534090658916,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:55:50.762420+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.9962686002347789,
-            "y": 0.12491365623118805,
-            "pixel_error_vs_gt": 6.306287781480048
+            "x": 0.9510137388288646,
+            "y": 0.2786969156594676,
+            "annotated_at": "2026-06-20T12:55:53.604142+00:00"
           },
           {
             "rep": 2,
-            "x": 0.9949950123660681,
-            "y": 0.12629970993983158,
-            "pixel_error_vs_gt": 9.796104844240478
+            "x": 0.951847405628918,
+            "y": 0.28199920744997015,
+            "annotated_at": "2026-06-20T12:55:55.721142+00:00"
           },
           {
             "rep": 3,
-            "x": 0.9920968602092711,
-            "y": 0.11719291449980318,
-            "pixel_error_vs_gt": 21.788188118731547
+            "x": 0.9501800720288115,
+            "y": 0.2770457697642163,
+            "annotated_at": "2026-06-20T12:55:57.654191+00:00"
           }
         ],
-        "mean_error_vs_gt": 12.63,
-        "data_source": "SIMULATED",
-        "x": 0.9944534909367061,
-        "y": 0.12280209355694094
+        "mean_x": 0.9510137388288648,
+        "mean_y": 0.2792472976245513,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:55:57.654200+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.9574855699855698,
+        "y": 0.2849330357142856,
+        "annotated_at": "2026-06-20T12:07:25.615603+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.9576830732292916,
+        "y": 0.2770457697642163,
+        "annotated_at": "2026-06-20T12:55:42.908225+00:00",
+        "data_source": "human"
+      }
     },
     "a3d45095_0002000ms": {
       "frame_id": "a3d45095_0002000ms",
       "type": "B",
       "is_no_ball": false,
       "gt_final": {
-        "x": 1.0,
-        "y": 0.1168916453687242
+        "x": 0.8406739210835847,
+        "y": 0.4963100852929432
       },
-      "gt_provenance": "provisional_simulation",
-      "gt_agreement_px": 21.2,
-      "gt_review_required": true,
+      "gt_provenance": "human_annotated",
+      "gt_agreement_px": 1.08,
+      "gt_review_required": "False",
       "annotation_round_1": {
         "x": 1.0,
         "y": 0.11378612220539329,
@@ -4015,70 +2838,86 @@
         "reps": [
           {
             "rep": 1,
-            "x": 1.0,
-            "y": 0.08068981241181591,
-            "pixel_error_vs_gt": 123.5689231595803
+            "x": 0.8409697212218219,
+            "y": 0.48839244435638324,
+            "annotated_at": "2026-06-20T12:56:02.782477+00:00"
           },
           {
             "rep": 2,
-            "x": 1.0,
-            "y": 0.12681222215951596,
-            "pixel_error_vs_gt": 33.86223544590251
+            "x": 0.8426370548219286,
+            "y": 0.481787860775378,
+            "annotated_at": "2026-06-20T12:56:04.630721+00:00"
           },
           {
             "rep": 3,
-            "x": 1.0,
-            "y": 0.12066064228629342,
-            "pixel_error_vs_gt": 12.864842811969575
+            "x": 0.8443043884220354,
+            "y": 0.4834390066706293,
+            "annotated_at": "2026-06-20T12:56:06.405035+00:00"
           }
         ],
-        "mean_error_vs_gt": 56.77,
-        "median_error_vs_gt": 33.86,
-        "data_source": "SIMULATED",
-        "x": 1.0,
-        "y": 0.10938755895254176
+        "mean_x": 0.8426370548219286,
+        "mean_y": 0.48453977060079684,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:56:06.405045+00:00"
       },
       "human_loupe_tap": {
         "reps": [
           {
             "rep": 1,
-            "x": 0.9858517129161694,
-            "y": 0.10754560538365843,
-            "pixel_error_vs_gt": 41.89993907148858
+            "x": 0.843470721621982,
+            "y": 0.49169473614688586,
+            "annotated_at": "2026-06-20T12:56:08.327018+00:00"
           },
           {
             "rep": 2,
-            "x": 0.9977053860621422,
-            "y": 0.12401352849168504,
-            "pixel_error_vs_gt": 24.70536104263168
+            "x": 0.8468053888221955,
+            "y": 0.4999504656231424,
+            "annotated_at": "2026-06-20T12:56:10.330652+00:00"
           },
           {
             "rep": 3,
-            "x": 0.9983186496006039,
-            "y": 0.12035520308309007,
-            "pixel_error_vs_gt": 12.255099427015749
+            "x": 0.8459717220221421,
+            "y": 0.5049039033088963,
+            "annotated_at": "2026-06-20T12:56:12.075489+00:00"
           }
         ],
-        "mean_error_vs_gt": 26.29,
-        "data_source": "SIMULATED",
-        "x": 0.9939585828596385,
-        "y": 0.11730477898614451
+        "mean_x": 0.8454159441554397,
+        "mean_y": 0.4988497016929749,
+        "data_source": "human",
+        "annotated_at": "2026-06-20T12:56:12.075497+00:00"
       },
       "db_reference": {
         "x": null,
         "y": null,
         "source": "model_predicted"
       },
-      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation."
+      "simulation_note": "PROVISIONAL SIMULATION \u2014 coordinates are NOT real human annotations. Ref source: model_predicted. Run 02_annotate_ground_truth.py for real human annotation.",
+      "gt_round_1": {
+        "x": 0.8420454545454542,
+        "y": 0.4959719967532467,
+        "annotated_at": "2026-06-20T12:07:27.152773+00:00"
+      },
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": {
+        "x": 0.8393023876217153,
+        "y": 0.4966481738326397,
+        "annotated_at": "2026-06-20T12:56:00.638675+00:00",
+        "data_source": "human"
+      }
     },
     "47466ee0_0000100ms": {
       "frame_id": "47466ee0_0000100ms",
       "type": "C",
-      "is_no_ball": true,
+      "is_no_ball": false,
       "gt_final": null,
-      "gt_provenance": "validated_no_ball_db_lost_state",
+      "gt_provenance": "human_ball_present",
       "gt_agreement_px": null,
-      "gt_review_required": false,
+      "gt_review_required": null,
       "annotation_round_1": null,
       "annotation_round_2": null,
       "human_raw_tap": null,
@@ -4087,16 +2926,20 @@
         "x": null,
         "y": null
       },
-      "simulation_note": "No-ball frame. FP measured per algorithm."
+      "simulation_note": "No-ball frame. FP measured per algorithm.",
+      "gt_round_1": null,
+      "completed_modes": [],
+      "gt_round_2": null,
+      "annotation_needs_redo": true
     },
     "47466ee0_0023000ms": {
       "frame_id": "47466ee0_0023000ms",
       "type": "C",
-      "is_no_ball": true,
+      "is_no_ball": false,
       "gt_final": null,
-      "gt_provenance": "validated_no_ball_db_lost_state",
+      "gt_provenance": "human_ball_present",
       "gt_agreement_px": null,
-      "gt_review_required": false,
+      "gt_review_required": null,
       "annotation_round_1": null,
       "annotation_round_2": null,
       "human_raw_tap": null,
@@ -4105,7 +2948,11 @@
         "x": null,
         "y": null
       },
-      "simulation_note": "No-ball frame. FP measured per algorithm."
+      "simulation_note": "No-ball frame. FP measured per algorithm.",
+      "gt_round_1": null,
+      "completed_modes": [],
+      "gt_round_2": null,
+      "annotation_needs_redo": true
     },
     "5416b28f_0000100ms": {
       "frame_id": "5416b28f_0000100ms",
@@ -4123,7 +2970,15 @@
         "x": null,
         "y": null
       },
-      "simulation_note": "No-ball frame. FP measured per algorithm."
+      "simulation_note": "No-ball frame. FP measured per algorithm.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null
     },
     "5416b28f_0000300ms": {
       "frame_id": "5416b28f_0000300ms",
@@ -4141,14 +2996,22 @@
         "x": null,
         "y": null
       },
-      "simulation_note": "No-ball frame. FP measured per algorithm."
+      "simulation_note": "No-ball frame. FP measured per algorithm.",
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_1": null,
+      "gt_round_2": null
     },
     "66ee1c8a_0000100ms": {
       "frame_id": "66ee1c8a_0000100ms",
       "type": "C",
       "is_no_ball": true,
       "gt_final": null,
-      "gt_provenance": "validated_no_ball_db_lost_state",
+      "gt_provenance": "human_unusable_quality",
       "gt_agreement_px": null,
       "gt_review_required": false,
       "annotation_round_1": null,
@@ -4159,16 +3022,24 @@
         "x": null,
         "y": null
       },
-      "simulation_note": "No-ball frame. FP measured per algorithm."
+      "simulation_note": "No-ball frame. FP measured per algorithm.",
+      "gt_round_1": null,
+      "completed_modes": [
+        "GT_R1",
+        "GT_R2",
+        "RAW_TAP",
+        "LOUPE_TAP"
+      ],
+      "gt_round_2": null
     },
     "66ee1c8a_0005900ms": {
       "frame_id": "66ee1c8a_0005900ms",
       "type": "C",
-      "is_no_ball": true,
+      "is_no_ball": false,
       "gt_final": null,
-      "gt_provenance": "validated_no_ball_db_lost_state",
+      "gt_provenance": "human_ball_present",
       "gt_agreement_px": null,
-      "gt_review_required": false,
+      "gt_review_required": null,
       "annotation_round_1": null,
       "annotation_round_2": null,
       "human_raw_tap": null,
@@ -4177,16 +3048,20 @@
         "x": null,
         "y": null
       },
-      "simulation_note": "No-ball frame. FP measured per algorithm."
+      "simulation_note": "No-ball frame. FP measured per algorithm.",
+      "gt_round_1": null,
+      "completed_modes": [],
+      "gt_round_2": null,
+      "annotation_needs_redo": true
     },
     "8e39b06f_0000100ms": {
       "frame_id": "8e39b06f_0000100ms",
       "type": "C",
-      "is_no_ball": true,
+      "is_no_ball": false,
       "gt_final": null,
-      "gt_provenance": "validated_no_ball_db_lost_state",
+      "gt_provenance": "human_ball_present",
       "gt_agreement_px": null,
-      "gt_review_required": false,
+      "gt_review_required": null,
       "annotation_round_1": null,
       "annotation_round_2": null,
       "human_raw_tap": null,
@@ -4195,16 +3070,20 @@
         "x": null,
         "y": null
       },
-      "simulation_note": "No-ball frame. FP measured per algorithm."
+      "simulation_note": "No-ball frame. FP measured per algorithm.",
+      "gt_round_1": null,
+      "completed_modes": [],
+      "gt_round_2": null,
+      "annotation_needs_redo": true
     },
     "8e39b06f_0007500ms": {
       "frame_id": "8e39b06f_0007500ms",
       "type": "C",
-      "is_no_ball": true,
+      "is_no_ball": false,
       "gt_final": null,
-      "gt_provenance": "validated_no_ball_db_lost_state",
+      "gt_provenance": "human_ball_present",
       "gt_agreement_px": null,
-      "gt_review_required": false,
+      "gt_review_required": null,
       "annotation_round_1": null,
       "annotation_round_2": null,
       "human_raw_tap": null,
@@ -4213,16 +3092,20 @@
         "x": null,
         "y": null
       },
-      "simulation_note": "No-ball frame. FP measured per algorithm."
+      "simulation_note": "No-ball frame. FP measured per algorithm.",
+      "gt_round_1": null,
+      "completed_modes": [],
+      "gt_round_2": null,
+      "annotation_needs_redo": true
     },
     "a3d45095_0000100ms": {
       "frame_id": "a3d45095_0000100ms",
       "type": "C",
-      "is_no_ball": true,
+      "is_no_ball": false,
       "gt_final": null,
-      "gt_provenance": "validated_no_ball_db_lost_state",
+      "gt_provenance": "human_ball_present",
       "gt_agreement_px": null,
-      "gt_review_required": false,
+      "gt_review_required": null,
       "annotation_round_1": null,
       "annotation_round_2": null,
       "human_raw_tap": null,
@@ -4231,16 +3114,20 @@
         "x": null,
         "y": null
       },
-      "simulation_note": "No-ball frame. FP measured per algorithm."
+      "simulation_note": "No-ball frame. FP measured per algorithm.",
+      "gt_round_1": null,
+      "completed_modes": [],
+      "gt_round_2": null,
+      "annotation_needs_redo": true
     },
     "a3d45095_0001300ms": {
       "frame_id": "a3d45095_0001300ms",
       "type": "C",
-      "is_no_ball": true,
+      "is_no_ball": false,
       "gt_final": null,
-      "gt_provenance": "validated_no_ball_db_lost_state",
+      "gt_provenance": "human_ball_present",
       "gt_agreement_px": null,
-      "gt_review_required": false,
+      "gt_review_required": null,
       "annotation_round_1": null,
       "annotation_round_2": null,
       "human_raw_tap": null,
@@ -4249,7 +3136,11 @@
         "x": null,
         "y": null
       },
-      "simulation_note": "No-ball frame. FP measured per algorithm."
+      "simulation_note": "No-ball frame. FP measured per algorithm.",
+      "gt_round_1": null,
+      "completed_modes": [],
+      "gt_round_2": null,
+      "annotation_needs_redo": true
     }
   }
 }
