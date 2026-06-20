@@ -34,8 +34,20 @@ struct BallTrainingFrameView: View {
     var body: some View {
         VStack(spacing: 0) {
             progressHeader
+            dailyProgress
             frameArea
             actionBar
+        }
+        .overlay(alignment: .top) {
+            if vm.showingRewardBadge {
+                RewardBadgeView(
+                    xpAwarded: vm.lastRewardXP,
+                    creditAwarded: vm.lastRewardCredit,
+                    onDismiss: { vm.dismissRewardBadge() }
+                )
+                .padding(.top, 60)
+                .zIndex(100)
+            }
         }
     }
 
@@ -53,6 +65,20 @@ struct BallTrainingFrameView: View {
         }
         .padding(.horizontal, Theme.Spacing.lg)
         .padding(.vertical, Theme.Spacing.sm)
+    }
+
+    // MARK: — Daily progress
+
+    @ViewBuilder
+    private var dailyProgress: some View {
+        if vm.dailyTasksDone > 0 || vm.dailyXpTotal > 0 {
+            DailyProgressView(
+                dailyXpTotal: vm.dailyXpTotal,
+                dailyTasksDone: vm.dailyTasksDone,
+                maxXpPerDay: BallTrainingHubViewModel.maxXpPerDay,
+                maxTasksPerDay: BallTrainingHubViewModel.maxTasksPerDay
+            )
+        }
     }
 
     // MARK: — Frame image + overlays

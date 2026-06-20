@@ -71,13 +71,23 @@ final class MockBallTrainingAPIClient: BallTrainingAPIClientProtocol {
         Data([0xFF, 0xD8, 0xFF, 0xE0])
     }
 
-    static func fakeFeedback(decision: String = "confirm") -> BallTrainingFeedbackResponse {
+    static func fakeFeedback(
+        decision: String = "confirm",
+        xpAwarded: Int = 5,
+        creditAwarded: Int = 0,
+        dailyXpTotal: Int = 5,
+        dailyTasksDone: Int = 1
+    ) -> BallTrainingFeedbackResponse {
         BallTrainingFeedbackResponse(
             assignmentId: UUID(),
             decision: decision,
             submittedAt: "2026-06-19T10:00:00Z",
             correctedX: nil,
-            correctedY: nil
+            correctedY: nil,
+            xpAwarded: xpAwarded,
+            creditAwarded: creditAwarded,
+            dailyXpTotal: dailyXpTotal,
+            dailyTasksDone: dailyTasksDone
         )
     }
 }
@@ -540,5 +550,188 @@ final class BallTrainingHubVMTests: XCTestCase {
         XCTAssertEqual(vm.submittedCount, 1)
         await vm.reload(authManager: AuthManager())
         XCTAssertEqual(vm.submittedCount, 0)
+    }
+
+    // MARK: — Reward UI tests (AN-3B2E PR-3B)
+
+    // RW-01: Full decoder — all 4 reward fields decoded
+    func test_RW_01_fullDecoder_allRewardFields() throws {
+        let json = """
+        {"assignment_id":"11111111-1111-1111-1111-111111111111","decision":"confirm",
+         "submitted_at":"2026-06-20T10:00:00Z","corrected_x":null,"corrected_y":null,
+         "xp_awarded":5,"credit_awarded":1,"daily_xp_total":45,"daily_tasks_done":12}
+        """.data(using: .utf8)!
+        let resp = try JSONDecoder().decode(BallTrainingFeedbackResponse.self, from: json)
+        XCTAssertEqual(resp.xpAwarded, 5)
+        XCTAssertEqual(resp.creditAwarded, 1)
+        XCTAssertEqual(resp.dailyXpTotal, 45)
+        XCTAssertEqual(resp.dailyTasksDone, 12)
+    }
+
+    // RW-02: Decoder backward compat — missing reward fields default to 0
+    func test_RW_02_decoderBackwardCompat_missingFieldsDefaultToZero() throws {
+        let json = """
+        {"assignment_id":"22222222-2222-2222-2222-222222222222","decision":"confirm",
+         "submitted_at":"2026-06-20T10:00:00Z"}
+        """.data(using: .utf8)!
+        let resp = try JSONDecoder().decode(BallTrainingFeedbackResponse.self, from: json)
+        XCTAssertEqual(resp.xpAwarded, 0)
+        XCTAssertEqual(resp.creditAwarded, 0)
+        XCTAssertEqual(resp.dailyXpTotal, 0)
+        XCTAssertEqual(resp.dailyTasksDone, 0)
+    }
+
+    // RW-03: XP-only badge — confirm → showingRewardBadge=true
+    func test_RW_03_xpOnlyBadge_confirm() async {
+        let (vm, mock) = makeVM(queueCount: 2)
+        mock.feedbackResult = .success(MockBallTrainingAPIClient.fakeFeedback(
+            xpAwarded: 5, creditAwarded: 0, dailyXpTotal: 5, dailyTasksDone: 1
+        ))
+        await vm.loadQueue(authManager: AuthManager())
+        await vm.confirm()
+        XCTAssertTrue(vm.showingRewardBadge)
+        XCTAssertEqual(vm.lastRewardXP, 5)
+        XCTAssertEqual(vm.lastRewardCredit, 0)
+    }
+
+    // RW-04: XP + credit badge — corrected → both shown
+    func test_RW_04_xpAndCreditBadge_corrected() async {
+        let (vm, mock) = makeVM(queueCount: 2)
+        mock.feedbackResult = .success(MockBallTrainingAPIClient.fakeFeedback(
+            decision: "corrected", xpAwarded: 10, creditAwarded: 1,
+            dailyXpTotal: 50, dailyTasksDone: 8
+        ))
+        await vm.loadQueue(authManager: AuthManager())
+        await vm.corrected(tapX: 0.5, tapY: 0.5)
+        XCTAssertTrue(vm.showingRewardBadge)
+        XCTAssertEqual(vm.lastRewardXP, 10)
+        XCTAssertEqual(vm.lastRewardCredit, 1)
+    }
+
+    // RW-05: Credit-only badge (XP cap reached, credit still awarded)
+    func test_RW_05_creditOnlyBadge_xpCapReached() async {
+        let (vm, mock) = makeVM(queueCount: 2)
+        mock.feedbackResult = .success(MockBallTrainingAPIClient.fakeFeedback(
+            xpAwarded: 0, creditAwarded: 1, dailyXpTotal: 100, dailyTasksDone: 25
+        ))
+        await vm.loadQueue(authManager: AuthManager())
+        await vm.confirm()
+        XCTAssertTrue(vm.showingRewardBadge)
+        XCTAssertEqual(vm.lastRewardXP, 0)
+        XCTAssertEqual(vm.lastRewardCredit, 1)
+    }
+
+    // RW-06: Zero reward / cap reached → no badge
+    func test_RW_06_zeroReward_noBadge() async {
+        let (vm, mock) = makeVM(queueCount: 2)
+        mock.feedbackResult = .success(MockBallTrainingAPIClient.fakeFeedback(
+            xpAwarded: 0, creditAwarded: 0, dailyXpTotal: 100, dailyTasksDone: 30
+        ))
+        await vm.loadQueue(authManager: AuthManager())
+        await vm.confirm()
+        XCTAssertFalse(vm.showingRewardBadge)
+    }
+
+    // RW-07: Daily XP progress updated after submit
+    func test_RW_07_dailyXpProgress_updatedAfterSubmit() async {
+        let (vm, mock) = makeVM(queueCount: 2)
+        mock.feedbackResult = .success(MockBallTrainingAPIClient.fakeFeedback(
+            xpAwarded: 5, dailyXpTotal: 45, dailyTasksDone: 12
+        ))
+        await vm.loadQueue(authManager: AuthManager())
+        XCTAssertEqual(vm.dailyXpTotal, 0)
+        await vm.confirm()
+        XCTAssertEqual(vm.dailyXpTotal, 45)
+    }
+
+    // RW-08: Daily task progress updated after submit
+    func test_RW_08_dailyTaskProgress_updatedAfterSubmit() async {
+        let (vm, mock) = makeVM(queueCount: 2)
+        mock.feedbackResult = .success(MockBallTrainingAPIClient.fakeFeedback(
+            xpAwarded: 5, dailyXpTotal: 25, dailyTasksDone: 5
+        ))
+        await vm.loadQueue(authManager: AuthManager())
+        XCTAssertEqual(vm.dailyTasksDone, 0)
+        await vm.confirm()
+        XCTAssertEqual(vm.dailyTasksDone, 5)
+    }
+
+    // RW-09: Badge shown once — dismissRewardBadge clears it
+    func test_RW_09_badge_shownOnce_dismissClears() async {
+        let (vm, mock) = makeVM(queueCount: 2)
+        mock.feedbackResult = .success(MockBallTrainingAPIClient.fakeFeedback(
+            xpAwarded: 5, dailyXpTotal: 5, dailyTasksDone: 1
+        ))
+        await vm.loadQueue(authManager: AuthManager())
+        await vm.confirm()
+        XCTAssertTrue(vm.showingRewardBadge)
+        vm.dismissRewardBadge()
+        XCTAssertFalse(vm.showingRewardBadge)
+    }
+
+    // RW-10: Skip → no badge, no reward state change
+    func test_RW_10_skip_noBadge_noRewardChange() async {
+        let (vm, _) = makeVM(queueCount: 2)
+        await vm.loadQueue(authManager: AuthManager())
+        vm.skip()
+        XCTAssertFalse(vm.showingRewardBadge)
+        XCTAssertEqual(vm.lastRewardXP, 0)
+        XCTAssertEqual(vm.lastRewardCredit, 0)
+        XCTAssertEqual(vm.dailyXpTotal, 0)
+    }
+
+    // RW-11: Network error → no false reward badge
+    func test_RW_11_networkError_noFalseRewardBadge() async {
+        let (vm, _) = makeVM(queueCount: 2, feedbackError: BallTrainingAPIError.network)
+        await vm.loadQueue(authManager: AuthManager())
+        await vm.confirm()
+        XCTAssertFalse(vm.showingRewardBadge)
+        XCTAssertEqual(vm.dailyXpTotal, 0)
+    }
+
+    // RW-12: Frame loading not blocked by reward badge
+    func test_RW_12_frameLoadingNotBlockedByBadge() async {
+        let (vm, mock) = makeVM(queueCount: 3)
+        mock.feedbackResult = .success(MockBallTrainingAPIClient.fakeFeedback(
+            xpAwarded: 5, dailyXpTotal: 5, dailyTasksDone: 1
+        ))
+        await vm.loadQueue(authManager: AuthManager())
+        await vm.confirm()
+        XCTAssertTrue(vm.showingRewardBadge)
+        // Frame should have advanced and loaded — not blocked by badge
+        XCTAssertNotNil(vm.frameData)
+        XCTAssertEqual(vm.currentIndex, 1)
+    }
+
+    // RW-13: hasReward computed property
+    func test_RW_13_hasReward_computedProperty() {
+        let r1 = BallTrainingFeedbackResponse(
+            assignmentId: UUID(), decision: "confirm", submittedAt: "x",
+            xpAwarded: 5, creditAwarded: 0
+        )
+        XCTAssertTrue(r1.hasReward)
+        let r2 = BallTrainingFeedbackResponse(
+            assignmentId: UUID(), decision: "confirm", submittedAt: "x",
+            xpAwarded: 0, creditAwarded: 1
+        )
+        XCTAssertTrue(r2.hasReward)
+        let r3 = BallTrainingFeedbackResponse(
+            assignmentId: UUID(), decision: "confirm", submittedAt: "x",
+            xpAwarded: 0, creditAwarded: 0
+        )
+        XCTAssertFalse(r3.hasReward)
+    }
+
+    // RW-14: Reward badge resets on reload
+    func test_RW_14_rewardBadge_resetsOnReload() async {
+        let (vm, mock) = makeVM(queueCount: 2)
+        mock.feedbackResult = .success(MockBallTrainingAPIClient.fakeFeedback(
+            xpAwarded: 5, dailyXpTotal: 5, dailyTasksDone: 1
+        ))
+        await vm.loadQueue(authManager: AuthManager())
+        await vm.confirm()
+        XCTAssertTrue(vm.showingRewardBadge)
+        await vm.reload(authManager: AuthManager())
+        XCTAssertFalse(vm.showingRewardBadge)
     }
 }

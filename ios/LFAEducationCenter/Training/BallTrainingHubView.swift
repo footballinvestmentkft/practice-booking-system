@@ -147,6 +147,24 @@ struct BallTrainingHubView: View {
                 .foregroundColor(Theme.Color.muted)
                 .padding(.horizontal, Theme.Spacing.xl)
 
+            if vm.dailyTasksDone > 0 || vm.dailyXpTotal > 0 {
+                DailyProgressView(
+                    dailyXpTotal: vm.dailyXpTotal,
+                    dailyTasksDone: vm.dailyTasksDone,
+                    maxXpPerDay: BallTrainingHubViewModel.maxXpPerDay,
+                    maxTasksPerDay: BallTrainingHubViewModel.maxTasksPerDay
+                )
+                .padding(.vertical, Theme.Spacing.sm)
+            }
+
+            if vm.dailyXpTotal >= BallTrainingHubViewModel.maxXpPerDay {
+                Text("Elérted a napi XP limitet. A visszajelzéseidet továbbra is fogadjuk!")
+                    .font(.caption)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(Theme.Color.muted)
+                    .padding(.horizontal, Theme.Spacing.xl)
+            }
+
             Button("Újabb feladatok") {
                 Task { await vm.reload(authManager: authManager) }
             }

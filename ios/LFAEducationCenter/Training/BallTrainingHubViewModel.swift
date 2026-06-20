@@ -41,6 +41,16 @@ final class BallTrainingHubViewModel: ObservableObject {
     @Published var pendingTapX:         Double? = nil
     @Published var pendingTapY:         Double? = nil
 
+    // Reward UI state (AN-3B2E PR-3B)
+    @Published var showingRewardBadge:  Bool = false
+    @Published var lastRewardXP:        Int  = 0
+    @Published var lastRewardCredit:    Int  = 0
+    @Published var dailyXpTotal:        Int  = 0
+    @Published var dailyTasksDone:      Int  = 0
+
+    static let maxXpPerDay:    Int = 100
+    static let maxTasksPerDay: Int = 30
+
     private(set) var maxPerSession: Int = 5
 
     // Lazily created in production from the passed-in AuthManager.
@@ -178,6 +188,7 @@ final class BallTrainingHubViewModel: ObservableObject {
         frameData           = nil
         lastErrorMessage    = nil
         isInCorrectionMode  = false
+        showingRewardBadge  = false
         clearPendingTap()
 
         do {
@@ -198,6 +209,10 @@ final class BallTrainingHubViewModel: ObservableObject {
         }
     }
 
+    func dismissRewardBadge() {
+        showingRewardBadge = false
+    }
+
     private func submitDecision(_ decision: String, tapX: Double?, tapY: Double?) async {
         guard let item = currentItem, !isSubmitting else { return }
         isSubmitting        = true
@@ -211,8 +226,9 @@ final class BallTrainingHubViewModel: ObservableObject {
         )
 
         do {
-            _ = try await apiClient!.submitFeedback(req)
+            let resp = try await apiClient!.submitFeedback(req)
             submittedCount += 1
+            applyReward(resp)
             await advanceAfterSubmit()
         } catch BallTrainingAPIError.consumed, BallTrainingAPIError.expired {
             submittedCount += 1
@@ -221,6 +237,16 @@ final class BallTrainingHubViewModel: ObservableObject {
             lastErrorMessage = "Hiba történt, próbáld újra."
         }
         isSubmitting = false
+    }
+
+    private func applyReward(_ resp: BallTrainingFeedbackResponse) {
+        dailyXpTotal   = resp.dailyXpTotal
+        dailyTasksDone = resp.dailyTasksDone
+        if resp.hasReward {
+            lastRewardXP     = resp.xpAwarded
+            lastRewardCredit = resp.creditAwarded
+            showingRewardBadge = true
+        }
     }
 
     private func advanceAfterSubmit() async {
