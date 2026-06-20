@@ -19,6 +19,15 @@
 		SK000004000000000000003 /* JointMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = SK000003000000000000003 /* JointMapper.swift */; };
 		SK000004000000000000004 /* LegacySkeletonAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = SK000003000000000000004 /* LegacySkeletonAdapter.swift */; };
 		BT500004000000000000001 /* BallTrainingHubVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT500003000000000000001 /* BallTrainingHubVMTests.swift */; };
+		SK500004000000000000001 /* CanonicalJointTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SK500003000000000000001 /* CanonicalJointTests.swift */; };
+		SK500004000000000000002 /* LegacySkeletonAdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SK500003000000000000002 /* LegacySkeletonAdapterTests.swift */; };
+		SK600004000000000000001 /* frame_v2_full.json in Resources */ = {isa = PBXBuildFile; fileRef = SK600003000000000000001 /* frame_v2_full.json */; };
+		SK600004000000000000002 /* frame_v2_2d_only.json in Resources */ = {isa = PBXBuildFile; fileRef = SK600003000000000000002 /* frame_v2_2d_only.json */; };
+		SK600004000000000000003 /* frame_v1_source.json in Resources */ = {isa = PBXBuildFile; fileRef = SK600003000000000000003 /* frame_v1_source.json */; };
+		SK600004000000000000004 /* frame_v1_adapted.json in Resources */ = {isa = PBXBuildFile; fileRef = SK600003000000000000004 /* frame_v1_adapted.json */; };
+		SK600004000000000000005 /* calibration_intrinsic.json in Resources */ = {isa = PBXBuildFile; fileRef = SK600003000000000000005 /* calibration_intrinsic.json */; };
+		SK600004000000000000006 /* calibration_stereo.json in Resources */ = {isa = PBXBuildFile; fileRef = SK600003000000000000006 /* calibration_stereo.json */; };
+		SK600004000000000000007 /* sync_metadata.json in Resources */ = {isa = PBXBuildFile; fileRef = SK600003000000000000007 /* sync_metadata.json */; };
 		36CB92D674607508AC4335E1 /* JugglingVideoListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */; };
 		3A252E40BD69018C7269AAF2 /* JugglingVideoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */; };
 		7FC19EF38DE99E82AE19FBE0 /* JugglingVideoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */; };
@@ -222,6 +231,15 @@
 		SK000003000000000000003 /* JointMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JointMapper.swift; sourceTree = "<group>"; };
 		SK000003000000000000004 /* LegacySkeletonAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacySkeletonAdapter.swift; sourceTree = "<group>"; };
 		BT500003000000000000001 /* BallTrainingHubVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingHubVMTests.swift; sourceTree = "<group>"; };
+		SK500003000000000000001 /* CanonicalJointTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalJointTests.swift; sourceTree = "<group>"; };
+		SK500003000000000000002 /* LegacySkeletonAdapterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacySkeletonAdapterTests.swift; sourceTree = "<group>"; };
+		SK600003000000000000001 /* frame_v2_full.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "frame_v2_full.json"; path = "../tests/fixtures/skeleton_3d/frame_v2_full.json"; sourceTree = SOURCE_ROOT; };
+		SK600003000000000000002 /* frame_v2_2d_only.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "frame_v2_2d_only.json"; path = "../tests/fixtures/skeleton_3d/frame_v2_2d_only.json"; sourceTree = SOURCE_ROOT; };
+		SK600003000000000000003 /* frame_v1_source.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "frame_v1_source.json"; path = "../tests/fixtures/skeleton_3d/frame_v1_source.json"; sourceTree = SOURCE_ROOT; };
+		SK600003000000000000004 /* frame_v1_adapted.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "frame_v1_adapted.json"; path = "../tests/fixtures/skeleton_3d/frame_v1_adapted.json"; sourceTree = SOURCE_ROOT; };
+		SK600003000000000000005 /* calibration_intrinsic.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "calibration_intrinsic.json"; path = "../tests/fixtures/skeleton_3d/calibration_intrinsic.json"; sourceTree = SOURCE_ROOT; };
+		SK600003000000000000006 /* calibration_stereo.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "calibration_stereo.json"; path = "../tests/fixtures/skeleton_3d/calibration_stereo.json"; sourceTree = SOURCE_ROOT; };
+		SK600003000000000000007 /* sync_metadata.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "sync_metadata.json"; path = "../tests/fixtures/skeleton_3d/sync_metadata.json"; sourceTree = SOURCE_ROOT; };
 		20CD58654D76D5278A5E5B62 /* JugglingVideoListViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListViewModel.swift; sourceTree = "<group>"; };
 		89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListView.swift; sourceTree = "<group>"; };
 		BB000003000000000000001 /* LFAEducationCenterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAEducationCenterApp.swift; sourceTree = "<group>"; };
@@ -797,6 +815,7 @@
 			children = (
 				CC300003000000000000001 /* JugglingVideoTests.swift */,
 				CC200002000000000000003 /* Juggling */,
+				SK500002000000000000001 /* Skeleton3D */,
 				CC200002000000000000004 /* Networking */,
 			);
 			path = LFAEducationCenterTests;
@@ -872,6 +891,22 @@
 				BB200003000000000000009 /* EventTimelineTests.swift */,
 			);
 			path = Juggling;
+			sourceTree = "<group>";
+		};
+		SK500002000000000000001 /* Skeleton3D */ = {
+			isa = PBXGroup;
+			children = (
+				SK500003000000000000001 /* CanonicalJointTests.swift */,
+				SK500003000000000000002 /* LegacySkeletonAdapterTests.swift */,
+				SK600003000000000000001 /* frame_v2_full.json */,
+				SK600003000000000000002 /* frame_v2_2d_only.json */,
+				SK600003000000000000003 /* frame_v1_source.json */,
+				SK600003000000000000004 /* frame_v1_adapted.json */,
+				SK600003000000000000005 /* calibration_intrinsic.json */,
+				SK600003000000000000006 /* calibration_stereo.json */,
+				SK600003000000000000007 /* sync_metadata.json */,
+			);
+			path = Skeleton3D;
 			sourceTree = "<group>";
 		};
 		BB000002000000000000019 /* Spike */ = {
@@ -980,6 +1015,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				SK600004000000000000001 /* frame_v2_full.json in Resources */,
+				SK600004000000000000002 /* frame_v2_2d_only.json in Resources */,
+				SK600004000000000000003 /* frame_v1_source.json in Resources */,
+				SK600004000000000000004 /* frame_v1_adapted.json in Resources */,
+				SK600004000000000000005 /* calibration_intrinsic.json in Resources */,
+				SK600004000000000000006 /* calibration_stereo.json in Resources */,
+				SK600004000000000000007 /* sync_metadata.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1189,6 +1231,8 @@
 				BF700004000000000000001 /* BallFeedbackAnnotationIndependenceTests.swift in Sources */,
 				BF800004000000000000001 /* JugglingAnnotationAPIClientFeedbackTests.swift in Sources */,
 				BT500004000000000000001 /* BallTrainingHubVMTests.swift in Sources */,
+				SK500004000000000000001 /* CanonicalJointTests.swift in Sources */,
+				SK500004000000000000002 /* LegacySkeletonAdapterTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
