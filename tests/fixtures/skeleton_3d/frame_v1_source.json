@@ -1,0 +1,26 @@
+{
+  "schema_version": "1",
+  "body": [
+    {"name": "nose", "x": 0.50, "y": 0.15, "confidence": 0.98},
+    {"name": "left_eye", "x": 0.47, "y": 0.12, "confidence": 0.96},
+    {"name": "right_eye", "x": 0.53, "y": 0.12, "confidence": 0.95},
+    {"name": "left_ear", "x": 0.44, "y": 0.14, "confidence": 0.80},
+    {"name": "right_ear", "x": 0.56, "y": 0.14, "confidence": 0.78},
+    {"name": "neck", "x": 0.50, "y": 0.28, "confidence": 0.92},
+    {"name": "left_shoulder", "x": 0.41, "y": 0.32, "confidence": 0.95},
+    {"name": "right_shoulder", "x": 0.59, "y": 0.33, "confidence": 0.93},
+    {"name": "left_elbow", "x": 0.35, "y": 0.50, "confidence": 0.88},
+    {"name": "right_elbow", "x": 0.65, "y": 0.51, "confidence": 0.86},
+    {"name": "left_wrist", "x": 0.32, "y": 0.65, "confidence": 0.75},
+    {"name": "right_wrist", "x": 0.68, "y": 0.66, "confidence": 0.73},
+    {"name": "root", "x": 0.50, "y": 0.55, "confidence": 0.90},
+    {"name": "left_hip", "x": 0.45, "y": 0.58, "confidence": 0.91},
+    {"name": "right_hip", "x": 0.55, "y": 0.58, "confidence": 0.89},
+    {"name": "left_knee", "x": 0.44, "y": 0.75, "confidence": 0.85},
+    {"name": "right_knee", "x": 0.56, "y": 0.76, "confidence": 0.83},
+    {"name": "left_ankle", "x": 0.44, "y": 0.92, "confidence": 0.72},
+    {"name": "right_ankle", "x": 0.56, "y": 0.93, "confidence": 0.70}
+  ],
+  "left_hand": [],
+  "right_hand": []
+}

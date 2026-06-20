@@ -1,0 +1,13 @@
+{
+  "session_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "sync_method": "audio_clap",
+  "initial_offset_ms": 12.5,
+  "drift_rate_ms_per_s": 0.003,
+  "sync_reference_start_ns": 1719000000000000000,
+  "sync_reference_end_ns": 1719000300000000000,
+  "matched_frame_count": 8950,
+  "dropped_frame_count": 3,
+  "median_alignment_ms": 8.2,
+  "p95_alignment_ms": 22.5,
+  "sync_quality": "high"
+}

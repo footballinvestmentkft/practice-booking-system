@@ -1,0 +1,18 @@
+{
+  "camera_id": "iphone_primary",
+  "intrinsic_matrix": [
+    [1080.0, 0.0, 960.0],
+    [0.0, 1080.0, 540.0],
+    [0.0, 0.0, 1.0]
+  ],
+  "distortion_coeffs": [0.012, -0.025, 0.001, -0.0005, 0.008],
+  "image_width_px": 1920,
+  "image_height_px": 1080,
+  "reprojection_error": 0.35,
+  "capture_preset": {
+    "resolution": "1920x1080",
+    "fps": 30,
+    "lens_mode": "standard",
+    "stabilization": "off"
+  }
+}
