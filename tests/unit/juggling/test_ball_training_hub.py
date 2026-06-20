@@ -53,7 +53,10 @@ from app.models.juggling import (
     JugglingVideoStatus,
     UserAnnotationReliability,
 )
+from app.models.credit_transaction import CreditTransaction
+from app.models.gamification import UserStats
 from app.models.user import User, UserRole
+from app.models.xp_transaction import XPTransaction
 from app.services.juggling import feature_flag as ff_module
 import app.api.api_v1.endpoints.users.juggling_ball_training as hub_module
 from app.tasks.juggling_feedback_task import run_compute_frame_consensus
@@ -340,6 +343,10 @@ def test_bth_07_valid_confirm_submit(db, client, monkeypatch):
     data = resp.json()
     assert data["decision"] == "confirm"
     assert str(data["assignment_id"]) == str(assignment.id)
+    assert data["xp_awarded"] == 5
+    assert data["credit_awarded"] == 0
+    assert "daily_xp_total" in data
+    assert "daily_tasks_done" in data
 
     # Verify feedback row created
     fb = db.execute(
@@ -375,7 +382,10 @@ def test_bth_08_valid_no_ball_submit(db, client, monkeypatch):
         headers=_auth(user),
     )
     assert resp.status_code == 201
-    assert resp.json()["decision"] == "no_ball"
+    data = resp.json()
+    assert data["decision"] == "no_ball"
+    assert data["xp_awarded"] == 5
+    assert data["credit_awarded"] == 0
 
 
 # ── BTH-09: corrected without tap_x/tap_y → 422 (Pydantic model_validator) ──
@@ -739,6 +749,15 @@ def _cc_cleanup(video_id: uuid.UUID, all_user_ids: list[int]) -> None:
         ))
         db.execute(sa_delete(UserAnnotationReliability).where(
             UserAnnotationReliability.user_id.in_(all_user_ids)
+        ))
+        db.execute(sa_delete(XPTransaction).where(
+            XPTransaction.user_id.in_(all_user_ids)
+        ))
+        db.execute(sa_delete(CreditTransaction).where(
+            CreditTransaction.user_id.in_(all_user_ids)
+        ))
+        db.execute(sa_delete(UserStats).where(
+            UserStats.user_id.in_(all_user_ids)
         ))
         db.execute(sa_delete(JugglingVideo).where(JugglingVideo.id == video_id))
         db.execute(sa_delete(User).where(User.id.in_(all_user_ids)))

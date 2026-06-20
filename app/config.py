@@ -457,6 +457,19 @@ class Settings(BaseSettings):
     #   tracking_state == 'lost'.  Default 0.30.
     BALL_TRAINING_FULL_FRAME_CONFIDENCE_THRESHOLD: float = 0.30
 
+    # ── Ball annotation reward (AN-3B2E) ──────────────────────────────────────
+    BALL_ANNOTATION_XP_BASE: int = 5            # confirm / no_ball upfront
+    BALL_ANNOTATION_XP_CORRECTED: int = 10      # corrected upfront
+    BALL_ANNOTATION_XP_ACCURACY_BONUS: int = 5  # posterior: approved feedback
+    BALL_ANNOTATION_XP_GOLD_BONUS: int = 10     # posterior: gold-standard addíció
+    BALL_ANNOTATION_MAX_XP_PER_DAY: int = 100   # upfront + posterior együtt
+    BALL_ANNOTATION_MAX_TASKS_PER_DAY: int = 30
+    BALL_ANNOTATION_MAX_CORRECTED_CREDIT_PER_DAY: int = 10
+    BALL_ANNOTATION_MIN_RELIABILITY_FOR_CREDIT: float = 0.4
+    BALL_ANNOTATION_RAPID_SUBMIT_WINDOW_S: int = 60
+    BALL_ANNOTATION_RAPID_SUBMIT_THRESHOLD: int = 5
+    BALL_ANNOTATION_SPAM_FLAG_BLOCK_THRESHOLD: int = 10
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

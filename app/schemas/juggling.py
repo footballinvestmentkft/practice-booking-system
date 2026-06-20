@@ -688,8 +688,12 @@ class BallTrainingFeedbackRequest(BaseModel):
 
 
 class BallTrainingFeedbackResponse(BaseModel):
-    assignment_id: uuid.UUID
-    decision:      str
-    submitted_at:  datetime
-    corrected_x:   Optional[float] = None
-    corrected_y:   Optional[float] = None
+    assignment_id:    uuid.UUID
+    decision:         str
+    submitted_at:     datetime
+    corrected_x:      Optional[float] = None
+    corrected_y:      Optional[float] = None
+    xp_awarded:       int = 0
+    credit_awarded:   int = 0
+    daily_xp_total:   int = 0
+    daily_tasks_done: int = 0

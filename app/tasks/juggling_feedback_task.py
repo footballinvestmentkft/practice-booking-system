@@ -193,6 +193,29 @@ def run_compute_frame_consensus(
 
     db.commit()
 
+    # Award posterior XP + credit for approved feedbacks (AN-3B2E).
+    # Called after commit so that approval_state is durable before reward is issued.
+    # award_annotation_accuracy_bonus() manages its own transaction with advisory lock.
+    if new_state == "approved":
+        from app.services.juggling.ball_annotation_reward_service import (
+            award_annotation_accuracy_bonus,
+        )
+        for r in rows:
+            if r.approval_state == "approved":
+                try:
+                    award_annotation_accuracy_bonus(
+                        db=db,
+                        feedback_id=r.id,
+                        user_id=r.user_id,
+                        decision=r.decision,
+                        is_gold_standard=r.is_gold_standard,
+                        reliability_at_submit=r.user_reliability_at_submit or 0.5,
+                    )
+                except Exception:
+                    logger.exception(
+                        "award_annotation_accuracy_bonus failed: feedback_id=%s", r.id
+                    )
+
 
 @celery_app.task(
     bind=True,

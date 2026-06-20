@@ -402,10 +402,29 @@ def submit_training_feedback(
     except Exception:
         pass
 
+    # 9. Award upfront XP (new transaction, advisory lock, partial-cap safe).
+    from app.services.juggling.ball_annotation_reward_service import (
+        award_annotation_upfront,
+        get_daily_annotation_stats,
+    )
+    xp_awarded, credit_awarded = award_annotation_upfront(
+        db=db,
+        user_id=user_id,
+        assignment_id=req.assignment_id,
+        decision=req.decision,
+        reliability=reliability,
+        feedback_id=feedback.id,
+    )
+    daily_count, daily_xp, _ = get_daily_annotation_stats(db, user_id)
+
     return BallTrainingFeedbackResponse(
         assignment_id=req.assignment_id,
         decision=req.decision,
         submitted_at=now,
         corrected_x=corrected_x,
         corrected_y=corrected_y,
+        xp_awarded=xp_awarded,
+        credit_awarded=credit_awarded,
+        daily_xp_total=daily_xp,
+        daily_tasks_done=daily_count,
     )
