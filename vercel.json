@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/**/*.py": {
-      "excludeFiles": "{ios/**,tests/**,docs/**,scripts/**,static/**,alembic/**,.stash_conflict_backup/**,**/*.md,**/*.test.py,**/test_*.py}"
+    "api/staging.py": {
+      "excludeFiles": "{ios/**,tests/**,docs/**,scripts/**,static/**,alembic/**,.stash_conflict_backup/**,**/*.md}"
     }
   }
 }
