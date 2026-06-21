@@ -18,6 +18,9 @@ struct GoProConnectionDebugView: View {
             }
             .navigationTitle("GoPro Connection")
             .navigationBarTitleDisplayMode(.inline)
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                manager.onForeground()
+            }
         }
         .navigationViewStyle(.stack)
     }

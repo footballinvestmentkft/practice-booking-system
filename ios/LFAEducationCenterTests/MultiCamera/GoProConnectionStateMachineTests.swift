@@ -55,6 +55,7 @@ final class MockGoProHTTPTransport: @preconcurrency GoProHTTPTransport {
     var isReachableResult = true
     var getResult: Result<Data, Error> = .success(Data())
     var getCallCount = 0
+    var isReachableCallCount = 0
 
     nonisolated func get(path: String, timeout: TimeInterval) async throws -> Data {
         await MainActor.run { getCallCount += 1 }
@@ -62,6 +63,7 @@ final class MockGoProHTTPTransport: @preconcurrency GoProHTTPTransport {
     }
 
     nonisolated func isReachable(timeout: TimeInterval) async -> Bool {
+        await MainActor.run { isReachableCallCount += 1 }
         return await MainActor.run { isReachableResult }
     }
 }
@@ -672,5 +674,203 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         mgr.confirmManualWiFiJoined()
         await awaitStatePredicate({ if case .ready = $0 { return true }; return false },
                                   on: mgr, timeout: 3.0, label: "ready")
+    }
+
+    // SM-34: BLE disconnect during awaitingManualWiFiJoin preserves state
+    func test_SM_34_bleDisconnectPreservesManualWiFiState() async {
+        let (mgr, ble, _, _) = makeManager()
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServicesDiscovered()
+        await awaitState(.establishingControl, on: mgr)
+        ble.simulateNotificationsSubscribed()
+        await awaitState(.enablingAccessPoint, on: mgr)
+        ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
+        ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        ble.simulateDisconnect()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        if case .awaitingManualWiFiJoin(let ssid) = mgr.state {
+            XCTAssertEqual(ssid, "GP12345")
+        } else {
+            XCTFail("Expected awaitingManualWiFiJoin, got \(mgr.state)")
+        }
+    }
+
+    // SM-35: foreground triggers exactly one HTTP verify
+    func test_SM_35_foregroundTriggersOneVerify() async {
+        let (mgr, ble, http, _) = makeManager()
+        let statusJSON = """
+        {"firmware_version":"2.30","is_recording":false,"battery_level":85}
+        """.data(using: .utf8)!
+        http.getResult = .success(statusJSON)
+        http.isReachableResult = true
+
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServicesDiscovered()
+        await awaitState(.establishingControl, on: mgr)
+        ble.simulateNotificationsSubscribed()
+        await awaitState(.enablingAccessPoint, on: mgr)
+        ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
+        ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        ble.simulateDisconnect()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        let countBefore = http.getCallCount
+        mgr.onForeground()
+        mgr.onForeground()
+        await awaitStatePredicate({ if case .ready = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "ready")
+        XCTAssertEqual(http.getCallCount - countBefore, 1, "Exactly one fetchCameraState call")
+    }
+
+    // SM-36: HTTP success after foreground → ready
+    func test_SM_36_foregroundHTTPSuccessReady() async {
+        let (mgr, ble, http, _) = makeManager()
+        let statusJSON = """
+        {"firmware_version":"2.30","is_recording":false,"battery_level":90}
+        """.data(using: .utf8)!
+        http.getResult = .success(statusJSON)
+        http.isReachableResult = true
+
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServicesDiscovered()
+        await awaitState(.establishingControl, on: mgr)
+        ble.simulateNotificationsSubscribed()
+        await awaitState(.enablingAccessPoint, on: mgr)
+        ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
+        ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        mgr.onForeground()
+        await awaitStatePredicate({ if case .ready = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "ready")
+        if case .ready(let fw) = mgr.state {
+            XCTAssertEqual(fw, "2.30")
+        }
+    }
+
+    // SM-37: HTTP failure → back to awaitingManualWiFiJoin (retryable)
+    func test_SM_37_httpFailureRetryable() async {
+        let (mgr, ble, http, _) = makeManager()
+        http.isReachableResult = false
+
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServicesDiscovered()
+        await awaitState(.establishingControl, on: mgr)
+        ble.simulateNotificationsSubscribed()
+        await awaitState(.enablingAccessPoint, on: mgr)
+        ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
+        ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        mgr.confirmManualWiFiJoined()
+        await awaitStatePredicate({
+            if case .awaitingManualWiFiJoin(let ssid) = $0 { return ssid == "GP12345" }; return false
+        }, on: mgr, timeout: 3.0, label: "back to awaitingManualWiFiJoin")
+        let trigger = mgr.diagnosticLog.last?.trigger ?? ""
+        XCTAssertEqual(trigger, "http_not_ready")
+    }
+
+    // SM-38: BLE disconnect in background doesn't trigger discovery
+    func test_SM_38_bleDisconnectNoBgDiscovery() async {
+        let (mgr, ble, _, _) = makeManager()
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServicesDiscovered()
+        await awaitState(.establishingControl, on: mgr)
+        ble.simulateNotificationsSubscribed()
+        await awaitState(.enablingAccessPoint, on: mgr)
+        ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
+        ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        ble.scanStartCount = 0
+        ble.simulateDisconnect()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertEqual(ble.scanStartCount, 0)
+    }
+
+    // SM-39: multiple foreground events don't create parallel requests
+    func test_SM_39_noParallelForegroundRequests() async {
+        let (mgr, ble, http, _) = makeManager()
+        http.isReachableResult = false
+
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServicesDiscovered()
+        await awaitState(.establishingControl, on: mgr)
+        ble.simulateNotificationsSubscribed()
+        await awaitState(.enablingAccessPoint, on: mgr)
+        ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
+        ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        let countBefore = http.isReachableCallCount
+        mgr.onForeground()
+        mgr.onForeground()
+        mgr.onForeground()
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "back after fail")
+        XCTAssertEqual(http.isReachableCallCount - countBefore, 1, "Only one HTTP check despite 3 foreground events")
+    }
+
+    // SM-40: Cancel clears pending manual Wi-Fi context
+    func test_SM_40_cancelClearsManualContext() async {
+        let (mgr, ble, http, _) = makeManager()
+        http.isReachableResult = true
+        let statusJSON = """
+        {"firmware_version":"2.30","is_recording":false,"battery_level":85}
+        """.data(using: .utf8)!
+        http.getResult = .success(statusJSON)
+
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServicesDiscovered()
+        await awaitState(.establishingControl, on: mgr)
+        ble.simulateNotificationsSubscribed()
+        await awaitState(.enablingAccessPoint, on: mgr)
+        ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
+        ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        mgr.cancel()
+        XCTAssertEqual(mgr.state, .failed(.cancelled))
+        mgr.onForeground()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertEqual(mgr.state, .failed(.cancelled))
     }
 }

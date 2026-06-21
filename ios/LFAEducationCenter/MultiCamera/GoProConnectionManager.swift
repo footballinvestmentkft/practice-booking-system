@@ -17,6 +17,8 @@ final class GoProConnectionManager: ObservableObject {
     private var selectedPeripheral: GoProPeripheralInfo?
     private var wifiSSID: String?
     private var wifiPassword: String?
+    private var manualWiFiSSID: String?
+    private var isHTTPVerifyInProgress = false
 
     init(
         bleTransport: GoProBLETransport,
@@ -65,6 +67,8 @@ final class GoProConnectionManager: ObservableObject {
 
     func cancel() {
         cancelTimeout()
+        manualWiFiSSID = nil
+        isHTTPVerifyInProgress = false
         let prev = state
         if case .ready = prev {
             transition(to: .disconnecting, trigger: "user_cancel")
@@ -78,6 +82,8 @@ final class GoProConnectionManager: ObservableObject {
 
     func disconnect() {
         cancelTimeout()
+        manualWiFiSSID = nil
+        isHTTPVerifyInProgress = false
         transition(to: .disconnecting, trigger: "user_disconnect")
         bleTransport.disconnect()
     }
@@ -186,13 +192,37 @@ final class GoProConnectionManager: ObservableObject {
             transition(to: .failed(.apActivationFailed), trigger: "no_wifi_creds")
             return
         }
+        manualWiFiSSID = ssid
         transition(to: .awaitingManualWiFiJoin(ssid: ssid), trigger: "ap_activated")
     }
 
     func confirmManualWiFiJoined() {
         guard case .awaitingManualWiFiJoin = state else { return }
-        transition(to: .verifyingHTTP(attempt: 1), trigger: "manual_wifi_confirmed")
-        Task { await verifyHTTP() }
+        startHTTPVerify(trigger: "manual_wifi_confirmed")
+    }
+
+    func onForeground() {
+        guard case .awaitingManualWiFiJoin = state else { return }
+        startHTTPVerify(trigger: "foreground_verify")
+    }
+
+    private func startHTTPVerify(trigger: String) {
+        guard !isHTTPVerifyInProgress else { return }
+        isHTTPVerifyInProgress = true
+        transition(to: .verifyingHTTP(attempt: 1), trigger: trigger)
+        Task { await verifyHTTPManual() }
+    }
+
+    private func verifyHTTPManual() async {
+        let reachable = await httpTransport.isReachable(timeout: GoProSpec.httpReachabilityTimeout)
+        isHTTPVerifyInProgress = false
+        if reachable {
+            await fetchCameraState()
+        } else if let ssid = manualWiFiSSID {
+            transition(to: .awaitingManualWiFiJoin(ssid: ssid), trigger: "http_not_ready")
+        } else {
+            transition(to: .failed(.httpUnreachable), trigger: "http_verify_no_context")
+        }
     }
 
     private func verifyHTTP() async {
@@ -295,6 +325,10 @@ extension GoProConnectionManager: GoProBLETransportDelegate {
             cancelTimeout()
             if case .disconnecting = state {
                 transition(to: .idle, trigger: "disconnected_clean")
+            } else if case .awaitingManualWiFiJoin = state {
+                // Expected: user is in Settings joining Wi-Fi
+            } else if case .verifyingHTTP = state {
+                // HTTP verify in progress after manual Wi-Fi join
             } else if case .idle = state {
                 // already idle
             } else {
