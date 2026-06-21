@@ -61,7 +61,12 @@ final class CoreBluetoothBLETransport: NSObject, GoProBLETransport {
     }
 
     func discoverServices() {
-        connectedPeripheral?.discoverServices([GoProSpec.controlServiceUUID])
+        controlServiceReady = false
+        wifiAPServiceReady = false
+        connectedPeripheral?.discoverServices([
+            GoProSpec.controlServiceUUID,
+            GoProSpec.wifiAPServiceUUID
+        ])
     }
 
     func subscribeNotifications() {
@@ -86,6 +91,8 @@ final class CoreBluetoothBLETransport: NSObject, GoProBLETransport {
 
     // MARK: — Internal storage
 
+    private var controlServiceReady = false
+    private var wifiAPServiceReady = false
     private var discoveredPeripherals: [UUID: CBPeripheral] = [:]
     private var allCharacteristics: [CBCharacteristic] = []
 }
@@ -130,7 +137,20 @@ extension CoreBluetoothBLETransport: CBCentralManagerDelegate {
 extension CoreBluetoothBLETransport: CBPeripheralDelegate {
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        guard error == nil, let services = peripheral.services else { return }
+        guard error == nil, let services = peripheral.services else {
+            delegate?.bleTransportDidFailServiceDiscovery(missing: "service discovery error")
+            return
+        }
+        let hasControl = services.contains { $0.uuid == GoProSpec.controlServiceUUID }
+        let hasWiFiAP = services.contains { $0.uuid == GoProSpec.wifiAPServiceUUID }
+        if !hasControl || !hasWiFiAP {
+            let missing = [
+                hasControl ? nil : "Control(FEA6)",
+                hasWiFiAP ? nil : "WiFiAP(B5F90001)",
+            ].compactMap { $0 }.joined(separator: ", ")
+            delegate?.bleTransportDidFailServiceDiscovery(missing: missing)
+            return
+        }
         for service in services {
             peripheral.discoverCharacteristics(nil, for: service)
         }
@@ -139,10 +159,29 @@ extension CoreBluetoothBLETransport: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         guard error == nil, let chars = service.characteristics else { return }
         allCharacteristics.append(contentsOf: chars)
-        for char in chars {
-            if char.uuid == GoProSpec.commandCharUUID { commandChar = char }
-            if char.uuid == GoProSpec.queryCharUUID { queryChar = char }
-            if char.uuid == GoProSpec.settingsCharUUID { settingsChar = char }
+
+        if service.uuid == GoProSpec.controlServiceUUID {
+            for char in chars {
+                if char.uuid == GoProSpec.commandCharUUID { commandChar = char }
+                if char.uuid == GoProSpec.queryCharUUID { queryChar = char }
+                if char.uuid == GoProSpec.settingsCharUUID { settingsChar = char }
+            }
+            controlServiceReady = true
+        } else if service.uuid == GoProSpec.wifiAPServiceUUID {
+            wifiAPServiceReady = true
+        }
+
+        guard controlServiceReady && wifiAPServiceReady else { return }
+
+        let hasSSID = allCharacteristics.contains { $0.uuid == GoProSpec.wifiSSIDCharUUID }
+        let hasPassword = allCharacteristics.contains { $0.uuid == GoProSpec.wifiPasswordCharUUID }
+        if !hasSSID || !hasPassword {
+            let missing = [
+                hasSSID ? nil : "SSID(B5F90002)",
+                hasPassword ? nil : "Password(B5F90003)",
+            ].compactMap { $0 }.joined(separator: ", ")
+            delegate?.bleTransportDidFailServiceDiscovery(missing: missing)
+            return
         }
         delegate?.bleTransportDidDiscoverServices()
     }

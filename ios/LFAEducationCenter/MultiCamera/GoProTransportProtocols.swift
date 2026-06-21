@@ -24,6 +24,7 @@ protocol GoProBLETransportDelegate: AnyObject {
     func bleTransportDidFailToConnect(error: Error?)
     func bleTransportDidDisconnect(error: Error?)
     func bleTransportDidDiscoverServices()
+    func bleTransportDidFailServiceDiscovery(missing: String)
     func bleTransportDidSubscribeNotifications()
     func bleTransportDidReceiveCommandResponse(_ data: Data)
     func bleTransportDidReceiveQueryResponse(_ data: Data)

@@ -329,6 +329,14 @@ extension GoProConnectionManager: GoProBLETransportDelegate {
         }
     }
 
+    nonisolated func bleTransportDidFailServiceDiscovery(missing: String) {
+        Task { @MainActor in
+            cancelTimeout()
+            bleTransport.disconnect()
+            transition(to: .failed(.serviceDiscoveryFailed), trigger: "missing_service: \(missing)")
+        }
+    }
+
     nonisolated func bleTransportDidSubscribeNotifications() {
         Task { @MainActor in
             guard case .establishingControl = state else { return }

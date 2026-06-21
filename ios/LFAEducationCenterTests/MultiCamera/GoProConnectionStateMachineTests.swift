@@ -40,6 +40,7 @@ final class MockGoProBLETransport: @preconcurrency GoProBLETransport {
     func simulateFailToConnect() { delegate?.bleTransportDidFailToConnect(error: nil) }
     func simulateDisconnect(error: Error? = nil) { delegate?.bleTransportDidDisconnect(error: error) }
     func simulateServicesDiscovered() { delegate?.bleTransportDidDiscoverServices() }
+    func simulateServiceDiscoveryFailed(missing: String) { delegate?.bleTransportDidFailServiceDiscovery(missing: missing) }
     func simulateNotificationsSubscribed() { delegate?.bleTransportDidSubscribeNotifications() }
     func simulateCommandResponse(_ data: Data = Data([0x02, 0x17, 0x00])) {
         delegate?.bleTransportDidReceiveCommandResponse(data)
@@ -539,5 +540,119 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 50_000_000)
         XCTAssertEqual(mgr.state, .failed(.cancelled))
         XCTAssertEqual(ble.scanStartCount, 0)
+    }
+
+    // SM-27: Both services discovered → proceeds to establishingControl
+    func test_SM_27_dualServiceDiscovery() async {
+        let (mgr, ble, _, _) = makeManager()
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServicesDiscovered()
+        await awaitState(.establishingControl, on: mgr)
+    }
+
+    // SM-28: SSID UUID is B5F90002 (not B5F90003)
+    func test_SM_28_correctSSIDCharUUID() {
+        XCTAssertEqual(
+            GoProSpec.wifiSSIDCharUUID,
+            CBUUID(string: "B5F90002-AA8D-11E3-9046-0002A5D5C51B")
+        )
+    }
+
+    // SM-29: Password UUID is B5F90003 (not B5F90004)
+    func test_SM_29_correctPasswordCharUUID() {
+        XCTAssertEqual(
+            GoProSpec.wifiPasswordCharUUID,
+            CBUUID(string: "B5F90003-AA8D-11E3-9046-0002A5D5C51B")
+        )
+    }
+
+    // SM-30: Missing WiFi AP service → explicit failure
+    func test_SM_30_missingServiceExplicitFailure() async {
+        let (mgr, ble, _, _) = makeManager()
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServiceDiscoveryFailed(missing: "WiFiAP(B5F90001)")
+        await awaitStatePredicate({ if case .failed(.serviceDiscoveryFailed) = $0 { return true }; return false },
+                                  on: mgr, label: "serviceDiscoveryFailed")
+        let trigger = mgr.diagnosticLog.last?.trigger ?? ""
+        XCTAssertTrue(trigger.contains("WiFiAP"), "Trigger should name missing service: \(trigger)")
+    }
+
+    // SM-31: Missing characteristic → explicit failure
+    func test_SM_31_missingCharExplicitFailure() async {
+        let (mgr, ble, _, _) = makeManager()
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServiceDiscoveryFailed(missing: "SSID(B5F90002)")
+        await awaitStatePredicate({ if case .failed(.serviceDiscoveryFailed) = $0 { return true }; return false },
+                                  on: mgr, label: "serviceDiscoveryFailed")
+        let trigger = mgr.diagnosticLog.last?.trigger ?? ""
+        XCTAssertTrue(trigger.contains("SSID"), "Trigger should name missing char: \(trigger)")
+    }
+
+    // SM-32: Credentials arrive in either order (password first, then SSID)
+    func test_SM_32_credentialsEitherOrder() async {
+        let (mgr, ble, http, _) = makeManager()
+        let statusJSON = """
+        {"firmware_version":"2.30","is_recording":false,"battery_level":85}
+        """.data(using: .utf8)!
+        http.getResult = .success(statusJSON)
+        http.isReachableResult = true
+
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServicesDiscovered()
+        await awaitState(.establishingControl, on: mgr)
+        ble.simulateNotificationsSubscribed()
+        await awaitState(.enablingAccessPoint, on: mgr)
+        // Password first, then SSID (reversed order)
+        ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
+        await awaitStatePredicate({ if case .ready = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "ready")
+    }
+
+    // SM-33: Command response + credential reads race — proceedToWiFiJoin fires only once
+    func test_SM_33_commandAndCredentialRace() async {
+        let (mgr, ble, http, _) = makeManager()
+        let statusJSON = """
+        {"firmware_version":"2.30","is_recording":false,"battery_level":85}
+        """.data(using: .utf8)!
+        http.getResult = .success(statusJSON)
+        http.isReachableResult = true
+
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
+        ble.simulateDiscover()
+        await awaitState(.connecting, on: mgr)
+        ble.simulateConnect()
+        await awaitState(.discoveringServices, on: mgr)
+        ble.simulateServicesDiscovered()
+        await awaitState(.establishingControl, on: mgr)
+        ble.simulateNotificationsSubscribed()
+        await awaitState(.enablingAccessPoint, on: mgr)
+        // Both credentials arrive, then command response (race scenario)
+        ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
+        ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        ble.simulateCommandResponse()
+        await awaitStatePredicate({ if case .ready = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "ready")
     }
 }

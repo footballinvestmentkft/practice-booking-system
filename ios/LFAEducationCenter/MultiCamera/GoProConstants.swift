@@ -26,8 +26,10 @@ enum GoProSpec {
     static let queryCharUUID = CBUUID(string: "B5F90076-AA8D-11E3-9046-0002A5D5C51B")
     static let queryResponseCharUUID = CBUUID(string: "B5F90077-AA8D-11E3-9046-0002A5D5C51B")
 
-    static let wifiSSIDCharUUID = CBUUID(string: "B5F90003-AA8D-11E3-9046-0002A5D5C51B")
-    static let wifiPasswordCharUUID = CBUUID(string: "B5F90004-AA8D-11E3-9046-0002A5D5C51B")
+    // Wi-Fi Access Point Service (separate from Control service)
+    static let wifiAPServiceUUID = CBUUID(string: "B5F90001-AA8D-11E3-9046-0002A5D5C51B")
+    static let wifiSSIDCharUUID = CBUUID(string: "B5F90002-AA8D-11E3-9046-0002A5D5C51B")
+    static let wifiPasswordCharUUID = CBUUID(string: "B5F90003-AA8D-11E3-9046-0002A5D5C51B")
 
     // MARK: — HTTP
 
