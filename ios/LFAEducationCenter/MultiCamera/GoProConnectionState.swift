@@ -13,7 +13,7 @@ enum GoProConnectionState: Equatable {
     case establishingControl
     case connectedBLE
     case enablingAccessPoint
-    case awaitingWiFiApproval
+    case awaitingManualWiFiJoin(ssid: String)
     case connectingWiFi(attempt: Int)
     case verifyingHTTP(attempt: Int)
     case ready(firmware: String)
@@ -38,7 +38,7 @@ enum GoProConnectionState: Equatable {
         case .establishingControl: return "Vezérlés létrehozása…"
         case .connectedBLE: return "BLE csatlakozva"
         case .enablingAccessPoint: return "Wi-Fi bekapcsolása…"
-        case .awaitingWiFiApproval: return "Wi-Fi jóváhagyásra vár"
+        case .awaitingManualWiFiJoin(let ssid): return "Csatlakozz: \(ssid)"
         case .connectingWiFi: return "Wi-Fi csatlakozás…"
         case .verifyingHTTP: return "HTTP ellenőrzése…"
         case .ready: return "Csatlakozva ✓"

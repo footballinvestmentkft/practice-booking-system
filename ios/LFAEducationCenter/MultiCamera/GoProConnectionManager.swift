@@ -142,13 +142,6 @@ final class GoProConnectionManager: ObservableObject {
             transition(to: .failed(.controlEstablishmentFailed), trigger: trigger)
         case .enablingAccessPoint:
             transition(to: .failed(.apActivationFailed), trigger: trigger)
-        case .connectingWiFi(let attempt):
-            if attempt < GoProSpec.wifiJoinMaxRetries {
-                transition(to: .connectingWiFi(attempt: attempt + 1), trigger: trigger)
-                Task { await attemptWiFiJoin() }
-            } else {
-                transition(to: .failed(.wifiJoinFailed), trigger: trigger)
-            }
         case .verifyingHTTP(let attempt):
             if attempt < GoProSpec.httpVerifyMaxRetries {
                 transition(to: .verifyingHTTP(attempt: attempt + 1), trigger: trigger)
@@ -189,29 +182,17 @@ final class GoProConnectionManager: ObservableObject {
 
     private func proceedToWiFiJoin() {
         cancelTimeout()
-        guard let ssid = wifiSSID, let pass = wifiPassword else {
+        guard let ssid = wifiSSID else {
             transition(to: .failed(.apActivationFailed), trigger: "no_wifi_creds")
             return
         }
-        transition(to: .awaitingWiFiApproval, trigger: "ap_activated")
-        transition(to: .connectingWiFi(attempt: 1), trigger: "auto_proceed")
-        Task { await attemptWiFiJoin() }
+        transition(to: .awaitingManualWiFiJoin(ssid: ssid), trigger: "ap_activated")
     }
 
-    private func attemptWiFiJoin() async {
-        guard let ssid = wifiSSID, let pass = wifiPassword else { return }
-        startTimeout(GoProSpec.wifiJoinTimeout, trigger: "wifi_join_timeout")
-        do {
-            try await wifiTransport.joinAccessPoint(ssid: ssid, password: pass)
-            cancelTimeout()
-            transition(to: .verifyingHTTP(attempt: 1), trigger: "wifi_joined")
-            await verifyHTTP()
-        } catch GoProWiFiError.userDenied {
-            cancelTimeout()
-            transition(to: .failed(.wifiUserDenied), trigger: "wifi_user_denied")
-        } catch {
-            // timeout handler will retry
-        }
+    func confirmManualWiFiJoined() {
+        guard case .awaitingManualWiFiJoin = state else { return }
+        transition(to: .verifyingHTTP(attempt: 1), trigger: "manual_wifi_confirmed")
+        Task { await verifyHTTP() }
     }
 
     private func verifyHTTP() async {

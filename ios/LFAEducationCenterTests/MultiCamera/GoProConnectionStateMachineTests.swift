@@ -272,6 +272,9 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         await awaitState(.enablingAccessPoint, on: mgr)
         ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
         ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        mgr.confirmManualWiFiJoined()
         await awaitStatePredicate({ if case .ready = $0 { return true }; return false },
                                   on: mgr, timeout: 3.0, label: "ready")
 
@@ -341,6 +344,9 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         await awaitState(.enablingAccessPoint, on: mgr)
         ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
         ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        mgr.confirmManualWiFiJoined()
         await awaitStatePredicate({ if case .failed(.unsupportedFirmware) = $0 { return true }; return false },
                                   on: mgr, timeout: 3.0, label: "unsupportedFirmware")
     }
@@ -367,11 +373,9 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         }
     }
 
-    // SM-17: Wi-Fi user denied → failed
-    func test_SM_17_wifiUserDenied() async {
-        let (mgr, ble, _, wifi) = makeManager()
-        wifi.joinResult = .failure(GoProWiFiError.userDenied)
-
+    // SM-17: AP credentials → awaitingManualWiFiJoin with SSID
+    func test_SM_17_manualWiFiJoinState() async {
+        let (mgr, ble, _, _) = makeManager()
         mgr.startConnection()
         await awaitStatePredicate({ if case .discovering = $0 { return true }; return false }, on: mgr, label: "discovering")
         ble.simulateDiscover()
@@ -384,7 +388,9 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         await awaitState(.enablingAccessPoint, on: mgr)
         ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
         ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
-        await awaitState(.failed(.wifiUserDenied), on: mgr, timeout: 3.0)
+        await awaitStatePredicate({
+            if case .awaitingManualWiFiJoin(let ssid) = $0 { return ssid == "GP12345" }; return false
+        }, on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
     }
 
     // SM-18: Stale callback ignored
@@ -419,6 +425,9 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         await awaitState(.enablingAccessPoint, on: mgr)
         ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
         ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        mgr.confirmManualWiFiJoined()
         await awaitStatePredicate({ if case .ready = $0 { return true }; return false },
                                   on: mgr, timeout: 3.0, label: "ready")
         XCTAssertEqual(mgr.cameraStatus?.batteryLevel, 72)
@@ -446,6 +455,9 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         await awaitState(.enablingAccessPoint, on: mgr)
         ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
         ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        mgr.confirmManualWiFiJoined()
         await awaitStatePredicate({ if case .ready = $0 { return true }; return false },
                                   on: mgr, timeout: 3.0, label: "ready")
         if case .ready(let fw) = mgr.state {
@@ -625,6 +637,9 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         // Password first, then SSID (reversed order)
         ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
         ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        mgr.confirmManualWiFiJoined()
         await awaitStatePredicate({ if case .ready = $0 { return true }; return false },
                                   on: mgr, timeout: 3.0, label: "ready")
     }
@@ -652,6 +667,9 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         ble.simulateCharRead(uuid: GoProSpec.wifiSSIDCharUUID, value: "GP12345".data(using: .utf8))
         ble.simulateCharRead(uuid: GoProSpec.wifiPasswordCharUUID, value: "pass123".data(using: .utf8))
         ble.simulateCommandResponse()
+        await awaitStatePredicate({ if case .awaitingManualWiFiJoin = $0 { return true }; return false },
+                                  on: mgr, timeout: 3.0, label: "awaitingManualWiFiJoin")
+        mgr.confirmManualWiFiJoined()
         await awaitStatePredicate({ if case .ready = $0 { return true }; return false },
                                   on: mgr, timeout: 3.0, label: "ready")
     }

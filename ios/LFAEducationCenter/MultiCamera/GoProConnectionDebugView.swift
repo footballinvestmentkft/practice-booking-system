@@ -60,6 +60,21 @@ struct GoProConnectionDebugView: View {
                     manager.startConnection()
                 }
                 .font(.body.weight(.semibold))
+            case .awaitingManualWiFiJoin(let ssid):
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Beállítások → Wi-Fi → \(ssid)")
+                        .font(.caption.weight(.semibold))
+                    Text("Jelszó a GoPro kijelzőjén")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                Button("Csatlakoztam a Wi-Fi-hez") {
+                    manager.confirmManualWiFiJoined()
+                }
+                .font(.body.weight(.semibold))
+                .foregroundColor(.green)
+                Button("Cancel") { manager.cancel() }
+                    .foregroundColor(.orange)
             case .ready:
                 Button("Disconnect") {
                     manager.disconnect()

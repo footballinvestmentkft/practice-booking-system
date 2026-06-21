@@ -263,7 +263,6 @@
 		BB000003000000000000001 /* LFAEducationCenterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LFAEducationCenterApp.swift; sourceTree = "<group>"; };
 		BB000003000000000000002 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		BB000003000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		EE000001000000000000001 /* LFAEducationCenter.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LFAEducationCenter.entitlements; sourceTree = "<group>"; };
 		BB000003000000000000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BB000003000000000000005 /* LFAEducationCenter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LFAEducationCenter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB000003000000000000006 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -523,7 +522,6 @@
 				BB000003000000000000004 /* Assets.xcassets */,
 				BC53ECBBF23C75435C8218AB /* Juggling */,
 				DD000002000000000000001 /* Config */,
-				EE000001000000000000001 /* LFAEducationCenter.entitlements */,
 			);
 			path = LFAEducationCenter;
 			sourceTree = "<group>";
@@ -1422,7 +1420,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = LFAEducationCenter/LFAEducationCenter.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4D7V9ZWVHY;
@@ -1452,7 +1449,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = LFAEducationCenter/LFAEducationCenter.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4D7V9ZWVHY;
