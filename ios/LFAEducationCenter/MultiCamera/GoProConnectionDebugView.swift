@@ -55,7 +55,7 @@ struct GoProConnectionDebugView: View {
     private var actionsSection: some View {
         Section("Actions") {
             switch manager.state {
-            case .idle, .failed:
+            case .idle, .failed, .bluetoothUnavailable:
                 Button("Connect GoPro") {
                     manager.startConnection()
                 }

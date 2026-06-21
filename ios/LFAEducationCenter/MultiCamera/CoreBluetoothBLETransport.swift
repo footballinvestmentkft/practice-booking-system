@@ -7,13 +7,19 @@ final class CoreBluetoothBLETransport: NSObject, GoProBLETransport {
 
     var bluetoothState: CBManagerState { centralManager.state }
 
-    private lazy var centralManager: CBCentralManager = {
-        CBCentralManager(delegate: self, queue: bleQueue, options: [
+    // Eager: CBCentralManager resolves BT state at init, not first use.
+    private let centralManager: CBCentralManager
+    private let bleQueue: DispatchQueue
+
+    override init() {
+        let queue = DispatchQueue(label: "com.lfa.gopro.ble", qos: .userInitiated)
+        bleQueue = queue
+        centralManager = CBCentralManager(delegate: nil, queue: queue, options: [
             CBCentralManagerOptionShowPowerAlertKey: true
         ])
-    }()
-
-    private let bleQueue = DispatchQueue(label: "com.lfa.gopro.ble", qos: .userInitiated)
+        super.init()
+        centralManager.delegate = self
+    }
     private var discoveredPeripheral: CBPeripheral?
     private var connectedPeripheral: CBPeripheral?
 

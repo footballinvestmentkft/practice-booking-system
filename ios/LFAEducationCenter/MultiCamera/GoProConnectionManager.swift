@@ -32,15 +32,25 @@ final class GoProConnectionManager: ObservableObject {
 
     func startConnection() {
         guard state == .idle || state.isTerminal else { return }
-        let btState = bleTransport.bluetoothState
-        guard btState == .poweredOn else {
-            transition(to: .bluetoothUnavailable(btState), trigger: "bluetooth_not_ready")
-            return
-        }
         bleTransport.delegate = self
-        transition(to: .discovering(attempt: 1), trigger: "user_initiated")
-        bleTransport.startScan()
-        startTimeout(GoProSpec.discoveryTimeout, trigger: "discovery_timeout")
+        let btState = bleTransport.bluetoothState
+        switch btState {
+        case .poweredOn:
+            transition(to: .discovering(attempt: 1), trigger: "user_initiated")
+            bleTransport.startScan()
+            startTimeout(GoProSpec.discoveryTimeout, trigger: "discovery_timeout")
+        case .unknown, .resetting:
+            transition(to: .waitingForBluetooth, trigger: "bluetooth_initializing")
+            startTimeout(GoProSpec.bluetoothInitTimeout, trigger: "bluetooth_init_timeout")
+        case .poweredOff:
+            transition(to: .bluetoothUnavailable(btState), trigger: "bluetooth_off")
+        case .unauthorized:
+            transition(to: .bluetoothUnavailable(btState), trigger: "bluetooth_unauthorized")
+        case .unsupported:
+            transition(to: .bluetoothUnavailable(btState), trigger: "bluetooth_unsupported")
+        @unknown default:
+            transition(to: .bluetoothUnavailable(btState), trigger: "bluetooth_unknown_cbstate")
+        }
     }
 
     func selectPeripheral(_ peripheral: GoProPeripheralInfo) {
@@ -110,6 +120,8 @@ final class GoProConnectionManager: ObservableObject {
 
     private func handleTimeout(trigger: String) {
         switch state {
+        case .waitingForBluetooth:
+            transition(to: .bluetoothUnavailable(.unknown), trigger: trigger)
         case .discovering(let attempt):
             if attempt < GoProSpec.discoveryMaxRetries {
                 transition(to: .discovering(attempt: attempt + 1), trigger: trigger)
@@ -248,9 +260,25 @@ final class GoProConnectionManager: ObservableObject {
 extension GoProConnectionManager: GoProBLETransportDelegate {
     nonisolated func bleTransportDidUpdateState(_ btState: CBManagerState) {
         Task { @MainActor in
-            if btState != .poweredOn, case .discovering = state {
+            switch (state, btState) {
+            case (.waitingForBluetooth, .poweredOn):
                 cancelTimeout()
+                transition(to: .discovering(attempt: 1), trigger: "bluetooth_ready")
+                bleTransport.startScan()
+                startTimeout(GoProSpec.discoveryTimeout, trigger: "discovery_timeout")
+            case (.waitingForBluetooth, .poweredOff),
+                 (.waitingForBluetooth, .unauthorized),
+                 (.waitingForBluetooth, .unsupported):
+                cancelTimeout()
+                transition(to: .bluetoothUnavailable(btState), trigger: "bt_state_resolved")
+            case (.waitingForBluetooth, _):
+                break
+            case (.discovering, _) where btState != .poweredOn:
+                cancelTimeout()
+                bleTransport.stopScan()
                 transition(to: .bluetoothUnavailable(btState), trigger: "bt_state_change")
+            default:
+                break
             }
         }
     }

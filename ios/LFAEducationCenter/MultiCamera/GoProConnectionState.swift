@@ -5,6 +5,7 @@ import CoreBluetooth
 
 enum GoProConnectionState: Equatable {
     case idle
+    case waitingForBluetooth
     case bluetoothUnavailable(CBManagerState)
     case discovering(attempt: Int)
     case connecting
@@ -21,7 +22,7 @@ enum GoProConnectionState: Equatable {
 
     var isTerminal: Bool {
         switch self {
-        case .ready, .failed, .idle: return true
+        case .ready, .failed, .idle, .bluetoothUnavailable: return true
         default: return false
         }
     }
@@ -29,6 +30,7 @@ enum GoProConnectionState: Equatable {
     var userFacingStatus: String {
         switch self {
         case .idle: return "Nincs csatlakoztatva"
+        case .waitingForBluetooth: return "Bluetooth inicializálás…"
         case .bluetoothUnavailable: return "Bluetooth nem elérhető"
         case .discovering: return "GoPro keresése…"
         case .connecting: return "Csatlakozás…"

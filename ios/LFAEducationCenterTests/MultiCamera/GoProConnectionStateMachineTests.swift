@@ -11,6 +11,7 @@ final class MockGoProBLETransport: @preconcurrency GoProBLETransport {
     var bluetoothState: CBManagerState = .poweredOn
 
     var scanStarted = false
+    var scanStartCount = 0
     var scanStopped = false
     var connectCalled = false
     var disconnectCalled = false
@@ -19,7 +20,7 @@ final class MockGoProBLETransport: @preconcurrency GoProBLETransport {
     var lastWrittenCommand: Data?
     var lastReadCharUUID: CBUUID?
 
-    nonisolated func startScan() { Task { @MainActor in self.scanStarted = true } }
+    nonisolated func startScan() { Task { @MainActor in self.scanStartCount += 1; self.scanStarted = true } }
     nonisolated func stopScan() { Task { @MainActor in self.scanStopped = true } }
     nonisolated func connect(peripheral: GoProPeripheralInfo) { Task { @MainActor in self.connectCalled = true } }
     nonisolated func disconnect() { Task { @MainActor in self.disconnectCalled = true } }
@@ -28,6 +29,9 @@ final class MockGoProBLETransport: @preconcurrency GoProBLETransport {
     nonisolated func writeCommand(_ data: Data) { Task { @MainActor in self.lastWrittenCommand = data } }
     nonisolated func readCharacteristic(_ uuid: CBUUID) { Task { @MainActor in self.lastReadCharUUID = uuid } }
 
+    func simulateBTStateUpdate(_ state: CBManagerState) {
+        delegate?.bleTransportDidUpdateState(state)
+    }
     func simulateDiscover(name: String = "GoPro 1234") {
         let info = GoProPeripheralInfo(identifier: UUID(), name: name, rssi: -50)
         delegate?.bleTransportDidDiscover(info)
@@ -448,5 +452,92 @@ final class GoProConnectionStateMachineTests: XCTestCase {
         } else {
             XCTFail("Expected .ready, got \(mgr.state)")
         }
+    }
+
+    // SM-21: .unknown → .poweredOn triggers exactly one scan
+    func test_SM_21_unknownToPoweredOn_singleScan() async {
+        let (mgr, ble, _, _) = makeManager()
+        ble.bluetoothState = .unknown
+        mgr.startConnection()
+        await awaitState(.waitingForBluetooth, on: mgr)
+        XCTAssertEqual(ble.scanStartCount, 0)
+        ble.simulateBTStateUpdate(.poweredOn)
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false },
+                                  on: mgr, label: "discovering")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertEqual(ble.scanStartCount, 1)
+    }
+
+    // SM-22: .unknown does not generate terminal error
+    func test_SM_22_unknownIsNotTerminal() async {
+        let (mgr, ble, _, _) = makeManager()
+        ble.bluetoothState = .unknown
+        mgr.startConnection()
+        await awaitState(.waitingForBluetooth, on: mgr)
+        XCTAssertFalse(mgr.state.isTerminal)
+        if case .bluetoothUnavailable = mgr.state { XCTFail("Should not be bluetoothUnavailable") }
+        if case .failed = mgr.state { XCTFail("Should not be failed") }
+    }
+
+    // SM-23: .poweredOff → explicit retry after BT turned on
+    func test_SM_23_poweredOffRecovery() async {
+        let (mgr, ble, _, _) = makeManager()
+        ble.bluetoothState = .poweredOff
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .bluetoothUnavailable = $0 { return true }; return false },
+                                  on: mgr, label: "btOff")
+        // BT turned on, but no auto-recovery — user must tap Connect again
+        ble.simulateBTStateUpdate(.poweredOn)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        if case .bluetoothUnavailable = mgr.state { } else {
+            XCTFail("Expected bluetoothUnavailable (no auto-recovery), got \(mgr.state)")
+        }
+        // Explicit retry via startConnection
+        ble.bluetoothState = .poweredOn
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false },
+                                  on: mgr, label: "discovering after retry")
+    }
+
+    // SM-24: .unauthorized → no scan, no auto-recovery
+    func test_SM_24_unauthorizedNoScan() async {
+        let (mgr, ble, _, _) = makeManager()
+        ble.bluetoothState = .unauthorized
+        mgr.startConnection()
+        await awaitStatePredicate({ if case .bluetoothUnavailable = $0 { return true }; return false },
+                                  on: mgr, label: "btUnauthorized")
+        XCTAssertEqual(ble.scanStartCount, 0)
+        ble.simulateBTStateUpdate(.poweredOn)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertEqual(ble.scanStartCount, 0)
+    }
+
+    // SM-25: Multiple Connect taps during waitingForBluetooth — no parallel scans
+    func test_SM_25_duplicateConnectBlocked() async {
+        let (mgr, ble, _, _) = makeManager()
+        ble.bluetoothState = .unknown
+        mgr.startConnection()
+        await awaitState(.waitingForBluetooth, on: mgr)
+        mgr.startConnection()
+        XCTAssertEqual(mgr.state, .waitingForBluetooth)
+        ble.simulateBTStateUpdate(.poweredOn)
+        await awaitStatePredicate({ if case .discovering = $0 { return true }; return false },
+                                  on: mgr, label: "discovering")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertEqual(ble.scanStartCount, 1)
+    }
+
+    // SM-26: Cancel during waitingForBluetooth prevents later auto-scan
+    func test_SM_26_cancelDuringWaiting() async {
+        let (mgr, ble, _, _) = makeManager()
+        ble.bluetoothState = .unknown
+        mgr.startConnection()
+        await awaitState(.waitingForBluetooth, on: mgr)
+        mgr.cancel()
+        XCTAssertEqual(mgr.state, .failed(.cancelled))
+        ble.simulateBTStateUpdate(.poweredOn)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertEqual(mgr.state, .failed(.cancelled))
+        XCTAssertEqual(ble.scanStartCount, 0)
     }
 }

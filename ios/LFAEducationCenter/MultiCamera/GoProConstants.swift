@@ -56,6 +56,7 @@ enum GoProSpec {
 
     // MARK: — Timeouts
 
+    static let bluetoothInitTimeout: TimeInterval = 10
     static let discoveryTimeout: TimeInterval = 15
     static let connectTimeout: TimeInterval = 10
     static let serviceDiscoveryTimeout: TimeInterval = 10
