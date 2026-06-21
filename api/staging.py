@@ -1,9 +1,10 @@
 """Minimal staging backend for GoPro connection smoke tests.
 
-Exposes exactly 4 endpoints:
+Exposes exactly 5 endpoints:
   POST /api/v1/auth/login
   POST /api/v1/auth/refresh
   GET  /api/v1/auth/me
+  GET  /api/v1/users/me
   GET  /api/v1/health
 
 No Celery, Redis, APScheduler, WebSocket, ML, static files, or media.
@@ -18,6 +19,9 @@ from app.api.api_v1.endpoints.auth import (
     login,
     refresh_token,
     read_users_me,
+)
+from app.api.api_v1.endpoints.users.profile import (
+    get_current_user_profile,
 )
 from app.schemas.auth import Token
 from app.schemas.user import User as UserSchema
@@ -36,6 +40,10 @@ auth_router.add_api_route("/login", login, methods=["POST"], response_model=Toke
 auth_router.add_api_route("/refresh", refresh_token, methods=["POST"], response_model=Token)
 auth_router.add_api_route("/me", read_users_me, methods=["GET"], response_model=UserSchema)
 app.include_router(auth_router)
+
+users_router = APIRouter(prefix="/api/v1/users", tags=["users"])
+users_router.add_api_route("/me", get_current_user_profile, methods=["GET"], response_model=UserSchema)
+app.include_router(users_router)
 
 
 @app.get("/api/v1/health", tags=["health"])
