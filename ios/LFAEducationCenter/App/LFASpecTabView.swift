@@ -41,6 +41,9 @@ private struct LFAProfileTab: View {
     @State private var isShowingAcademyID = false
     @State private var isShowingCredits   = false
     @State private var isShowingProfile   = false
+    #if DEBUG
+    @State private var isShowingGoProDebug = false
+    #endif
 
     var body: some View {
         NavigationView {
@@ -50,6 +53,9 @@ private struct LFAProfileTab: View {
                 academyIDRow
                 creditsRow
                 profileRow
+                #if DEBUG
+                goProDebugRow
+                #endif
                 returnToHubButton
                 signOutButton
             }
@@ -171,6 +177,39 @@ private struct LFAProfileTab: View {
         }
         .padding(.horizontal, Theme.Spacing.xl)
     }
+
+    #if DEBUG
+    private var goProDebugRow: some View {
+        Button {
+            isShowingGoProDebug = true
+        } label: {
+            HStack {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.system(size: 15))
+                    .foregroundColor(.orange)
+                    .frame(width: 28)
+                Text("GoPro Debug")
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.orange)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Theme.Color.muted)
+            }
+            .padding(.horizontal, Theme.Spacing.xl)
+            .frame(height: 48)
+        }
+        .fullScreenCover(isPresented: $isShowingGoProDebug) {
+            GoProConnectionDebugView(
+                manager: GoProConnectionManager(
+                    bleTransport: CoreBluetoothBLETransport(),
+                    httpTransport: GoProHTTPClientTransport(),
+                    wifiTransport: SystemWiFiTransport()
+                )
+            )
+        }
+    }
+    #endif
 
     private var signOutButton: some View {
         Button {

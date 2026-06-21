@@ -31,6 +31,10 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Bluetooth is used to connect and control the GoPro camera for multi-camera recording sessions.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Local network access is required to communicate with the GoPro camera over Wi-Fi for recording control and media transfer.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera is used for pose tracking in training sessions and for capturing mood expression photos on your player card.</string>
 	<key>UIApplicationSceneManifest</key>

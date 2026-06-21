@@ -20,6 +20,9 @@ struct MainHubView: View {
     // Session-level: shown when profile is 80/80 but licence is not active.
     // Not persisted — resets on app restart.
     @State private var showLicenceWarningBanner   = false
+    #if DEBUG
+    @State private var isShowingGoProDebug        = false
+    #endif
 
     private let gridColumns = [GridItem(.adaptive(minimum: 150), spacing: Theme.Spacing.sm)]
 
@@ -86,6 +89,9 @@ struct MainHubView: View {
                     academyIDButton
                     creditsButton
                     profileButton
+                    #if DEBUG
+                    goProDebugButton
+                    #endif
                     Divider().padding(.vertical, Theme.Spacing.xs)
                     signOutButton
                 }
@@ -140,6 +146,17 @@ struct MainHubView: View {
                 .environmentObject(authManager)
                 .environmentObject(dashboardVM)
         }
+        #if DEBUG
+        .fullScreenCover(isPresented: $isShowingGoProDebug) {
+            GoProConnectionDebugView(
+                manager: GoProConnectionManager(
+                    bleTransport: CoreBluetoothBLETransport(),
+                    httpTransport: GoProHTTPClientTransport(),
+                    wifiTransport: SystemWiFiTransport()
+                )
+            )
+        }
+        #endif
         .fullScreenCover(isPresented: $isShowingOnboarding) {
             LFAOnboardingView()
                 .environmentObject(authManager)
@@ -357,6 +374,29 @@ struct MainHubView: View {
             .cornerRadius(Theme.Radius.sm)
         }
     }
+
+    #if DEBUG
+    private var goProDebugButton: some View {
+        Button {
+            isShowingGoProDebug = true
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .foregroundColor(.orange)
+                Text("GoPro Debug")
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.orange)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(Theme.Color.muted)
+            }
+            .padding(Theme.Spacing.md)
+            .background(Color.orange.opacity(0.08))
+            .cornerRadius(Theme.Radius.sm)
+        }
+    }
+    #endif
 
     private var signOutButton: some View {
         Button {
