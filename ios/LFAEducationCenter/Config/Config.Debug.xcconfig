@@ -20,4 +20,9 @@
 // unexpanded or unreachable — that is intentional.
 
 SLASH = /
-API_BASE_URL = http:$(SLASH)$(SLASH)192.168.1.129:8000
+
+// ── Local backend (Mac LAN) ──
+// API_BASE_URL = http:$(SLASH)$(SLASH)192.168.1.129:8000
+
+// ── Vercel staging (public HTTPS — works over cellular + GoPro Wi-Fi) ──
+API_BASE_URL = https:$(SLASH)$(SLASH)practice-booking-system-git-deploy-vercel-staging-lfa-ec-test.vercel.app
