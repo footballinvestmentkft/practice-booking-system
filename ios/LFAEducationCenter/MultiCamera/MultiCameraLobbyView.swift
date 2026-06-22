@@ -97,11 +97,42 @@ struct MultiCameraLobbyView: View {
                     }
                 }
             }
+            Section("Capture") {
+                HStack {
+                    Text("Local").font(.caption).foregroundColor(.secondary)
+                    Spacer()
+                    Text(String(describing: vm.orchestrator.orchestrationState))
+                        .font(.caption.weight(.semibold))
+                }
+                HStack {
+                    Text("Clock").font(.caption).foregroundColor(.secondary)
+                    Spacer()
+                    Text(vm.orchestrator.clockQuality.rawValue)
+                        .font(.caption2)
+                        .foregroundColor(vm.orchestrator.clockQuality == .synchronized ? .green : .orange)
+                }
+                if let sid = vm.orchestrator.streamId {
+                    HStack {
+                        Text("Stream").font(.caption).foregroundColor(.secondary)
+                        Spacer()
+                        Text("id=\(sid)").font(.caption2)
+                    }
+                }
+            }
             Section("Actions") {
                 if vm.isInstructor && session.status == .lobby {
                     Button("Mark Devices Ready") { vm.transitionToDevicesReady() }
                         .font(.body.weight(.semibold))
                         .foregroundColor(.green)
+                } else if vm.isInstructor && session.status == .devicesReady {
+                    Button("Start Capture") { vm.startCapture() }
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(.green)
+                        .disabled(!vm.allAppleDevicesReadyPublic(session))
+                } else if vm.isInstructor && (session.status == .recording || session.status == .recordingPending) {
+                    Button("Stop Capture") { vm.stopCapture() }
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(.red)
                 } else if !vm.isInstructor {
                     Text("Várakozás az instructor-ra…")
                         .font(.caption).foregroundColor(.secondary)

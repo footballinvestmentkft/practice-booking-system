@@ -71,7 +71,7 @@ final class MultiCameraSessionContractTests: XCTestCase {
             let decoded = try JSONDecoder().decode(SessionStatus.self, from: json)
             XCTAssertEqual(s, decoded)
         }
-        XCTAssertEqual(SessionStatus.allCases.count, 7)
+        XCTAssertEqual(SessionStatus.allCases.count, 8)
     }
 
     // SCP-08: DeviceRole enum values

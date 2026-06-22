@@ -42,9 +42,9 @@ final class SessionCaptureOrchestrator: ObservableObject {
     private let clock: ScheduledCaptureClockManager
 
     init(timerProvider: OrchestrationTimerProvider = SystemOrchestrationTimer(),
-         clock: ScheduledCaptureClockManager = ScheduledCaptureClockManager()) {
+         clock: ScheduledCaptureClockManager? = nil) {
         self.timerProvider = timerProvider
-        self.clock = clock
+        self.clock = clock ?? ScheduledCaptureClockManager()
     }
 
     // MARK: — Arm

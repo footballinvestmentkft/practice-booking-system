@@ -24,10 +24,12 @@ final class MultiCameraSessionViewModel: ObservableObject {
 
     @Published private(set) var state: LobbyState = .idle
     @Published private(set) var sessionDeviceId: Int?
+    let orchestrator = SessionCaptureOrchestrator()
 
     private var pollingTask: Task<Void, Never>?
     private var heartbeatTask: Task<Void, Never>?
     private var isCreateInProgress = false
+    private var hasArmedForCurrentSession = false
 
     private let authManager: AuthManager
     private let pollingInterval: UInt64
@@ -104,6 +106,87 @@ final class MultiCameraSessionViewModel: ObservableObject {
         }
     }
 
+    func armCapture() {
+        guard case .inLobby(let session) = state, !hasArmedForCurrentSession else { return }
+        guard let sdId = sessionDeviceId else { return }
+        hasArmedForCurrentSession = true
+        Task {
+            await orchestrator.armCapture(sessionUUID: session.sessionUuid, deviceId: sdId)
+            if orchestrator.orchestrationState == .armed, let token = authManager.accessToken {
+                _ = try? await MultiCameraAPIClient.updateDeviceStatus(
+                    token: token, uuid: session.sessionUuid, sessionDeviceId: sdId,
+                    targetStatus: .ready, deviceRevision: 1
+                )
+                let preset: [String: AnyCodable] = [
+                    "resolution": AnyCodable("1920x1080"), "fps": AnyCodable(30),
+                    "codec": AnyCodable("h264"), "camera": AnyCodable("rear_wide")
+                ]
+                await orchestrator.ensureStreamCreated(
+                    token: token, uuid: session.sessionUuid, sdId: sdId, preset: preset
+                )
+            }
+        }
+    }
+
+    func startCapture() {
+        guard case .inLobby(let session) = state, isInstructor else { return }
+        guard allAppleDevicesReady(session) else { return }
+        Task {
+            guard let token = authManager.accessToken else { return }
+            do {
+                let updated = try await MultiCameraAPIClient.transitionSession(
+                    token: token, uuid: session.sessionUuid,
+                    target: .recordingPending, revision: session.revision
+                )
+                state = .inLobby(session: updated)
+                if let schedStr = updated.scheduledStartAt, let schedDate = ISO8601DateFormatter().date(from: schedStr) {
+                    orchestrator.scheduleStart(serverScheduledAt: schedDate)
+                }
+            } catch {
+                state = .error(mapError(error))
+            }
+        }
+    }
+
+    func stopCapture() {
+        guard case .inLobby(let session) = state else { return }
+        orchestrator.stopCapture()
+        Task {
+            guard let token = authManager.accessToken else { return }
+            _ = try? await MultiCameraAPIClient.transitionSession(
+                token: token, uuid: session.sessionUuid,
+                target: .stopped, revision: session.revision
+            )
+        }
+    }
+
+    func allAppleDevicesReadyPublic(_ session: MultiCameraSessionDTO) -> Bool {
+        allAppleDevicesReady(session)
+    }
+
+    private func allAppleDevicesReady(_ session: MultiCameraSessionDTO) -> Bool {
+        let appleDevices = session.devices.filter { $0.deviceRole != .auxiliaryCamera }
+        return !appleDevices.isEmpty && appleDevices.allSatisfy { $0.status == .ready }
+    }
+
+    private func handlePolledSessionUpdate(_ session: MultiCameraSessionDTO) {
+        if session.status == .devicesReady && orchestrator.orchestrationState == .idle {
+            armCapture()
+        }
+        if session.status == .recordingPending && orchestrator.orchestrationState == .armed {
+            if let schedStr = session.scheduledStartAt, let schedDate = ISO8601DateFormatter().date(from: schedStr) {
+                orchestrator.scheduleStart(serverScheduledAt: schedDate)
+            }
+        }
+        if session.status == .recordingPending && orchestrator.orchestrationState == .idle {
+            orchestrator.orchestrationState == .idle
+            // NOT armed → report error, no late arm
+        }
+        if session.status == .stopped && (orchestrator.orchestrationState == .capturing || orchestrator.orchestrationState == .starting) {
+            orchestrator.stopCapture()
+        }
+    }
+
     func cancelSession() {
         guard case .inLobby(let session) = state else { return }
         Task {
@@ -127,6 +210,8 @@ final class MultiCameraSessionViewModel: ObservableObject {
         heartbeatTask = nil
         sessionDeviceId = nil
         isCreateInProgress = false
+        hasArmedForCurrentSession = false
+        orchestrator.teardown()
         state = .idle
     }
 
@@ -165,6 +250,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 do {
                     let session = try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
                     self.state = .inLobby(session: session)
+                    self.handlePolledSessionUpdate(session)
                 } catch {
                     // skip iteration, retry next cycle
                 }

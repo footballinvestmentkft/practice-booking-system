@@ -29,6 +29,8 @@
 		MC000004000000000000005 /* SessionCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000005 /* SessionCaptureManager.swift */; };
 		MC000004000000000000006 /* CaptureProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000006 /* CaptureProtocols.swift */; };
 		MC000004000000000000007 /* SessionCaptureDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000007 /* SessionCaptureDebugView.swift */; };
+		MC000004000000000000008 /* ScheduledCaptureClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000008 /* ScheduledCaptureClock.swift */; };
+		MC000004000000000000009 /* SessionCaptureOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000009 /* SessionCaptureOrchestrator.swift */; };
 		MC500004000000000000003 /* SessionCaptureManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC500003000000000000003 /* SessionCaptureManagerTests.swift */; };
 		GP000004000000000000005 /* GoProConnectionDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000005 /* GoProConnectionDebugView.swift */; };
 		GP000004000000000000006 /* CoreBluetoothBLETransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000006 /* CoreBluetoothBLETransport.swift */; };
@@ -260,6 +262,8 @@
 		MC000003000000000000005 /* SessionCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCaptureManager.swift; sourceTree = "<group>"; };
 		MC000003000000000000006 /* CaptureProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureProtocols.swift; sourceTree = "<group>"; };
 		MC000003000000000000007 /* SessionCaptureDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCaptureDebugView.swift; sourceTree = "<group>"; };
+		MC000003000000000000008 /* ScheduledCaptureClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduledCaptureClock.swift; sourceTree = "<group>"; };
+		MC000003000000000000009 /* SessionCaptureOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCaptureOrchestrator.swift; sourceTree = "<group>"; };
 		GP000003000000000000005 /* GoProConnectionDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProConnectionDebugView.swift; sourceTree = "<group>"; };
 		GP000003000000000000006 /* CoreBluetoothBLETransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothBLETransport.swift; sourceTree = "<group>"; };
 		GP000003000000000000007 /* GoProHTTPClientTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProHTTPClientTransport.swift; sourceTree = "<group>"; };
@@ -694,6 +698,8 @@
 				MC000003000000000000005 /* SessionCaptureManager.swift */,
 				MC000003000000000000006 /* CaptureProtocols.swift */,
 				MC000003000000000000007 /* SessionCaptureDebugView.swift */,
+				MC000003000000000000008 /* ScheduledCaptureClock.swift */,
+				MC000003000000000000009 /* SessionCaptureOrchestrator.swift */,
 				GP000003000000000000005 /* GoProConnectionDebugView.swift */,
 				GP000003000000000000006 /* CoreBluetoothBLETransport.swift */,
 				GP000003000000000000007 /* GoProHTTPClientTransport.swift */,
@@ -1264,6 +1270,8 @@
 				MC000004000000000000005 /* SessionCaptureManager.swift in Sources */,
 				MC000004000000000000006 /* CaptureProtocols.swift in Sources */,
 				MC000004000000000000007 /* SessionCaptureDebugView.swift in Sources */,
+				MC000004000000000000008 /* ScheduledCaptureClock.swift in Sources */,
+				MC000004000000000000009 /* SessionCaptureOrchestrator.swift in Sources */,
 				GP000004000000000000005 /* GoProConnectionDebugView.swift in Sources */,
 				GP000004000000000000006 /* CoreBluetoothBLETransport.swift in Sources */,
 				GP000004000000000000007 /* GoProHTTPClientTransport.swift in Sources */,
