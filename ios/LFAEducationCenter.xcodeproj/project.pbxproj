@@ -23,6 +23,9 @@
 		GP000004000000000000003 /* GoProConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000003 /* GoProConnectionState.swift */; };
 		GP000004000000000000004 /* GoProConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000004 /* GoProConnectionManager.swift */; };
 		MC000004000000000000001 /* MultiCameraSessionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000001 /* MultiCameraSessionModels.swift */; };
+		MC000004000000000000002 /* MultiCameraAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000002 /* MultiCameraAPIClient.swift */; };
+		MC000004000000000000003 /* MultiCameraSessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000003 /* MultiCameraSessionViewModel.swift */; };
+		MC000004000000000000004 /* MultiCameraLobbyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000004 /* MultiCameraLobbyView.swift */; };
 		GP000004000000000000005 /* GoProConnectionDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000005 /* GoProConnectionDebugView.swift */; };
 		GP000004000000000000006 /* CoreBluetoothBLETransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000006 /* CoreBluetoothBLETransport.swift */; };
 		GP000004000000000000007 /* GoProHTTPClientTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000007 /* GoProHTTPClientTransport.swift */; };
@@ -247,6 +250,9 @@
 		GP000003000000000000003 /* GoProConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProConnectionState.swift; sourceTree = "<group>"; };
 		GP000003000000000000004 /* GoProConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProConnectionManager.swift; sourceTree = "<group>"; };
 		MC000003000000000000001 /* MultiCameraSessionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraSessionModels.swift; sourceTree = "<group>"; };
+		MC000003000000000000002 /* MultiCameraAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraAPIClient.swift; sourceTree = "<group>"; };
+		MC000003000000000000003 /* MultiCameraSessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraSessionViewModel.swift; sourceTree = "<group>"; };
+		MC000003000000000000004 /* MultiCameraLobbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraLobbyView.swift; sourceTree = "<group>"; };
 		GP000003000000000000005 /* GoProConnectionDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProConnectionDebugView.swift; sourceTree = "<group>"; };
 		GP000003000000000000006 /* CoreBluetoothBLETransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothBLETransport.swift; sourceTree = "<group>"; };
 		GP000003000000000000007 /* GoProHTTPClientTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProHTTPClientTransport.swift; sourceTree = "<group>"; };
@@ -674,6 +680,9 @@
 				GP000003000000000000003 /* GoProConnectionState.swift */,
 				GP000003000000000000004 /* GoProConnectionManager.swift */,
 				MC000003000000000000001 /* MultiCameraSessionModels.swift */,
+				MC000003000000000000002 /* MultiCameraAPIClient.swift */,
+				MC000003000000000000003 /* MultiCameraSessionViewModel.swift */,
+				MC000003000000000000004 /* MultiCameraLobbyView.swift */,
 				GP000003000000000000005 /* GoProConnectionDebugView.swift */,
 				GP000003000000000000006 /* CoreBluetoothBLETransport.swift */,
 				GP000003000000000000007 /* GoProHTTPClientTransport.swift */,
@@ -1237,6 +1246,9 @@
 				GP000004000000000000003 /* GoProConnectionState.swift in Sources */,
 				GP000004000000000000004 /* GoProConnectionManager.swift in Sources */,
 				MC000004000000000000001 /* MultiCameraSessionModels.swift in Sources */,
+				MC000004000000000000002 /* MultiCameraAPIClient.swift in Sources */,
+				MC000004000000000000003 /* MultiCameraSessionViewModel.swift in Sources */,
+				MC000004000000000000004 /* MultiCameraLobbyView.swift in Sources */,
 				GP000004000000000000005 /* GoProConnectionDebugView.swift in Sources */,
 				GP000004000000000000006 /* CoreBluetoothBLETransport.swift in Sources */,
 				GP000004000000000000007 /* GoProHTTPClientTransport.swift in Sources */,

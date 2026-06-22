@@ -22,6 +22,7 @@ struct MainHubView: View {
     @State private var showLicenceWarningBanner   = false
     #if DEBUG
     @State private var isShowingGoProDebug        = false
+    @State private var isShowingSessionLab        = false
     #endif
 
     private let gridColumns = [GridItem(.adaptive(minimum: 150), spacing: Theme.Spacing.sm)]
@@ -91,6 +92,7 @@ struct MainHubView: View {
                     profileButton
                     #if DEBUG
                     goProDebugButton
+                    sessionLabButton
                     #endif
                     Divider().padding(.vertical, Theme.Spacing.xs)
                     signOutButton
@@ -155,6 +157,9 @@ struct MainHubView: View {
                     wifiTransport: SystemWiFiTransport()
                 )
             )
+        }
+        .fullScreenCover(isPresented: $isShowingSessionLab) {
+            MultiCameraLobbyView(authManager: authManager)
         }
         #endif
         .fullScreenCover(isPresented: $isShowingOnboarding) {
@@ -393,6 +398,27 @@ struct MainHubView: View {
             }
             .padding(Theme.Spacing.md)
             .background(Color.orange.opacity(0.08))
+            .cornerRadius(Theme.Radius.sm)
+        }
+    }
+
+    private var sessionLabButton: some View {
+        Button {
+            isShowingSessionLab = true
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "person.2.wave.2")
+                    .foregroundColor(.blue)
+                Text("Session Lab")
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.blue)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(Theme.Color.muted)
+            }
+            .padding(Theme.Spacing.md)
+            .background(Color.blue.opacity(0.08))
             .cornerRadius(Theme.Radius.sm)
         }
     }
