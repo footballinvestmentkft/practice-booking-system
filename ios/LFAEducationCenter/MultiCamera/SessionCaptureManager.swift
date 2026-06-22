@@ -85,51 +85,128 @@ final class SessionCaptureManager: NSObject, ObservableObject {
 
     // MARK: — Configure
 
+    private static let prepareTimeoutSeconds: Double = 15
+
     func prepare(sessionUUID: String, deviceId: Int) {
         guard state == .configuring, !isTornDown else { return }
         self.sessionUUID = sessionUUID
         self.deviceId = deviceId
 
+        let prepareStarted = Date()
+        var didComplete = false
+
         captureQueue.async { [weak self] in
             guard let self else { return }
+            let log = { (msg: String) in print("[SessionCapture] \(msg)") }
+            log("prepare: captureQueue entered (thread: \(Thread.current))")
+            assert(!Thread.isMainThread, "Capture configure must not run on main thread")
+
+            log("prepare: beginConfiguration")
             self.captureSession.beginConfiguration()
+
+            log("prepare: sessionPreset = .high")
             self.captureSession.sessionPreset = .high
 
-            guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
-                  let videoInput = try? AVCaptureDeviceInput(device: camera),
-                  self.captureSession.canAddInput(videoInput) else {
-                DispatchQueue.main.async { self.state = .failed("Kamera nem elérhető") }
+            log("prepare: discovering rear camera...")
+            let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
+            log("prepare: rear camera = \(camera?.localizedName ?? "nil")")
+            guard let camera else {
                 self.captureSession.commitConfiguration()
+                DispatchQueue.main.async { if !self.isTornDown { self.state = .failed("Rear kamera nem található") } }
+                return
+            }
+
+            var videoInput: AVCaptureDeviceInput?
+            do {
+                videoInput = try AVCaptureDeviceInput(device: camera)
+                log("prepare: videoInput created")
+            } catch {
+                log("prepare: videoInput error: \(error)")
+                self.captureSession.commitConfiguration()
+                DispatchQueue.main.async { if !self.isTornDown { self.state = .failed("Video input hiba: \(error.localizedDescription)") } }
+                return
+            }
+
+            guard let videoInput, self.captureSession.canAddInput(videoInput) else {
+                log("prepare: canAddInput(video) = false")
+                self.captureSession.commitConfiguration()
+                DispatchQueue.main.async { if !self.isTornDown { self.state = .failed("Video input nem adható hozzá") } }
                 return
             }
             self.captureSession.addInput(videoInput)
+            log("prepare: video input added")
 
-            guard let mic = AVCaptureDevice.default(for: .audio),
-                  let audioInput = try? AVCaptureDeviceInput(device: mic),
-                  self.captureSession.canAddInput(audioInput) else {
-                DispatchQueue.main.async { self.state = .failed("Audio input nem elérhető") }
+            log("prepare: discovering microphone...")
+            let mic = AVCaptureDevice.default(for: .audio)
+            log("prepare: mic = \(mic?.localizedName ?? "nil")")
+            guard let mic else {
                 self.captureSession.commitConfiguration()
+                DispatchQueue.main.async { if !self.isTornDown { self.state = .failed("Mikrofon nem található") } }
+                return
+            }
+
+            var audioInput: AVCaptureDeviceInput?
+            do {
+                audioInput = try AVCaptureDeviceInput(device: mic)
+                log("prepare: audioInput created")
+            } catch {
+                log("prepare: audioInput error: \(error)")
+                self.captureSession.commitConfiguration()
+                DispatchQueue.main.async { if !self.isTornDown { self.state = .failed("Audio input hiba: \(error.localizedDescription)") } }
+                return
+            }
+
+            guard let audioInput, self.captureSession.canAddInput(audioInput) else {
+                log("prepare: canAddInput(audio) = false")
+                self.captureSession.commitConfiguration()
+                DispatchQueue.main.async { if !self.isTornDown { self.state = .failed("Audio input nem adható hozzá") } }
                 return
             }
             self.captureSession.addInput(audioInput)
+            log("prepare: audio input added")
 
-            guard self.captureSession.canAddOutput(self.movieOutput) else {
-                DispatchQueue.main.async { self.state = .failed("Movie output nem elérhető") }
+            let canAddMovie = self.captureSession.canAddOutput(self.movieOutput)
+            log("prepare: canAddOutput(movie) = \(canAddMovie)")
+            guard canAddMovie else {
                 self.captureSession.commitConfiguration()
+                DispatchQueue.main.async { if !self.isTornDown { self.state = .failed("Movie output nem adható hozzá") } }
                 return
             }
             self.captureSession.addOutput(self.movieOutput)
+            log("prepare: movie output added")
 
             if let conn = self.movieOutput.connection(with: .video), conn.isVideoOrientationSupported {
                 conn.videoOrientation = .portrait
+                log("prepare: orientation set to portrait")
             }
 
+            log("prepare: commitConfiguration")
             self.captureSession.commitConfiguration()
-            self.captureSession.startRunning()
 
+            log("prepare: startRunning() begin...")
+            self.captureSession.startRunning()
+            let isRunning = self.captureSession.isRunning
+            log("prepare: startRunning() done, isRunning=\(isRunning)")
+
+            didComplete = true
             DispatchQueue.main.async {
-                self.registerObservers()
-                self.state = .ready
+                guard !self.isTornDown else { return }
+                if isRunning {
+                    self.registerObservers()
+                    self.state = .ready
+                    log("prepare: state → ready")
+                } else {
+                    self.state = .failed("captureSession.isRunning = false startRunning() után")
+                    log("prepare: state → failed (not running)")
+                }
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.prepareTimeoutSeconds) { [weak self] in
+            guard let self, !didComplete, !self.isTornDown else { return }
+            if self.state == .configuring {
+                self.state = .failed("Kamera inicializálási timeout (\(Int(Self.prepareTimeoutSeconds))s)")
+                print("[SessionCapture] prepare: TIMEOUT after \(Self.prepareTimeoutSeconds)s")
             }
         }
     }
@@ -228,6 +305,7 @@ extension SessionCaptureManager: AVCaptureFileOutputRecordingDelegate {
     nonisolated func fileOutput(_ output: AVCaptureFileOutput, didStartRecordingTo fileURL: URL,
                                 from connections: [AVCaptureConnection]) {
         Task { @MainActor in
+            guard !isTornDown, state != .tornDown else { return }
             state = .capturing
         }
     }
@@ -235,6 +313,8 @@ extension SessionCaptureManager: AVCaptureFileOutputRecordingDelegate {
     nonisolated func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL,
                                 from connections: [AVCaptureConnection], error: Error?) {
         Task { @MainActor in
+            guard !isTornDown else { return }
+            if case .failed = state { return }
             if let error = error {
                 state = .failed("Capture error: \(error.localizedDescription)")
                 return

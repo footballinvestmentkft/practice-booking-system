@@ -339,6 +339,57 @@ final class SessionCaptureManagerTests: XCTestCase {
         customFS.availableStorage = 42
         let mgr = SessionCaptureManager(fileStore: customFS)
         XCTAssertEqual(mgr.state, .idle)
-        // The manager uses the injected store — verified by construction
+    }
+
+    // SC-28: Prepare timeout → failed, not stuck in configuring
+    func test_SC_28_prepare_timeout() async {
+        let (mgr, _, _) = makeManager()
+        await mgr.requestPermissions()
+        XCTAssertEqual(mgr.state, .configuring)
+        // On simulator, prepare() will either fail (no camera) or succeed
+        // The timeout mechanism ensures configuring doesn't persist forever
+        mgr.prepare(sessionUUID: "timeout-test", deviceId: 0)
+        // Wait longer than timeout (15s) — but in simulator the captureQueue
+        // returns quickly (failed or ready), so we just verify non-stuck
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        XCTAssertNotEqual(mgr.state, .configuring,
+            "State must not be stuck in configuring after prepare returns")
+    }
+
+    // SC-29: Late callback after teardown cannot override tornDown
+    func test_SC_29_late_callback_after_teardown() async {
+        let (mgr, _, fs) = makeManager()
+        mgr.teardown()
+        // Simulate a late delegate callback
+        let url = fs.outputURL(sessionUUID: "late", deviceId: 0)
+        mgr.fileOutput(AVCaptureMovieFileOutput(), didFinishRecordingTo: url, from: [], error: nil)
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        // tornDown state must not be overridden
+        XCTAssertEqual(mgr.state, .tornDown)
+    }
+
+    // SC-30: Late callback after failed cannot override failed
+    func test_SC_30_late_callback_after_failed() async {
+        let (mgr, _, fs) = makeManager(camStatus: .denied)
+        await mgr.requestPermissions()
+        guard case .failed = mgr.state else { XCTFail("Expected failed"); return }
+        let url = fs.outputURL(sessionUUID: "late", deviceId: 0)
+        mgr.fileOutput(AVCaptureMovieFileOutput(), didFinishRecordingTo: url, from: [], error: nil)
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        if case .failed = mgr.state { } else { XCTFail("Failed state must not be overridden") }
+    }
+
+    // SC-31: Prepare on simulator → either ready or failed, never stuck
+    func test_SC_31_prepare_deterministic() async {
+        let (mgr, _, _) = makeManager()
+        await mgr.requestPermissions()
+        mgr.prepare(sessionUUID: "det-test", deviceId: 0)
+        try? await Task.sleep(nanoseconds: 2_000_000_000)
+        let validEndStates: [Bool] = [
+            mgr.state == .ready,
+            { if case .failed = mgr.state { return true }; return false }()
+        ]
+        XCTAssertTrue(validEndStates.contains(true),
+            "State must be ready or failed, got \(mgr.state)")
     }
 }
