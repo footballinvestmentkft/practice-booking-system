@@ -100,6 +100,78 @@ enum MultiCameraAPIClient {
             token: token
         )
     }
+
+    static func updateDeviceStatus(token: String, uuid: String, sessionDeviceId: Int,
+                                    targetStatus: MCDeviceStatus, deviceRevision: Int) async throws -> SessionDeviceDTO {
+        try await APIClient.patch(
+            path: "\(base)/sessions/\(uuid)/devices/\(sessionDeviceId)/status",
+            body: DeviceStatusUpdateBody(targetStatus: targetStatus, deviceRevision: deviceRevision),
+            token: token
+        )
+    }
+
+    static func createCaptureStream(token: String, uuid: String, sessionDeviceId: Int,
+                                     streamType: MCStreamType, presetJson: [String: AnyCodable]) async throws -> CaptureStreamDTO {
+        try await APIClient.post(
+            path: "\(base)/sessions/\(uuid)/devices/\(sessionDeviceId)/streams",
+            body: CreateStreamBody(streamType: streamType, presetJson: presetJson),
+            token: token
+        )
+    }
+
+    static func updateCaptureStream(token: String, uuid: String, sessionDeviceId: Int, streamId: Int,
+                                     startedAt: String? = nil, stoppedAt: String? = nil,
+                                     captureResult: String? = nil, streamRevision: Int) async throws -> CaptureStreamDTO {
+        try await APIClient.patch(
+            path: "\(base)/sessions/\(uuid)/devices/\(sessionDeviceId)/streams/\(streamId)",
+            body: UpdateStreamBody(startedAt: startedAt, stoppedAt: stoppedAt,
+                                   captureResult: captureResult, streamRevision: streamRevision),
+            token: token
+        )
+    }
+
+    static func getSessionWithTiming(token: String, uuid: String) async throws -> TimedSessionResponse {
+        let start = ProcessInfo.processInfo.systemUptime
+        let session: MultiCameraSessionDTO = try await APIClient.get(path: "\(base)/sessions/\(uuid)", token: token)
+        let elapsed = ProcessInfo.processInfo.systemUptime - start
+        return TimedSessionResponse(session: session, requestDuration: elapsed)
+    }
+}
+
+struct TimedSessionResponse {
+    let session: MultiCameraSessionDTO
+    let requestDuration: TimeInterval
 }
 
 private struct EmptyBody: Codable {}
+
+private struct DeviceStatusUpdateBody: Codable {
+    let targetStatus: MCDeviceStatus
+    let deviceRevision: Int
+    enum CodingKeys: String, CodingKey {
+        case targetStatus = "target_status"
+        case deviceRevision = "device_revision"
+    }
+}
+
+private struct CreateStreamBody: Codable {
+    let streamType: MCStreamType
+    let presetJson: [String: AnyCodable]
+    enum CodingKeys: String, CodingKey {
+        case streamType = "stream_type"
+        case presetJson = "preset_json"
+    }
+}
+
+private struct UpdateStreamBody: Codable {
+    let startedAt: String?
+    let stoppedAt: String?
+    let captureResult: String?
+    let streamRevision: Int
+    enum CodingKeys: String, CodingKey {
+        case startedAt = "started_at"
+        case stoppedAt = "stopped_at"
+        case captureResult = "capture_result"
+        case streamRevision = "stream_revision"
+    }
+}
