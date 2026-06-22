@@ -22,11 +22,14 @@
 		GP000004000000000000002 /* GoProTransportProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000002 /* GoProTransportProtocols.swift */; };
 		GP000004000000000000003 /* GoProConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000003 /* GoProConnectionState.swift */; };
 		GP000004000000000000004 /* GoProConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000004 /* GoProConnectionManager.swift */; };
+		MC000004000000000000001 /* MultiCameraSessionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000001 /* MultiCameraSessionModels.swift */; };
 		GP000004000000000000005 /* GoProConnectionDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000005 /* GoProConnectionDebugView.swift */; };
 		GP000004000000000000006 /* CoreBluetoothBLETransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000006 /* CoreBluetoothBLETransport.swift */; };
 		GP000004000000000000007 /* GoProHTTPClientTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000007 /* GoProHTTPClientTransport.swift */; };
 		GP000004000000000000008 /* SystemWiFiTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000008 /* SystemWiFiTransport.swift */; };
 		GP500004000000000000001 /* GoProConnectionStateMachineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP500003000000000000001 /* GoProConnectionStateMachineTests.swift */; };
+		MC500004000000000000001 /* MultiCameraSessionContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC500003000000000000001 /* MultiCameraSessionContractTests.swift */; };
+		MC500004000000000000002 /* session_full.json in Resources */ = {isa = PBXBuildFile; fileRef = MC500003000000000000002 /* session_full.json */; };
 		BT500004000000000000001 /* BallTrainingHubVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT500003000000000000001 /* BallTrainingHubVMTests.swift */; };
 		SK500004000000000000001 /* CanonicalJointTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SK500003000000000000001 /* CanonicalJointTests.swift */; };
 		SK500004000000000000002 /* LegacySkeletonAdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SK500003000000000000002 /* LegacySkeletonAdapterTests.swift */; };
@@ -243,11 +246,14 @@
 		GP000003000000000000002 /* GoProTransportProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProTransportProtocols.swift; sourceTree = "<group>"; };
 		GP000003000000000000003 /* GoProConnectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProConnectionState.swift; sourceTree = "<group>"; };
 		GP000003000000000000004 /* GoProConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProConnectionManager.swift; sourceTree = "<group>"; };
+		MC000003000000000000001 /* MultiCameraSessionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraSessionModels.swift; sourceTree = "<group>"; };
 		GP000003000000000000005 /* GoProConnectionDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProConnectionDebugView.swift; sourceTree = "<group>"; };
 		GP000003000000000000006 /* CoreBluetoothBLETransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothBLETransport.swift; sourceTree = "<group>"; };
 		GP000003000000000000007 /* GoProHTTPClientTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProHTTPClientTransport.swift; sourceTree = "<group>"; };
 		GP000003000000000000008 /* SystemWiFiTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemWiFiTransport.swift; sourceTree = "<group>"; };
 		GP500003000000000000001 /* GoProConnectionStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProConnectionStateMachineTests.swift; sourceTree = "<group>"; };
+		MC500003000000000000001 /* MultiCameraSessionContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraSessionContractTests.swift; sourceTree = "<group>"; };
+		MC500003000000000000002 /* session_full.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "session_full.json"; path = "../tests/fixtures/multicamera/session_full.json"; sourceTree = SOURCE_ROOT; };
 		BT500003000000000000001 /* BallTrainingHubVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingHubVMTests.swift; sourceTree = "<group>"; };
 		SK500003000000000000001 /* CanonicalJointTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalJointTests.swift; sourceTree = "<group>"; };
 		SK500003000000000000002 /* LegacySkeletonAdapterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacySkeletonAdapterTests.swift; sourceTree = "<group>"; };
@@ -667,6 +673,7 @@
 				GP000003000000000000002 /* GoProTransportProtocols.swift */,
 				GP000003000000000000003 /* GoProConnectionState.swift */,
 				GP000003000000000000004 /* GoProConnectionManager.swift */,
+				MC000003000000000000001 /* MultiCameraSessionModels.swift */,
 				GP000003000000000000005 /* GoProConnectionDebugView.swift */,
 				GP000003000000000000006 /* CoreBluetoothBLETransport.swift */,
 				GP000003000000000000007 /* GoProHTTPClientTransport.swift */,
@@ -948,6 +955,8 @@
 			isa = PBXGroup;
 			children = (
 				GP500003000000000000001 /* GoProConnectionStateMachineTests.swift */,
+				MC500003000000000000001 /* MultiCameraSessionContractTests.swift */,
+				MC500003000000000000002 /* session_full.json */,
 			);
 			path = MultiCamera;
 			sourceTree = "<group>";
@@ -1059,6 +1068,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				SK600004000000000000001 /* frame_v2_full.json in Resources */,
+				MC500004000000000000002 /* session_full.json in Resources */,
 				SK600004000000000000002 /* frame_v2_2d_only.json in Resources */,
 				SK600004000000000000003 /* frame_v1_source.json in Resources */,
 				SK600004000000000000004 /* frame_v1_adapted.json in Resources */,
@@ -1226,6 +1236,7 @@
 				GP000004000000000000002 /* GoProTransportProtocols.swift in Sources */,
 				GP000004000000000000003 /* GoProConnectionState.swift in Sources */,
 				GP000004000000000000004 /* GoProConnectionManager.swift in Sources */,
+				MC000004000000000000001 /* MultiCameraSessionModels.swift in Sources */,
 				GP000004000000000000005 /* GoProConnectionDebugView.swift in Sources */,
 				GP000004000000000000006 /* CoreBluetoothBLETransport.swift in Sources */,
 				GP000004000000000000007 /* GoProHTTPClientTransport.swift in Sources */,
@@ -1285,6 +1296,7 @@
 				SK500004000000000000001 /* CanonicalJointTests.swift in Sources */,
 				SK500004000000000000002 /* LegacySkeletonAdapterTests.swift in Sources */,
 				GP500004000000000000001 /* GoProConnectionStateMachineTests.swift in Sources */,
+				MC500004000000000000001 /* MultiCameraSessionContractTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
