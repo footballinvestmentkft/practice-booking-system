@@ -15,6 +15,7 @@ from ..database import Base
 class SessionStatus(str, enum.Enum):
     LOBBY = "lobby"
     DEVICES_READY = "devices_ready"
+    RECORDING_PENDING = "recording_pending"
     RECORDING = "recording"
     STOPPED = "stopped"
     FINALIZING = "finalizing"
@@ -54,7 +55,8 @@ class StreamType(str, enum.Enum):
 
 SESSION_TRANSITIONS = {
     SessionStatus.LOBBY: {SessionStatus.DEVICES_READY, SessionStatus.CANCELLED},
-    SessionStatus.DEVICES_READY: {SessionStatus.RECORDING, SessionStatus.LOBBY, SessionStatus.CANCELLED},
+    SessionStatus.DEVICES_READY: {SessionStatus.RECORDING_PENDING, SessionStatus.LOBBY, SessionStatus.CANCELLED},
+    SessionStatus.RECORDING_PENDING: {SessionStatus.RECORDING, SessionStatus.DEVICES_READY, SessionStatus.CANCELLED},
     SessionStatus.RECORDING: {SessionStatus.STOPPED},
     SessionStatus.STOPPED: {SessionStatus.FINALIZING, SessionStatus.CANCELLED},
     SessionStatus.FINALIZING: {SessionStatus.COMPLETED},
@@ -86,6 +88,7 @@ class MultiCameraSession(Base):
     max_devices = Column(SmallInteger, nullable=False, server_default="4")
     revision = Column(Integer, nullable=False, server_default="1")
     calibration_json = Column(JSONB, nullable=True)
+    scheduled_start_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     started_at = Column(DateTime(timezone=True))
     stopped_at = Column(DateTime(timezone=True))
@@ -94,7 +97,7 @@ class MultiCameraSession(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('lobby','devices_ready','recording','stopped','finalizing','completed','cancelled')",
+            "status IN ('lobby','devices_ready','recording_pending','recording','stopped','finalizing','completed','cancelled')",
             name="ck_mcs_status",
         ),
         CheckConstraint("max_participants BETWEEN 1 AND 4", name="ck_mcs_max_participants"),
@@ -174,11 +177,16 @@ class CaptureStream(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     started_at = Column(DateTime(timezone=True))
     stopped_at = Column(DateTime(timezone=True))
+    capture_result = Column(String(20))
 
     __table_args__ = (
         CheckConstraint(
             "stream_type IN ('video','skeleton_2d','skeleton_3d','audio','telemetry')",
             name="ck_cs_stream_type",
+        ),
+        CheckConstraint(
+            "capture_result IS NULL OR capture_result IN ('success','error','interrupted')",
+            name="ck_cs_capture_result",
         ),
     )
 
