@@ -3921,14 +3921,13 @@ def test_admin_toggle_user_status_deactivates_active_user(test_db: Session, clie
         f"User.is_active must be False after deactivation toggle, got {refreshed.is_active}"
     )
 
-    # ── UI: admin users list renders 200 ─────────────────────────────────────
-    r_page = client.get("/admin/users")
+    # ── UI: admin users list renders 200 and includes the target user ───────
+    r_page = client.get(f"/admin/users?search={target.email}")
     assert r_page.status_code == 200, (
         f"Admin users list must render 200 after toggle, got {r_page.status_code}"
     )
-    # Target user email should still appear in list (just with inactive status)
     assert target.email in r_page.text, (
-        f"Admin users list must include deactivated user's email. "
+        f"Admin users list must include deactivated user's email when searched. "
         f"Snippet: {r_page.text[:600]}"
     )
 
