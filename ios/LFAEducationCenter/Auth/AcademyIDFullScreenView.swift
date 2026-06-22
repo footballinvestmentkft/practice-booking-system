@@ -145,7 +145,7 @@ struct AcademyIDFullScreenView: View {
         }
         .navigationViewStyle(.stack)
         .sheet(isPresented: $isShowingColorPicker) {
-            AcademyIDColorPickerView(colorVM: colorVM)
+            AcademyIDColorPickerView(colorVM: colorVM, cardStatus: cardStatus)
                 .environmentObject(authManager)
         }
         .fullScreenCover(isPresented: $isShowingCardPreview) {

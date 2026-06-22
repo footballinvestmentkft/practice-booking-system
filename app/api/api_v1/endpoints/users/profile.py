@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone
 import json
 
@@ -27,12 +28,19 @@ from .....services.academy_id_service import (
     assign_lfa_academy_id,
     ensure_public_token,
 )
+from .....models.card_color_ownership import CardColorOwnership
 from .....services.academy_id_color_service import (
-    get_all_colors,
+    ACADEMY_ID_COLORS,
+    get_all_colors_with_ownership,
     get_active_color_id,
-    set_active_color,
+    get_color_by_id,
+    is_color_accessible,
     is_valid_color,
+    set_active_color,
+    unlock_academy_id_color as _unlock_academy_id_color,
+    UnlockColorResult,
 )
+from .....services.credit_service import InsufficientCreditsError
 from .....config import settings as _settings
 from .helpers import validate_email_unique, validate_nickname
 
@@ -284,7 +292,7 @@ def get_academy_id(
     }
 
 
-# ── Academy ID — Colour system (Phase 1: free colours only) ──────────────────
+# ── Academy ID — Colour system (Phase 2: free + premium colours) ─────────────
 
 def _require_lfa_license(db: Session, user: User) -> UserLicense:
     """Return the user's LFA Football Player licence or raise 404."""
@@ -312,30 +320,16 @@ def get_academy_id_colors(
     """
     Return the Academy ID colour palette and the user's active colour.
 
-    Phase 1: three free colours (official / ivory / charcoal).
-    All colours have is_owned=true and credit_cost=0.
-    Phase 2 will add premium colours with ownership checks.
+    Free colours (official / ivory / charcoal): is_owned=True for everyone.
+    Premium colours (navy / burgundy / forest): is_owned=True only if purchased.
 
     Requires an active LFA Football Player licence (404 otherwise).
     """
-    lfa_license   = _require_lfa_license(db, current_user)
-    active_color  = get_active_color_id(lfa_license)
-    colors        = get_all_colors()
-
+    lfa_license  = _require_lfa_license(db, current_user)
+    active_color = get_active_color_id(lfa_license)
     return {
         "active_color_id": active_color,
-        "colors": [
-            {
-                "id":          c.id,
-                "label":       c.label,
-                "dot_color":   c.dot_color,
-                "is_premium":  c.is_premium,
-                "credit_cost": c.credit_cost,
-                "is_owned":    True,   # Phase 1: all colours are free → always owned
-                "sort_order":  c.sort_order,
-            }
-            for c in colors
-        ],
+        "colors": get_all_colors_with_ownership(db, current_user.id),
     }
 
 
@@ -352,15 +346,72 @@ def select_academy_id_color(
     """
     Set the active Academy ID colour for the current user.
 
-    Phase 1: only free colours accepted (official / ivory / charcoal).
-    Returns the new active_color_id on success.
+    Free colours always selectable.
+    Premium colours require prior purchase via /unlock.
+    403 color_not_owned if premium colour not yet purchased.
     """
+    valid_ids = ", ".join(c.id for c in ACADEMY_ID_COLORS)
     if not is_valid_color(payload.color_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unknown Academy ID colour: {payload.color_id!r}. "
-                   f"Valid options: official, ivory, charcoal.",
+            detail=f"Unknown Academy ID colour: {payload.color_id!r}. Valid options: {valid_ids}.",
         )
     lfa_license = _require_lfa_license(db, current_user)
-    new_color   = set_active_color(db, lfa_license, payload.color_id)
+    if not is_color_accessible(db, current_user.id, payload.color_id):
+        color = get_color_by_id(payload.color_id)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "color_not_owned", "color_id": payload.color_id,
+                    "credit_cost": color.credit_cost if color else 0},
+        )
+    new_color = set_active_color(db, lfa_license, payload.color_id)
     return {"ok": True, "active_color_id": new_color}
+
+
+class _ColorUnlockRequest(BaseModel):
+    color_id: str
+
+
+@router.post("/me/academy-id/colors/unlock")
+def unlock_academy_id_color(
+    payload:      _ColorUnlockRequest,
+    db:           Session = Depends(get_db),
+    current_user: User    = Depends(get_current_user),
+) -> Any:
+    """
+    Purchase a premium Academy ID colour (300 CR). Idempotent.
+
+    400 color_unknown      — color_id not in palette
+    400 color_is_free      — attempting to unlock a free colour
+    402 insufficient_credits — not enough credits
+    """
+    try:
+        result: UnlockColorResult = _unlock_academy_id_color(
+            db=db, user=current_user, color_id=payload.color_id,
+        )
+    except ValueError as exc:
+        code = str(exc)
+        if code == "color_unknown":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"code": "color_unknown", "color_id": payload.color_id},
+            )
+        if code == "color_is_free":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"code": "color_is_free", "color_id": payload.color_id},
+            )
+        raise
+    except InsufficientCreditsError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={"code": "insufficient_credits", "required": exc.required, "available": exc.available},
+        )
+    except IntegrityError:
+        # Race condition: SAVEPOINT rolled back both credit deduction and INSERT.
+        db.rollback()
+        return {"ok": True, "color_id": payload.color_id, "already_owned": True,
+                "credits_charged": 0, "balance_after": current_user.credit_balance}
+
+    return {"ok": result.ok, "color_id": result.color_id, "already_owned": result.already_owned,
+            "credits_charged": result.credits_charged, "balance_after": result.credit_balance}
