@@ -6542,6 +6542,62 @@
         "title": "BookingWithRelations",
         "type": "object"
       },
+      "CalibrationPlaceholder": {
+        "properties": {
+          "calibration_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibration Id"
+          },
+          "intrinsic_cameras": {
+            "items": {},
+            "title": "Intrinsic Cameras",
+            "type": "array"
+          },
+          "schema_version": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "stereo_pairs": {
+            "items": {},
+            "title": "Stereo Pairs",
+            "type": "array"
+          },
+          "sync_metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Metadata"
+          },
+          "world_origin_camera_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "World Origin Camera Id"
+          }
+        },
+        "title": "CalibrationPlaceholder",
+        "type": "object"
+      },
       "CampusCreate": {
         "description": "Schema for creating a new campus",
         "properties": {
@@ -6938,6 +6994,69 @@
           "enrollments_rejected"
         ],
         "title": "CancellationResponse",
+        "type": "object"
+      },
+      "CaptureStreamDTO": {
+        "description": "Contract placeholder. Multiple streams per device+type\n(recording attempts, restarts) handled in PR-4B3B.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "preset_json": {
+            "title": "Preset Json",
+            "type": "object"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "session_device_id": {
+            "title": "Session Device Id",
+            "type": "integer"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "stopped_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stopped At"
+          },
+          "stream_type": {
+            "$ref": "#/components/schemas/StreamType"
+          }
+        },
+        "required": [
+          "id",
+          "session_device_id",
+          "stream_type",
+          "preset_json",
+          "revision",
+          "created_at"
+        ],
+        "title": "CaptureStreamDTO",
         "type": "object"
       },
       "CategoryOverride": {
@@ -8333,6 +8452,26 @@
         "title": "CreateAssessmentResponse",
         "type": "object"
       },
+      "CreateSessionRequest": {
+        "properties": {
+          "max_devices": {
+            "default": 4,
+            "maximum": 8.0,
+            "minimum": 1.0,
+            "title": "Max Devices",
+            "type": "integer"
+          },
+          "max_participants": {
+            "default": 2,
+            "maximum": 4.0,
+            "minimum": 1.0,
+            "title": "Max Participants",
+            "type": "integer"
+          }
+        },
+        "title": "CreateSessionRequest",
+        "type": "object"
+      },
       "DeclineApplicationRequest": {
         "description": "Request schema for declining an application",
         "properties": {
@@ -8408,6 +8547,37 @@
         },
         "title": "DemoteRequest",
         "type": "object"
+      },
+      "DeviceRole": {
+        "enum": [
+          "player_primary",
+          "player_secondary",
+          "instructor_primary",
+          "auxiliary_camera"
+        ],
+        "title": "DeviceRole",
+        "type": "string"
+      },
+      "DeviceStatus": {
+        "enum": [
+          "registered",
+          "ready",
+          "recording",
+          "stopped",
+          "disconnected",
+          "error"
+        ],
+        "title": "DeviceStatus",
+        "type": "string"
+      },
+      "DeviceType": {
+        "enum": [
+          "iphone",
+          "ipad",
+          "gopro"
+        ],
+        "title": "DeviceType",
+        "type": "string"
       },
       "DirectAssignmentRequest": {
         "description": "Request schema for direct instructor assignment",
@@ -10068,6 +10238,25 @@
         "title": "HeadToHeadParticipantResult",
         "type": "object"
       },
+      "HeartbeatResponse": {
+        "properties": {
+          "last_heartbeat": {
+            "format": "date-time",
+            "title": "Last Heartbeat",
+            "type": "string"
+          },
+          "session_device_id": {
+            "title": "Session Device Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_device_id",
+          "last_heartbeat"
+        ],
+        "title": "HeartbeatResponse",
+        "type": "object"
+      },
       "HireFromApplicationRequest": {
         "description": "Schema for hiring from job application (Pathway B)",
         "properties": {
@@ -11323,6 +11512,18 @@
           "positions"
         ],
         "title": "JobBoardResponse",
+        "type": "object"
+      },
+      "JoinSessionRequest": {
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/ParticipantRole"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "JoinSessionRequest",
         "type": "object"
       },
       "JugglingCompleteOut": {
@@ -13870,6 +14071,137 @@
         "title": "MoveStudentRequest",
         "type": "object"
       },
+      "MultiCameraSessionDTO": {
+        "properties": {
+          "calibration": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalibrationPlaceholder"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cancelled_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_user_id": {
+            "title": "Created By User Id",
+            "type": "integer"
+          },
+          "devices": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/SessionDeviceDTO"
+            },
+            "title": "Devices",
+            "type": "array"
+          },
+          "finalized_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalized At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "max_devices": {
+            "title": "Max Devices",
+            "type": "integer"
+          },
+          "max_participants": {
+            "title": "Max Participants",
+            "type": "integer"
+          },
+          "participants": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/SessionParticipantDTO"
+            },
+            "title": "Participants",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "session_uuid": {
+            "format": "uuid",
+            "title": "Session Uuid",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SessionStatus"
+          },
+          "stopped_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stopped At"
+          },
+          "streams": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/CaptureStreamDTO"
+            },
+            "title": "Streams",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "session_uuid",
+          "status",
+          "created_by_user_id",
+          "max_participants",
+          "max_devices",
+          "revision",
+          "created_at"
+        ],
+        "title": "MultiCameraSessionDTO",
+        "type": "object"
+      },
       "NextLevel": {
         "properties": {
           "current_xp": {
@@ -14476,6 +14808,15 @@
         ],
         "title": "OpsScenarioResponse",
         "type": "object"
+      },
+      "ParticipantRole": {
+        "enum": [
+          "instructor",
+          "player",
+          "observer"
+        ],
+        "title": "ParticipantRole",
+        "type": "string"
       },
       "PaymentVerificationRequest": {
         "description": "Request body for payment verification",
@@ -17402,6 +17743,84 @@
         "title": "RefreshToken",
         "type": "object"
       },
+      "RegisterDeviceRequest": {
+        "properties": {
+          "ble_identifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ble Identifier"
+          },
+          "device_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Name"
+          },
+          "device_role": {
+            "$ref": "#/components/schemas/DeviceRole"
+          },
+          "device_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeviceType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "device_uuid": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Uuid"
+          },
+          "managed_by_device_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Managed By Device Id"
+          },
+          "participant_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Participant Id"
+          }
+        },
+        "required": [
+          "device_role"
+        ],
+        "title": "RegisterDeviceRequest",
+        "type": "object"
+      },
       "RegisterWithInvitation": {
         "description": "Registration request with invitation code",
         "properties": {
@@ -19716,6 +20135,94 @@
         "title": "SessionCreate",
         "type": "object"
       },
+      "SessionDeviceDTO": {
+        "properties": {
+          "device_id": {
+            "title": "Device Id",
+            "type": "integer"
+          },
+          "device_role": {
+            "$ref": "#/components/schemas/DeviceRole"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_heartbeat": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Heartbeat"
+          },
+          "managed_by_device_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Managed By Device Id"
+          },
+          "participant_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Participant Id"
+          },
+          "registered_at": {
+            "format": "date-time",
+            "title": "Registered At",
+            "type": "string"
+          },
+          "removed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Removed At"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DeviceStatus"
+          }
+        },
+        "required": [
+          "id",
+          "session_id",
+          "device_id",
+          "device_role",
+          "status",
+          "revision",
+          "registered_at"
+        ],
+        "title": "SessionDeviceDTO",
+        "type": "object"
+      },
       "SessionGenerationRequest": {
         "description": "Request body for session generation",
         "properties": {
@@ -19827,6 +20334,56 @@
           "size"
         ],
         "title": "SessionList",
+        "type": "object"
+      },
+      "SessionParticipantDTO": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "joined_at": {
+            "format": "date-time",
+            "title": "Joined At",
+            "type": "string"
+          },
+          "left_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Left At"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "role": {
+            "$ref": "#/components/schemas/ParticipantRole"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "integer"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "session_id",
+          "user_id",
+          "role",
+          "revision",
+          "joined_at"
+        ],
+        "title": "SessionParticipantDTO",
         "type": "object"
       },
       "SessionSegmentCreate": {
@@ -20029,6 +20586,19 @@
         },
         "title": "SessionSegmentUpdate",
         "type": "object"
+      },
+      "SessionStatus": {
+        "enum": [
+          "lobby",
+          "devices_ready",
+          "recording",
+          "stopped",
+          "finalizing",
+          "completed",
+          "cancelled"
+        ],
+        "title": "SessionStatus",
+        "type": "string"
       },
       "SessionSummaryResponse": {
         "properties": {
@@ -21231,6 +21801,17 @@
         ],
         "title": "StatusTransitionResponse",
         "type": "object"
+      },
+      "StreamType": {
+        "enum": [
+          "video",
+          "skeleton_2d",
+          "skeleton_3d",
+          "audio",
+          "telemetry"
+        ],
+        "title": "StreamType",
+        "type": "string"
       },
       "StudentStatus": {
         "properties": {
@@ -23022,6 +23603,23 @@
           "created_at"
         ],
         "title": "TransactionHistoryItem",
+        "type": "object"
+      },
+      "TransitionRequest": {
+        "properties": {
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "target_status": {
+            "$ref": "#/components/schemas/SessionStatus"
+          }
+        },
+        "required": [
+          "target_status",
+          "revision"
+        ],
+        "title": "TransitionRequest",
         "type": "object"
       },
       "UpdateHoursRequest": {
@@ -50515,6 +51113,331 @@
         "summary": "Update Message",
         "tags": [
           "messages"
+        ]
+      }
+    },
+    "/api/v1/multicamera/sessions": {
+      "post": {
+        "operationId": "create_session_api_v1_multicamera_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiCameraSessionDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Session",
+        "tags": [
+          "multicamera"
+        ]
+      }
+    },
+    "/api/v1/multicamera/sessions/{session_uuid}": {
+      "get": {
+        "operationId": "get_session_api_v1_multicamera_sessions__session_uuid__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_uuid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiCameraSessionDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Session",
+        "tags": [
+          "multicamera"
+        ]
+      }
+    },
+    "/api/v1/multicamera/sessions/{session_uuid}/devices": {
+      "post": {
+        "operationId": "register_device_api_v1_multicamera_sessions__session_uuid__devices_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_uuid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDeviceDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Register Device",
+        "tags": [
+          "multicamera"
+        ]
+      }
+    },
+    "/api/v1/multicamera/sessions/{session_uuid}/devices/{session_device_id}/heartbeat": {
+      "post": {
+        "operationId": "heartbeat_api_v1_multicamera_sessions__session_uuid__devices__session_device_id__heartbeat_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_uuid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "session_device_id",
+            "required": true,
+            "schema": {
+              "title": "Session Device Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Heartbeat",
+        "tags": [
+          "multicamera"
+        ]
+      }
+    },
+    "/api/v1/multicamera/sessions/{session_uuid}/join": {
+      "post": {
+        "operationId": "join_session_api_v1_multicamera_sessions__session_uuid__join_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_uuid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionParticipantDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Join Session",
+        "tags": [
+          "multicamera"
+        ]
+      }
+    },
+    "/api/v1/multicamera/sessions/{session_uuid}/status": {
+      "patch": {
+        "operationId": "transition_session_api_v1_multicamera_sessions__session_uuid__status_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_uuid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiCameraSessionDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Transition Session",
+        "tags": [
+          "multicamera"
         ]
       }
     },
