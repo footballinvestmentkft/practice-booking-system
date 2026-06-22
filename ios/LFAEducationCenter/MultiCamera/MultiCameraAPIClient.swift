@@ -52,6 +52,22 @@ struct HeartbeatResponse: Codable, Equatable {
     }
 }
 
+// MARK: — API Protocol (injectable for tests)
+
+protocol MultiCameraAPIClientProtocol: Sendable {
+    func transitionSession(token: String, uuid: String, target: SessionStatus, revision: Int) async throws -> MultiCameraSessionDTO
+    func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO
+}
+
+struct SystemMultiCameraAPIClient: MultiCameraAPIClientProtocol {
+    func transitionSession(token: String, uuid: String, target: SessionStatus, revision: Int) async throws -> MultiCameraSessionDTO {
+        try await MultiCameraAPIClient.transitionSession(token: token, uuid: uuid, target: target, revision: revision)
+    }
+    func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO {
+        try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
+    }
+}
+
 // MARK: — API Client
 
 enum MultiCameraAPIClient {

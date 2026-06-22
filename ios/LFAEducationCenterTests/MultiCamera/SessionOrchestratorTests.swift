@@ -392,3 +392,119 @@ final class SessionOrchestratorTests: XCTestCase {
         return try Data(contentsOf: url)
     }
 }
+
+// MARK: — Mock API Client for revision retry tests
+
+@MainActor
+final class MockMultiCameraAPIClient: MultiCameraAPIClientProtocol, @unchecked Sendable {
+    var transitionCallCount = 0
+    var getSessionCallCount = 0
+    var transitionRevisions: [Int] = []
+    var transitionResults: [Result<MultiCameraSessionDTO, Error>] = []
+    var getSessionResult: Result<MultiCameraSessionDTO, Error> = .failure(NSError(domain: "test", code: -1))
+
+    func transitionSession(token: String, uuid: String, target: SessionStatus, revision: Int) async throws -> MultiCameraSessionDTO {
+        transitionCallCount += 1
+        transitionRevisions.append(revision)
+        let idx = transitionCallCount - 1
+        guard idx < transitionResults.count else { throw NSError(domain: "test", code: -1) }
+        return try transitionResults[idx].get()
+    }
+
+    func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO {
+        getSessionCallCount += 1
+        return try getSessionResult.get()
+    }
+
+    static func makeSession(revision: Int, status: SessionStatus = .devicesReady) -> MultiCameraSessionDTO {
+        let json = """
+        {
+            "id": 1, "session_uuid": "test-uuid", "status": "\(status.rawValue)",
+            "created_by_user_id": 10, "max_participants": 2, "max_devices": 4,
+            "revision": \(revision), "calibration": null, "scheduled_start_at": null,
+            "created_at": "2026-06-22T20:00:00Z", "started_at": null, "stopped_at": null,
+            "finalized_at": null, "cancelled_at": null,
+            "participants": [], "devices": [], "streams": []
+        }
+        """.data(using: .utf8)!
+        return try! JSONDecoder().decode(MultiCameraSessionDTO.self, from: json)
+    }
+}
+
+// MARK: — Revision Retry Integration Tests
+
+@MainActor
+final class RevisionRetryTests: XCTestCase {
+
+    // RT-01: Revision retry success
+    // 1st PATCH → 409, GET re-fetch (new revision), 2nd PATCH → success
+    // Total: 2 PATCH, 1 GET, no error
+    func test_RT_01_revision_retry_success() async throws {
+        let mock = MockMultiCameraAPIClient()
+        let sessionRev5 = MockMultiCameraAPIClient.makeSession(revision: 5)
+        let sessionRev6 = MockMultiCameraAPIClient.makeSession(revision: 6)
+        let sessionRev7 = MockMultiCameraAPIClient.makeSession(revision: 7, status: .recordingPending)
+
+        // 1st PATCH → 409
+        mock.transitionResults.append(.failure(NSError(domain: "APIClient", code: 409)))
+        // GET re-fetch → revision 6
+        mock.getSessionResult = .success(sessionRev6)
+        // 2nd PATCH with revision 6 → success (revision 7)
+        mock.transitionResults.append(.success(sessionRev7))
+
+        let vm = MultiCameraSessionViewModel(authManager: AuthManager(), apiClient: mock)
+
+        let result = try await vm.transitionWithRetry(
+            token: "test-token", uuid: "test-uuid",
+            target: SessionStatus.recordingPending, revision: sessionRev5.revision
+        )
+
+        // Verify call counts
+        XCTAssertEqual(mock.transitionCallCount, 2, "Exactly 2 PATCH calls")
+        XCTAssertEqual(mock.getSessionCallCount, 1, "Exactly 1 GET re-fetch")
+
+        // Verify revisions used
+        XCTAssertEqual(mock.transitionRevisions[0], 5, "1st PATCH with original revision")
+        XCTAssertEqual(mock.transitionRevisions[1], 6, "2nd PATCH with refreshed revision")
+
+        // Verify success
+        XCTAssertEqual(result.revision, 7)
+        XCTAssertEqual(result.status, SessionStatus.recordingPending)
+    }
+
+    // RT-02: Revision retry failure — second 409, no third attempt
+    // 1st PATCH → 409, GET re-fetch, 2nd PATCH → 409, NO 3rd PATCH, error
+    func test_RT_02_revision_retry_failure() async {
+        let mock = MockMultiCameraAPIClient()
+        let sessionRev6 = MockMultiCameraAPIClient.makeSession(revision: 6)
+
+        // 1st PATCH → 409
+        mock.transitionResults.append(.failure(NSError(domain: "APIClient", code: 409)))
+        // GET re-fetch → revision 6
+        mock.getSessionResult = .success(sessionRev6)
+        // 2nd PATCH → also 409
+        mock.transitionResults.append(.failure(NSError(domain: "APIClient", code: 409)))
+
+        let vm = MultiCameraSessionViewModel(authManager: AuthManager(), apiClient: mock)
+
+        do {
+            _ = try await vm.transitionWithRetry(
+                token: "test-token", uuid: "test-uuid",
+                target: SessionStatus.recordingPending, revision: 5
+            )
+            XCTFail("Should have thrown on second 409")
+        } catch {
+            let nsError = error as NSError
+            XCTAssertEqual(nsError.code, 409, "Error should be 409")
+        }
+
+        // Verify call counts — exactly 2 PATCH, 1 GET, NO third PATCH
+        XCTAssertEqual(mock.transitionCallCount, 2, "Exactly 2 PATCH calls, no third")
+        XCTAssertEqual(mock.getSessionCallCount, 1, "Exactly 1 GET re-fetch")
+
+        // Verify revisions
+        XCTAssertEqual(mock.transitionRevisions[0], 5, "1st PATCH with original revision")
+        XCTAssertEqual(mock.transitionRevisions[1], 6, "2nd PATCH with refreshed revision")
+    }
+}
+

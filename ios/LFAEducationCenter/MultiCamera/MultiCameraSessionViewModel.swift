@@ -32,15 +32,18 @@ final class MultiCameraSessionViewModel: ObservableObject {
     private var hasArmedForCurrentSession = false
 
     private let authManager: AuthManager
+    private let apiClient: MultiCameraAPIClientProtocol
     private let pollingInterval: UInt64
     private let heartbeatInterval: UInt64
 
     init(
         authManager: AuthManager,
+        apiClient: (any MultiCameraAPIClientProtocol)? = nil,
         pollingIntervalSeconds: Double = 3.0,
         heartbeatIntervalSeconds: Double = 5.0
     ) {
         self.authManager = authManager
+        self.apiClient = apiClient ?? SystemMultiCameraAPIClient()
         self.pollingInterval = UInt64(pollingIntervalSeconds * 1_000_000_000)
         self.heartbeatInterval = UInt64(heartbeatIntervalSeconds * 1_000_000_000)
     }
@@ -134,7 +137,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         Task {
             guard let token = authManager.accessToken else { return }
             do {
-                let updated = try await MultiCameraAPIClient.transitionSession(
+                let updated = try await transitionWithRetry(
                     token: token, uuid: session.sessionUuid,
                     target: .recordingPending, revision: session.revision
                 )
@@ -145,6 +148,17 @@ final class MultiCameraSessionViewModel: ObservableObject {
             } catch {
                 state = .error(mapError(error))
             }
+        }
+    }
+
+    func transitionWithRetry(token: String, uuid: String, target: SessionStatus, revision: Int) async throws -> MultiCameraSessionDTO {
+        do {
+            return try await apiClient.transitionSession(token: token, uuid: uuid, target: target, revision: revision)
+        } catch {
+            let nsError = error as NSError
+            guard nsError.code == 409 else { throw error }
+            let refreshed = try await apiClient.getSession(token: token, uuid: uuid)
+            return try await apiClient.transitionSession(token: token, uuid: uuid, target: target, revision: refreshed.revision)
         }
     }
 
