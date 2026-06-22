@@ -27,7 +27,7 @@ enum OrchestrationState: Equatable {
 @MainActor
 final class SessionCaptureOrchestrator: ObservableObject {
 
-    @Published private(set) var orchestrationState: OrchestrationState = .idle
+    @Published var orchestrationState: OrchestrationState = .idle
     @Published private(set) var clockQuality: ClockSyncQuality = .degradedMissingServerDate
     @Published private(set) var streamId: Int?
     @Published private(set) var lastDriftMs: Int?
@@ -80,6 +80,10 @@ final class SessionCaptureOrchestrator: ObservableObject {
     // MARK: — Schedule
 
     func scheduleStart(serverScheduledAt: Date) {
+        if case .scheduled = orchestrationState { return }
+        if case .capturing = orchestrationState { return }
+        if case .stopping = orchestrationState { return }
+        if case .completed = orchestrationState { return }
         guard orchestrationState == .armed, !isTornDown else {
             if orchestrationState != .armed {
                 orchestrationState = .failed("Nem armed állapotban érkezett schedule")

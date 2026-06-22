@@ -32,6 +32,7 @@
 		MC000004000000000000008 /* ScheduledCaptureClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000008 /* ScheduledCaptureClock.swift */; };
 		MC000004000000000000009 /* SessionCaptureOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC000003000000000000009 /* SessionCaptureOrchestrator.swift */; };
 		MC500004000000000000003 /* SessionCaptureManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC500003000000000000003 /* SessionCaptureManagerTests.swift */; };
+		MC500004000000000000004 /* SessionOrchestratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC500003000000000000004 /* SessionOrchestratorTests.swift */; };
 		GP000004000000000000005 /* GoProConnectionDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000005 /* GoProConnectionDebugView.swift */; };
 		GP000004000000000000006 /* CoreBluetoothBLETransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000006 /* CoreBluetoothBLETransport.swift */; };
 		GP000004000000000000007 /* GoProHTTPClientTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000007 /* GoProHTTPClientTransport.swift */; };
@@ -271,6 +272,7 @@
 		GP500003000000000000001 /* GoProConnectionStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProConnectionStateMachineTests.swift; sourceTree = "<group>"; };
 		MC500003000000000000001 /* MultiCameraSessionContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraSessionContractTests.swift; sourceTree = "<group>"; };
 		MC500003000000000000003 /* SessionCaptureManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCaptureManagerTests.swift; sourceTree = "<group>"; };
+		MC500003000000000000004 /* SessionOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionOrchestratorTests.swift; sourceTree = "<group>"; };
 		MC500003000000000000002 /* session_full.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "session_full.json"; path = "../tests/fixtures/multicamera/session_full.json"; sourceTree = SOURCE_ROOT; };
 		BT500003000000000000001 /* BallTrainingHubVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingHubVMTests.swift; sourceTree = "<group>"; };
 		SK500003000000000000001 /* CanonicalJointTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalJointTests.swift; sourceTree = "<group>"; };
@@ -983,6 +985,7 @@
 				GP500003000000000000001 /* GoProConnectionStateMachineTests.swift */,
 				MC500003000000000000001 /* MultiCameraSessionContractTests.swift */,
 				MC500003000000000000003 /* SessionCaptureManagerTests.swift */,
+				MC500003000000000000004 /* SessionOrchestratorTests.swift */,
 				MC500003000000000000002 /* session_full.json */,
 			);
 			path = MultiCamera;
@@ -1333,6 +1336,7 @@
 				GP500004000000000000001 /* GoProConnectionStateMachineTests.swift in Sources */,
 				MC500004000000000000001 /* MultiCameraSessionContractTests.swift in Sources */,
 				MC500004000000000000003 /* SessionCaptureManagerTests.swift in Sources */,
+				MC500004000000000000004 /* SessionOrchestratorTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,
 				BB100004000000000000006 /* AVPlayerLayerViewTests.swift in Sources */,
