@@ -88,6 +88,9 @@ class MultiCameraSessionRepo:
         self.db.flush()
         return cs
 
+    def get_capture_stream_by_id(self, stream_id: int) -> Optional[CaptureStream]:
+        return self.db.query(CaptureStream).filter(CaptureStream.id == stream_id).first()
+
     def get_managed_device_by_uuid(self, device_uuid: uuid.UUID) -> Optional[ManagedDevice]:
         return self.db.query(ManagedDevice).filter(ManagedDevice.device_uuid == device_uuid).first()
 

@@ -145,6 +145,9 @@ class SessionService:
         self.db.refresh(sd)
         return sd
 
+    _SCHEDULED_LEAD_SECONDS = 8
+    _SCHEDULED_EXPIRE_SECONDS = 60
+
     def transition_session(self, session_uuid: uuid.UUID, target_status: str, session_revision: int):
         s = self._require_session(session_uuid)
         if s.revision != session_revision:
@@ -153,12 +156,25 @@ class SessionService:
         target = SessionStatus(target_status)
         if target not in SESSION_TRANSITIONS.get(current, set()):
             raise InvalidTransitionError("session", s.status, target_status)
-        s.status = target_status
-        s.revision += 1
+
         now = datetime.now(timezone.utc)
+
+        if target == SessionStatus.RECORDING_PENDING:
+            from datetime import timedelta
+            s.scheduled_start_at = now + timedelta(seconds=self._SCHEDULED_LEAD_SECONDS)
+
         if target == SessionStatus.RECORDING:
+            if s.scheduled_start_at:
+                elapsed = (now - s.scheduled_start_at).total_seconds()
+                if elapsed > self._SCHEDULED_EXPIRE_SECONDS:
+                    raise InvalidTransitionError("session", s.status,
+                        f"recording (scheduled start expired: {elapsed:.0f}s > {self._SCHEDULED_EXPIRE_SECONDS}s)")
             s.started_at = now
-        elif target == SessionStatus.STOPPED:
+
+        if target == SessionStatus.DEVICES_READY and current == SessionStatus.RECORDING_PENDING:
+            s.scheduled_start_at = None
+
+        if target == SessionStatus.STOPPED:
             s.stopped_at = now
         elif target == SessionStatus.COMPLETED:
             s.finalized_at = now
@@ -183,6 +199,70 @@ class SessionService:
         self.db.commit()
         self.db.refresh(cs)
         return cs
+
+    _CLOCK_SKEW_TOLERANCE_SECONDS = 30
+
+    def update_capture_stream(self, stream_id: int, started_at=None, stopped_at=None,
+                               capture_result=None, stream_revision: int = 0):
+        cs = self.repo.get_capture_stream_by_id(stream_id)
+        if not cs:
+            raise DeviceNotFoundError(f"stream {stream_id}")
+        if cs.revision != stream_revision:
+            if self._is_identical_update(cs, started_at, stopped_at, capture_result):
+                return cs
+            raise RevisionConflictError("capture_stream", stream_revision, cs.revision)
+        if cs.capture_result in ("success", "error", "interrupted"):
+            if self._is_identical_update(cs, started_at, stopped_at, capture_result):
+                return cs
+            raise RevisionConflictError("capture_stream", stream_revision, cs.revision)
+
+        now = datetime.now(timezone.utc)
+        skew = self._CLOCK_SKEW_TOLERANCE_SECONDS
+
+        if started_at is not None:
+            if cs.started_at is not None and cs.started_at != started_at:
+                raise RevisionConflictError("capture_stream.started_at", 0, 1)
+            if (started_at - now).total_seconds() > skew:
+                raise InvalidTransitionError("stream", "started_at", f"future >{skew}s")
+            cs.started_at = started_at
+
+        if stopped_at is not None:
+            if cs.started_at is None and started_at is None:
+                raise InvalidTransitionError("stream", "none", "stopped_at without started_at")
+            effective_start = started_at or cs.started_at
+            if stopped_at < effective_start:
+                raise InvalidTransitionError("stream", "stopped_at", "before started_at")
+            if (stopped_at - now).total_seconds() > skew:
+                raise InvalidTransitionError("stream", "stopped_at", f"future >{skew}s")
+            cs.stopped_at = stopped_at
+
+        if capture_result is not None:
+            if capture_result == "success":
+                effective_start = started_at or cs.started_at
+                effective_stop = stopped_at or cs.stopped_at
+                if not effective_start or not effective_stop:
+                    raise InvalidTransitionError("stream", "capture_result",
+                        "success requires started_at and stopped_at")
+            if capture_result in ("error", "interrupted") and cs.stopped_at is None and stopped_at is None:
+                cs.stopped_at = now
+            cs.capture_result = capture_result
+
+        cs.revision += 1
+        self.db.commit()
+        self.db.refresh(cs)
+        return cs
+
+    @staticmethod
+    def _is_identical_update(cs, started_at, stopped_at, capture_result) -> bool:
+        if started_at is not None and cs.started_at != started_at:
+            return False
+        if stopped_at is not None and cs.stopped_at != stopped_at:
+            return False
+        if capture_result is not None and cs.capture_result != capture_result:
+            return False
+        if started_at is None and stopped_at is None and capture_result is None:
+            return False
+        return True
 
     def _require_session(self, session_uuid: uuid.UUID) -> MultiCameraSession:
         s = self.repo.get_session_by_uuid(session_uuid)
