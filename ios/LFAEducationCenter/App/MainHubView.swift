@@ -23,6 +23,7 @@ struct MainHubView: View {
     #if DEBUG
     @State private var isShowingGoProDebug        = false
     @State private var isShowingSessionLab        = false
+    @State private var isShowingCaptureTest       = false
     #endif
 
     private let gridColumns = [GridItem(.adaptive(minimum: 150), spacing: Theme.Spacing.sm)]
@@ -93,6 +94,7 @@ struct MainHubView: View {
                     #if DEBUG
                     goProDebugButton
                     sessionLabButton
+                    captureTestButton
                     #endif
                     Divider().padding(.vertical, Theme.Spacing.xs)
                     signOutButton
@@ -160,6 +162,9 @@ struct MainHubView: View {
         }
         .fullScreenCover(isPresented: $isShowingSessionLab) {
             MultiCameraLobbyView(authManager: authManager)
+        }
+        .fullScreenCover(isPresented: $isShowingCaptureTest) {
+            SessionCaptureDebugView()
         }
         #endif
         .fullScreenCover(isPresented: $isShowingOnboarding) {
@@ -419,6 +424,27 @@ struct MainHubView: View {
             }
             .padding(Theme.Spacing.md)
             .background(Color.blue.opacity(0.08))
+            .cornerRadius(Theme.Radius.sm)
+        }
+    }
+
+    private var captureTestButton: some View {
+        Button {
+            isShowingCaptureTest = true
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "video.fill")
+                    .foregroundColor(.purple)
+                Text("Capture Test")
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.purple)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(Theme.Color.muted)
+            }
+            .padding(Theme.Spacing.md)
+            .background(Color.purple.opacity(0.08))
             .cornerRadius(Theme.Radius.sm)
         }
     }
