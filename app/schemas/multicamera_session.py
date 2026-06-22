@@ -10,12 +10,13 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class SessionStatus(str, Enum):
     LOBBY = "lobby"
     DEVICES_READY = "devices_ready"
+    RECORDING_PENDING = "recording_pending"
     RECORDING = "recording"
     STOPPED = "stopped"
     FINALIZING = "finalizing"
@@ -99,8 +100,6 @@ class SessionDeviceDTO(BaseModel):
 
 
 class CaptureStreamDTO(BaseModel):
-    """Contract placeholder. Multiple streams per device+type
-    (recording attempts, restarts) handled in PR-4B3B."""
     model_config = {"from_attributes": True}
     id: int
     session_device_id: int
@@ -110,6 +109,36 @@ class CaptureStreamDTO(BaseModel):
     created_at: datetime
     started_at: Optional[datetime] = None
     stopped_at: Optional[datetime] = None
+    capture_result: Optional[str] = None
+    duration_ms: Optional[int] = None
+
+    @model_validator(mode="after")
+    def compute_duration(self):
+        if self.started_at and self.stopped_at:
+            delta = self.stopped_at - self.started_at
+            object.__setattr__(self, "duration_ms", int(delta.total_seconds() * 1000))
+        return self
+
+
+class UpdateCaptureStreamRequest(BaseModel):
+    started_at: Optional[datetime] = None
+    stopped_at: Optional[datetime] = None
+    capture_result: Optional[str] = None
+    stream_revision: int
+
+    @field_validator("capture_result")
+    @classmethod
+    def validate_result(cls, v):
+        if v is not None and v not in ("success", "error", "interrupted"):
+            raise ValueError("Must be success/error/interrupted")
+        return v
+
+    @field_validator("started_at", "stopped_at")
+    @classmethod
+    def require_timezone(cls, v):
+        if v is not None and v.tzinfo is None:
+            raise ValueError("Timestamp must be timezone-aware UTC")
+        return v
 
 
 class CalibrationPlaceholder(BaseModel):
@@ -131,6 +160,7 @@ class MultiCameraSessionDTO(BaseModel):
     max_devices: int
     revision: int
     calibration: Optional[CalibrationPlaceholder] = None
+    scheduled_start_at: Optional[datetime] = None
     created_at: datetime
     started_at: Optional[datetime] = None
     stopped_at: Optional[datetime] = None
