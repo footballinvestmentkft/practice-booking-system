@@ -37,6 +37,8 @@
 	<string>Local network access is required to communicate with the GoPro camera over Wi-Fi for recording control and media transfer.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera is used for pose tracking in training sessions and for capturing mood expression photos on your player card.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone is used for audio recording during multi-camera training sessions.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
