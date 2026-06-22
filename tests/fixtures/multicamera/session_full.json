@@ -1,0 +1,125 @@
+{
+  "id": 1,
+  "session_uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "recording",
+  "created_by_user_id": 10,
+  "max_participants": 2,
+  "max_devices": 4,
+  "revision": 5,
+  "calibration": {
+    "schema_version": 1,
+    "calibration_id": null,
+    "world_origin_camera_id": null,
+    "intrinsic_cameras": [],
+    "stereo_pairs": [],
+    "sync_metadata": null
+  },
+  "created_at": "2026-06-22T10:00:00+00:00",
+  "started_at": "2026-06-22T10:05:00+00:00",
+  "stopped_at": null,
+  "finalized_at": null,
+  "cancelled_at": null,
+  "participants": [
+    {
+      "id": 1,
+      "session_id": 1,
+      "user_id": 10,
+      "role": "instructor",
+      "revision": 1,
+      "joined_at": "2026-06-22T10:00:01+00:00",
+      "left_at": null
+    },
+    {
+      "id": 2,
+      "session_id": 1,
+      "user_id": 20,
+      "role": "player",
+      "revision": 1,
+      "joined_at": "2026-06-22T10:00:30+00:00",
+      "left_at": null
+    }
+  ],
+  "devices": [
+    {
+      "id": 1,
+      "session_id": 1,
+      "device_id": 100,
+      "participant_id": 1,
+      "managed_by_device_id": null,
+      "device_role": "instructor_primary",
+      "status": "recording",
+      "revision": 3,
+      "last_heartbeat": "2026-06-22T10:06:00+00:00",
+      "registered_at": "2026-06-22T10:01:00+00:00",
+      "removed_at": null
+    },
+    {
+      "id": 2,
+      "session_id": 1,
+      "device_id": 200,
+      "participant_id": 2,
+      "managed_by_device_id": null,
+      "device_role": "player_primary",
+      "status": "recording",
+      "revision": 3,
+      "last_heartbeat": "2026-06-22T10:06:01+00:00",
+      "registered_at": "2026-06-22T10:01:30+00:00",
+      "removed_at": null
+    },
+    {
+      "id": 3,
+      "session_id": 1,
+      "device_id": 300,
+      "participant_id": null,
+      "managed_by_device_id": 2,
+      "device_role": "auxiliary_camera",
+      "status": "recording",
+      "revision": 2,
+      "last_heartbeat": "2026-06-22T10:06:02+00:00",
+      "registered_at": "2026-06-22T10:02:00+00:00",
+      "removed_at": null
+    }
+  ],
+  "streams": [
+    {
+      "id": 1,
+      "session_device_id": 1,
+      "stream_type": "video",
+      "preset_json": {"resolution": "1920x1080", "fps": 30, "lens_mode": "wide", "stabilization": "on"},
+      "revision": 1,
+      "created_at": "2026-06-22T10:05:00+00:00",
+      "started_at": "2026-06-22T10:05:00+00:00",
+      "stopped_at": null
+    },
+    {
+      "id": 2,
+      "session_device_id": 2,
+      "stream_type": "video",
+      "preset_json": {"resolution": "1920x1080", "fps": 30, "lens_mode": "standard", "stabilization": "off"},
+      "revision": 1,
+      "created_at": "2026-06-22T10:05:00+00:00",
+      "started_at": "2026-06-22T10:05:00+00:00",
+      "stopped_at": null
+    },
+    {
+      "id": 3,
+      "session_device_id": 3,
+      "stream_type": "video",
+      "preset_json": {"resolution": "1920x1080", "fps": 30, "lens_mode": "linear", "stabilization": "off"},
+      "revision": 1,
+      "created_at": "2026-06-22T10:05:01+00:00",
+      "started_at": "2026-06-22T10:05:01+00:00",
+      "stopped_at": null
+    },
+    {
+      "id": 4,
+      "session_device_id": 2,
+      "stream_type": "skeleton_2d",
+      "preset_json": {"model_id": "vision_body_pose", "min_confidence": 0.3},
+      "revision": 1,
+      "created_at": "2026-06-22T10:05:00+00:00",
+      "started_at": "2026-06-22T10:05:00+00:00",
+      "stopped_at": null
+    }
+  ]
+}

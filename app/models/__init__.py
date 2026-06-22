@@ -110,6 +110,14 @@ from .tournament_achievement import (
     SkillPointConversionRate
 )
 
+# 📹 Multicamera Session Contract (AN-3B PR-4B2)
+from .managed_device import ManagedDevice, DeviceType
+from .multicamera_session import (
+    MultiCameraSession, SessionParticipant, SessionDevice, CaptureStream,
+    SessionStatus, ParticipantRole, DeviceRole, DeviceStatus, StreamType,
+    SESSION_TRANSITIONS, DEVICE_TRANSITIONS,
+)
+
 # Configure relationships after all models are imported
 configure_relationships()
 configure_license_relationships()
