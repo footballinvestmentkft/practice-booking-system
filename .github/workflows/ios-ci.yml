@@ -141,6 +141,11 @@ jobs:
             | xcpretty --color 2>/dev/null || true
 
       # ── 7. Run unit tests ─────────────────────────────────────────────────────
+      #
+      # xcodebuild test on GHA macOS runners hangs after all tests pass —
+      # the simulator process keeps stdout open. We use `script` to run it
+      # in a PTY (avoids broken-pipe crashes from bg redirect), then grep
+      # the raw log for the TEST SUCCEEDED/FAILED marker.
       - name: Run unit tests (LFAEducationCenterTests)
         timeout-minutes: 15
         run: |
@@ -155,72 +160,62 @@ jobs:
           }
           trap cleanup EXIT
 
-          # Run xcodebuild in background — kill it once tests are done
-          # xcodebuild test hangs after completion on GHA macOS runners
-          # because the simulator process keeps the parent alive.
-          xcodebuild test \
-            -project ios/LFAEducationCenter.xcodeproj \
-            -scheme LFAEducationCenter \
-            -configuration Debug \
-            -destination "platform=iOS Simulator,id=$SIM_UDID" \
-            -derivedDataPath /tmp/DerivedData \
-            -resultBundlePath /tmp/TestResults.xcresult \
-            CODE_SIGNING_ALLOWED=NO \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            > /tmp/xcodebuild-test.log 2>&1 &
-          XCODE_PID=$!
+          # Use `script` to allocate a PTY so xcodebuild doesn't crash
+          # on broken pipe. The -q flag suppresses script's own header.
+          script -q /tmp/xcodebuild-test.log \
+            xcodebuild test \
+              -project ios/LFAEducationCenter.xcodeproj \
+              -scheme LFAEducationCenter \
+              -configuration Debug \
+              -destination "platform=iOS Simulator,id=$SIM_UDID" \
+              -derivedDataPath /tmp/DerivedData \
+              -resultBundlePath /tmp/TestResults.xcresult \
+              CODE_SIGNING_ALLOWED=NO \
+              COMPILER_INDEX_STORE_ENABLE=NO &
+          SCRIPT_PID=$!
 
-          # Poll for test completion (xcresult appears, or process exits)
+          # Poll raw log for test completion marker
           WAITED=0
-          while kill -0 $XCODE_PID 2>/dev/null; do
-            if [ -f /tmp/xcodebuild-test.log ] && grep -q '\*\* TEST \(SUCCEEDED\|FAILED\) \*\*' /tmp/xcodebuild-test.log 2>/dev/null; then
-              echo "xcodebuild test finished — terminating process"
-              kill $XCODE_PID 2>/dev/null || true
+          while kill -0 $SCRIPT_PID 2>/dev/null; do
+            if grep -q 'TEST SUCCEEDED\|TEST FAILED' /tmp/xcodebuild-test.log 2>/dev/null; then
+              echo "Test marker found — killing xcodebuild"
+              kill $SCRIPT_PID 2>/dev/null || true
               sleep 2
-              kill -9 $XCODE_PID 2>/dev/null || true
+              kill -9 $SCRIPT_PID 2>/dev/null || true
               break
             fi
             sleep 5
             WAITED=$((WAITED + 5))
             if [ $WAITED -ge 600 ]; then
-              echo "xcodebuild test exceeded 10 min poll — killing"
-              kill -9 $XCODE_PID 2>/dev/null || true
+              echo "Poll timeout 10 min — killing"
+              kill -9 $SCRIPT_PID 2>/dev/null || true
               break
             fi
           done
-          wait $XCODE_PID 2>/dev/null || true
+          wait $SCRIPT_PID 2>/dev/null || true
 
-          # Post-process: xcpretty for JUnit XML
+          # Post-process for JUnit XML
           if [ -f /tmp/xcodebuild-test.log ]; then
             cat /tmp/xcodebuild-test.log | xcpretty --color --report junit --output /tmp/test-results.xml 2>/dev/null || true
           fi
 
-          # Primary verdict: xcresult bundle
-          if [ -d /tmp/TestResults.xcresult ]; then
-            echo "xcresult bundle exists"
-            FAILURES=$(xcrun xcresulttool get test-results summary \
-              --path /tmp/TestResults.xcresult 2>/dev/null \
-              | grep -oE '"failedTests" : [0-9]+' | grep -oE '[0-9]+' || echo "")
-            TOTAL=$(xcrun xcresulttool get test-results summary \
-              --path /tmp/TestResults.xcresult 2>/dev/null \
-              | grep -oE '"totalTests" : [0-9]+' | grep -oE '[0-9]+' || echo "")
-            echo "xcresult: total=$TOTAL failures=$FAILURES"
+          # Verdict: grep raw log for marker
+          if grep -q 'TEST SUCCEEDED' /tmp/xcodebuild-test.log 2>/dev/null; then
+            TOTAL=$(grep -c '✓\|Test Case.*passed' /tmp/xcodebuild-test.log 2>/dev/null || echo "?")
             echo "### iOS Test Results" >> $GITHUB_STEP_SUMMARY
-            echo "- Total tests: ${TOTAL:-unknown}" >> $GITHUB_STEP_SUMMARY
-            echo "- Failures: ${FAILURES:-unknown}" >> $GITHUB_STEP_SUMMARY
-            if [ "$FAILURES" = "0" ] && [ -n "$TOTAL" ] && [ "$TOTAL" != "0" ]; then
-              echo "Tests PASSED ($TOTAL tests, 0 failures)"
-              exit 0
-            fi
-          fi
-
-          # Fallback: raw log
-          if grep -q '\*\* TEST SUCCEEDED \*\*' /tmp/xcodebuild-test.log 2>/dev/null; then
-            echo "Tests PASSED (raw log fallback)"
+            echo "- Result: PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "- Approx tests: $TOTAL" >> $GITHUB_STEP_SUMMARY
+            echo "Tests PASSED (~$TOTAL tests)"
             exit 0
           fi
 
-          echo "Tests FAILED"
+          if grep -q 'TEST FAILED' /tmp/xcodebuild-test.log 2>/dev/null; then
+            echo "Tests FAILED"
+            grep 'failed' /tmp/xcodebuild-test.log | tail -20
+            exit 1
+          fi
+
+          echo "No test marker found — treating as failure"
           tail -50 /tmp/xcodebuild-test.log
           exit 1
 
