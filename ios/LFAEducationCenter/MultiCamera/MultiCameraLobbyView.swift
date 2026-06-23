@@ -5,6 +5,9 @@ struct MultiCameraLobbyView: View {
 
     @StateObject private var vm: MultiCameraSessionViewModel
     @State private var joinUuid = ""
+    @State private var showQRScanner = false
+    @State private var qrDecodeError: String?
+    @State private var orchestrationTick = 0
     @Environment(\.presentationMode) private var presentationMode
 
     init(authManager: AuthManager) {
@@ -39,6 +42,25 @@ struct MultiCameraLobbyView: View {
         }
         .navigationViewStyle(.stack)
         .onDisappear { vm.reset() }
+        .onReceive(vm.orchestrator.objectWillChange) { _ in
+            // Propagate orchestrator state changes to SwiftUI render cycle
+            orchestrationTick += 1
+        }
+        .sheet(isPresented: $showQRScanner) {
+            QRScannerView(
+                onScanned: { raw in
+                    showQRScanner = false
+                    switch SessionQRPayload.decode(from: raw) {
+                    case .success(let payload):
+                        vm.joinSession(uuid: payload.sessionUuid)
+                    case .failure(let err):
+                        qrDecodeError = err.localizedDescription
+                    }
+                },
+                onDismiss: { showQRScanner = false }
+            )
+            .ignoresSafeArea()
+        }
     }
 
     // MARK: — Idle
@@ -50,12 +72,26 @@ struct MultiCameraLobbyView: View {
                     .font(.body.weight(.semibold))
             }
             Section("Csatlakozás meglévőhöz") {
-                TextField("Session UUID", text: $joinUuid)
+                Button("QR-kóddal csatlakozás") { showQRScanner = true }
+                    .font(.body.weight(.semibold))
+                TextField("Session UUID (manuális)", text: $joinUuid)
                     .font(.system(.body, design: .monospaced))
                     .autocapitalization(.none)
                     .disableAutocorrection(true)
-                Button("Join Session") { vm.joinSession(uuid: joinUuid.trimmingCharacters(in: .whitespaces)) }
-                    .disabled(joinUuid.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button("Join Session") {
+                    vm.joinSession(uuid: joinUuid.trimmingCharacters(in: .whitespaces))
+                }
+                .disabled(joinUuid.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            if let err = qrDecodeError {
+                Section {
+                    HStack(spacing: 8) {
+                        Image(systemName: "qrcode.viewfinder").foregroundColor(.red)
+                        Text(err).font(.caption).foregroundColor(.red)
+                    }
+                    Button("Rendben") { qrDecodeError = nil }
+                        .font(.caption)
+                }
             }
         }
     }
@@ -64,6 +100,7 @@ struct MultiCameraLobbyView: View {
 
     private func lobbySection(_ session: MultiCameraSessionDTO) -> some View {
         Group {
+            qrSection(session)
             Section("Session") {
                 LabeledRow("UUID", session.sessionUuid)
                 LabeledRow("Status", session.status.rawValue)
@@ -97,6 +134,7 @@ struct MultiCameraLobbyView: View {
                     }
                 }
             }
+            previewSection
             Section("Capture") {
                 HStack {
                     Text("Local").font(.caption).foregroundColor(.secondary)
@@ -145,6 +183,45 @@ struct MultiCameraLobbyView: View {
                     LabeledRow("Session Device ID", "\(sdId)")
                     LabeledRow("Heartbeat", "Active")
                 }
+            }
+        }
+    }
+
+    // MARK: — QR display (instructor only)
+
+    @ViewBuilder
+    private func qrSection(_ session: MultiCameraSessionDTO) -> some View {
+        if vm.isInstructor,
+           let qrString = SessionQRPayload.encode(sessionUuid: session.sessionUuid),
+           let qrImage = QRCodeGenerator.image(from: qrString, scale: 6) {
+            Section("Join QR-kód") {
+                HStack {
+                    Spacer()
+                    Image(uiImage: qrImage)
+                        .interpolation(.none)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 180, height: 180)
+                    Spacer()
+                }
+                .listRowBackground(Color.white)
+            }
+        }
+    }
+
+    // MARK: — Camera preview (armed and above)
+
+    @ViewBuilder
+    private var previewSection: some View {
+        if let previewSession = vm.orchestrator.captureSessionForPreview {
+            Section("Camera") {
+                ZStack(alignment: .topLeading) {
+                    CapturePreviewView(captureSession: previewSession)
+                        .frame(height: 240)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    CaptureOverlayView(orchestrationState: vm.orchestrator.orchestrationState)
+                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
             }
         }
     }
