@@ -142,6 +142,7 @@ jobs:
 
       # ── 7. Run unit tests ─────────────────────────────────────────────────────
       - name: Run unit tests (LFAEducationCenterTests)
+        timeout-minutes: 15
         run: |
           set -o pipefail
           xcodebuild test \
@@ -153,16 +154,15 @@ jobs:
             -resultBundlePath /tmp/TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO \
             COMPILER_INDEX_STORE_ENABLE=NO \
-            | xcpretty --color --report junit --output /tmp/test-results.xml 2>/dev/null || \
-          xcodebuild test \
-            -project ios/LFAEducationCenter.xcodeproj \
-            -scheme LFAEducationCenter \
-            -configuration Debug \
-            -destination "platform=iOS Simulator,id=${{ env.SIMULATOR_UDID }}" \
-            -derivedDataPath /tmp/DerivedData \
-            -resultBundlePath /tmp/TestResults.xcresult \
-            CODE_SIGNING_ALLOWED=NO \
-            COMPILER_INDEX_STORE_ENABLE=NO
+            2>&1 | tee /tmp/xcodebuild-test.log | xcpretty --color --report junit --output /tmp/test-results.xml || true
+          xcrun simctl shutdown "${{ env.SIMULATOR_UDID }}" 2>/dev/null || true
+          if grep -q "TEST SUCCEEDED" /tmp/xcodebuild-test.log 2>/dev/null || grep -q "** TEST SUCCEEDED **" /tmp/xcodebuild-test.log 2>/dev/null; then
+            echo "✅ Tests passed"
+            exit 0
+          else
+            echo "❌ Tests failed — check xcresult bundle"
+            exit 1
+          fi
 
       # ── 8. Publish test results to PR ─────────────────────────────────────────
       - name: Publish test results
