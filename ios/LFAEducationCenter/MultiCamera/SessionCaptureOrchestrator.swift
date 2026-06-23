@@ -129,7 +129,9 @@ final class SessionCaptureOrchestrator: ObservableObject {
             return
         }
         orchestrationState = .starting
-        mgr.startCapture()
+        // Snapshot interface orientation at fire time; held fixed for the full recording.
+        let captureOrientation = CaptureOrientationHelper.currentAVCaptureOrientation()
+        mgr.startCapture(captureOrientation: captureOrientation)
 
         Task {
             for _ in 0..<20 {

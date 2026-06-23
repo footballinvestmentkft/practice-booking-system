@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 #if DEBUG
 struct MultiCameraLobbyView: View {
@@ -8,6 +9,7 @@ struct MultiCameraLobbyView: View {
     @State private var showQRScanner = false
     @State private var qrDecodeError: String?
     @State private var orchestrationTick = 0
+    @State private var interfaceOrientation: UIInterfaceOrientation = .portrait
     @Environment(\.presentationMode) private var presentationMode
 
     init(authManager: AuthManager) {
@@ -41,6 +43,14 @@ struct MultiCameraLobbyView: View {
             }
         }
         .navigationViewStyle(.stack)
+        .onAppear {
+            interfaceOrientation = CaptureOrientationHelper.currentInterfaceOrientation()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            let current = CaptureOrientationHelper.currentInterfaceOrientation()
+            // Ignore faceUp / faceDown — scene.interfaceOrientation stays at last valid rotation
+            if current != .unknown { interfaceOrientation = current }
+        }
         .onDisappear { vm.reset() }
         .onReceive(vm.orchestrator.objectWillChange) { _ in
             // Propagate orchestrator state changes to SwiftUI render cycle
@@ -216,7 +226,8 @@ struct MultiCameraLobbyView: View {
         if let previewSession = vm.orchestrator.captureSessionForPreview {
             Section("Camera") {
                 ZStack(alignment: .topLeading) {
-                    CapturePreviewView(captureSession: previewSession)
+                    CapturePreviewView(captureSession: previewSession,
+                                       interfaceOrientation: interfaceOrientation)
                         .frame(height: 240)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     CaptureOverlayView(orchestrationState: vm.orchestrator.orchestrationState)

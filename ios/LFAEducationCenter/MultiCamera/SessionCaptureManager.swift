@@ -180,11 +180,6 @@ final class SessionCaptureManager: NSObject, ObservableObject {
             self.captureSession.addOutput(self.movieOutput)
             log("prepare: movie output added")
 
-            if let conn = self.movieOutput.connection(with: .video), conn.isVideoOrientationSupported {
-                conn.videoOrientation = .portrait
-                log("prepare: orientation set to portrait")
-            }
-
             log("prepare: commitConfiguration")
             self.captureSession.commitConfiguration()
 
@@ -218,7 +213,7 @@ final class SessionCaptureManager: NSObject, ObservableObject {
 
     // MARK: — Capture
 
-    func startCapture() {
+    func startCapture(captureOrientation: AVCaptureVideoOrientation = .portrait) {
         guard state == .ready, !isTornDown else { return }
         guard fileStore.availableStorageBytes() > 100_000_000 else {
             state = .failed("Nincs elég tárhely (min 100 MB)")
@@ -231,6 +226,9 @@ final class SessionCaptureManager: NSObject, ObservableObject {
         let url = fileStore.outputURL(sessionUUID: sessionUUID, deviceId: deviceId)
         captureQueue.async { [weak self] in
             guard let self else { return }
+            if let conn = self.movieOutput.connection(with: .video), conn.isVideoOrientationSupported {
+                conn.videoOrientation = captureOrientation
+            }
             self.movieOutput.startRecording(to: url, recordingDelegate: self)
         }
     }
