@@ -168,10 +168,22 @@ final class MultiCameraSessionViewModel: ObservableObject {
         orchestrator.stopCapture()
         Task {
             guard let token = authManager.accessToken else { return }
-            _ = try? await MultiCameraAPIClient.transitionSession(
-                token: token, uuid: session.sessionUuid,
-                target: .stopped, revision: session.revision
+            let fresh = try? await MultiCameraAPIClient.getSession(token: token, uuid: session.sessionUuid)
+            let current = fresh ?? session
+            let target: SessionStatus
+            switch SessionStatus(rawValue: current.status.rawValue) {
+            case .recording:
+                target = .stopped
+            case .recordingPending:
+                target = .cancelled
+            default:
+                target = .stopped
+            }
+            let updated = try? await transitionWithRetry(
+                token: token, uuid: current.sessionUuid,
+                target: target, revision: current.revision
             )
+            if let updated { state = .inLobby(session: updated) }
         }
     }
 
@@ -184,6 +196,8 @@ final class MultiCameraSessionViewModel: ObservableObject {
         return !appleDevices.isEmpty && appleDevices.allSatisfy { $0.status == .ready }
     }
 
+    private var hasTransitionedToRecording = false
+
     private func handlePolledSessionUpdate(_ session: MultiCameraSessionDTO) {
         if session.status == .devicesReady && orchestrator.orchestrationState == .idle {
             armCapture()
@@ -193,9 +207,17 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 orchestrator.scheduleStart(serverScheduledAt: schedDate)
             }
         }
-        if session.status == .recordingPending && orchestrator.orchestrationState == .idle {
-            orchestrator.orchestrationState == .idle
-            // NOT armed → report error, no late arm
+        if session.status == .recordingPending && orchestrator.orchestrationState == .capturing
+            && isInstructor && !hasTransitionedToRecording {
+            hasTransitionedToRecording = true
+            Task {
+                guard let token = authManager.accessToken else { return }
+                let updated = try? await transitionWithRetry(
+                    token: token, uuid: session.sessionUuid,
+                    target: .recording, revision: session.revision
+                )
+                if let updated { state = .inLobby(session: updated) }
+            }
         }
         if session.status == .stopped && (orchestrator.orchestrationState == .capturing || orchestrator.orchestrationState == .starting) {
             orchestrator.stopCapture()
@@ -204,16 +226,13 @@ final class MultiCameraSessionViewModel: ObservableObject {
 
     func cancelSession() {
         guard case .inLobby(let session) = state else { return }
+        orchestrator.stopCapture()
         Task {
-            do {
-                guard let token = authManager.accessToken else { throw LobbyError.noAuth }
-                _ = try await MultiCameraAPIClient.transitionSession(
-                    token: token, uuid: session.sessionUuid,
-                    target: .cancelled, revision: session.revision
-                )
-            } catch {
-                // best-effort
-            }
+            guard let token = authManager.accessToken else { reset(); return }
+            _ = try? await transitionWithRetry(
+                token: token, uuid: session.sessionUuid,
+                target: .cancelled, revision: session.revision
+            )
             reset()
         }
     }
@@ -226,6 +245,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         sessionDeviceId = nil
         isCreateInProgress = false
         hasArmedForCurrentSession = false
+        hasTransitionedToRecording = false
         orchestrator.teardown()
         state = .idle
     }
