@@ -41,11 +41,11 @@ final class SessionCaptureOrchestrator: ObservableObject {
     private let timerProvider: OrchestrationTimerProvider
     private let clock: ScheduledCaptureClockManager
 
-    private let captureManagerFactory: () -> SessionCaptureManager
+    private let captureManagerFactory: @MainActor () -> SessionCaptureManager
 
     init(timerProvider: OrchestrationTimerProvider = SystemOrchestrationTimer(),
          clock: ScheduledCaptureClockManager? = nil,
-         captureManagerFactory: @escaping () -> SessionCaptureManager = { SessionCaptureManager() }) {
+         captureManagerFactory: @MainActor @escaping () -> SessionCaptureManager = { SessionCaptureManager() }) {
         self.timerProvider = timerProvider
         self.clock = clock ?? ScheduledCaptureClockManager()
         self.captureManagerFactory = captureManagerFactory
