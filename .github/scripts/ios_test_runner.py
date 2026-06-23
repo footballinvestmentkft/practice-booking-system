@@ -320,8 +320,8 @@ def try_junit_xml():
     try:
         with open(JUNIT_PATH, "r") as f:
             content = f.read()
-        tm = re.search(r'tests="(\d+)"', content)
-        fm = re.search(r'failures="(\d+)"', content)
+        tm = re.search(r"tests=['\"](\d+)['\"]", content)
+        fm = re.search(r"failures=['\"](\d+)['\"]", content)
         if tm:
             total = int(tm.group(1))
             failures = int(fm.group(1)) if fm else 0

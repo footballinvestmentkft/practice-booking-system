@@ -194,8 +194,8 @@ jobs:
         if: always()
         run: |
           if [[ -f /tmp/test-results.xml ]]; then
-            TESTS=$(grep -oE 'tests="[0-9]+"' /tmp/test-results.xml | head -1 | grep -oE '[0-9]+' || true)
-            FAILURES=$(grep -oE 'failures="[0-9]+"' /tmp/test-results.xml | head -1 | grep -oE '[0-9]+' || true)
+            TESTS=$(grep -oE "tests=['\"][0-9]+['\"]" /tmp/test-results.xml | head -1 | grep -oE '[0-9]+' || true)
+            FAILURES=$(grep -oE "failures=['\"][0-9]+['\"]" /tmp/test-results.xml | head -1 | grep -oE '[0-9]+' || true)
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Test Results" >> $GITHUB_STEP_SUMMARY
             echo "- Tests run: ${TESTS:-unknown}" >> $GITHUB_STEP_SUMMARY
