@@ -74,7 +74,7 @@ final class SessionQRPayloadTests: XCTestCase {
             .invalidJSON, .unknownType("x"), .unsupportedVersion(2), .missingUUID
         ]
         for err in errors {
-            XCTAssertFalse(err.localizedDescription?.isEmpty ?? true,
+            XCTAssertFalse(err.localizedDescription.isEmpty,
                            "Empty errorDescription for \(err)")
         }
     }
