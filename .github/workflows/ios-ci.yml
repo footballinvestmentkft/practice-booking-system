@@ -142,82 +142,17 @@ jobs:
 
       # ── 7. Run unit tests ─────────────────────────────────────────────────────
       #
-      # xcodebuild test on GHA macOS runners hangs after all tests pass —
-      # the simulator process keeps stdout open. We use `script` to run it
-      # in a PTY (avoids broken-pipe crashes from bg redirect), then grep
-      # the raw log for the TEST SUCCEEDED/FAILED marker.
+      # Python wrapper starts xcodebuild as a child process in its own
+      # process group (os.setsid). stdout/stderr go to a file — no pipe,
+      # no broken-pipe crash. The wrapper polls the raw log for TEST
+      # SUCCEEDED/FAILED, gives 30s grace for natural exit, then logs
+      # the process tree (diagnostic) and terminates the process group.
+      #
+      # Exit 0 only if xcresult is complete, tests > 0, failures == 0,
+      # AND xcodebuild exited naturally or after proven post-test hang.
       - name: Run unit tests (LFAEducationCenterTests)
         timeout-minutes: 15
-        run: |
-          SIM_UDID="${{ env.SIMULATOR_UDID }}"
-
-          cleanup() {
-            echo "── Cleanup ──"
-            xcrun simctl shutdown "$SIM_UDID" 2>/dev/null || true
-            xcrun simctl delete "$SIM_UDID" 2>/dev/null || true
-            pkill -9 -f "xcodebuild" 2>/dev/null || true
-            pkill -9 -f "xctest" 2>/dev/null || true
-          }
-          trap cleanup EXIT
-
-          # Use `script` to allocate a PTY so xcodebuild doesn't crash
-          # on broken pipe. The -q flag suppresses script's own header.
-          script -q /tmp/xcodebuild-test.log \
-            xcodebuild test \
-              -project ios/LFAEducationCenter.xcodeproj \
-              -scheme LFAEducationCenter \
-              -configuration Debug \
-              -destination "platform=iOS Simulator,id=$SIM_UDID" \
-              -derivedDataPath /tmp/DerivedData \
-              -resultBundlePath /tmp/TestResults.xcresult \
-              CODE_SIGNING_ALLOWED=NO \
-              COMPILER_INDEX_STORE_ENABLE=NO &
-          SCRIPT_PID=$!
-
-          # Poll raw log for test completion marker
-          WAITED=0
-          while kill -0 $SCRIPT_PID 2>/dev/null; do
-            if grep -q 'TEST SUCCEEDED\|TEST FAILED' /tmp/xcodebuild-test.log 2>/dev/null; then
-              echo "Test marker found — killing xcodebuild"
-              kill $SCRIPT_PID 2>/dev/null || true
-              sleep 2
-              kill -9 $SCRIPT_PID 2>/dev/null || true
-              break
-            fi
-            sleep 5
-            WAITED=$((WAITED + 5))
-            if [ $WAITED -ge 600 ]; then
-              echo "Poll timeout 10 min — killing"
-              kill -9 $SCRIPT_PID 2>/dev/null || true
-              break
-            fi
-          done
-          wait $SCRIPT_PID 2>/dev/null || true
-
-          # Post-process for JUnit XML
-          if [ -f /tmp/xcodebuild-test.log ]; then
-            cat /tmp/xcodebuild-test.log | xcpretty --color --report junit --output /tmp/test-results.xml 2>/dev/null || true
-          fi
-
-          # Verdict: grep raw log for marker
-          if grep -q 'TEST SUCCEEDED' /tmp/xcodebuild-test.log 2>/dev/null; then
-            TOTAL=$(grep -c '✓\|Test Case.*passed' /tmp/xcodebuild-test.log 2>/dev/null || echo "?")
-            echo "### iOS Test Results" >> $GITHUB_STEP_SUMMARY
-            echo "- Result: PASSED" >> $GITHUB_STEP_SUMMARY
-            echo "- Approx tests: $TOTAL" >> $GITHUB_STEP_SUMMARY
-            echo "Tests PASSED (~$TOTAL tests)"
-            exit 0
-          fi
-
-          if grep -q 'TEST FAILED' /tmp/xcodebuild-test.log 2>/dev/null; then
-            echo "Tests FAILED"
-            grep 'failed' /tmp/xcodebuild-test.log | tail -20
-            exit 1
-          fi
-
-          echo "No test marker found — treating as failure"
-          tail -50 /tmp/xcodebuild-test.log
-          exit 1
+        run: python3 .github/scripts/ios_test_runner.py "${{ env.SIMULATOR_UDID }}"
 
       # ── 8. Publish test results to PR ─────────────────────────────────────────
       - name: Publish test results
