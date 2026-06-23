@@ -32,6 +32,20 @@ app = FastAPI(
     openapi_url=None,
 )
 
+
+@app.exception_handler(Exception)
+async def _debug_exception_handler(request, exc):
+    import traceback
+    tb = traceback.format_exception(type(exc), exc, exc.__traceback__)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": type(exc).__name__,
+            "detail": str(exc),
+            "traceback": tb,
+        },
+    )
+
 auth_router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 auth_router.add_api_route("/login", login, methods=["POST"], response_model=Token)
 auth_router.add_api_route("/refresh", refresh_token, methods=["POST"], response_model=Token)
