@@ -38,7 +38,7 @@ with engine.begin() as conn:
         conn.execute(
             text(
                 "INSERT INTO users (name, email, password_hash, role, is_active) "
-                "VALUES (:name, :email, :h, 'student', true)"
+                "VALUES (:name, :email, :h, 'INSTRUCTOR', true)"
             ),
             {"name": NAME, "email": EMAIL, "h": hashed},
         )
