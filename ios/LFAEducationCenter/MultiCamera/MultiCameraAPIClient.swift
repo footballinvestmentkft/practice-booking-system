@@ -161,15 +161,32 @@ enum MultiCameraAPIClient {
 
     static func getSessionWithTiming(token: String, uuid: String) async throws -> TimedSessionResponse {
         let start = ProcessInfo.processInfo.systemUptime
-        let session: MultiCameraSessionDTO = try await APIClient.get(path: "\(base)/sessions/\(uuid)", token: token)
+        let (session, httpResponse): (MultiCameraSessionDTO, HTTPURLResponse) = try await APIClient.getWithHeaders(
+            path: "\(base)/sessions/\(uuid)", token: token
+        )
         let elapsed = ProcessInfo.processInfo.systemUptime - start
-        return TimedSessionResponse(session: session, requestDuration: elapsed)
+        let serverDate = Self.parseHTTPDate(httpResponse.value(forHTTPHeaderField: "Date"))
+        return TimedSessionResponse(session: session, requestDuration: elapsed, serverDate: serverDate)
+    }
+
+    private static let httpDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "GMT")
+        f.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        return f
+    }()
+
+    static func parseHTTPDate(_ string: String?) -> Date? {
+        guard let string = string else { return nil }
+        return httpDateFormatter.date(from: string)
     }
 }
 
 struct TimedSessionResponse {
     let session: MultiCameraSessionDTO
     let requestDuration: TimeInterval
+    let serverDate: Date?
 }
 
 private struct EmptyBody: Codable {}

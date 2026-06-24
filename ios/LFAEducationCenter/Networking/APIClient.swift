@@ -178,6 +178,31 @@ enum APIClient {
         return try await execute(request)
     }
 
+    // MARK: — GET (JSON + response headers)
+    // Returns both the decoded value and the raw HTTPURLResponse so callers
+    // can inspect response headers (e.g. the Date header for clock sync).
+
+    static func getWithHeaders<T: Decodable>(
+        path: String,
+        token: String? = nil
+    ) async throws -> (T, HTTPURLResponse) {
+        let request = try buildRequest(path: path, method: "GET", token: token)
+        let (data, response) = try await perform(request)
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError.networkError(URLError(.badServerResponse))
+        }
+        guard (200...299).contains(http.statusCode) else {
+            let detail = try? JSONDecoder().decode(ErrorBody.self, from: data)
+            throw APIError.httpError(statusCode: http.statusCode, detail: detail?.detail)
+        }
+        do {
+            let decoded = try JSONDecoder().decode(T.self, from: data)
+            return (decoded, http)
+        } catch {
+            throw APIError.decodingError
+        }
+    }
+
     // MARK: — GET (binary — for thumbnail / media endpoints)
     // Returns raw Data. Does not attempt JSON decode.
     // Accept header is set to */* so binary responses (JPEG, MP4) are received cleanly.

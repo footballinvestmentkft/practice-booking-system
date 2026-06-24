@@ -46,23 +46,53 @@ final class SystemOrchestrationTimer: OrchestrationTimerProvider {
 final class ScheduledCaptureClockManager: ObservableObject {
     @Published private(set) var currentOffset: ClockOffset = .zero
 
+    private var samples: [Double] = []
+    private static let maxSamples = 8
+    private static let minSamplesForSync = 3
+    private static let maxRTTSeconds: TimeInterval = 2.0
+
+    var sampleCount: Int { samples.count }
+
     func updateFromPolling(requestDuration: TimeInterval, serverDateHeader: Date?) {
-        if let serverDate = serverDateHeader {
-            let rtt = requestDuration
-            let estimatedServerNow = serverDate.timeIntervalSince1970 + rtt / 2
-            let localNow = Date().timeIntervalSince1970
-            let quality: ClockSyncQuality = rtt > 2.0 ? .degradedHighRTT : .synchronized
-            currentOffset = ClockOffset(
-                offsetSeconds: estimatedServerNow - localNow,
-                uncertaintySeconds: rtt / 2,
-                quality: quality
-            )
-        } else {
-            currentOffset = .zero
+        guard let serverDate = serverDateHeader else { return }
+        let rtt = requestDuration
+        guard rtt <= Self.maxRTTSeconds else {
+            if samples.isEmpty {
+                currentOffset = ClockOffset(
+                    offsetSeconds: 0, uncertaintySeconds: rtt / 2, quality: .degradedHighRTT
+                )
+            }
+            return
         }
+        let estimatedServerNow = serverDate.timeIntervalSince1970 + rtt / 2
+        let localNow = Date().timeIntervalSince1970
+        let rawOffset = estimatedServerNow - localNow
+
+        samples.append(rawOffset)
+        if samples.count > Self.maxSamples { samples.removeFirst() }
+
+        let sorted = samples.sorted()
+        let n = sorted.count
+        let median = n % 2 == 0
+            ? (sorted[n / 2 - 1] + sorted[n / 2]) / 2
+            : sorted[n / 2]
+
+        let quality: ClockSyncQuality = n >= Self.minSamplesForSync
+            ? .synchronized : .degradedMissingServerDate
+
+        currentOffset = ClockOffset(
+            offsetSeconds: median,
+            uncertaintySeconds: rtt / 2,
+            quality: quality
+        )
     }
 
     func localFireDate(for serverTimestamp: Date) -> Date {
         currentOffset.localFireDate(for: serverTimestamp)
+    }
+
+    func reset() {
+        samples = []
+        currentOffset = .zero
     }
 }

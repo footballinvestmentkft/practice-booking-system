@@ -472,9 +472,13 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 guard !Task.isCancelled, let self else { return }
                 guard let token = self.tokenProvider() else { continue }
                 do {
-                    let session = try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
-                    self.state = .inLobby(session: session)
-                    self.handlePolledSessionUpdate(session)
+                    let timed = try await MultiCameraAPIClient.getSessionWithTiming(token: token, uuid: uuid)
+                    self.state = .inLobby(session: timed.session)
+                    self.orchestrator.updateClock(
+                        requestDuration: timed.requestDuration,
+                        serverDateHeader: timed.serverDate
+                    )
+                    self.handlePolledSessionUpdate(timed.session)
                 } catch { }
             }
         }

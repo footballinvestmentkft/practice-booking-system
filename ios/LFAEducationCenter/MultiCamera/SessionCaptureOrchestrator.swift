@@ -66,6 +66,12 @@ final class SessionCaptureOrchestrator: ObservableObject {
         self.captureManagerFactory = captureManagerFactory
     }
 
+    // MARK: — Clock update (forwarded from polling)
+
+    func updateClock(requestDuration: TimeInterval, serverDateHeader: Date?) {
+        clock.updateFromPolling(requestDuration: requestDuration, serverDateHeader: serverDateHeader)
+    }
+
     // MARK: — Arm
 
     func armCapture(sessionUUID: String, deviceId: Int) async {

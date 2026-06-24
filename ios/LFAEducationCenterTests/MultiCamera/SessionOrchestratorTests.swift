@@ -254,11 +254,13 @@ final class SessionOrchestratorTests: XCTestCase {
         XCTAssertEqual(orch.orchestrationState, .idle)
     }
 
-    // CL-01: ClockOffset from HTTP Date + RTT
+    // CL-01: ClockOffset from HTTP Date + RTT (needs 3 samples for synchronized)
     func test_CL_01_clock_offset() {
         let clock = ScheduledCaptureClockManager()
-        let serverDate = Date().addingTimeInterval(-0.5) // server 0.5s behind
-        clock.updateFromPolling(requestDuration: 0.2, serverDateHeader: serverDate)
+        let serverDate = Date().addingTimeInterval(-0.5)
+        for _ in 0..<3 {
+            clock.updateFromPolling(requestDuration: 0.2, serverDateHeader: serverDate)
+        }
         XCTAssertEqual(clock.currentOffset.quality, .synchronized)
         XCTAssertTrue(abs(clock.currentOffset.offsetSeconds) < 2.0)
     }
@@ -363,10 +365,12 @@ final class SessionOrchestratorTests: XCTestCase {
         XCTAssertEqual(clock.currentOffset.offsetSeconds, 0)
     }
 
-    // DT-06: Clock quality synchronized with valid Date + low RTT
+    // DT-06: Clock quality synchronized with valid Date + low RTT (needs 3 samples)
     func test_DT_06_clock_quality_synchronized() {
         let clock = ScheduledCaptureClockManager()
-        clock.updateFromPolling(requestDuration: 0.15, serverDateHeader: Date())
+        for _ in 0..<3 {
+            clock.updateFromPolling(requestDuration: 0.15, serverDateHeader: Date())
+        }
         XCTAssertEqual(clock.currentOffset.quality, .synchronized)
     }
 
