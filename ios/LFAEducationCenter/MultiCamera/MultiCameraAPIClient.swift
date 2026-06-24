@@ -57,6 +57,9 @@ struct HeartbeatResponse: Codable, Equatable {
 protocol MultiCameraAPIClientProtocol: Sendable {
     func transitionSession(token: String, uuid: String, target: SessionStatus, revision: Int) async throws -> MultiCameraSessionDTO
     func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO
+    func registerDevice(token: String, uuid: String, request: RegisterDeviceRequest) async throws -> SessionDeviceDTO
+    func updateDeviceStatus(token: String, uuid: String, sessionDeviceId: Int,
+                            targetStatus: MCDeviceStatus, deviceRevision: Int) async throws -> SessionDeviceDTO
 }
 
 struct SystemMultiCameraAPIClient: MultiCameraAPIClientProtocol {
@@ -65,6 +68,16 @@ struct SystemMultiCameraAPIClient: MultiCameraAPIClientProtocol {
     }
     func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO {
         try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
+    }
+    func registerDevice(token: String, uuid: String, request: RegisterDeviceRequest) async throws -> SessionDeviceDTO {
+        try await MultiCameraAPIClient.registerDevice(token: token, uuid: uuid, request: request)
+    }
+    func updateDeviceStatus(token: String, uuid: String, sessionDeviceId: Int,
+                            targetStatus: MCDeviceStatus, deviceRevision: Int) async throws -> SessionDeviceDTO {
+        try await MultiCameraAPIClient.updateDeviceStatus(
+            token: token, uuid: uuid, sessionDeviceId: sessionDeviceId,
+            targetStatus: targetStatus, deviceRevision: deviceRevision
+        )
     }
 }
 

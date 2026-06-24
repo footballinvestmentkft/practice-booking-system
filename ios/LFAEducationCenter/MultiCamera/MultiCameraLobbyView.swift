@@ -168,16 +168,32 @@ struct MultiCameraLobbyView: View {
                 }
             }
             Section("Actions") {
-                if vm.isInstructor && session.status == .lobby {
+                if let instrErr = vm.instructorIdentityError(for: session) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.crop.circle.badge.exclamationmark").foregroundColor(.orange)
+                        Text(instrErr).font(.caption).foregroundColor(.orange)
+                    }
+                } else if session.status == .lobby {
                     Button("Mark Devices Ready") { vm.transitionToDevicesReady() }
                         .font(.body.weight(.semibold))
                         .foregroundColor(.green)
-                } else if vm.isInstructor && session.status == .devicesReady {
-                    Button("Start Capture") { vm.startCapture() }
+                } else if session.status == .devicesReady {
+                    Button("Start Capture") { Task { await vm.startCapture() } }
                         .font(.body.weight(.semibold))
                         .foregroundColor(.green)
                         .disabled(!vm.allAppleDevicesReadyPublic(session))
-                } else if vm.isInstructor && (session.status == .recording || session.status == .recordingPending) {
+                    if let notReadyMsg = vm.deviceNotReadyMessage {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.circle").foregroundColor(.red)
+                            Text(notReadyMsg).font(.caption).foregroundColor(.red)
+                        }
+                    } else if !vm.allAppleDevicesReadyPublic(session) {
+                        let pending = session.devices
+                            .filter { $0.deviceRole != .auxiliaryCamera && $0.removedAt == nil && $0.status != .ready }
+                        Text("Várakozás: \(pending.map { "\($0.deviceRole.rawValue) (\($0.status.rawValue))" }.joined(separator: ", "))")
+                            .font(.caption).foregroundColor(.orange)
+                    }
+                } else if session.status == .recording || session.status == .recordingPending {
                     Button("Stop Capture") { vm.stopCapture() }
                         .font(.body.weight(.semibold))
                         .foregroundColor(.red)

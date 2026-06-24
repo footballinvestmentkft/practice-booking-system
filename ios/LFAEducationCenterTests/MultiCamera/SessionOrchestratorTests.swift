@@ -419,6 +419,15 @@ final class MockMultiCameraAPIClient: MultiCameraAPIClientProtocol, @unchecked S
         return try getSessionResult.get()
     }
 
+    func registerDevice(token: String, uuid: String, request: RegisterDeviceRequest) async throws -> SessionDeviceDTO {
+        throw NSError(domain: "test", code: -1, userInfo: [NSLocalizedDescriptionKey: "not implemented"])
+    }
+
+    func updateDeviceStatus(token: String, uuid: String, sessionDeviceId: Int,
+                            targetStatus: MCDeviceStatus, deviceRevision: Int) async throws -> SessionDeviceDTO {
+        throw NSError(domain: "test", code: -1, userInfo: [NSLocalizedDescriptionKey: "not implemented"])
+    }
+
     static func makeSession(revision: Int, status: SessionStatus = .devicesReady) -> MultiCameraSessionDTO {
         let json = """
         {

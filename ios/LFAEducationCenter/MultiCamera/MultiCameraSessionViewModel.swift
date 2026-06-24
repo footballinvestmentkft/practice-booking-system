@@ -27,26 +27,35 @@ final class MultiCameraSessionViewModel: ObservableObject {
 
     @Published private(set) var state: LobbyState = .idle
     @Published private(set) var sessionDeviceId: Int?
+    // Per-device readiness message; set when startCapture() is blocked by a specific device.
+    @Published private(set) var deviceNotReadyMessage: String?
     let orchestrator = SessionCaptureOrchestrator()
 
     private var pollingTask: Task<Void, Never>?
     private var heartbeatTask: Task<Void, Never>?
     private var isCreateInProgress = false
     private var hasArmedForCurrentSession = false
+    private var hasTransitionedToRecording = false
+    // Revision from registerDevice() response; used for the ready-PATCH to avoid hardcoding 1.
+    private(set) var sessionDeviceRevision: Int = 1
 
     private let authManager: AuthManager
     private let apiClient: MultiCameraAPIClientProtocol
+    // Injectable token provider — defaults to authManager.accessToken; overridden in tests.
+    private let tokenProvider: () -> String?
     private let pollingInterval: UInt64
     private let heartbeatInterval: UInt64
 
     init(
         authManager: AuthManager,
         apiClient: (any MultiCameraAPIClientProtocol)? = nil,
+        tokenProvider: (() -> String?)? = nil,
         pollingIntervalSeconds: Double = 3.0,
         heartbeatIntervalSeconds: Double = 5.0
     ) {
         self.authManager = authManager
         self.apiClient = apiClient ?? SystemMultiCameraAPIClient()
+        self.tokenProvider = tokenProvider ?? { authManager.accessToken }
         self.pollingInterval = UInt64(pollingIntervalSeconds * 1_000_000_000)
         self.heartbeatInterval = UInt64(heartbeatIntervalSeconds * 1_000_000_000)
     }
@@ -55,6 +64,25 @@ final class MultiCameraSessionViewModel: ObservableObject {
         pollingTask?.cancel()
         heartbeatTask?.cancel()
     }
+
+    // MARK: — ISO8601 parser (shared; handles fractional seconds and plain Internet date)
+
+    // Tries fractional seconds first (the server's typical format), falls back to plain.
+    static func parseScheduledDate(_ string: String) -> Date? {
+        fractionalFormatter.date(from: string) ?? plainFormatter.date(from: string)
+    }
+
+    private static let fractionalFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    private static let plainFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
 
     // MARK: — Public actions
 
@@ -66,7 +94,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         Task {
             defer { isCreateInProgress = false }
             do {
-                guard let token = authManager.accessToken else { throw LobbyError.noAuth }
+                guard let token = tokenProvider() else { throw LobbyError.noAuth }
                 let session = try await MultiCameraAPIClient.createSession(token: token, maxP: maxP, maxD: maxD)
                 state = .inLobby(session: session)
                 let myPartId = session.participants.first?.id
@@ -84,7 +112,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         state = .joining
         Task {
             do {
-                guard let token = authManager.accessToken else { throw LobbyError.noAuth }
+                guard let token = tokenProvider() else { throw LobbyError.noAuth }
                 let joinedParticipant = try await MultiCameraAPIClient.joinSession(token: token, uuid: uuid, role: role)
                 let session = try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
                 state = .inLobby(session: session)
@@ -101,7 +129,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         guard case .inLobby(let session) = state else { return }
         Task {
             do {
-                guard let token = authManager.accessToken else { throw LobbyError.noAuth }
+                guard let token = tokenProvider() else { throw LobbyError.noAuth }
                 let updated = try await MultiCameraAPIClient.transitionSession(
                     token: token, uuid: session.sessionUuid,
                     target: .devicesReady, revision: session.revision
@@ -120,11 +148,11 @@ final class MultiCameraSessionViewModel: ObservableObject {
             return
         }
         guard let sdId = sessionDeviceId else {
-            let msg = "[LobbyVM] armCapture: skip — sessionDeviceId=nil (device not registered)"
+            let msg = "[LobbyVM] armCapture: BLOCKED — sessionDeviceId=nil (device registration failed or pending)"
             print(msg); vmLog.error("\(msg, privacy: .public)")
             return
         }
-        let msg0 = "[LobbyVM] armCapture: starting sdId=\(sdId)"
+        let msg0 = "[LobbyVM] armCapture: starting sdId=\(sdId) rev=\(sessionDeviceRevision)"
         print(msg0); vmLog.info("\(msg0, privacy: .public)")
         hasArmedForCurrentSession = true
         Task {
@@ -132,54 +160,119 @@ final class MultiCameraSessionViewModel: ObservableObject {
             let orchStateStr = String(describing: orchestrator.orchestrationState)
             let msg1 = "[LobbyVM] armCapture: after arm — orchState=\(orchStateStr)"
             print(msg1); vmLog.info("\(msg1, privacy: .public)")
-            if orchestrator.orchestrationState == .armed, let token = authManager.accessToken {
-                _ = try? await MultiCameraAPIClient.updateDeviceStatus(
-                    token: token, uuid: session.sessionUuid, sessionDeviceId: sdId,
-                    targetStatus: .ready, deviceRevision: 1
-                )
-                let msg2 = "[LobbyVM] armCapture: PATCH status→ready sent"
-                print(msg2); vmLog.info("\(msg2, privacy: .public)")
-                let preset: [String: AnyCodable] = [
-                    "resolution": AnyCodable("1920x1080"), "fps": AnyCodable(30),
-                    "codec": AnyCodable("h264"), "camera": AnyCodable("rear_wide")
-                ]
-                await orchestrator.ensureStreamCreated(
-                    token: token, uuid: session.sessionUuid, sdId: sdId, preset: preset
-                )
-            }
+            guard orchestrator.orchestrationState == .armed, let token = tokenProvider() else { return }
+            await _patchDeviceReady(token: token, sessionUuid: session.sessionUuid, sdId: sdId)
+            guard case .inLobby = state else { return }  // _patchDeviceReady may have set .error
+            let preset: [String: AnyCodable] = [
+                "resolution": AnyCodable("1920x1080"), "fps": AnyCodable(30),
+                "codec": AnyCodable("h264"), "camera": AnyCodable("rear_wide")
+            ]
+            await orchestrator.ensureStreamCreated(
+                token: token, uuid: session.sessionUuid, sdId: sdId, preset: preset
+            )
         }
     }
 
-    func startCapture() {
-        guard case .inLobby(let session) = state, isInstructor else {
-            let inLobby: Bool; if case .inLobby = state { inLobby = true } else { inLobby = false }
-            let msg = "[LobbyVM] startCapture: guard1 — inLobby=\(inLobby) isInstructor=\(isInstructor)"
+    // Extracted for unit-testability: sends the PATCH /devices/{id}/status ready call.
+    // Uses sessionDeviceRevision (not hardcoded 1). Errors are surfaced — never swallowed.
+    func _patchDeviceReady(token: String, sessionUuid: String, sdId: Int) async {
+        do {
+            let updated = try await apiClient.updateDeviceStatus(
+                token: token, uuid: sessionUuid, sessionDeviceId: sdId,
+                targetStatus: .ready, deviceRevision: sessionDeviceRevision
+            )
+            sessionDeviceRevision = updated.revision
+            let msg = "[LobbyVM] _patchDeviceReady: OK — new rev=\(updated.revision)"
+            print(msg); vmLog.info("\(msg, privacy: .public)")
+        } catch {
+            let msg = "[LobbyVM] _patchDeviceReady: FAILED — \(error)"
+            print(msg); vmLog.error("\(msg, privacy: .public)")
+            state = .error("Device status PATCH hiba (\(mapError(error))). Indíts új sessiont.")
+        }
+    }
+
+    func startCapture() async {
+        guard case .inLobby(let session) = state else {
+            vmLog.warning("[LobbyVM] startCapture: not inLobby — skipping")
+            return
+        }
+        if let instrErr = instructorIdentityError(for: session) {
+            let msg = "[LobbyVM] startCapture: instructor check failed — \(instrErr)"
             print(msg); vmLog.warning("\(msg, privacy: .public)")
+            state = .error(instrErr)
             return
         }
-        let appleDevices = session.devices.filter { $0.deviceRole != .auxiliaryCamera }
-        let statusSummary = appleDevices.map { "id=\($0.id)/role=\($0.deviceRole.rawValue)/status=\($0.status.rawValue)" }.joined(separator: " ")
-        let msg2 = "[LobbyVM] startCapture: \(appleDevices.count) apple devices: \(statusSummary)"
+        guard let token = tokenProvider() else {
+            state = .error("Nincs bejelentkezve")
+            return
+        }
+        // Fresh GET — never rely on cached polling data for a gating decision.
+        let fresh: MultiCameraSessionDTO
+        do {
+            fresh = try await apiClient.getSession(token: token, uuid: session.sessionUuid)
+        } catch {
+            let msg = "[LobbyVM] startCapture: fresh GET failed — \(error)"
+            print(msg); vmLog.error("\(msg, privacy: .public)")
+            state = .error("Session lekérés hiba: \(mapError(error))")
+            return
+        }
+        state = .inLobby(session: fresh)
+
+        // Duplicate device detection (same role registered more than once, active entries only).
+        if let dupWarning = duplicateDeviceWarning(in: fresh) {
+            let msg = "[LobbyVM] startCapture: DUPLICATE DEVICES — \(dupWarning)"
+            print(msg); vmLog.warning("\(msg, privacy: .public)")
+            state = .error(dupWarning)
+            return
+        }
+
+        // Per-device readiness check — active non-auxiliary devices only.
+        let appleDevices = fresh.devices.filter {
+            $0.deviceRole != .auxiliaryCamera && $0.removedAt == nil
+        }
+        let summary = appleDevices.map {
+            "id=\($0.id)/\($0.deviceRole.rawValue)/\($0.status.rawValue)"
+        }.joined(separator: " ")
+        let msg2 = "[LobbyVM] startCapture: \(appleDevices.count) active apple devices: \(summary)"
         print(msg2); vmLog.info("\(msg2, privacy: .public)")
-        guard allAppleDevicesReady(session) else {
-            let msg3 = "[LobbyVM] startCapture: BLOCKED — not all ready (see above)"
+
+        let notReady = appleDevices.filter { $0.status != .ready }
+        if !notReady.isEmpty {
+            let names = notReady.map {
+                "\($0.deviceRole.rawValue) (id=\($0.id), status=\($0.status.rawValue))"
+            }.joined(separator: ", ")
+            let errMsg = "Nem kész eszközök: \(names)"
+            let msg3 = "[LobbyVM] startCapture: BLOCKED — \(errMsg)"
             print(msg3); vmLog.warning("\(msg3, privacy: .public)")
+            deviceNotReadyMessage = errMsg
             return
         }
-        Task {
-            guard let token = authManager.accessToken else { return }
-            do {
-                let updated = try await transitionWithRetry(
-                    token: token, uuid: session.sessionUuid,
-                    target: .recordingPending, revision: session.revision
-                )
-                state = .inLobby(session: updated)
-                if let schedStr = updated.scheduledStartAt, let schedDate = ISO8601DateFormatter().date(from: schedStr) {
-                    orchestrator.scheduleStart(serverScheduledAt: schedDate)
-                }
-            } catch {
-                state = .error(mapError(error))
+        deviceNotReadyMessage = nil
+
+        do {
+            let updated = try await transitionWithRetry(
+                token: token, uuid: fresh.sessionUuid,
+                target: .recordingPending, revision: fresh.revision
+            )
+            state = .inLobby(session: updated)
+
+            guard let schedStr = updated.scheduledStartAt else {
+                let msg4 = "[LobbyVM] startCapture: scheduledStartAt nil after transition"
+                print(msg4); vmLog.error("\(msg4, privacy: .public)")
+                state = .error("Backend nem adott ütemezési időpontot (scheduled_start_at hiányzik)")
+                return
             }
+            guard let schedDate = Self.parseScheduledDate(schedStr) else {
+                let msg5 = "[LobbyVM] startCapture: ISO8601 parse FAILED for '\(schedStr)'"
+                print(msg5); vmLog.error("\(msg5, privacy: .public)")
+                state = .error("Érvénytelen ütemezési időpont: \(schedStr)")
+                return
+            }
+            let msg6 = "[LobbyVM] startCapture: scheduleStart at \(schedStr)"
+            print(msg6); vmLog.info("\(msg6, privacy: .public)")
+            orchestrator.scheduleStart(serverScheduledAt: schedDate)
+        } catch {
+            state = .error(mapError(error))
         }
     }
 
@@ -198,17 +291,14 @@ final class MultiCameraSessionViewModel: ObservableObject {
         guard case .inLobby(let session) = state else { return }
         orchestrator.stopCapture()
         Task {
-            guard let token = authManager.accessToken else { return }
+            guard let token = tokenProvider() else { return }
             let fresh = try? await MultiCameraAPIClient.getSession(token: token, uuid: session.sessionUuid)
             let current = fresh ?? session
             let target: SessionStatus
-            switch SessionStatus(rawValue: current.status.rawValue) {
-            case .recording:
-                target = .stopped
-            case .recordingPending:
-                target = .cancelled
-            default:
-                target = .stopped
+            switch current.status {
+            case .recording: target = .stopped
+            case .recordingPending: target = .cancelled
+            default: target = .stopped
             }
             let updated = try? await transitionWithRetry(
                 token: token, uuid: current.sessionUuid,
@@ -218,31 +308,67 @@ final class MultiCameraSessionViewModel: ObservableObject {
         }
     }
 
+    // MARK: — Device readiness helpers
+
     func allAppleDevicesReadyPublic(_ session: MultiCameraSessionDTO) -> Bool {
-        allAppleDevicesReady(session)
+        let active = session.devices.filter {
+            $0.deviceRole != .auxiliaryCamera && $0.removedAt == nil
+        }
+        return !active.isEmpty && active.allSatisfy { $0.status == .ready }
     }
 
-    private func allAppleDevicesReady(_ session: MultiCameraSessionDTO) -> Bool {
-        let appleDevices = session.devices.filter { $0.deviceRole != .auxiliaryCamera }
-        return !appleDevices.isEmpty && appleDevices.allSatisfy { $0.status == .ready }
+    // Returns a user-visible warning when the same device role appears more than once
+    // in active (non-removed) entries — a sign of duplicate registration from session reuse.
+    func duplicateDeviceWarning(in session: MultiCameraSessionDTO) -> String? {
+        let active = session.devices.filter {
+            $0.deviceRole != .auxiliaryCamera && $0.removedAt == nil
+        }
+        var roleToIds: [MCDeviceRole: [Int]] = [:]
+        for d in active { roleToIds[d.deviceRole, default: []].append(d.id) }
+        let dups = roleToIds.filter { $0.value.count > 1 }
+        guard !dups.isEmpty else { return nil }
+        let msgs = dups.sorted { $0.key.rawValue < $1.key.rawValue }
+                       .map { "\($0.key.rawValue): \($0.value.count)× (ids: \($0.value))" }
+        return "Duplikált device rekordok — Indíts új sessiont! (\(msgs.joined(separator: ", ")))"
     }
 
-    private var hasTransitionedToRecording = false
+    // Returns a user-visible error if instructor identity cannot be confirmed, nil if OK.
+    func instructorIdentityError(for session: MultiCameraSessionDTO) -> String? {
+        guard let uid = Self.cachedUserId else {
+            return "Nincs bejelentkezve (lfa_current_user_id hiányzik a UserDefaults-ból)"
+        }
+        guard session.participants.contains(where: { $0.userId == uid && $0.role == .instructor }) else {
+            return "A felhasználó (id=\(uid)) nem instructor ebben a sessionben"
+        }
+        return nil
+    }
+
+    var isInstructor: Bool {
+        guard case .inLobby(let session) = state else { return false }
+        return instructorIdentityError(for: session) == nil
+    }
+
+    // MARK: — Session state handler (polling)
 
     private func handlePolledSessionUpdate(_ session: MultiCameraSessionDTO) {
         if session.status == .devicesReady && orchestrator.orchestrationState == .idle {
             armCapture()
         }
         if session.status == .recordingPending && orchestrator.orchestrationState == .armed {
-            if let schedStr = session.scheduledStartAt, let schedDate = ISO8601DateFormatter().date(from: schedStr) {
-                orchestrator.scheduleStart(serverScheduledAt: schedDate)
+            if let schedStr = session.scheduledStartAt {
+                if let schedDate = Self.parseScheduledDate(schedStr) {
+                    orchestrator.scheduleStart(serverScheduledAt: schedDate)
+                } else {
+                    let msg = "[LobbyVM] handlePolledUpdate: ISO8601 parse FAILED for '\(schedStr)'"
+                    print(msg); vmLog.error("\(msg, privacy: .public)")
+                }
             }
         }
         if session.status == .recordingPending && orchestrator.orchestrationState == .capturing
             && isInstructor && !hasTransitionedToRecording {
             hasTransitionedToRecording = true
             Task {
-                guard let token = authManager.accessToken else { return }
+                guard let token = tokenProvider() else { return }
                 let updated = try? await transitionWithRetry(
                     token: token, uuid: session.sessionUuid,
                     target: .recording, revision: session.revision
@@ -250,7 +376,9 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 if let updated { state = .inLobby(session: updated) }
             }
         }
-        if session.status == .stopped && (orchestrator.orchestrationState == .capturing || orchestrator.orchestrationState == .starting) {
+        if session.status == .stopped
+            && (orchestrator.orchestrationState == .capturing
+                || orchestrator.orchestrationState == .starting) {
             orchestrator.stopCapture()
         }
     }
@@ -259,7 +387,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         guard case .inLobby(let session) = state else { return }
         orchestrator.stopCapture()
         Task {
-            guard let token = authManager.accessToken else { reset(); return }
+            guard let token = tokenProvider() else { reset(); return }
             _ = try? await transitionWithRetry(
                 token: token, uuid: session.sessionUuid,
                 target: .cancelled, revision: session.revision
@@ -274,6 +402,8 @@ final class MultiCameraSessionViewModel: ObservableObject {
         pollingTask = nil
         heartbeatTask = nil
         sessionDeviceId = nil
+        sessionDeviceRevision = 1
+        deviceNotReadyMessage = nil
         isCreateInProgress = false
         hasArmedForCurrentSession = false
         hasTransitionedToRecording = false
@@ -281,10 +411,16 @@ final class MultiCameraSessionViewModel: ObservableObject {
         state = .idle
     }
 
-    // MARK: — Auto device register
+    // MARK: — Auto device register (3-retry; never silent)
 
-    private func autoRegisterDevice(sessionUuid: String, participantId: Int? = nil) async {
-        guard let token = authManager.accessToken else { return }
+    // Internal visibility so unit tests can call it directly without going through
+    // createSession()/joinSession() which use static API calls outside the injectable protocol.
+    func autoRegisterDevice(sessionUuid: String, participantId: Int? = nil) async {
+        guard let token = tokenProvider() else {
+            let msg = "[LobbyVM] autoRegisterDevice: FAILED — no auth token"
+            print(msg); vmLog.error("\(msg, privacy: .public)")
+            return
+        }
         #if targetEnvironment(simulator)
         let deviceType: MCDeviceType = .iphone
         #else
@@ -299,15 +435,24 @@ final class MultiCameraSessionViewModel: ObservableObject {
             deviceRole: deviceType == .ipad ? .instructorPrimary : .playerPrimary,
             participantId: participantId, managedByDeviceId: nil
         )
-        do {
-            let sd = try await MultiCameraAPIClient.registerDevice(token: token, uuid: sessionUuid, request: request)
-            sessionDeviceId = sd.id
-            let msg = "[LobbyVM] autoRegisterDevice: OK — id=\(sd.id) type=\(deviceType.rawValue)"
-            print(msg); vmLog.info("\(msg, privacy: .public)")
-        } catch {
-            let msg = "[LobbyVM] autoRegisterDevice: FAILED — \(error)"
-            print(msg); vmLog.error("\(msg, privacy: .public)")
+        for attempt in 1...3 {
+            do {
+                let sd = try await apiClient.registerDevice(token: token, uuid: sessionUuid, request: request)
+                sessionDeviceId = sd.id
+                sessionDeviceRevision = sd.revision
+                let msg = "[LobbyVM] autoRegisterDevice: OK — attempt=\(attempt) id=\(sd.id) rev=\(sd.revision) type=\(deviceType.rawValue)"
+                print(msg); vmLog.info("\(msg, privacy: .public)")
+                return
+            } catch {
+                let msg = "[LobbyVM] autoRegisterDevice: attempt=\(attempt)/3 FAILED — \(error)"
+                print(msg); vmLog.error("\(msg, privacy: .public)")
+                if attempt < 3 { try? await Task.sleep(nanoseconds: 500_000_000) }
+            }
         }
+        let errMsg = "Device regisztráció sikertelen (3 kísérlet után). Ellenőrizd a hálózatot és indíts új sessiont."
+        let msg = "[LobbyVM] autoRegisterDevice: ALL 3 FAILED — \(errMsg)"
+        print(msg); vmLog.error("\(msg, privacy: .public)")
+        state = .error(errMsg)
     }
 
     // MARK: — Polling
@@ -318,14 +463,12 @@ final class MultiCameraSessionViewModel: ObservableObject {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: self?.pollingInterval ?? 3_000_000_000)
                 guard !Task.isCancelled, let self else { return }
-                guard let token = self.authManager.accessToken else { continue }
+                guard let token = self.tokenProvider() else { continue }
                 do {
                     let session = try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
                     self.state = .inLobby(session: session)
                     self.handlePolledSessionUpdate(session)
-                } catch {
-                    // skip iteration, retry next cycle
-                }
+                } catch { }
             }
         }
     }
@@ -338,7 +481,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: self?.heartbeatInterval ?? 5_000_000_000)
                 guard !Task.isCancelled, let self else { return }
-                guard let token = self.authManager.accessToken,
+                guard let token = self.tokenProvider(),
                       let sdId = self.sessionDeviceId else { continue }
                 _ = try? await MultiCameraAPIClient.heartbeat(token: token, uuid: uuid, sessionDeviceId: sdId)
             }
@@ -346,11 +489,6 @@ final class MultiCameraSessionViewModel: ObservableObject {
     }
 
     // MARK: — Helpers
-
-    var isInstructor: Bool {
-        guard case .inLobby(let session) = state else { return false }
-        return session.participants.contains { $0.role == .instructor && $0.userId == (Self.cachedUserId ?? 0) }
-    }
 
     private static var cachedUserId: Int? {
         let v = UserDefaults.standard.integer(forKey: "lfa_current_user_id")
@@ -369,13 +507,21 @@ final class MultiCameraSessionViewModel: ObservableObject {
             case 401: return "Nincs bejelentkezve"
             case 403: return "Nincs jogosultság"
             case 404: return "Session nem található"
-            case 409: return "Session megtelt vagy verzióütközés"
+            case 409: return "Verzióütközés (409)"
             case 422: return "Érvénytelen művelet"
             default: return "Szerverhiba (\(nsError.code))"
             }
         }
         if error is LobbyError { return "Nincs bejelentkezve" }
         return "Hálózati hiba"
+    }
+
+    // MARK: — Test support
+
+    // Sets the lobby state directly for unit tests that need the VM in .inLobby
+    // without going through createSession()/joinSession() (which use static API calls).
+    func _setLobbyStateForTesting(_ session: MultiCameraSessionDTO) {
+        state = .inLobby(session: session)
     }
 }
 
