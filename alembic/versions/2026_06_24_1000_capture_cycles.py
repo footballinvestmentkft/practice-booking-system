@@ -9,6 +9,21 @@ Expand ck_mcs_status to include 'recording_pending' + 'active'.
 Revision ID: 2026_06_24_1000
 Revises: 2026_06_22_2000
 Create Date: 2026-06-24
+
+PREFLIGHT NOTE (initial deployment):
+  Both new tables are created from scratch by this migration.  No existing
+  rows can violate the new constraints because the tables do not yet exist
+  before upgrade runs.  The capture_cycle_id column added to capture_streams
+  is nullable, so all legacy stream rows remain valid (capture_cycle_id=NULL
+  rows are excluded from the partial unique index).  No preflight data checks
+  are required for a green-field schema.  For a re-run after a partial failure,
+  verify capture_cycles / capture_cycle_devices do not already exist before
+  running upgrade head again.
+
+DOWNGRADE DATA LOSS WARNING:
+  downgrade() drops capture_cycles and capture_cycle_devices entirely.
+  All recorded cycle data and device snapshots are permanently destroyed.
+  Only run downgrade in dev/test environments or with explicit operator sign-off.
 """
 from alembic import op
 import sqlalchemy as sa
@@ -156,9 +171,18 @@ def downgrade() -> None:
     op.drop_table("capture_cycle_devices")
     op.drop_table("capture_cycles")
 
+    # Migrate 'active' sessions (introduced by this revision) to 'cancelled'
+    # before restoring the constraint that does not include 'active'.
+    # 'recording_pending' was valid before this revision (added by 2026_06_22_2000)
+    # and is kept in the restored constraint below.
+    op.execute(sa.text(
+        "UPDATE multicamera_sessions SET status = 'cancelled' WHERE status = 'active'"
+    ))
+
     op.drop_constraint("ck_mcs_status", "multicamera_sessions")
     op.create_check_constraint(
         "ck_mcs_status",
         "multicamera_sessions",
-        "status IN ('lobby','devices_ready','recording','stopped','finalizing','completed','cancelled')",
+        "status IN ('lobby','devices_ready','recording_pending','recording',"
+        "'stopped','finalizing','completed','cancelled')",
     )

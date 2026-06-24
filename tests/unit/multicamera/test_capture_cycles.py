@@ -173,13 +173,16 @@ class TestCreateCycle:
         assert c1.id == c2.id
         assert c1.cycle_index == c2.cycle_index
 
-    def test_cc_04_different_keys_get_different_indices(self, db, active_session):
-        """CC-04: two distinct keys → cycle_index 0 and 1."""
+    def test_cc_04_sequential_cycles_get_different_indices(self, db, active_session):
+        """CC-04: second cycle only allowed after first is terminal → index 0 then 1."""
         s, p_inst, sd1, sd2 = active_session
         svc = CycleService(db)
         c1 = svc.create_cycle(s.session_uuid, "key-cc04a", p_inst.id)
-        c2 = svc.create_cycle(s.session_uuid, "key-cc04b", p_inst.id)
         assert c1.cycle_index == 0
+        # Abort first cycle so a second can be created
+        c1_aborted = svc.abort_cycle(c1.id, c1.revision, reason="test")
+        assert c1_aborted.status == "aborted"
+        c2 = svc.create_cycle(s.session_uuid, "key-cc04b", p_inst.id)
         assert c2.cycle_index == 1
 
     def test_cc_05_session_not_active_raises(self, db, users):
@@ -354,19 +357,31 @@ class TestConfirmDeviceStart:
         with pytest.raises(DeviceNotFoundError):
             svc.confirm_device_start(cycle.id, 99999, datetime.now(timezone.utc), 1)
 
-    def test_cs_06_double_confirm_start_raises(self, db, cycle_with_two_devices):
-        """CS-06: confirming start twice raises InvalidTransitionError."""
+    def test_cs_06_confirm_start_after_stop_raises(self, db, cycle_with_two_devices):
+        """CS-06: confirm_device_start after device is already CONFIRMED_STOP raises InvalidTransitionError."""
         cycle, sd1, sd2, p_inst, s = cycle_with_two_devices
         svc = CycleService(db)
         cycle = self._schedule(svc, cycle)
         now = datetime.now(timezone.utc)
+        # Start both devices → RECORDING
         ccd1 = next(d for d in cycle.cycle_devices if d.session_device_id == sd1.id)
+        ccd2 = next(d for d in cycle.cycle_devices if d.session_device_id == sd2.id)
         cycle = svc.confirm_device_start(cycle.id, sd1.id, now, ccd1.revision)
         db.expire_all()
         cycle = svc.get_cycle(cycle.id)
-        ccd1 = next(d for d in cycle.cycle_devices if d.session_device_id == sd1.id)
+        ccd2 = next(d for d in cycle.cycle_devices if d.session_device_id == sd2.id)
+        cycle = svc.confirm_device_start(cycle.id, sd2.id, now, ccd2.revision)
+        # Stop → STOPPING
+        cycle = svc.stop_cycle(cycle.id, cycle.revision)
+        ccd1_fresh = next(d for d in cycle.cycle_devices if d.session_device_id == sd1.id)
+        # Confirm stop on sd1
+        cycle = svc.confirm_device_stop(cycle.id, sd1.id, now, ccd1_fresh.revision)
+        db.expire_all()
+        cycle = svc.get_cycle(cycle.id)
+        ccd1_stopped = next(d for d in cycle.cycle_devices if d.session_device_id == sd1.id)
+        # Attempting to confirm_start again from CONFIRMED_STOP must raise
         with pytest.raises(InvalidTransitionError):
-            svc.confirm_device_start(cycle.id, sd1.id, now, ccd1.revision)
+            svc.confirm_device_start(cycle.id, sd1.id, now, ccd1_stopped.revision)
 
     def test_cs_07_started_at_stored(self, db, cycle_with_two_devices):
         """CS-07: started_at is persisted on the CycleDevice row."""
@@ -622,10 +637,12 @@ class TestListCycles:
         assert result == []
 
     def test_lc_02_returns_in_cycle_index_order(self, db, active_session):
-        """LC-02: cycles returned ordered by cycle_index."""
+        """LC-02: cycles returned ordered by cycle_index (first must be terminal before second)."""
         s, p_inst, sd1, sd2 = active_session
         svc = CycleService(db)
         c1 = svc.create_cycle(s.session_uuid, "lc-key-a", p_inst.id)
+        # Abort first cycle so active-cycle guard allows creating c2
+        svc.abort_cycle(c1.id, c1.revision, reason="lc-02 setup")
         c2 = svc.create_cycle(s.session_uuid, "lc-key-b", p_inst.id)
         result = svc.list_cycles(s.session_uuid)
         assert len(result) == 2
@@ -864,3 +881,221 @@ class TestConcurrentIdempotency:
         assert len(results) == 2
         # Both results should have a valid ID
         assert all(r is not None for r in results)
+
+    def test_idem_02_concurrent_different_keys_one_wins_one_409(self):
+        """IDEM-02: two concurrent create_cycle calls with DIFFERENT keys.
+
+        Exactly one call must succeed (cycle created, result appended).
+        The other must raise CycleConflictError (409 Active cycle exists).
+        DB must contain exactly one non-terminal cycle for the session.
+        No duplicate cycle_index.
+        Session row SELECT FOR UPDATE serialises the race.
+        """
+        from app.database import SessionLocal
+        from app.services.multicamera.exceptions import CycleConflictError as CCE
+        import uuid as _u
+
+        setup_db = SessionLocal()
+        tag = _u.uuid4().hex[:8]
+        try:
+            instructor = User(
+                name=f"Idem2Inst-{tag}",
+                email=f"idem2-inst-{tag}@test.com",
+                password_hash="x",
+                role=UserRole.INSTRUCTOR,
+                is_active=True,
+            )
+            setup_db.add(instructor)
+            setup_db.flush()
+
+            s = MultiCameraSession(
+                created_by_user_id=instructor.id,
+                status=SessionStatus.ACTIVE.value,
+            )
+            setup_db.add(s)
+            setup_db.flush()
+
+            p = SessionParticipant(session_id=s.id, user_id=instructor.id, role="instructor")
+            setup_db.add(p)
+            setup_db.flush()
+
+            md = ManagedDevice(owner_user_id=instructor.id, device_type="ipad", device_name=f"iPad2-{tag}")
+            setup_db.add(md)
+            setup_db.flush()
+
+            sd = SessionDevice(
+                session_id=s.id, device_id=md.id, participant_id=p.id,
+                device_role="instructor_primary", status="ready",
+            )
+            setup_db.add(sd)
+            setup_db.flush()
+
+            session_uuid = s.session_uuid
+            participant_id = p.id
+            session_id = s.id
+            setup_db.commit()
+        except Exception:
+            setup_db.rollback()
+            raise
+        finally:
+            setup_db.close()
+
+        results = []   # cycle ids from successful creates
+        conflicts = [] # CycleConflictError exceptions
+        other_errors = []
+
+        def _create(key: str):
+            worker_db = SessionLocal()
+            try:
+                svc = CycleService(worker_db)
+                cycle = svc.create_cycle(session_uuid, key, participant_id)
+                results.append(cycle.id)
+            except CCE as e:
+                conflicts.append(e)
+            except Exception as e:
+                other_errors.append(e)
+            finally:
+                worker_db.close()
+
+        t1 = threading.Thread(target=_create, args=("idem2-key-A",))
+        t2 = threading.Thread(target=_create, args=("idem2-key-B",))
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+
+        # Cleanup before assertions (so cleanup runs even if assertions fail)
+        cleanup_db = SessionLocal()
+        try:
+            from app.models.multicamera_session import CaptureCycleDevice as CCD2, CaptureCycle as CC2
+            cleanup_db.query(CCD2).filter(CCD2.capture_cycle_id.in_(
+                cleanup_db.query(CC2.id).filter(CC2.session_id == session_id)
+            )).delete(synchronize_session=False)
+            cleanup_db.query(CC2).filter(CC2.session_id == session_id).delete()
+            cleanup_db.query(SessionDevice).filter(SessionDevice.session_id == session_id).delete()
+            cleanup_db.query(SessionParticipant).filter(SessionParticipant.session_id == session_id).delete()
+            cleanup_db.query(MultiCameraSession).filter(MultiCameraSession.id == session_id).delete()
+            cleanup_db.commit()
+        finally:
+            cleanup_db.close()
+
+        assert not other_errors, f"Unexpected errors: {other_errors}"
+        # Exactly one winner, exactly one 409
+        assert len(results) == 1, f"Expected 1 winner, got {len(results)}: {results}"
+        assert len(conflicts) == 1, f"Expected 1 CycleConflictError, got {len(conflicts)}"
+        assert "active cycle" in str(conflicts[0]).lower() or "active" in str(conflicts[0]).lower()
+
+
+# ── CC — active cycle guard ───────────────────────────────────────────────────
+
+class TestActiveCycleGuard:
+    def test_cc_09_different_key_blocked_by_active_cycle(self, db, active_session):
+        """CC-09: creating a second cycle with a different key while first is non-terminal → 409."""
+        s, p_inst, sd1, sd2 = active_session
+        svc = CycleService(db)
+        svc.create_cycle(s.session_uuid, "key-guard-first", p_inst.id)
+        with pytest.raises(CycleConflictError) as exc_info:
+            svc.create_cycle(s.session_uuid, "key-guard-second", p_inst.id)
+        assert "active cycle" in str(exc_info.value).lower()
+
+    def test_cc_10_terminal_cycle_allows_new_create(self, db, active_session):
+        """CC-10: after first cycle is aborted (terminal), a new cycle can be created."""
+        s, p_inst, sd1, sd2 = active_session
+        svc = CycleService(db)
+        c1 = svc.create_cycle(s.session_uuid, "key-term-first", p_inst.id)
+        svc.abort_cycle(c1.id, c1.revision, reason="test done")
+        c2 = svc.create_cycle(s.session_uuid, "key-term-second", p_inst.id)
+        assert c2.cycle_index == 1
+        assert CycleStatus(c2.status) == CycleStatus.PREPARING
+
+    def test_cc_11_same_key_always_idempotent_even_when_active(self, db, active_session):
+        """CC-11: same idempotency key always returns existing cycle, not blocked by active guard."""
+        s, p_inst, sd1, sd2 = active_session
+        svc = CycleService(db)
+        c1 = svc.create_cycle(s.session_uuid, "key-idem-active", p_inst.id)
+        c2 = svc.create_cycle(s.session_uuid, "key-idem-active", p_inst.id)
+        assert c1.id == c2.id  # idempotent return, not blocked
+
+
+# ── SC — snapshot gate: not-ready device in snapshot ─────────────────────────
+
+class TestSnapshotGate:
+    def test_sc_snp_not_ready_device_in_snapshot_schedule_blocked(self, db, active_session):
+        """SC-SNP: not-ready required device is captured in snapshot; schedule is then blocked.
+
+        Verifies three properties together:
+        1. create_cycle snapshots ALL non-removed devices, not only ready ones.
+        2. The not-ready device is marked required=True (non-auxiliary role).
+        3. schedule_cycle raises DeviceNotReadyError for that device.
+        """
+        s, p_inst, sd1, sd2 = active_session
+        # Make sd2 not ready
+        sd2.status = "registered"
+        db.flush()
+
+        svc = CycleService(db)
+        cycle = svc.create_cycle(s.session_uuid, "key-snp", p_inst.id)
+
+        # Both devices captured
+        device_ids = {ccd.session_device_id for ccd in cycle.cycle_devices}
+        assert sd1.id in device_ids, "ready device must be in snapshot"
+        assert sd2.id in device_ids, "not-ready device must still be in snapshot"
+
+        # Not-ready device is required (player_primary role)
+        ccd2 = next(d for d in cycle.cycle_devices if d.session_device_id == sd2.id)
+        assert ccd2.required is True, "player_primary must be required"
+
+        # Schedule must be blocked
+        with pytest.raises(DeviceNotReadyError) as exc_info:
+            svc.schedule_cycle(cycle.id, cycle.revision)
+        assert str(sd2.id) in str(exc_info.value) or "not ready" in str(exc_info.value).lower()
+
+
+# ── DS — confirm_device_stop idempotency ─────────────────────────────────────
+
+class TestConfirmDeviceStopIdempotency:
+    def _full_start(self, db, cycle, sd1, sd2):
+        """Helper: schedule + confirm both devices started."""
+        svc = CycleService(db)
+        cycle = svc.schedule_cycle(cycle.id, cycle.revision)
+        ccd1 = next(d for d in cycle.cycle_devices if d.session_device_id == sd1.id)
+        ccd2 = next(d for d in cycle.cycle_devices if d.session_device_id == sd2.id)
+        now = datetime.now(timezone.utc)
+        cycle = svc.confirm_device_start(cycle.id, sd1.id, now, ccd1.revision)
+        ccd2_fresh = next(d for d in cycle.cycle_devices if d.session_device_id == sd2.id)
+        cycle = svc.confirm_device_start(cycle.id, sd2.id, now, ccd2_fresh.revision)
+        return cycle, svc
+
+    def test_ds_idem_confirm_stop_twice_returns_same_state(self, db, cycle_with_two_devices):
+        """DS-IDEM: calling confirm_device_stop twice on the same device is idempotent."""
+        cycle, sd1, sd2, p_inst, s = cycle_with_two_devices
+        cycle, svc = self._full_start(db, cycle, sd1, sd2)
+
+        # First stop (sd1)
+        stop_cycle = svc.stop_cycle(cycle.id, cycle.revision)
+        ccd1 = next(d for d in stop_cycle.cycle_devices if d.session_device_id == sd1.id)
+        now = datetime.now(timezone.utc)
+        result1 = svc.confirm_device_stop(stop_cycle.id, sd1.id, now, ccd1.revision)
+
+        # Second stop on same device — must not raise, must return same cycle
+        result2 = svc.confirm_device_stop(stop_cycle.id, sd1.id, now, ccd1.revision)
+        assert result2.id == result1.id
+        assert result2.status == result1.status
+
+
+# ── CS — confirm_device_start idempotency ────────────────────────────────────
+
+class TestConfirmDeviceStartIdempotency:
+    def test_cs_idem_confirm_start_twice_returns_same_state(self, db, cycle_with_two_devices):
+        """CS-IDEM: calling confirm_device_start twice on same device is idempotent."""
+        cycle, sd1, sd2, p_inst, s = cycle_with_two_devices
+        svc = CycleService(db)
+        cycle = svc.schedule_cycle(cycle.id, cycle.revision)
+        ccd1 = next(d for d in cycle.cycle_devices if d.session_device_id == sd1.id)
+        now = datetime.now(timezone.utc)
+
+        result1 = svc.confirm_device_start(cycle.id, sd1.id, now, ccd1.revision)
+        # Second call with same revision — idempotent
+        result2 = svc.confirm_device_start(cycle.id, sd1.id, now, ccd1.revision)
+        assert result2.id == result1.id
+        assert result2.status == result1.status

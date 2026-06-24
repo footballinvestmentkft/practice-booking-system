@@ -35,6 +35,15 @@ class MultiCameraSessionRepo:
             .first()
         )
 
+    def get_session_by_uuid_for_update(self, session_uuid: uuid.UUID) -> Optional[MultiCameraSession]:
+        """Lock the session row (SELECT FOR UPDATE) before write-critical checks."""
+        return (
+            self.db.query(MultiCameraSession)
+            .filter(MultiCameraSession.session_uuid == session_uuid)
+            .with_for_update()
+            .first()
+        )
+
     # ── Participants ──────────────────────────────────────────────────────────
 
     def get_participant(self, session_id: int, user_id: int) -> Optional[SessionParticipant]:
@@ -152,6 +161,18 @@ class MultiCameraSessionRepo:
             .options(joinedload(CaptureCycle.cycle_devices))
             .filter(CaptureCycle.session_id == session_id)
             .order_by(CaptureCycle.cycle_index)
+            .all()
+        )
+
+    def get_non_terminal_cycles(self, session_id: int) -> List[CaptureCycle]:
+        """Return cycles that are not in a terminal state (completed/failed/aborted)."""
+        terminal = {"completed", "failed", "aborted"}
+        return (
+            self.db.query(CaptureCycle)
+            .filter(
+                CaptureCycle.session_id == session_id,
+                ~CaptureCycle.status.in_(terminal),
+            )
             .all()
         )
 

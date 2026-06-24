@@ -1,16 +1,26 @@
-"""CycleService — multicamera capture cycle lifecycle (PR-MC1)."""
+"""CycleService — multicamera capture cycle lifecycle (PR-MC1).
+
+TIMEOUT GAP (PR-MC1, not production-ready): No background worker or scheduler
+exists.  Once a cycle enters 'stopping', it depends entirely on client traffic
+(confirm-stop / report-failure from each required device) to reach a terminal
+state.  If all devices disconnect silently the cycle stays in 'stopping'
+indefinitely.  A Celery-beat task that periodically marks stale 'stopping'
+cycles as 'failed' is required before production deployment; that task is
+deferred to a future PR.  The deterministic alternative available today is
+client-driven-only completion — every required device must call confirm-stop
+or report-failure.
+"""
 from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.multicamera_session import (
     CYCLE_TRANSITIONS,
-    SESSION_TRANSITIONS,
+    SESSION_TRANSITIONS,  # noqa: F401 — exported for session activation guard
     CaptureCycle,
     CaptureCycleDevice,
     CycleDeviceRecordingStatus,
@@ -68,43 +78,58 @@ class CycleService:
         """
         Snapshot all non-removed session devices → CaptureCycleDevice rows.
         required = True for all roles except auxiliary_camera.
-        Idempotency: IntegrityError on duplicate key → re-read → return existing.
-        Session must be ACTIVE.
+
+        Session must be ACTIVE.  Only one non-terminal cycle may exist per
+        session at a time.  The session row is locked (SELECT FOR UPDATE)
+        before all checks to prevent concurrent different-key races from both
+        succeeding — exactly one caller gets the cycle, the other gets
+        CycleConflictError.
+
+        Idempotency: if the same idempotency_key is already committed for this
+        session, the existing cycle is returned without creating a new one.
         """
-        s = self._require_session(session_uuid)
+        # Lock session row to serialise concurrent create_cycle calls
+        s = self._require_session_for_update(session_uuid)
         if SessionStatus(s.status) != SessionStatus.ACTIVE:
             raise InvalidTransitionError("session", s.status, "create_cycle requires active")
 
+        # 1. Idempotency: same key → return existing cycle
+        existing_by_key = self.repo.get_cycle_by_idempotency_key(s.id, idempotency_key)
+        if existing_by_key is not None:
+            return existing_by_key
+
+        # 2. One-active-cycle guard: block if a non-terminal cycle already exists
+        active = self.repo.get_non_terminal_cycles(s.id)
+        if active:
+            raise CycleConflictError(
+                f"Session already has an active cycle "
+                f"(id={active[0].id}, status={active[0].status}). "
+                "Complete or abort it before creating a new one."
+            )
+
+        # 3. Snapshot devices (all non-removed, regardless of readiness)
         devices = self.repo.get_active_session_devices(s.id)
         if not devices:
             raise NoCycleDevicesError("Session has no active devices to snapshot")
 
         cycle_index = self.repo.next_cycle_index(s.id)
-
-        try:
-            cycle = self.repo.add_cycle(
-                session_id=s.id,
-                cycle_index=cycle_index,
-                status=CycleStatus.PREPARING.value,
-                created_by_participant_id=created_by_participant_id,
-                idempotency_key=idempotency_key,
+        cycle = self.repo.add_cycle(
+            session_id=s.id,
+            cycle_index=cycle_index,
+            status=CycleStatus.PREPARING.value,
+            created_by_participant_id=created_by_participant_id,
+            idempotency_key=idempotency_key,
+        )
+        for sd in devices:
+            required = DeviceRole(sd.device_role) != DeviceRole.AUXILIARY_CAMERA
+            self.repo.add_cycle_device(
+                capture_cycle_id=cycle.id,
+                session_device_id=sd.id,
+                required=required,
             )
-            for sd in devices:
-                required = DeviceRole(sd.device_role) != DeviceRole.AUXILIARY_CAMERA
-                self.repo.add_cycle_device(
-                    capture_cycle_id=cycle.id,
-                    session_device_id=sd.id,
-                    required=required,
-                )
-            self.db.commit()
-            self.db.refresh(cycle)
-            return cycle
-        except IntegrityError:
-            self.db.rollback()
-            existing = self.repo.get_cycle_by_idempotency_key(s.id, idempotency_key)
-            if existing is None:
-                raise CycleConflictError(f"Duplicate idempotency_key '{idempotency_key}' but cycle not found")
-            return existing
+        self.db.commit()
+        self.db.refresh(cycle)
+        return cycle
 
     # ── Schedule ──────────────────────────────────────────────────────────────
 
@@ -150,6 +175,10 @@ class CycleService:
             raise InvalidTransitionError("cycle", cycle.status, "confirm_device_start requires recording_pending")
 
         ccd = self._require_cycle_device(cycle_id, session_device_id)
+        # Idempotent: already confirmed start — return current cycle state
+        if CycleDeviceRecordingStatus(ccd.recording_status) == CycleDeviceRecordingStatus.CONFIRMED_START:
+            self.db.refresh(cycle)
+            return cycle
         if ccd.revision != cycle_device_revision:
             raise RevisionConflictError("cycle_device", cycle_device_revision, ccd.revision)
         if CycleDeviceRecordingStatus(ccd.recording_status) != CycleDeviceRecordingStatus.PENDING:
@@ -207,6 +236,10 @@ class CycleService:
             )
 
         ccd = self._require_cycle_device(cycle_id, session_device_id)
+        # Idempotent: already confirmed stop — return current cycle state
+        if CycleDeviceRecordingStatus(ccd.recording_status) == CycleDeviceRecordingStatus.CONFIRMED_STOP:
+            self.db.refresh(cycle)
+            return cycle
         if ccd.revision != cycle_device_revision:
             raise RevisionConflictError("cycle_device", cycle_device_revision, ccd.revision)
         if CycleDeviceRecordingStatus(ccd.recording_status) != CycleDeviceRecordingStatus.CONFIRMED_START:
@@ -369,6 +402,13 @@ class CycleService:
 
     def _require_session(self, session_uuid: uuid.UUID):
         s = self.repo.get_session_by_uuid(session_uuid)
+        if not s:
+            raise SessionNotFoundError(str(session_uuid))
+        return s
+
+    def _require_session_for_update(self, session_uuid: uuid.UUID):
+        """Load session with SELECT FOR UPDATE to serialise write-critical paths."""
+        s = self.repo.get_session_by_uuid_for_update(session_uuid)
         if not s:
             raise SessionNotFoundError(str(session_uuid))
         return s

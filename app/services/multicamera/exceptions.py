@@ -51,7 +51,12 @@ class CycleNotFoundError(Exception):
 
 
 class CycleConflictError(Exception):
-    """Duplicate idempotency_key within the same session."""
+    """Raised when cycle creation is blocked.
+
+    Two cases:
+    - A non-terminal cycle already exists for this session (different idempotency key).
+    - Idempotency key collision that resolves to a missing row (safety net).
+    """
     pass
 
 
