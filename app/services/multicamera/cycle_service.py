@@ -1,20 +1,12 @@
-"""CycleService — multicamera capture cycle lifecycle (PR-MC1).
-
-TIMEOUT GAP (PR-MC1, not production-ready): No background worker or scheduler
-exists.  Once a cycle enters 'stopping', it depends entirely on client traffic
-(confirm-stop / report-failure from each required device) to reach a terminal
-state.  If all devices disconnect silently the cycle stays in 'stopping'
-indefinitely.  A Celery-beat task that periodically marks stale 'stopping'
-cycles as 'failed' is required before production deployment; that task is
-deferred to a future PR.  The deterministic alternative available today is
-client-driven-only completion — every required device must call confirm-stop
-or report-failure.
-"""
+"""CycleService — multicamera capture cycle lifecycle (PR-MC1)."""
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy.orm import Session
 
@@ -372,40 +364,50 @@ class CycleService:
 
         expired = 0
         for cycle_id in candidate_ids:
-            # Lock individually — SKIP LOCKED avoids blocking concurrent workers
-            cycle = (
-                self.db.query(CaptureCycle)
-                .filter(CaptureCycle.id == cycle_id)
-                .with_for_update(skip_locked=True)
-                .first()
-            )
-            if cycle is None:
-                continue  # Another worker instance holds this row
-            if CycleStatus(cycle.status) != CycleStatus.STOPPING:
+            # Isolate each cycle so one failure does not abort the rest.
+            try:
+                # Lock individually — SKIP LOCKED avoids blocking concurrent workers
+                cycle = (
+                    self.db.query(CaptureCycle)
+                    .filter(CaptureCycle.id == cycle_id)
+                    .with_for_update(skip_locked=True)
+                    .first()
+                )
+                if cycle is None:
+                    continue  # Another worker instance holds this row
+                if CycleStatus(cycle.status) != CycleStatus.STOPPING:
+                    self.db.rollback()
+                    continue  # Concurrent client call already transitioned it
+
+                # Force-fail required devices that never confirmed stop.
+                # Both PENDING (never started) and CONFIRMED_START (started but
+                # silently disconnected before confirming stop) are unresolved.
+                _unresolved = {
+                    CycleDeviceRecordingStatus.PENDING,
+                    CycleDeviceRecordingStatus.CONFIRMED_START,
+                }
+                required = self.repo.get_required_cycle_devices(cycle_id)
+                for ccd in required:
+                    if CycleDeviceRecordingStatus(ccd.recording_status) in _unresolved:
+                        ccd.recording_status = CycleDeviceRecordingStatus.FAILED.value
+                        ccd.failure_reason = (
+                            f"timeout: device did not report within "
+                            f"{timeout_seconds}s stopping window"
+                        )
+                        ccd.revision += 1
+                self.db.flush()
+
+                self._check_cycle_completion(cycle)
+                self.db.commit()
+                expired += 1
+            except Exception as exc:
                 self.db.rollback()
-                continue  # Concurrent client call already transitioned it
-
-            # Force-fail required devices that never confirmed stop.
-            # Both PENDING (never started) and CONFIRMED_START (started but
-            # silently disconnected before confirming stop) are unresolved.
-            _unresolved = {
-                CycleDeviceRecordingStatus.PENDING,
-                CycleDeviceRecordingStatus.CONFIRMED_START,
-            }
-            required = self.repo.get_required_cycle_devices(cycle_id)
-            for ccd in required:
-                if CycleDeviceRecordingStatus(ccd.recording_status) in _unresolved:
-                    ccd.recording_status = CycleDeviceRecordingStatus.FAILED.value
-                    ccd.failure_reason = (
-                        f"timeout: device did not report within "
-                        f"{timeout_seconds}s stopping window"
-                    )
-                    ccd.revision += 1
-            self.db.flush()
-
-            self._check_cycle_completion(cycle)
-            self.db.commit()
-            expired += 1
+                logger.warning(
+                    "MC1_EXPIRE_CYCLE_FAILED — cycle_id=%s error=%s",
+                    cycle_id,
+                    type(exc).__name__,
+                    exc_info=True,
+                )
 
         return expired
 
