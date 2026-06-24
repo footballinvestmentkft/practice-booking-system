@@ -284,6 +284,12 @@ class Settings(BaseSettings):
     BG_REMOVAL_PROCESSOR: str = "null"
     PROCESSING_TIMEOUT_SECONDS: int = 300
 
+    # ── Multicamera capture cycle ──────────────────────────────────────────────
+    # Seconds after stop_requested_at before a 'stopping' cycle is auto-expired
+    # by the background scheduler job.  Covers devices that disconnect silently
+    # without calling confirm-stop or report-failure.  120 s = 2 minutes.
+    MULTICAMERA_STOPPING_TIMEOUT_SECONDS: int = 120
+
     # ── Academy ID Phase 2A ───────────────────────────────────────────────────
     # Base URL used to build the QR verify link: {VERIFY_BASE_URL}/verify/{token}
     # Dev (simulator):       http://localhost:8000

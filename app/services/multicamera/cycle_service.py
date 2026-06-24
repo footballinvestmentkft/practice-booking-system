@@ -336,6 +336,79 @@ class CycleService:
         self.db.refresh(s)
         return s
 
+    # ── Stopping timeout (scheduler-driven) ──────────────────────────────────
+
+    def expire_stale_stopping_cycles(self, timeout_seconds: int = 120) -> int:
+        """
+        Find all 'stopping' cycles where stop_requested_at + timeout_seconds < now
+        and force-complete them.
+
+        Called by the APScheduler job every 30 s.  Safe under concurrent
+        execution: uses SELECT FOR UPDATE SKIP LOCKED so two overlapping
+        scheduler ticks never process the same cycle.
+
+        For each expired cycle:
+          1. Lock the row (SKIP LOCKED — skip if already held).
+          2. Verify still 'stopping' (idempotent if already transitioned).
+          3. Force-fail any PENDING required devices (they missed the window).
+          4. Run completion logic (_check_cycle_completion).
+          5. Commit per cycle so partial progress survives an error.
+
+        Returns number of cycles expired.
+        """
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=timeout_seconds)
+
+        # Identify candidates without a lock (fast scan)
+        candidate_ids = [
+            row[0]
+            for row in self.db.query(CaptureCycle.id)
+            .filter(
+                CaptureCycle.status == CycleStatus.STOPPING.value,
+                CaptureCycle.stop_requested_at.isnot(None),
+                CaptureCycle.stop_requested_at <= cutoff,
+            )
+            .all()
+        ]
+
+        expired = 0
+        for cycle_id in candidate_ids:
+            # Lock individually — SKIP LOCKED avoids blocking concurrent workers
+            cycle = (
+                self.db.query(CaptureCycle)
+                .filter(CaptureCycle.id == cycle_id)
+                .with_for_update(skip_locked=True)
+                .first()
+            )
+            if cycle is None:
+                continue  # Another worker instance holds this row
+            if CycleStatus(cycle.status) != CycleStatus.STOPPING:
+                self.db.rollback()
+                continue  # Concurrent client call already transitioned it
+
+            # Force-fail required devices that never confirmed stop.
+            # Both PENDING (never started) and CONFIRMED_START (started but
+            # silently disconnected before confirming stop) are unresolved.
+            _unresolved = {
+                CycleDeviceRecordingStatus.PENDING,
+                CycleDeviceRecordingStatus.CONFIRMED_START,
+            }
+            required = self.repo.get_required_cycle_devices(cycle_id)
+            for ccd in required:
+                if CycleDeviceRecordingStatus(ccd.recording_status) in _unresolved:
+                    ccd.recording_status = CycleDeviceRecordingStatus.FAILED.value
+                    ccd.failure_reason = (
+                        f"timeout: device did not report within "
+                        f"{timeout_seconds}s stopping window"
+                    )
+                    ccd.revision += 1
+            self.db.flush()
+
+            self._check_cycle_completion(cycle)
+            self.db.commit()
+            expired += 1
+
+        return expired
+
     # ── List cycles ───────────────────────────────────────────────────────────
 
     def list_cycles(self, session_uuid: uuid.UUID) -> List[CaptureCycle]:

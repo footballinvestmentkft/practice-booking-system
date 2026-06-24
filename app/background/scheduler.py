@@ -323,6 +323,17 @@ def start_scheduler():
         misfire_grace_time=3600,  # 1 hour — can run late if server was down
     )
 
+    # Every 30 s: auto-expire stale 'stopping' capture cycles (PR-MC1)
+    scheduler.add_job(
+        func=expire_stopping_cycles_job,
+        trigger=IntervalTrigger(seconds=30),
+        id='multicamera_stopping_timeout',
+        name='Multicamera Stopping Cycle Timeout',
+        replace_existing=True,
+        max_instances=1,       # Prevent concurrent runs from the same process
+        misfire_grace_time=30, # Skip if more than 30 s late (don't pile up)
+    )
+
     scheduler.start()
 
     logger.info("✅ Background scheduler started successfully")
@@ -431,6 +442,49 @@ def run_purge_now() -> int:
         db.rollback()
         logger.warning("SYSTEM_EVENT_PURGE_FAILED (manual) — error=%s", type(exc).__name__, exc_info=True)
         return 0
+    finally:
+        db.close()
+
+
+def expire_stopping_cycles_job() -> None:
+    """
+    Scheduler job: auto-expire stale 'stopping' capture cycles (PR-MC1).
+
+    Runs every 30 s.  Finds 'stopping' cycles where
+    stop_requested_at + MULTICAMERA_STOPPING_TIMEOUT_SECONDS < now and
+    force-completes them via CycleService.expire_stale_stopping_cycles().
+
+    Row-level SELECT FOR UPDATE SKIP LOCKED prevents concurrent workers
+    from processing the same cycle twice.  Idempotent: a second run within
+    the same 30-second window is a no-op because the cycle is already
+    terminal after the first run.
+
+    Process restart: the job re-registers with the same ID on next startup
+    (replace_existing=True) and the scheduler's first tick will find any
+    cycles that expired while the process was down.
+    """
+    from app.services.multicamera.cycle_service import CycleService
+
+    db = SessionLocal()
+    try:
+        svc = CycleService(db)
+        count = svc.expire_stale_stopping_cycles(
+            timeout_seconds=settings.MULTICAMERA_STOPPING_TIMEOUT_SECONDS
+        )
+        if count:
+            logger.info(
+                "MC1 stopping timeout: expired %d stale cycle(s) "
+                "(threshold=%ds)",
+                count,
+                settings.MULTICAMERA_STOPPING_TIMEOUT_SECONDS,
+            )
+    except Exception as exc:
+        db.rollback()
+        logger.warning(
+            "MC1_STOPPING_EXPIRE_FAILED — error=%s",
+            type(exc).__name__,
+            exc_info=True,
+        )
     finally:
         db.close()
 
