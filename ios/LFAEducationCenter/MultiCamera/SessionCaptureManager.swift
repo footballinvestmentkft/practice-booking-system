@@ -334,7 +334,12 @@ extension SessionCaptureManager: AVCaptureFileOutputRecordingDelegate {
                                                      didStartRecordingAt: callbackTime,
                                                      success: true)
                 driftStore.append(record)
-                print("[DriftMeasurement] cycle=\(ctx.cycleIndex) serverOffsetMs=\(String(format: "%.1f", record.serverOffsetMs)) callbackDelayMs=\(String(format: "%.1f", record.callbackDelayMs))")
+                print("[DriftMeasurement] cycle=\(ctx.cycleIndex) device=\(record.deviceType):\(record.deviceId) serverOffsetMs=\(String(format: "%.1f", record.serverOffsetMs)) callbackDelayMs=\(String(format: "%.1f", record.callbackDelayMs))")
+                let enc = JSONEncoder()
+                enc.outputFormatting = .sortedKeys
+                if let d = try? enc.encode(record), let s = String(data: d, encoding: .utf8) {
+                    print("[DriftMeasurement:RECORD] \(s)")
+                }
             }
             #endif
         }
