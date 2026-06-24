@@ -47,9 +47,15 @@ final class ScheduledCaptureClockManager: ObservableObject {
     @Published private(set) var currentOffset: ClockOffset = .zero
 
     private var samples: [Double] = []
+    private(set) var rejectedSampleCount: Int = 0
     private static let maxSamples = 8
     private static let minSamplesForSync = 3
     private static let maxRTTSeconds: TimeInterval = 2.0
+    // HTTP Date header has 1-second precision. CDN edge timing + cold starts can
+    // cause offsets of several seconds even when both clocks are NTP-accurate.
+    // Reject any sample where |offset| > 1s — NTP-synchronized devices should be
+    // within ~100ms, so a 1s offset is certainly a measurement artifact.
+    private static let maxAbsoluteOffsetSeconds: Double = 1.0
 
     var sampleCount: Int { samples.count }
 
@@ -67,6 +73,11 @@ final class ScheduledCaptureClockManager: ObservableObject {
         let estimatedServerNow = serverDate.timeIntervalSince1970 + rtt / 2
         let localNow = Date().timeIntervalSince1970
         let rawOffset = estimatedServerNow - localNow
+
+        guard abs(rawOffset) <= Self.maxAbsoluteOffsetSeconds else {
+            rejectedSampleCount += 1
+            return
+        }
 
         samples.append(rawOffset)
         if samples.count > Self.maxSamples { samples.removeFirst() }
