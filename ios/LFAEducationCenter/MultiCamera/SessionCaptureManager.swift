@@ -23,6 +23,13 @@ final class SessionCaptureManager: NSObject, ObservableObject {
 
     private let permissionProvider: PermissionProvider
     private let fileStore: CaptureFileStore
+
+    #if DEBUG
+    var driftStore: CaptureDriftStore = .shared
+    private var pendingDriftContext: DriftMeasurementContext?
+    private var hasMeasuredCurrentCycle = false
+    #endif
+
     private let captureSession = AVCaptureSession()
     private let movieOutput = AVCaptureMovieFileOutput()
     private let captureQueue = DispatchQueue(label: "com.lfa.multicamera.capture", qos: .userInitiated)
@@ -233,6 +240,15 @@ final class SessionCaptureManager: NSObject, ObservableObject {
         }
     }
 
+    #if DEBUG
+    func startCapture(captureOrientation: AVCaptureVideoOrientation = .portrait,
+                      driftContext: DriftMeasurementContext?) {
+        pendingDriftContext = driftContext
+        hasMeasuredCurrentCycle = false
+        startCapture(captureOrientation: captureOrientation)
+    }
+    #endif
+
     func stopCapture() {
         guard state == .capturing || state == .interrupted, !isTornDown else { return }
         state = .stopping
@@ -307,9 +323,20 @@ extension SessionCaptureManager: AVCaptureFileOutputRecordingDelegate {
 
     nonisolated func fileOutput(_ output: AVCaptureFileOutput, didStartRecordingTo fileURL: URL,
                                 from connections: [AVCaptureConnection]) {
+        let callbackTime = Date()  // ← first instruction; captures wall-clock before any main-actor hop
         Task { @MainActor in
             guard !isTornDown, state != .tornDown else { return }
             state = .capturing
+            #if DEBUG
+            if !hasMeasuredCurrentCycle, let ctx = pendingDriftContext {
+                hasMeasuredCurrentCycle = true
+                let record = CaptureDriftRecord.make(context: ctx,
+                                                     didStartRecordingAt: callbackTime,
+                                                     success: true)
+                driftStore.append(record)
+                print("[DriftMeasurement] cycle=\(ctx.cycleIndex) serverOffsetMs=\(String(format: "%.1f", record.serverOffsetMs)) callbackDelayMs=\(String(format: "%.1f", record.callbackDelayMs))")
+            }
+            #endif
         }
     }
 

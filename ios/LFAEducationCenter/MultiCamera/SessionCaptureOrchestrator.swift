@@ -46,6 +46,13 @@ final class SessionCaptureOrchestrator: ObservableObject {
     private let timerProvider: OrchestrationTimerProvider
     private let clock: ScheduledCaptureClockManager
 
+    #if DEBUG
+    private(set) var cycleIndex: Int = 0
+    private var measuredScheduledStartAt: Date = Date()
+    private var measuredLocalFireAt: Date = Date()
+    var deviceType: String = "unknown"
+    #endif
+
     private let captureManagerFactory: @MainActor () -> SessionCaptureManager
 
     init(timerProvider: OrchestrationTimerProvider = SystemOrchestrationTimer(),
@@ -106,6 +113,10 @@ final class SessionCaptureOrchestrator: ObservableObject {
             return
         }
         orchestrationState = .scheduled(fireAt: localFire)
+        #if DEBUG
+        measuredScheduledStartAt = serverScheduledAt
+        measuredLocalFireAt = localFire
+        #endif
         clockQuality = clock.currentOffset.quality
         scheduledTimer = timerProvider.scheduleTimer(fireAt: localFire) { [weak self] in
             Task { @MainActor in
@@ -131,7 +142,23 @@ final class SessionCaptureOrchestrator: ObservableObject {
         orchestrationState = .starting
         // Snapshot interface orientation at fire time; held fixed for the full recording.
         let captureOrientation = CaptureOrientationHelper.currentAVCaptureOrientation()
+        #if DEBUG
+        cycleIndex += 1
+        let driftCtx = DriftMeasurementContext(
+            sessionUUID: sessionUUID,
+            cycleIndex: cycleIndex,
+            deviceId: deviceId,
+            deviceType: deviceType,
+            scheduledStartAt: measuredScheduledStartAt,
+            localFireAt: measuredLocalFireAt,
+            serverOffsetEstimateSeconds: clock.currentOffset.offsetSeconds,
+            clockQuality: clock.currentOffset.quality.rawValue,
+            captureOrientation: captureOrientation.name
+        )
+        mgr.startCapture(captureOrientation: captureOrientation, driftContext: driftCtx)
+        #else
         mgr.startCapture(captureOrientation: captureOrientation)
+        #endif
 
         Task {
             for _ in 0..<20 {

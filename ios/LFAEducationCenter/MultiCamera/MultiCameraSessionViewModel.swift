@@ -259,6 +259,9 @@ final class MultiCameraSessionViewModel: ObservableObject {
         #else
         let deviceType: MCDeviceType = UIDevice.current.userInterfaceIdiom == .pad ? .ipad : .iphone
         #endif
+        #if DEBUG
+        orchestrator.deviceType = deviceType.rawValue
+        #endif
         let request = RegisterDeviceRequest(
             deviceUuid: nil, deviceType: deviceType,
             deviceName: UIDevice.current.name, bleIdentifier: nil,

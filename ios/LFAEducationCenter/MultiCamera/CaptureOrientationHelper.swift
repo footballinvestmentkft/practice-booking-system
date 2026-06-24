@@ -28,4 +28,16 @@ enum CaptureOrientationHelper {
         avCaptureOrientation(for: currentInterfaceOrientation())
     }
 }
+
+extension AVCaptureVideoOrientation {
+    var name: String {
+        switch self {
+        case .portrait:           return "portrait"
+        case .portraitUpsideDown: return "portraitUpsideDown"
+        case .landscapeLeft:      return "landscapeLeft"
+        case .landscapeRight:     return "landscapeRight"
+        @unknown default:         return "unknown"
+        }
+    }
+}
 #endif
