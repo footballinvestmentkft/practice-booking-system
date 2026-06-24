@@ -1,6 +1,9 @@
 import Foundation
 import Combine
 import UIKit
+import os.log
+
+private let vmLog = Logger(subsystem: "com.lovas-zoltan.lfa-education-center", category: "LobbyVM")
 
 enum LobbyState: Equatable {
     case idle
@@ -111,16 +114,31 @@ final class MultiCameraSessionViewModel: ObservableObject {
     }
 
     func armCapture() {
-        guard case .inLobby(let session) = state, !hasArmedForCurrentSession else { return }
-        guard let sdId = sessionDeviceId else { return }
+        guard case .inLobby(let session) = state, !hasArmedForCurrentSession else {
+            let msg = "[LobbyVM] armCapture: skip — hasArmed=\(hasArmedForCurrentSession) sdId=\(sessionDeviceId?.description ?? "nil")"
+            print(msg); vmLog.info("\(msg, privacy: .public)")
+            return
+        }
+        guard let sdId = sessionDeviceId else {
+            let msg = "[LobbyVM] armCapture: skip — sessionDeviceId=nil (device not registered)"
+            print(msg); vmLog.error("\(msg, privacy: .public)")
+            return
+        }
+        let msg0 = "[LobbyVM] armCapture: starting sdId=\(sdId)"
+        print(msg0); vmLog.info("\(msg0, privacy: .public)")
         hasArmedForCurrentSession = true
         Task {
             await orchestrator.armCapture(sessionUUID: session.sessionUuid, deviceId: sdId)
+            let orchStateStr = String(describing: orchestrator.orchestrationState)
+            let msg1 = "[LobbyVM] armCapture: after arm — orchState=\(orchStateStr)"
+            print(msg1); vmLog.info("\(msg1, privacy: .public)")
             if orchestrator.orchestrationState == .armed, let token = authManager.accessToken {
                 _ = try? await MultiCameraAPIClient.updateDeviceStatus(
                     token: token, uuid: session.sessionUuid, sessionDeviceId: sdId,
                     targetStatus: .ready, deviceRevision: 1
                 )
+                let msg2 = "[LobbyVM] armCapture: PATCH status→ready sent"
+                print(msg2); vmLog.info("\(msg2, privacy: .public)")
                 let preset: [String: AnyCodable] = [
                     "resolution": AnyCodable("1920x1080"), "fps": AnyCodable(30),
                     "codec": AnyCodable("h264"), "camera": AnyCodable("rear_wide")
@@ -133,8 +151,21 @@ final class MultiCameraSessionViewModel: ObservableObject {
     }
 
     func startCapture() {
-        guard case .inLobby(let session) = state, isInstructor else { return }
-        guard allAppleDevicesReady(session) else { return }
+        guard case .inLobby(let session) = state, isInstructor else {
+            let inLobby: Bool; if case .inLobby = state { inLobby = true } else { inLobby = false }
+            let msg = "[LobbyVM] startCapture: guard1 — inLobby=\(inLobby) isInstructor=\(isInstructor)"
+            print(msg); vmLog.warning("\(msg, privacy: .public)")
+            return
+        }
+        let appleDevices = session.devices.filter { $0.deviceRole != .auxiliaryCamera }
+        let statusSummary = appleDevices.map { "id=\($0.id)/role=\($0.deviceRole.rawValue)/status=\($0.status.rawValue)" }.joined(separator: " ")
+        let msg2 = "[LobbyVM] startCapture: \(appleDevices.count) apple devices: \(statusSummary)"
+        print(msg2); vmLog.info("\(msg2, privacy: .public)")
+        guard allAppleDevicesReady(session) else {
+            let msg3 = "[LobbyVM] startCapture: BLOCKED — not all ready (see above)"
+            print(msg3); vmLog.warning("\(msg3, privacy: .public)")
+            return
+        }
         Task {
             guard let token = authManager.accessToken else { return }
             do {
@@ -271,8 +302,11 @@ final class MultiCameraSessionViewModel: ObservableObject {
         do {
             let sd = try await MultiCameraAPIClient.registerDevice(token: token, uuid: sessionUuid, request: request)
             sessionDeviceId = sd.id
+            let msg = "[LobbyVM] autoRegisterDevice: OK — id=\(sd.id) type=\(deviceType.rawValue)"
+            print(msg); vmLog.info("\(msg, privacy: .public)")
         } catch {
-            // non-fatal — device can be registered later
+            let msg = "[LobbyVM] autoRegisterDevice: FAILED — \(error)"
+            print(msg); vmLog.error("\(msg, privacy: .public)")
         }
     }
 
