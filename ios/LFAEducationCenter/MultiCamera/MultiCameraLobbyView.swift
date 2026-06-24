@@ -181,7 +181,7 @@ struct MultiCameraLobbyView: View {
                     Button("Start Capture") { Task { await vm.startCapture() } }
                         .font(.body.weight(.semibold))
                         .foregroundColor(.green)
-                        .disabled(!vm.allAppleDevicesReadyPublic(session))
+                        .disabled(!vm.allAppleDevicesReadyPublic(session) || vm.orchestrator.orchestrationState != .armed)
                     if let notReadyMsg = vm.deviceNotReadyMessage {
                         HStack(spacing: 6) {
                             Image(systemName: "exclamationmark.circle").foregroundColor(.red)
@@ -192,6 +192,12 @@ struct MultiCameraLobbyView: View {
                             .filter { $0.deviceRole != .auxiliaryCamera && $0.removedAt == nil && $0.status != .ready }
                         Text("Várakozás: \(pending.map { "\($0.deviceRole.rawValue) (\($0.status.rawValue))" }.joined(separator: ", "))")
                             .font(.caption).foregroundColor(.orange)
+                    } else if vm.orchestrator.orchestrationState != .armed {
+                        HStack(spacing: 6) {
+                            Image(systemName: "camera.metering.unknown").foregroundColor(.orange)
+                            Text("Kamera inicializálás: \(String(describing: vm.orchestrator.orchestrationState))")
+                                .font(.caption).foregroundColor(.orange)
+                        }
                     }
                 } else if session.status == .recording || session.status == .recordingPending {
                     Button("Stop Capture") { vm.stopCapture() }

@@ -202,6 +202,13 @@ final class MultiCameraSessionViewModel: ObservableObject {
             state = .error(instrErr)
             return
         }
+        guard orchestrator.orchestrationState == .armed else {
+            let orchState = String(describing: orchestrator.orchestrationState)
+            let msg = "[LobbyVM] startCapture: BLOCKED — orchestrator not armed (state=\(orchState))"
+            print(msg); vmLog.warning("\(msg, privacy: .public)")
+            deviceNotReadyMessage = "Helyi kamera inicializálás folyamatban (\(orchState)) — kérlek várj"
+            return
+        }
         guard let token = tokenProvider() else {
             state = .error("Nincs bejelentkezve")
             return
@@ -376,7 +383,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 if let updated { state = .inLobby(session: updated) }
             }
         }
-        if session.status == .stopped
+        if (session.status == .stopped || session.status == .cancelled)
             && (orchestrator.orchestrationState == .capturing
                 || orchestrator.orchestrationState == .starting) {
             orchestrator.stopCapture()

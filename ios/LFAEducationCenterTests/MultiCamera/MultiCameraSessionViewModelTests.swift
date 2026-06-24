@@ -246,6 +246,7 @@ final class MultiCameraSessionViewModelTests: XCTestCase {
             participants: [instructor], devices: [ipadDev, iphoneDev]
         )
         vm._setLobbyStateForTesting(session)
+        vm.orchestrator.orchestrationState = .armed
         mock.getSessionHandler = { session }
 
         await vm.startCapture()
@@ -275,6 +276,7 @@ final class MultiCameraSessionViewModelTests: XCTestCase {
             participants: [instructor], devices: [ipadDev, iphoneDev]
         )
         vm._setLobbyStateForTesting(session)
+        vm.orchestrator.orchestrationState = .armed
         mock.getSessionHandler = { session }
 
         let pending = makeSSession(
@@ -353,5 +355,30 @@ final class MultiCameraSessionViewModelTests: XCTestCase {
         let session = makeSSession(participants: [instructor])
         XCTAssertNil(vm.instructorIdentityError(for: session),
                      "must return nil for a valid instructor")
+    }
+
+    // MARK: — LVM-13: startCapture blocked when orchestrator not armed
+
+    func test_LVM_13_startCapture_blockedWhenOrchestratorNotArmed() async throws {
+        UserDefaults.standard.set(42, forKey: "lfa_current_user_id")
+        let instructor = makeParticipant(id: 1, userId: 42, role: .instructor)
+        let dev = makeSDevice(id: 10, role: .instructorPrimary, status: .ready)
+        let session = makeSSession(
+            status: .devicesReady, revision: 3,
+            participants: [instructor], devices: [dev]
+        )
+        vm._setLobbyStateForTesting(session)
+        // orchestrator.orchestrationState is .idle (not .armed)
+
+        await vm.startCapture()
+
+        XCTAssertEqual(mock.getSessionCallCount, 0,
+                       "must NOT do fresh GET when orchestrator not armed")
+        XCTAssertEqual(mock.transitionCallCount, 0,
+                       "must NOT transition when orchestrator not armed")
+        XCTAssertNotNil(vm.deviceNotReadyMessage,
+                        "must show message about camera initialization")
+        XCTAssertTrue(vm.deviceNotReadyMessage!.contains("inicializálás"),
+                      "message must mention initialization: '\(vm.deviceNotReadyMessage!)'")
     }
 }
