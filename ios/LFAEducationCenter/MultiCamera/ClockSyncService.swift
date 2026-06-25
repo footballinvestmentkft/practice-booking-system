@@ -57,7 +57,7 @@ struct LiveSystemTimeAPIClient: SystemTimeAPIClient {
 
 // MARK: — Result types
 
-struct ClockSyncResult: Sendable {
+struct ClockSyncResult: Sendable, Equatable {
     let estimatedServerAtSampleMs: Double
     let clockOffsetMs: Double
     let rttMs: Double
