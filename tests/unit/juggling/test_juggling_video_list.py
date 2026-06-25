@@ -453,7 +453,7 @@ def test_jvl24_server_detected_metadata_not_in_response(client, student_token, s
 # ── JVL-25: OpenAPI path delta +1, route delta +1 ────────────────────────────
 
 def test_jvl25_openapi_path_and_route_delta(client):
-    """JVL-25: GET /api/v1/users/me/juggling/videos in OpenAPI; route count = 1013."""
+    """JVL-25: GET /api/v1/users/me/juggling/videos in OpenAPI; route count = 1059."""
     from app.main import app as fastapi_app
     schema = fastapi_app.openapi()
     assert "/api/v1/users/me/juggling/videos" in schema["paths"], "List path missing from OpenAPI"
@@ -463,7 +463,7 @@ def test_jvl25_openapi_path_and_route_delta(client):
         if hasattr(r, "methods") and hasattr(r, "path")
         for m in (r.methods or [])
     ]
-    assert len(routes) == 1058, f"Expected 1058 routes (PR-MC1: +10 capture cycle routes), got {len(routes)}"
+    assert len(routes) == 1059, f"Expected 1059 routes, got {len(routes)}"
     get_list = [r for r in routes if r[0] == "GET" and r[1] == "/api/v1/users/me/juggling/videos"]
     assert len(get_list) == 1
 
