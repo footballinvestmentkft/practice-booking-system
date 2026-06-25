@@ -340,7 +340,7 @@ class TestLifecycleAndSnapshot:
     def test_api_26_route_count(self):
         from app.main import app as _app
         paths = len(_app.openapi().get("paths", {}))
-        assert paths == 932, f"Expected 932, got {paths}"
+        assert paths == 933, f"Expected 933 routes, got {paths}"
 
 
 # ── API-27..40 Device Status + Capture Stream (PR-4B3B-0) ───────────────────

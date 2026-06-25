@@ -16356,6 +16356,27 @@
         }
       }
     },
+    "/api/v1/system/time": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Server UTC time with millisecond precision",
+        "operationId": "get_system_time_api_v1_system_time_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemTimeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/semester-enrollments/semesters/{semester_id}/enrollments": {
       "get": {
         "tags": [
@@ -71104,6 +71125,34 @@
           "resolved"
         ],
         "title": "SystemEventResponse"
+      },
+      "SystemTimeResponse": {
+        "properties": {
+          "server_time_utc": {
+            "type": "string",
+            "title": "Server Time Utc"
+          },
+          "server_epoch_ms": {
+            "type": "integer",
+            "title": "Server Epoch Ms"
+          },
+          "precision": {
+            "type": "string",
+            "title": "Precision"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "server_time_utc",
+          "server_epoch_ms",
+          "precision",
+          "source"
+        ],
+        "title": "SystemTimeResponse"
       },
       "TeachingHoursRecord": {
         "properties": {
