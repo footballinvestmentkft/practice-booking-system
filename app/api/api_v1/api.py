@@ -101,6 +101,7 @@ from .endpoints import (
     health,
 )
 from .endpoints import system_events
+from .endpoints import system_time
 from .endpoints import admin_players
 from .endpoints import admin_biometric_review
 from .endpoints.sandbox import run_test as sandbox
@@ -159,6 +160,7 @@ api_router.include_router(health.router, prefix="/health", tags=["health-monitor
 api_router.include_router(admin.router, prefix="/admin", tags=["admin-dashboard"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit-logs"])
 api_router.include_router(system_events.router, prefix="/system-events", tags=["system-events"])
+api_router.include_router(system_time.router, prefix="/system", tags=["system"])
 api_router.include_router(semester_enrollments.router, prefix="/semester-enrollments", tags=["semester-enrollments"])
 api_router.include_router(invoices.router, prefix="/invoices", tags=["invoices"])
 api_router.include_router(coupons.router, prefix="", tags=["coupons"])
