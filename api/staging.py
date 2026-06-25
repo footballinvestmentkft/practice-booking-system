@@ -3,6 +3,7 @@
 Exposes:
   Auth:        POST login, POST refresh, GET /auth/me, GET /users/me
   Health:      GET /health
+  System:      GET /system/time (ClockSync)
   Multicamera: POST sessions, GET sessions/{uuid}, POST join, PATCH status,
                POST devices, POST heartbeat
 
@@ -20,6 +21,7 @@ from app.api.api_v1.endpoints.auth import (
     read_users_me,
 )
 from app.api.api_v1.endpoints.multicamera.sessions import router as multicamera_router
+from app.api.api_v1.endpoints.system_time import router as system_time_router
 from app.schemas.auth import Token
 from app.schemas.user import User as UserSchema
 
@@ -43,6 +45,7 @@ users_router.add_api_route("/me", read_users_me, methods=["GET"], response_model
 app.include_router(users_router)
 
 app.include_router(multicamera_router, prefix="/api/v1/multicamera", tags=["multicamera"])
+app.include_router(system_time_router, prefix="/api/v1/system", tags=["system"])
 
 
 @app.get("/api/v1/health", tags=["health"])
