@@ -11,7 +11,7 @@ CEL-08b empty state block in template
 CEL-09  Player CTA links to /card-editor/player, text "Open Studio"
 CEL-10  Welcome CTA links to /card-studio/welcome (CS-S1b)
 CEL-11  Challenge CTA links to /card-editor/challenge
-CEL-12  route count = 844
+CEL-12  route count = 933
 CEL-13  OpenAPI snapshot is up to date
 CEL-14  /card-editor/player regression — lfa_player_card_editor still callable
 """
@@ -151,16 +151,16 @@ class TestCEL091011CTALinks:
         assert 'href="/card-studio/player"' not in src
 
 
-# ── CEL-12: route count = 844 ────────────────────────────────────────────────
+# ── CEL-12: route count = 933 ────────────────────────────────────────────────
 
 class TestCEL12RouteCount:
 
-    def test_cel_12_route_count_844(self):
-        """CEL-12: route count 844 (unchanged — redirect is handler change, not new route)."""
+    def test_cel_12_route_count_933(self):
+        """CEL-12: route count = 933."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 923, (
-            f"Expected 845 routes (redirect handler change does not add routes), got {len(paths)}."
+        assert len(paths) == 933, (
+            f"Expected 933 routes, got {len(paths)}"
         )
 
     def test_cel_12b_card_editor_route_registered(self):

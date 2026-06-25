@@ -6,6 +6,7 @@
   "max_participants": 2,
   "max_devices": 4,
   "revision": 5,
+  "scheduled_start_at": "2026-06-22T10:04:52+00:00",
   "calibration": {
     "schema_version": 1,
     "calibration_id": null,

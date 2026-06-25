@@ -103,3 +103,101 @@ enum MultiCameraAPIClient {
 }
 
 private struct EmptyBody: Codable {}
+
+// MARK: — Cycle request types
+
+struct CreateCycleRequest: Codable {
+    let idempotencyKey: String
+    enum CodingKeys: String, CodingKey {
+        case idempotencyKey = "idempotency_key"
+    }
+}
+
+struct ScheduleCycleRequest: Codable {
+    let revision: Int
+}
+
+struct StopCycleRequest: Codable {
+    let revision: Int
+}
+
+struct ConfirmDeviceStartRequest: Codable {
+    let startedAt: String
+    let cycleDeviceRevision: Int
+    enum CodingKeys: String, CodingKey {
+        case startedAt = "started_at"
+        case cycleDeviceRevision = "cycle_device_revision"
+    }
+}
+
+struct ConfirmDeviceStopRequest: Codable {
+    let stoppedAt: String
+    let cycleDeviceRevision: Int
+    enum CodingKeys: String, CodingKey {
+        case stoppedAt = "stopped_at"
+        case cycleDeviceRevision = "cycle_device_revision"
+    }
+}
+
+// MARK: — Cycle API Client
+
+extension MultiCameraAPIClient {
+
+    static func activateSession(token: String, uuid: String, revision: Int) async throws -> MultiCameraSessionDTO {
+        try await APIClient.post(
+            path: "\(base)/sessions/\(uuid)/activate",
+            body: ScheduleCycleRequest(revision: revision),
+            token: token
+        )
+    }
+
+    static func createCycle(token: String, uuid: String, idempotencyKey: String) async throws -> CaptureCycleDTO {
+        try await APIClient.post(
+            path: "\(base)/sessions/\(uuid)/cycles",
+            body: CreateCycleRequest(idempotencyKey: idempotencyKey),
+            token: token
+        )
+    }
+
+    static func listCycles(token: String, uuid: String) async throws -> [CaptureCycleDTO] {
+        try await APIClient.get(path: "\(base)/sessions/\(uuid)/cycles", token: token)
+    }
+
+    static func scheduleCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO {
+        try await APIClient.post(
+            path: "\(base)/sessions/\(uuid)/cycles/\(cycleId)/schedule",
+            body: ScheduleCycleRequest(revision: revision),
+            token: token
+        )
+    }
+
+    static func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO {
+        try await APIClient.post(
+            path: "\(base)/sessions/\(uuid)/cycles/\(cycleId)/stop",
+            body: StopCycleRequest(revision: revision),
+            token: token
+        )
+    }
+
+    static func confirmDeviceStart(
+        token: String, uuid: String, cycleId: Int, sessionDeviceId: Int,
+        startedAt: String, cycleDeviceRevision: Int
+    ) async throws -> CaptureCycleDTO {
+        try await APIClient.post(
+            path: "\(base)/sessions/\(uuid)/cycles/\(cycleId)/devices/\(sessionDeviceId)/confirm-start",
+            body: ConfirmDeviceStartRequest(startedAt: startedAt, cycleDeviceRevision: cycleDeviceRevision),
+            token: token
+        )
+    }
+
+    static func confirmDeviceStop(
+        token: String, uuid: String, cycleId: Int, sessionDeviceId: Int,
+        stoppedAt: String, cycleDeviceRevision: Int
+    ) async throws -> CaptureCycleDTO {
+        try await APIClient.post(
+            path: "\(base)/sessions/\(uuid)/cycles/\(cycleId)/devices/\(sessionDeviceId)/confirm-stop",
+            body: ConfirmDeviceStopRequest(stoppedAt: stoppedAt, cycleDeviceRevision: cycleDeviceRevision),
+            token: token
+        )
+    }
+}

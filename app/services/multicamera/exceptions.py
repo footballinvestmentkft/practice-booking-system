@@ -44,3 +44,34 @@ class DeviceRoleViolationError(Exception):
     def __init__(self, detail: str):
         self.detail = detail
         super().__init__(detail)
+
+
+class CycleNotFoundError(Exception):
+    pass
+
+
+class CycleConflictError(Exception):
+    """Raised when cycle creation is blocked.
+
+    Two cases:
+    - A non-terminal cycle already exists for this session (different idempotency key).
+    - Idempotency key collision that resolves to a missing row (safety net).
+    """
+    pass
+
+
+class DeviceNotReadyError(Exception):
+    """One or more required devices are not in 'ready' status at schedule time."""
+    def __init__(self, detail: str):
+        self.detail = detail
+        super().__init__(detail)
+
+
+class NoCycleDevicesError(Exception):
+    """Session has no non-removed devices to snapshot into the cycle."""
+    pass
+
+
+class InstructorRequiredError(Exception):
+    """Operation requires the caller to be the session instructor."""
+    pass

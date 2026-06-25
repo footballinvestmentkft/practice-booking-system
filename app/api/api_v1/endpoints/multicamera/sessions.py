@@ -226,11 +226,21 @@ def register_device(
             from .....repositories.multicamera_session_repo import MultiCameraSessionRepo
             repo = MultiCameraSessionRepo(db)
             md = repo.get_managed_device_by_uuid(body.device_uuid)
-            if not md:
-                raise HTTPException(status_code=404, detail="Managed device not found")
-            if md.owner_user_id != current_user.id:
-                raise HTTPException(status_code=403, detail="Not device owner")
-            device_uuid = body.device_uuid
+            if md:
+                if md.owner_user_id != current_user.id:
+                    raise HTTPException(status_code=403, detail="Not device owner")
+            else:
+                if not body.device_type:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="device_uuid not found and device_type not provided",
+                    )
+                ds = DeviceService(db)
+                md = ds.register_managed_device_with_uuid(
+                    current_user.id, body.device_uuid, body.device_type.value,
+                    body.device_name, body.ble_identifier,
+                )
+            device_uuid = md.device_uuid
         elif body.device_type:
             ds = DeviceService(db)
             md = ds.register_managed_device(

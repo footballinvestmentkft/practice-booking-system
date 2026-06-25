@@ -278,7 +278,7 @@ class TestStartStopScheduler:
                         result = sched_mod.start_scheduler()
 
             mock_sched.start.assert_called_once()
-            assert mock_sched.add_job.call_count == 4  # sync + health + purge + auto_checkin_open
+            assert mock_sched.add_job.call_count == 5  # sync + health + purge + auto_checkin_open + mc1_stopping_timeout
             assert result is mock_sched
 
         finally:

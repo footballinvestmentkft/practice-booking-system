@@ -2,6 +2,13 @@ import Foundation
 import Combine
 import UIKit
 
+enum ClockSyncState: Equatable {
+    case notSynced
+    case syncing
+    case synced(ClockSyncResult)
+    case failed(retryCount: Int, message: String?)
+}
+
 enum LobbyState: Equatable {
     case idle
     case creating
@@ -24,28 +31,39 @@ final class MultiCameraSessionViewModel: ObservableObject {
 
     @Published private(set) var state: LobbyState = .idle
     @Published private(set) var sessionDeviceId: Int?
+    @Published private(set) var clockSyncState: ClockSyncState = .notSynced
 
     private var pollingTask: Task<Void, Never>?
     private var heartbeatTask: Task<Void, Never>?
+    private var clockSyncTask: Task<Void, Never>?
     private var isCreateInProgress = false
 
     private let authManager: AuthManager
+    private let clockSyncService: ClockSyncService
     private let pollingInterval: UInt64
     private let heartbeatInterval: UInt64
+    private static let maxRetries = 3
+
+    private let cycleOrchestrator: CycleCaptureOrchestrator?
 
     init(
         authManager: AuthManager,
+        clockSyncService: ClockSyncService = ClockSyncService(),
         pollingIntervalSeconds: Double = 3.0,
-        heartbeatIntervalSeconds: Double = 5.0
+        heartbeatIntervalSeconds: Double = 5.0,
+        cycleOrchestrator: CycleCaptureOrchestrator? = nil
     ) {
         self.authManager = authManager
+        self.clockSyncService = clockSyncService
         self.pollingInterval = UInt64(pollingIntervalSeconds * 1_000_000_000)
         self.heartbeatInterval = UInt64(heartbeatIntervalSeconds * 1_000_000_000)
+        self.cycleOrchestrator = cycleOrchestrator
     }
 
     deinit {
         pollingTask?.cancel()
         heartbeatTask?.cancel()
+        clockSyncTask?.cancel()
     }
 
     // MARK: — Public actions
@@ -64,6 +82,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 await autoRegisterDevice(sessionUuid: session.sessionUuid)
                 startPolling(uuid: session.sessionUuid)
                 startHeartbeat(uuid: session.sessionUuid)
+                startClockSync()
             } catch {
                 state = .error(mapError(error))
             }
@@ -82,6 +101,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 await autoRegisterDevice(sessionUuid: session.sessionUuid)
                 startPolling(uuid: session.sessionUuid)
                 startHeartbeat(uuid: session.sessionUuid)
+                startClockSync()
             } catch {
                 state = .error(mapError(error))
             }
@@ -123,24 +143,40 @@ final class MultiCameraSessionViewModel: ObservableObject {
     func reset() {
         pollingTask?.cancel()
         heartbeatTask?.cancel()
+        clockSyncTask?.cancel()
         pollingTask = nil
         heartbeatTask = nil
+        clockSyncTask = nil
         sessionDeviceId = nil
         isCreateInProgress = false
+        clockSyncState = .notSynced
+        cycleOrchestrator?.reset()
         state = .idle
+    }
+
+    func beginCycle() {
+        guard canStartCapture, let uuid = sessionUuid, let sdId = sessionDeviceId else { return }
+        cycleOrchestrator?.startCycle(sessionUuid: uuid, sessionDeviceId: sdId)
+    }
+
+    func endCycle() {
+        guard sessionUuid != nil else { return }
+        Task { await cycleOrchestrator?.stopCycle() }
     }
 
     // MARK: — Auto device register
 
     private func autoRegisterDevice(sessionUuid: String) async {
         guard let token = authManager.accessToken else { return }
+        let stableUUID = DeviceIdentity.stableDeviceUUID()
+        let logId = DeviceIdentity.logSafeIdentifier()
         #if targetEnvironment(simulator)
         let deviceType: MCDeviceType = .iphone
         #else
         let deviceType: MCDeviceType = UIDevice.current.userInterfaceIdiom == .pad ? .ipad : .iphone
         #endif
         let request = RegisterDeviceRequest(
-            deviceUuid: nil, deviceType: deviceType,
+            deviceUuid: stableUUID, deviceType: deviceType,
             deviceName: UIDevice.current.name, bleIdentifier: nil,
             deviceRole: deviceType == .ipad ? .instructorPrimary : .playerPrimary,
             participantId: nil, managedByDeviceId: nil
@@ -148,8 +184,9 @@ final class MultiCameraSessionViewModel: ObservableObject {
         do {
             let sd = try await MultiCameraAPIClient.registerDevice(token: token, uuid: sessionUuid, request: request)
             sessionDeviceId = sd.id
+            print("[LobbyVM] autoRegisterDevice: OK sdId=\(sd.id) deviceUUID=\(logId)")
         } catch {
-            // non-fatal — device can be registered later
+            print("[LobbyVM] autoRegisterDevice: FAILED deviceUUID=\(logId) error=\(error)")
         }
     }
 
@@ -185,6 +222,52 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 _ = try? await MultiCameraAPIClient.heartbeat(token: token, uuid: uuid, sessionDeviceId: sdId)
             }
         }
+    }
+
+    // MARK: — Clock sync
+
+    func startClockSync() {
+        clockSyncTask?.cancel()
+        clockSyncTask = Task { [weak self] in
+            guard let self else { return }
+            self.clockSyncState = .syncing
+            for attempt in 0...Self.maxRetries {
+                guard !Task.isCancelled else { return }
+                if attempt > 0 {
+                    let delayNs = UInt64(pow(2.0, Double(attempt - 1))) * 1_000_000_000
+                    try? await Task.sleep(nanoseconds: delayNs)
+                    guard !Task.isCancelled else { return }
+                }
+                do {
+                    let result = try await self.clockSyncService.sync()
+                    guard !Task.isCancelled else { return }
+                    self.clockSyncState = .synced(result)
+                    return
+                } catch {
+                    if attempt == Self.maxRetries {
+                        self.clockSyncState = .failed(
+                            retryCount: Self.maxRetries,
+                            message: error.localizedDescription
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    func retryClockSync() {
+        startClockSync()
+    }
+
+    var isClockSynced: Bool {
+        if case .synced = clockSyncState { return true }
+        return false
+    }
+
+    var canStartCapture: Bool {
+        guard case .inLobby = state else { return false }
+        guard isClockSynced else { return false }
+        return true
     }
 
     // MARK: — Helpers

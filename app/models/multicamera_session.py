@@ -2,7 +2,7 @@ import enum
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    Column, DateTime, Integer, SmallInteger, String, Text,
+    Boolean, Column, DateTime, Integer, SmallInteger, String, Text,
     ForeignKey, CheckConstraint, UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
@@ -21,6 +21,7 @@ class SessionStatus(str, enum.Enum):
     FINALIZING = "finalizing"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+    ACTIVE = "active"
 
 
 class ParticipantRole(str, enum.Enum):
@@ -53,12 +54,36 @@ class StreamType(str, enum.Enum):
     TELEMETRY = "telemetry"
 
 
+class CycleStatus(str, enum.Enum):
+    PREPARING = "preparing"
+    RECORDING_PENDING = "recording_pending"
+    RECORDING = "recording"
+    STOPPING = "stopping"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    ABORTED = "aborted"
+
+
+class CycleDeviceRecordingStatus(str, enum.Enum):
+    PENDING = "pending"
+    CONFIRMED_START = "confirmed_start"
+    CONFIRMED_STOP = "confirmed_stop"
+    FAILED = "failed"
+
+
+class CycleResult(str, enum.Enum):
+    SUCCESS = "success"
+    PARTIAL = "partial"
+    FAILED = "failed"
+
+
 SESSION_TRANSITIONS = {
-    SessionStatus.LOBBY: {SessionStatus.DEVICES_READY, SessionStatus.CANCELLED},
+    SessionStatus.LOBBY: {SessionStatus.DEVICES_READY, SessionStatus.ACTIVE, SessionStatus.CANCELLED},
     SessionStatus.DEVICES_READY: {SessionStatus.RECORDING_PENDING, SessionStatus.LOBBY, SessionStatus.CANCELLED},
     SessionStatus.RECORDING_PENDING: {SessionStatus.RECORDING, SessionStatus.DEVICES_READY, SessionStatus.CANCELLED},
     SessionStatus.RECORDING: {SessionStatus.STOPPED},
     SessionStatus.STOPPED: {SessionStatus.FINALIZING, SessionStatus.CANCELLED},
+    SessionStatus.ACTIVE: {SessionStatus.FINALIZING, SessionStatus.CANCELLED},
     SessionStatus.FINALIZING: {SessionStatus.COMPLETED},
     SessionStatus.COMPLETED: set(),
     SessionStatus.CANCELLED: set(),
@@ -72,6 +97,22 @@ DEVICE_TRANSITIONS = {
     DeviceStatus.STOPPED: set(),
     DeviceStatus.ERROR: set(),
 }
+
+CYCLE_TRANSITIONS = {
+    CycleStatus.PREPARING: {CycleStatus.RECORDING_PENDING, CycleStatus.ABORTED},
+    CycleStatus.RECORDING_PENDING: {CycleStatus.RECORDING, CycleStatus.FAILED, CycleStatus.ABORTED},
+    CycleStatus.RECORDING: {CycleStatus.STOPPING, CycleStatus.ABORTED},
+    CycleStatus.STOPPING: {CycleStatus.COMPLETED, CycleStatus.FAILED, CycleStatus.ABORTED},
+    CycleStatus.COMPLETED: set(),
+    CycleStatus.FAILED: set(),
+    CycleStatus.ABORTED: set(),
+}
+
+_CYCLE_TERMINAL = {CycleStatus.COMPLETED, CycleStatus.FAILED, CycleStatus.ABORTED}
+
+
+def is_cycle_terminal(status: CycleStatus) -> bool:
+    return status in _CYCLE_TERMINAL
 
 
 class MultiCameraSession(Base):
@@ -97,7 +138,8 @@ class MultiCameraSession(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('lobby','devices_ready','recording_pending','recording','stopped','finalizing','completed','cancelled')",
+            "status IN ('lobby','devices_ready','recording_pending','recording','stopped',"
+            "'finalizing','completed','cancelled','active')",
             name="ck_mcs_status",
         ),
         CheckConstraint("max_participants BETWEEN 1 AND 4", name="ck_mcs_max_participants"),
@@ -107,6 +149,7 @@ class MultiCameraSession(Base):
     creator = relationship("User", foreign_keys=[created_by_user_id])
     participants = relationship("SessionParticipant", back_populates="session", cascade="all, delete-orphan")
     devices = relationship("SessionDevice", back_populates="session", cascade="all, delete-orphan")
+    cycles = relationship("CaptureCycle", back_populates="session", cascade="all, delete-orphan")
 
 
 class SessionParticipant(Base):
@@ -162,6 +205,7 @@ class SessionDevice(Base):
     participant = relationship("SessionParticipant", back_populates="devices")
     manager_device = relationship("SessionDevice", remote_side=[id], foreign_keys=[managed_by_device_id])
     streams = relationship("CaptureStream", back_populates="session_device", cascade="all, delete-orphan")
+    cycle_devices = relationship("CaptureCycleDevice", back_populates="session_device")
 
 
 class CaptureStream(Base):
@@ -171,6 +215,7 @@ class CaptureStream(Base):
 
     id = Column(Integer, primary_key=True)
     session_device_id = Column(Integer, ForeignKey("session_devices.id", ondelete="CASCADE"), nullable=False)
+    capture_cycle_id = Column(Integer, ForeignKey("capture_cycles.id"), nullable=True)
     stream_type = Column(String(20), nullable=False)
     preset_json = Column(JSONB, nullable=False)
     revision = Column(Integer, nullable=False, server_default="1")
@@ -191,3 +236,70 @@ class CaptureStream(Base):
     )
 
     session_device = relationship("SessionDevice", back_populates="streams")
+    cycle = relationship("CaptureCycle", back_populates="streams")
+
+
+class CaptureCycle(Base):
+    __tablename__ = "capture_cycles"
+
+    id = Column(Integer, primary_key=True)
+    session_id = Column(Integer, ForeignKey("multicamera_sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    cycle_index = Column(Integer, nullable=False)
+    status = Column(String(20), nullable=False, server_default="preparing")
+    result = Column(String(20), nullable=True)
+    scheduled_start_at = Column(DateTime(timezone=True), nullable=True)
+    recording_started_at = Column(DateTime(timezone=True), nullable=True)
+    stop_requested_at = Column(DateTime(timezone=True), nullable=True)
+    recording_stopped_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    failure_reason = Column(Text, nullable=True)
+    created_by_participant_id = Column(Integer, ForeignKey("session_participants.id"), nullable=False)
+    idempotency_key = Column(String(64), nullable=False)
+    revision = Column(Integer, nullable=False, server_default="1")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('preparing','recording_pending','recording','stopping',"
+            "'completed','failed','aborted')",
+            name="ck_cc_status",
+        ),
+        CheckConstraint(
+            "result IS NULL OR result IN ('success','partial','failed')",
+            name="ck_cc_result",
+        ),
+        CheckConstraint("cycle_index >= 0", name="ck_cc_cycle_index_nonneg"),
+        UniqueConstraint("session_id", "cycle_index", name="uq_cc_session_cycle"),
+        UniqueConstraint("session_id", "idempotency_key", name="uq_cc_session_idempotency"),
+    )
+
+    session = relationship("MultiCameraSession", back_populates="cycles")
+    creator_participant = relationship("SessionParticipant", foreign_keys=[created_by_participant_id])
+    cycle_devices = relationship("CaptureCycleDevice", back_populates="cycle", cascade="all, delete-orphan")
+    streams = relationship("CaptureStream", back_populates="cycle")
+
+
+class CaptureCycleDevice(Base):
+    __tablename__ = "capture_cycle_devices"
+
+    id = Column(Integer, primary_key=True)
+    capture_cycle_id = Column(Integer, ForeignKey("capture_cycles.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_device_id = Column(Integer, ForeignKey("session_devices.id"), nullable=False)
+    required = Column(Boolean, nullable=False, server_default="true")
+    recording_status = Column(String(20), nullable=False, server_default="pending")
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    stopped_at = Column(DateTime(timezone=True), nullable=True)
+    failure_reason = Column(Text, nullable=True)
+    revision = Column(Integer, nullable=False, server_default="1")
+
+    __table_args__ = (
+        CheckConstraint(
+            "recording_status IN ('pending','confirmed_start','confirmed_stop','failed')",
+            name="ck_ccd_recording_status",
+        ),
+        UniqueConstraint("capture_cycle_id", "session_device_id", name="uq_ccd_cycle_device"),
+    )
+
+    cycle = relationship("CaptureCycle", back_populates="cycle_devices")
+    session_device = relationship("SessionDevice", back_populates="cycle_devices")

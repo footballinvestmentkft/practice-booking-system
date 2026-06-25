@@ -218,4 +218,6 @@ api_router.include_router(sandbox_data.router, prefix="/sandbox", tags=["sandbox
 
 # ── MULTICAMERA ──────────────────────────────────────────────────────────────
 from .endpoints.multicamera import sessions as multicamera_sessions
+from .endpoints.multicamera import cycles as multicamera_cycles
 api_router.include_router(multicamera_sessions.router, prefix="/multicamera", tags=["multicamera"])
+api_router.include_router(multicamera_cycles.router, prefix="/multicamera", tags=["multicamera", "capture-cycles"])

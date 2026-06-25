@@ -22,6 +22,7 @@ class SessionStatus(str, Enum):
     FINALIZING = "finalizing"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+    ACTIVE = "active"
 
 
 class ParticipantRole(str, Enum):

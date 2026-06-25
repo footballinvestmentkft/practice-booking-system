@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import uuid
+import uuid as _uuid
 from datetime import datetime, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.repositories.multicamera_session_repo import MultiCameraSessionRepo
@@ -33,6 +34,38 @@ class DeviceService:
         self.db.commit()
         self.db.refresh(d)
         return d
+
+    def register_managed_device_with_uuid(
+        self,
+        user_id: int,
+        device_uuid: _uuid.UUID,
+        device_type: str,
+        device_name: str = None,
+        ble_identifier: str = None,
+    ):
+        """Create-or-get a ManagedDevice with a client-provided UUID.
+
+        If a concurrent request already inserted the same UUID, catches the
+        unique-constraint violation, rolls back the failed INSERT, and returns
+        the existing row.
+        """
+        existing = self.repo.get_managed_device_by_uuid(device_uuid)
+        if existing:
+            return existing
+        try:
+            d = self.repo.add_managed_device(
+                owner_user_id=user_id,
+                device_type=device_type,
+                device_name=device_name,
+                ble_identifier=ble_identifier,
+                device_uuid=device_uuid,
+            )
+            self.db.commit()
+            self.db.refresh(d)
+            return d
+        except IntegrityError:
+            self.db.rollback()
+            return self.repo.get_managed_device_by_uuid(device_uuid)
 
     def deactivate_device(self, device_uuid: uuid.UUID):
         d = self.repo.get_managed_device_by_uuid(device_uuid)
