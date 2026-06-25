@@ -44,16 +44,20 @@ final class MultiCameraSessionViewModel: ObservableObject {
     private let heartbeatInterval: UInt64
     private static let maxRetries = 3
 
+    private let cycleOrchestrator: CycleCaptureOrchestrator?
+
     init(
         authManager: AuthManager,
         clockSyncService: ClockSyncService = ClockSyncService(),
         pollingIntervalSeconds: Double = 3.0,
-        heartbeatIntervalSeconds: Double = 5.0
+        heartbeatIntervalSeconds: Double = 5.0,
+        cycleOrchestrator: CycleCaptureOrchestrator? = nil
     ) {
         self.authManager = authManager
         self.clockSyncService = clockSyncService
         self.pollingInterval = UInt64(pollingIntervalSeconds * 1_000_000_000)
         self.heartbeatInterval = UInt64(heartbeatIntervalSeconds * 1_000_000_000)
+        self.cycleOrchestrator = cycleOrchestrator
     }
 
     deinit {
@@ -146,7 +150,18 @@ final class MultiCameraSessionViewModel: ObservableObject {
         sessionDeviceId = nil
         isCreateInProgress = false
         clockSyncState = .notSynced
+        cycleOrchestrator?.reset()
         state = .idle
+    }
+
+    func beginCycle() {
+        guard canStartCapture, let uuid = sessionUuid, let sdId = sessionDeviceId else { return }
+        cycleOrchestrator?.startCycle(sessionUuid: uuid, sessionDeviceId: sdId)
+    }
+
+    func endCycle() {
+        guard sessionUuid != nil else { return }
+        Task { await cycleOrchestrator?.stopCycle() }
     }
 
     // MARK: — Auto device register

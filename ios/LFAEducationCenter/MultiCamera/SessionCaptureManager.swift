@@ -1,4 +1,5 @@
 import AVFoundation
+import Combine
 import UIKit
 
 enum CaptureState: Equatable {
@@ -295,6 +296,14 @@ final class SessionCaptureManager: NSObject, ObservableObject {
 
     private func handleInterruptionEnded() {
         if state == .interrupted { stopCapture() }
+    }
+}
+
+// MARK: — CaptureController
+
+extension SessionCaptureManager: CaptureController {
+    var captureStatePublisher: AnyPublisher<CaptureState, Never> {
+        $state.eraseToAnyPublisher()
     }
 }
 
