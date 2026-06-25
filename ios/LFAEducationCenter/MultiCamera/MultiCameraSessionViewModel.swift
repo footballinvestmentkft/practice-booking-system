@@ -134,13 +134,15 @@ final class MultiCameraSessionViewModel: ObservableObject {
 
     private func autoRegisterDevice(sessionUuid: String) async {
         guard let token = authManager.accessToken else { return }
+        let stableUUID = DeviceIdentity.stableDeviceUUID()
+        let logId = DeviceIdentity.logSafeIdentifier()
         #if targetEnvironment(simulator)
         let deviceType: MCDeviceType = .iphone
         #else
         let deviceType: MCDeviceType = UIDevice.current.userInterfaceIdiom == .pad ? .ipad : .iphone
         #endif
         let request = RegisterDeviceRequest(
-            deviceUuid: nil, deviceType: deviceType,
+            deviceUuid: stableUUID, deviceType: deviceType,
             deviceName: UIDevice.current.name, bleIdentifier: nil,
             deviceRole: deviceType == .ipad ? .instructorPrimary : .playerPrimary,
             participantId: nil, managedByDeviceId: nil
@@ -148,8 +150,9 @@ final class MultiCameraSessionViewModel: ObservableObject {
         do {
             let sd = try await MultiCameraAPIClient.registerDevice(token: token, uuid: sessionUuid, request: request)
             sessionDeviceId = sd.id
+            print("[LobbyVM] autoRegisterDevice: OK sdId=\(sd.id) deviceUUID=\(logId)")
         } catch {
-            // non-fatal — device can be registered later
+            print("[LobbyVM] autoRegisterDevice: FAILED deviceUUID=\(logId) error=\(error)")
         }
     }
 
