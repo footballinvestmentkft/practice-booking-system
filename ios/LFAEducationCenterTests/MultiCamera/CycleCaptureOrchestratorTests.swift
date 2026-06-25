@@ -19,10 +19,12 @@ private final class MockCycleAPIClient: CycleAPIClient {
     var confirmStartResult: Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 4, status: .recording))
     var confirmStopResult:  Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 5, status: .completed))
 
-    private(set) var createCallCount       = 0
-    private(set) var scheduleCallCount     = 0
-    private(set) var confirmStartCallCount = 0
-    private(set) var confirmStopCallCount  = 0
+    private(set) var createCallCount              = 0
+    private(set) var scheduleCallCount            = 0
+    private(set) var confirmStartCallCount        = 0
+    private(set) var confirmStopCallCount         = 0
+    private(set) var lastConfirmStartRevision: Int? = nil
+    private(set) var lastConfirmStopRevision:  Int? = nil
 
     func createCycle(token: String, uuid: String, idempotencyKey: String) async throws -> CaptureCycleDTO {
         createCallCount += 1
@@ -40,11 +42,13 @@ private final class MockCycleAPIClient: CycleAPIClient {
 
     func confirmDeviceStart(token: String, uuid: String, cycleId: Int, sessionDeviceId: Int, startedAt: String, cycleDeviceRevision: Int) async throws -> CaptureCycleDTO {
         confirmStartCallCount += 1
+        lastConfirmStartRevision = cycleDeviceRevision
         return try confirmStartResult.get()
     }
 
     func confirmDeviceStop(token: String, uuid: String, cycleId: Int, sessionDeviceId: Int, stoppedAt: String, cycleDeviceRevision: Int) async throws -> CaptureCycleDTO {
         confirmStopCallCount += 1
+        lastConfirmStopRevision = cycleDeviceRevision
         return try confirmStopResult.get()
     }
 }
@@ -69,9 +73,22 @@ private func makeTestCycle(
     id: Int = 1,
     revision: Int = 1,
     scheduledStartAt: String? = nil,
-    status: CycleStatus = .preparing
+    status: CycleStatus = .preparing,
+    sessionDeviceId: Int = 1,
+    deviceRevision: Int = 0
 ) -> CaptureCycleDTO {
-    CaptureCycleDTO(
+    let device = CaptureCycleDeviceDTO(
+        id: 1,
+        captureCycleId: id,
+        sessionDeviceId: sessionDeviceId,
+        required: true,
+        recordingStatus: .pending,
+        startedAt: nil,
+        stoppedAt: nil,
+        failureReason: nil,
+        revision: deviceRevision
+    )
+    return CaptureCycleDTO(
         id: id,
         sessionId: 1,
         cycleIndex: 0,
@@ -88,7 +105,7 @@ private func makeTestCycle(
         revision: revision,
         createdAt: "2026-06-25T10:00:00.000Z",
         updatedAt: "2026-06-25T10:00:00.000Z",
-        cycleDevices: []
+        cycleDevices: [device]
     )
 }
 
@@ -451,14 +468,13 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         XCTAssertEqual(apiClient.confirmStartCallCount, 1)
     }
 
-    // CYC-O-10: confirmStart 409 → idempotent success (not .failed)
-    func test_CYC_O_10_confirmStart409_idempotentSuccess() async throws {
+    // CYC-O-10: confirmStart 409 → .failed(.revisionConflict) — not silently swallowed
+    func test_CYC_O_10_confirmStart409_isRevisionConflict() async throws {
         let authProvider = FakeAccessTokenProvider()
         let apiClient = MockCycleAPIClient()
         apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
         apiClient.scheduleResult = .success(makeTestCycle(id: 1, revision: 2, scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
-        // 409 error on confirmStart
-        apiClient.confirmStartResult = .failure(NSError(domain: "APIClient", code: 409, userInfo: [NSLocalizedDescriptionKey: "already confirmed"]))
+        apiClient.confirmStartResult = .failure(NSError(domain: "APIClient", code: 409, userInfo: [NSLocalizedDescriptionKey: "conflict"]))
         let clockService = await makeSyncedClockService()
         let captureController = FakeCaptureController()
         let sleepProvider: (UInt64) async throws -> Void = { _ in }
@@ -474,21 +490,18 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1)
 
         await waitForOrchestratorState(orchestrator, timeout: 3.0) {
-            if case .capturing = $0 { return true }
             if case .failed = $0 { return true }
             return false
         }
 
-        // Give time for confirmStart to settle
-        try? await Task.sleep(nanoseconds: 200_000_000)
-
-        // Should NOT be failed — 409 is idempotent success
         if case .failed(let failure) = orchestrator.state {
-            XCTFail("Expected NOT .failed for 409 confirmStart, got .failed(\(failure))")
-        }
-        // State should still be .capturing
-        if case .capturing(let cycleId) = orchestrator.state {
-            XCTAssertEqual(cycleId, 1)
+            if case .revisionConflict = failure {
+                // expected
+            } else {
+                XCTFail("Expected .revisionConflict for 409 confirmStart, got \(failure)")
+            }
+        } else {
+            XCTFail("Expected .failed(.revisionConflict) for 409 confirmStart, got \(orchestrator.state)")
         }
     }
 
@@ -577,14 +590,14 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         }
     }
 
-    // CYC-O-13: confirmStop 409 → idempotent → .completed
-    func test_CYC_O_13_confirmStop409_idempotentCompleted() async throws {
+    // CYC-O-13: confirmStop 409 → .failed(.revisionConflict) — not silently swallowed
+    func test_CYC_O_13_confirmStop409_isRevisionConflict() async throws {
         let authProvider = FakeAccessTokenProvider()
         let apiClient = MockCycleAPIClient()
         apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
         apiClient.scheduleResult = .success(makeTestCycle(id: 1, revision: 2, scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
         apiClient.confirmStartResult = .success(makeTestCycle(id: 1, revision: 4, status: .recording))
-        apiClient.confirmStopResult = .failure(NSError(domain: "APIClient", code: 409, userInfo: [NSLocalizedDescriptionKey: "already confirmed"]))
+        apiClient.confirmStopResult = .failure(NSError(domain: "APIClient", code: 409, userInfo: [NSLocalizedDescriptionKey: "conflict"]))
         let clockService = await makeSyncedClockService()
         let captureController = FakeCaptureController()
         let sleepProvider: (UInt64) async throws -> Void = { _ in }
@@ -610,15 +623,19 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         captureController.simulateState(.completed(fileURL: URL(fileURLWithPath: "/tmp/test.mov")))
 
         await waitForOrchestratorState(orchestrator, timeout: 3.0) {
-            if case .completed = $0 { return true }
             if case .failed = $0 { return true }
+            if case .completed = $0 { return true }
             return false
         }
 
-        if case .completed(let cycleId) = orchestrator.state {
-            XCTAssertEqual(cycleId, 1, "409 on confirmStop should be idempotent completed")
+        if case .failed(let failure) = orchestrator.state {
+            if case .revisionConflict = failure {
+                // expected
+            } else {
+                XCTFail("Expected .revisionConflict for 409 confirmStop, got \(failure)")
+            }
         } else {
-            XCTFail("Expected .completed for 409 confirmStop, got \(orchestrator.state)")
+            XCTFail("Expected .failed(.revisionConflict) for 409 confirmStop, got \(orchestrator.state)")
         }
     }
 
@@ -711,6 +728,182 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 50_000_000)
 
         XCTAssertEqual(orchestrator.state, .idle, "After reset(), state should be .idle")
+    }
+
+    // CYC-O-17: confirm-start sends the cycle device's actual revision, not 0
+    func test_CYC_O_17_confirmStart_sendsDeviceRevision() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
+        // Device has revision 3 — orchestrator must forward this, not hardcode 0
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001),
+            status: .recordingPending,
+            sessionDeviceId: 1,
+            deviceRevision: 3
+        ))
+        apiClient.confirmStartResult = .success(makeTestCycle(id: 1, revision: 4, status: .recording))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+        let sleepProvider: (UInt64) async throws -> Void = { _ in }
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider,
+            clockSyncService: clockService,
+            captureController: captureController,
+            cycleAPIClient: apiClient,
+            sleepProvider: sleepProvider
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1)
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing = $0 { return true }
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(apiClient.lastConfirmStartRevision, 3,
+            "confirmStart must send the device's actual revision (3), not a hardcoded 0")
+    }
+
+    // CYC-O-18: missing cycle device → .failed(.cycleDeviceMissing)
+    func test_CYC_O_18_missingCycleDevice_failsWithDeviceMissing() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
+        // Schedule result has device with sessionDeviceId 99, but startCycle called with sdId=1
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001),
+            status: .recordingPending,
+            sessionDeviceId: 99,   // mismatch
+            deviceRevision: 0
+        ))
+        apiClient.confirmStartResult = .success(makeTestCycle(id: 1, revision: 4, status: .recording))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+        let sleepProvider: (UInt64) async throws -> Void = { _ in }
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider,
+            clockSyncService: clockService,
+            captureController: captureController,
+            cycleAPIClient: apiClient,
+            sleepProvider: sleepProvider
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1)  // sdId=1 ≠ 99
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        if case .failed(let failure) = orchestrator.state {
+            if case .cycleDeviceMissing(let sdId) = failure {
+                XCTAssertEqual(sdId, 1)
+            } else {
+                XCTFail("Expected .cycleDeviceMissing(1), got \(failure)")
+            }
+        } else {
+            XCTFail("Expected .failed(.cycleDeviceMissing), got \(orchestrator.state)")
+        }
+        XCTAssertEqual(apiClient.confirmStartCallCount, 0, "confirmStart must NOT be called when device is missing")
+    }
+
+    // CYC-O-19: 409 on confirm-start is not silently treated as success
+    func test_CYC_O_19_confirmStart409_notSilentSuccess() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001),
+            status: .recordingPending
+        ))
+        apiClient.confirmStartResult = .failure(NSError(domain: "APIClient", code: 409,
+            userInfo: [NSLocalizedDescriptionKey: "revision mismatch"]))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+        let sleepProvider: (UInt64) async throws -> Void = { _ in }
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider,
+            clockSyncService: clockService,
+            captureController: captureController,
+            cycleAPIClient: apiClient,
+            sleepProvider: sleepProvider
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1)
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        // 409 must NOT become a quiet success — it must surface as .revisionConflict
+        if case .failed(let failure) = orchestrator.state {
+            if case .revisionConflict = failure { /* expected */ }
+            else { XCTFail("409 must surface as .revisionConflict, got \(failure)") }
+        } else {
+            XCTFail("409 on confirmStart must not be swallowed — expected .failed, got \(orchestrator.state)")
+        }
+    }
+
+    // CYC-O-20: confirm-stop sends the cycle device's actual revision
+    func test_CYC_O_20_confirmStop_sendsDeviceRevision() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
+        // Device has revision 5
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001),
+            status: .recordingPending,
+            sessionDeviceId: 1,
+            deviceRevision: 5
+        ))
+        apiClient.confirmStartResult = .success(makeTestCycle(id: 1, revision: 4, status: .recording,
+            sessionDeviceId: 1, deviceRevision: 5))
+        apiClient.confirmStopResult  = .success(makeTestCycle(id: 1, revision: 5, status: .completed,
+            sessionDeviceId: 1, deviceRevision: 5))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+        let sleepProvider: (UInt64) async throws -> Void = { _ in }
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider,
+            clockSyncService: clockService,
+            captureController: captureController,
+            cycleAPIClient: apiClient,
+            sleepProvider: sleepProvider
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1)
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing = $0 { return true }
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        captureController.simulateState(.completed(fileURL: URL(fileURLWithPath: "/tmp/test.mov")))
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .completed = $0 { return true }
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        XCTAssertEqual(apiClient.lastConfirmStopRevision, 5,
+            "confirmStop must send the device's actual revision (5), not a hardcoded 0")
     }
 
     // CYC-O-16: noAuth → .failed(.noAuth)

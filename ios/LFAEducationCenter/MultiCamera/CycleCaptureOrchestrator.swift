@@ -13,6 +13,8 @@ enum OrchestratorFailure: Error, Equatable {
     case apiError(statusCode: Int, detail: String)
     case confirmStartRejected(detail: String)
     case confirmStopRejected(detail: String)
+    case cycleDeviceMissing(sessionDeviceId: Int)
+    case revisionConflict(detail: String)
 }
 
 // MARK: — OrchestratorState
@@ -237,8 +239,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
             token: token,
             sessionUuid: sessionUuid,
             cycleId: scheduledCycle.id,
-            sessionDeviceId: sessionDeviceId,
-            cycleDeviceRevision: 0
+            sessionDeviceId: sessionDeviceId
         )
 
         // 6. Start capture
@@ -307,8 +308,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
         token: String,
         sessionUuid: String,
         cycleId: Int,
-        sessionDeviceId: Int,
-        cycleDeviceRevision: Int
+        sessionDeviceId: Int
     ) {
         captureSubscription?.cancel()
         captureSubscription = captureController.captureStatePublisher
@@ -322,8 +322,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
                             token: token,
                             sessionUuid: sessionUuid,
                             cycleId: cycleId,
-                            sessionDeviceId: sessionDeviceId,
-                            cycleDeviceRevision: cycleDeviceRevision
+                            sessionDeviceId: sessionDeviceId
                         )
                     }
                 case .completed:
@@ -332,8 +331,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
                             token: token,
                             sessionUuid: sessionUuid,
                             cycleId: cycleId,
-                            sessionDeviceId: sessionDeviceId,
-                            cycleDeviceRevision: cycleDeviceRevision
+                            sessionDeviceId: sessionDeviceId
                         )
                     }
                 default:
@@ -348,12 +346,14 @@ final class CycleCaptureOrchestrator: ObservableObject {
         token: String,
         sessionUuid: String,
         cycleId: Int,
-        sessionDeviceId: Int,
-        cycleDeviceRevision: Int
+        sessionDeviceId: Int
     ) async {
-        // Transition orchestrator state to .capturing now that physical capture has started
-        // (regardless of previous orchestrator state — could be .waitingForStart)
         state = .capturing(cycleId: cycleId)
+
+        guard let cycleDevice = currentCycle?.cycleDevices.first(where: { $0.sessionDeviceId == sessionDeviceId }) else {
+            state = .failed(.cycleDeviceMissing(sessionDeviceId: sessionDeviceId))
+            return
+        }
 
         guard let startedAt = await currentServerTimeISO() else {
             state = .failed(.clockSyncRequired)
@@ -367,19 +367,18 @@ final class CycleCaptureOrchestrator: ObservableObject {
                 cycleId: cycleId,
                 sessionDeviceId: sessionDeviceId,
                 startedAt: startedAt,
-                cycleDeviceRevision: cycleDeviceRevision
+                cycleDeviceRevision: cycleDevice.revision
             )
             currentCycle = updated
-            // state stays .capturing(cycleId:) — already set by caller or stays from previous
         } catch {
             let nsErr = error as NSError
             if nsErr.code == 409 {
-                // idempotent success — already confirmed, keep .capturing state
-                return
+                // 409 may be revision mismatch, not just already-confirmed — treat as conflict
+                state = .failed(.revisionConflict(detail: nsErr.localizedDescription))
             } else if nsErr.code == 422 {
                 state = .failed(.confirmStartRejected(detail: nsErr.localizedDescription))
             } else {
-                // retry once
+                // retry once for transient network errors
                 do {
                     let updated = try await cycleAPIClient.confirmDeviceStart(
                         token: token,
@@ -387,14 +386,13 @@ final class CycleCaptureOrchestrator: ObservableObject {
                         cycleId: cycleId,
                         sessionDeviceId: sessionDeviceId,
                         startedAt: startedAt,
-                        cycleDeviceRevision: cycleDeviceRevision
+                        cycleDeviceRevision: cycleDevice.revision
                     )
                     currentCycle = updated
                 } catch let retryError {
                     let retryNsErr = retryError as NSError
                     if retryNsErr.code == 409 {
-                        // idempotent on retry
-                        return
+                        state = .failed(.revisionConflict(detail: retryNsErr.localizedDescription))
                     } else if retryNsErr.code == 422 {
                         state = .failed(.confirmStartRejected(detail: retryNsErr.localizedDescription))
                     } else {
@@ -411,9 +409,13 @@ final class CycleCaptureOrchestrator: ObservableObject {
         token: String,
         sessionUuid: String,
         cycleId: Int,
-        sessionDeviceId: Int,
-        cycleDeviceRevision: Int
+        sessionDeviceId: Int
     ) async {
+        guard let cycleDevice = currentCycle?.cycleDevices.first(where: { $0.sessionDeviceId == sessionDeviceId }) else {
+            state = .failed(.cycleDeviceMissing(sessionDeviceId: sessionDeviceId))
+            return
+        }
+
         guard let stoppedAt = await currentServerTimeISO() else {
             state = .failed(.clockSyncRequired)
             return
@@ -426,19 +428,19 @@ final class CycleCaptureOrchestrator: ObservableObject {
                 cycleId: cycleId,
                 sessionDeviceId: sessionDeviceId,
                 stoppedAt: stoppedAt,
-                cycleDeviceRevision: cycleDeviceRevision
+                cycleDeviceRevision: cycleDevice.revision
             )
             currentCycle = updated
             state = .completed(cycleId: cycleId)
         } catch {
             let nsErr = error as NSError
             if nsErr.code == 409 {
-                // idempotent — already confirmed stop, treat as completed
-                state = .completed(cycleId: cycleId)
+                // 409 may be revision mismatch — do not silently treat as success
+                state = .failed(.revisionConflict(detail: nsErr.localizedDescription))
             } else if nsErr.code == 422 {
                 state = .failed(.confirmStopRejected(detail: nsErr.localizedDescription))
             } else {
-                // retry once
+                // retry once for transient network errors
                 do {
                     let updated = try await cycleAPIClient.confirmDeviceStop(
                         token: token,
@@ -446,14 +448,14 @@ final class CycleCaptureOrchestrator: ObservableObject {
                         cycleId: cycleId,
                         sessionDeviceId: sessionDeviceId,
                         stoppedAt: stoppedAt,
-                        cycleDeviceRevision: cycleDeviceRevision
+                        cycleDeviceRevision: cycleDevice.revision
                     )
                     currentCycle = updated
                     state = .completed(cycleId: cycleId)
                 } catch let retryError {
                     let retryNsErr = retryError as NSError
                     if retryNsErr.code == 409 {
-                        state = .completed(cycleId: cycleId)
+                        state = .failed(.revisionConflict(detail: retryNsErr.localizedDescription))
                     } else if retryNsErr.code == 422 {
                         state = .failed(.confirmStopRejected(detail: retryNsErr.localizedDescription))
                     } else {
