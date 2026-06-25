@@ -3,11 +3,13 @@ import Foundation
 enum SessionStatus: String, Codable, CaseIterable {
     case lobby
     case devicesReady = "devices_ready"
+    case recordingPending = "recording_pending"
     case recording
     case stopped
     case finalizing
     case completed
     case cancelled
+    case active
 }
 
 enum ParticipantRole: String, Codable, CaseIterable {
@@ -191,5 +193,93 @@ struct AnyCodable: Codable, Equatable {
     }
     static func == (lhs: AnyCodable, rhs: AnyCodable) -> Bool {
         String(describing: lhs.value) == String(describing: rhs.value)
+    }
+}
+
+// MARK: — Capture Cycle models
+
+enum CycleStatus: String, Codable, CaseIterable {
+    case preparing
+    case recordingPending = "recording_pending"
+    case recording
+    case stopping
+    case completed
+    case failed
+    case aborted
+}
+
+enum CycleDeviceRecordingStatus: String, Codable, CaseIterable {
+    case pending
+    case confirmedStart = "confirmed_start"
+    case confirmedStop = "confirmed_stop"
+    case failed
+}
+
+enum CycleResult: String, Codable, CaseIterable {
+    case success
+    case partial
+    case failed
+}
+
+struct CaptureCycleDeviceDTO: Codable, Equatable {
+    let id: Int
+    let captureCycleId: Int
+    let sessionDeviceId: Int
+    let required: Bool
+    let recordingStatus: CycleDeviceRecordingStatus
+    let startedAt: String?
+    let stoppedAt: String?
+    let failureReason: String?
+    let revision: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case captureCycleId = "capture_cycle_id"
+        case sessionDeviceId = "session_device_id"
+        case required
+        case recordingStatus = "recording_status"
+        case startedAt = "started_at"
+        case stoppedAt = "stopped_at"
+        case failureReason = "failure_reason"
+        case revision
+    }
+}
+
+struct CaptureCycleDTO: Codable, Equatable {
+    let id: Int
+    let sessionId: Int
+    let cycleIndex: Int
+    let status: CycleStatus
+    let result: CycleResult?
+    let scheduledStartAt: String?
+    let recordingStartedAt: String?
+    let stopRequestedAt: String?
+    let recordingStoppedAt: String?
+    let completedAt: String?
+    let failureReason: String?
+    let createdByParticipantId: Int
+    let idempotencyKey: String
+    let revision: Int
+    let createdAt: String
+    let updatedAt: String
+    let cycleDevices: [CaptureCycleDeviceDTO]
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case sessionId = "session_id"
+        case cycleIndex = "cycle_index"
+        case status, result
+        case scheduledStartAt = "scheduled_start_at"
+        case recordingStartedAt = "recording_started_at"
+        case stopRequestedAt = "stop_requested_at"
+        case recordingStoppedAt = "recording_stopped_at"
+        case completedAt = "completed_at"
+        case failureReason = "failure_reason"
+        case createdByParticipantId = "created_by_participant_id"
+        case idempotencyKey = "idempotency_key"
+        case revision
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+        case cycleDevices = "cycle_devices"
     }
 }

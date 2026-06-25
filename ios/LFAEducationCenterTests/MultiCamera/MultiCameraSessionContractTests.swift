@@ -63,15 +63,15 @@ final class MultiCameraSessionContractTests: XCTestCase {
         XCTAssertNil(session.calibration?.worldOriginCameraId)
     }
 
-    // SCP-07: SessionStatus enum values
+    // SCP-07: SessionStatus enum values (9 cases after ORCH-2A added recordingPending + active)
     func test_SCP_07_sessionStatusEnum() throws {
-        let all: [SessionStatus] = [.lobby, .devicesReady, .recording, .stopped, .finalizing, .completed, .cancelled]
+        let all: [SessionStatus] = [.lobby, .devicesReady, .recordingPending, .recording, .stopped, .finalizing, .completed, .cancelled, .active]
         for s in all {
             let json = try JSONEncoder().encode(s)
             let decoded = try JSONDecoder().decode(SessionStatus.self, from: json)
             XCTAssertEqual(s, decoded)
         }
-        XCTAssertEqual(SessionStatus.allCases.count, 7)
+        XCTAssertEqual(SessionStatus.allCases.count, 9)
     }
 
     // SCP-08: DeviceRole enum values
