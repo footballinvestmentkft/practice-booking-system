@@ -4,11 +4,28 @@ import SwiftUI
 struct MultiCameraLobbyView: View {
 
     @StateObject private var vm: MultiCameraSessionViewModel
+    @StateObject private var orchestrator: CycleCaptureOrchestrator
+    @StateObject private var captureManager: SessionCaptureManager
     @State private var joinUuid = ""
+    @State private var showQRScanner = false
+    @State private var qrDecodeError: String?
     @Environment(\.presentationMode) private var presentationMode
 
     init(authManager: AuthManager) {
-        _vm = StateObject(wrappedValue: MultiCameraSessionViewModel(authManager: authManager))
+        let clockSync = ClockSyncService()
+        let captureMgr = SessionCaptureManager()
+        let orch = CycleCaptureOrchestrator(
+            authManager: authManager,
+            clockSyncService: clockSync,
+            captureController: captureMgr
+        )
+        _captureManager = StateObject(wrappedValue: captureMgr)
+        _orchestrator = StateObject(wrappedValue: orch)
+        _vm = StateObject(wrappedValue: MultiCameraSessionViewModel(
+            authManager: authManager,
+            clockSyncService: clockSync,
+            cycleOrchestrator: orch
+        ))
     }
 
     var body: some View {
@@ -39,6 +56,22 @@ struct MultiCameraLobbyView: View {
         }
         .navigationViewStyle(.stack)
         .onDisappear { vm.reset() }
+        .sheet(isPresented: $showQRScanner) {
+            QRScannerView(
+                onScanned: { raw in
+                    showQRScanner = false
+                    switch SessionQRPayload.decode(from: raw) {
+                    case .success(let payload):
+                        qrDecodeError = nil
+                        vm.joinSession(uuid: payload.sessionUuid)
+                    case .failure(let err):
+                        qrDecodeError = err.localizedDescription
+                    }
+                },
+                onDismiss: { showQRScanner = false }
+            )
+            .ignoresSafeArea()
+        }
     }
 
     // MARK: — Idle
@@ -50,12 +83,22 @@ struct MultiCameraLobbyView: View {
                     .font(.body.weight(.semibold))
             }
             Section("Csatlakozás meglévőhöz") {
-                TextField("Session UUID", text: $joinUuid)
+                Button("QR-kóddal csatlakozás") { showQRScanner = true }
+                    .font(.body.weight(.semibold))
+                TextField("UUID (manuális fallback)", text: $joinUuid)
                     .font(.system(.body, design: .monospaced))
                     .autocapitalization(.none)
                     .disableAutocorrection(true)
                 Button("Join Session") { vm.joinSession(uuid: joinUuid.trimmingCharacters(in: .whitespaces)) }
                     .disabled(joinUuid.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            if let err = qrDecodeError {
+                Section {
+                    HStack(spacing: 8) {
+                        Image(systemName: "qrcode.viewfinder").foregroundColor(.red)
+                        Text(err).font(.caption).foregroundColor(.red)
+                    }
+                }
             }
         }
     }
@@ -64,6 +107,22 @@ struct MultiCameraLobbyView: View {
 
     private func lobbySection(_ session: MultiCameraSessionDTO) -> some View {
         Group {
+            if vm.isInstructor,
+               let qrString = SessionQRPayload.encode(sessionUuid: session.sessionUuid),
+               let qrImage  = QRCodeGenerator.image(from: qrString, scale: 6) {
+                Section("Join QR-kód") {
+                    HStack {
+                        Spacer()
+                        Image(uiImage: qrImage)
+                            .interpolation(.none)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 180, height: 180)
+                        Spacer()
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
             Section("Session") {
                 LabeledRow("UUID", session.sessionUuid)
                 LabeledRow("Status", session.status.rawValue)
@@ -106,6 +165,27 @@ struct MultiCameraLobbyView: View {
                     Text("Várakozás az instructor-ra…")
                         .font(.caption).foregroundColor(.secondary)
                 }
+                if captureManager.state == .idle || captureManager.state == .requestingPermissions {
+                    Button("Prepare Capture") {
+                        Task {
+                            await captureManager.requestPermissions()
+                            if let sdId = vm.sessionDeviceId {
+                                captureManager.prepare(sessionUUID: session.sessionUuid, deviceId: sdId)
+                            }
+                        }
+                    }
+                    .disabled(captureManager.state == .requestingPermissions)
+                }
+                if vm.canStartCapture && captureManager.state == .ready {
+                    Button("Begin Cycle") { vm.beginCycle() }
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(.blue)
+                }
+                if case .capturing = orchestrator.state {
+                    Button("End Cycle") { vm.endCycle() }
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(.orange)
+                }
                 Button("Cancel Session") { vm.cancelSession() }
                     .foregroundColor(.red)
             }
@@ -113,6 +193,9 @@ struct MultiCameraLobbyView: View {
                 Section("Debug") {
                     LabeledRow("Session Device ID", "\(sdId)")
                     LabeledRow("Heartbeat", "Active")
+                    LabeledRow("Clock", clockSyncDescription)
+                    LabeledRow("Capture", captureStateDescription)
+                    LabeledRow("Orchestrator", orchestratorStateDescription)
                 }
             }
         }
@@ -131,6 +214,43 @@ struct MultiCameraLobbyView: View {
     }
 
     // MARK: — Helpers
+
+    private var clockSyncDescription: String {
+        switch vm.clockSyncState {
+        case .notSynced:       return "notSynced"
+        case .syncing:         return "syncing…"
+        case .synced:          return "synced ✓"
+        case .failed(let n, _): return "failed(\(n))"
+        }
+    }
+
+    private var captureStateDescription: String {
+        switch captureManager.state {
+        case .idle:                  return "idle"
+        case .requestingPermissions: return "requestingPermissions"
+        case .configuring:           return "configuring"
+        case .ready:                 return "ready ✓"
+        case .capturing:             return "capturing ●"
+        case .stopping:              return "stopping"
+        case .interrupted:           return "interrupted"
+        case .completed:             return "completed ✓"
+        case .failed(let msg):       return "failed: \(msg)"
+        case .tornDown:              return "tornDown"
+        }
+    }
+
+    private var orchestratorStateDescription: String {
+        switch orchestrator.state {
+        case .idle:                    return "idle"
+        case .creating:                return "creating…"
+        case .scheduling:              return "scheduling…"
+        case .waitingForStart:         return "waitingForStart…"
+        case .capturing(let id):       return "capturing(#\(id)) ●"
+        case .stopping(let id):        return "stopping(#\(id))"
+        case .completed(let id):       return "completed(#\(id)) ✓"
+        case .failed(let f):           return "failed: \(f)"
+        }
+    }
 
     private func deviceIcon(_ role: MCDeviceRole) -> String {
         switch role {
