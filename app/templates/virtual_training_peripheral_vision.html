@@ -620,10 +620,15 @@ function endGame() {
                 protocol_difficulty_multiplier: 1.0,
                 assignment_source: "system", self_declared: true, not_verified: true,
             },
+            gaze_validation: PvGaze.summary(),
         },
         browser_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
         location:         VtLocation.get(),
     };
+
+    // Stop camera and worker after game ends — before network request
+    PvGaze.stop();
+    GazeConsent.stopCamera();
 
     fetch("/virtual-training/peripheral-vision/submit", {
         method:  "POST",
@@ -647,6 +652,76 @@ function endGame() {
     });
 }
 
+// ── Gaze infrastructure (Phase 1) ────────────────────────────────────────────
+//
+// PvGaze: thin wrapper that tracks the consent decision and exposes summary().
+// Phase 2 will extend this with calibration; Phase 3 with live estimation.
+// summary() always returns a valid object — backend handles all cases gracefully.
+//
+var PvGaze = (function () {
+    var _cameraDenied = true;   // conservative default: assume no camera
+    var _worker       = null;
+    var _workerAlive  = false;
+
+    function init(consentResult) {
+        _cameraDenied = consentResult !== "granted";
+
+        if (!_cameraDenied && window.Worker) {
+            try {
+                _worker = new Worker("/static/js/vt/gaze-worker.js");
+                _worker.onmessage = function (e) {
+                    if (e.data && e.data.type === "ready") {
+                        _workerAlive = true;
+                        var badge = document.getElementById("pv-gaze-badge");
+                        if (badge) badge.removeAttribute("hidden");
+                    }
+                    // error (model_deferred in Phase 1) → stay in honor mode
+                };
+                _worker.onerror = function () { _worker = null; };
+                _worker.postMessage({ type: "init" });
+            } catch (_) {
+                _worker = null;
+            }
+        }
+    }
+
+    function stop() {
+        if (_worker) { _worker.postMessage({ type: "stop" }); _worker = null; }
+    }
+
+    function summary() {
+        // Phase 1: model not loaded yet → gaze_validated always false.
+        // Aggregated fields only — no iris/camera data.
+        return {
+            enabled:               !_cameraDenied,
+            gaze_validated:        false,   // Phase 3 will set true when model works
+            fixation_rate:         null,
+            drift_count:           null,
+            camera_denied:         _cameraDenied,
+            validation_confidence: "none",
+            calibration_quality:   null,
+            calibration_error_deg: null,
+            frames_tracked:        0,
+            model_used:            "none",  // Phase 2: mediapipe_face_landmarker_v1
+            near_zone_validated:   false,
+        };
+    }
+
+    return { init: init, stop: stop, summary: summary };
+}());
+
+// ── Consent-gated start wrapper ───────────────────────────────────────────────
+window.pvStartWithConsent = async function () {
+    var btn = document.getElementById("btnStart");
+    if (btn) btn.disabled = true;
+
+    var consentResult = await GazeConsent.request();
+    PvGaze.init(consentResult);
+
+    pvStart();
+};
+
 }());
 </script>
+<script src="/static/js/vt/gaze-consent.js"></script>
 {% endblock %}
