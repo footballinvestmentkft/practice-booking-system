@@ -16359,7 +16359,6 @@
     "/api/v1/system/time": {
       "get": {
         "tags": [
-          "system",
           "system"
         ],
         "summary": "Server UTC time with millisecond precision",

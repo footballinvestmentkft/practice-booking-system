@@ -28,7 +28,6 @@ class SystemTimeResponse(BaseModel):
     "/time",
     response_model=SystemTimeResponse,
     summary="Server UTC time with millisecond precision",
-    tags=["system"],
 )
 def get_system_time(response: Response) -> SystemTimeResponse:
     epoch_ms = time.time_ns() // 1_000_000

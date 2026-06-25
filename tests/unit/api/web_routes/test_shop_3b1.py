@@ -154,11 +154,11 @@ class TestS3B108to11RouteBehavior:
 
 class TestS3B112to13RouteAndSnapshot:
 
-    def test_s3b1_12_route_count_845(self):
+    def test_s3b1_12_route_count_933(self):
         """S3B1-12: Route count = 845 (test cleanup does not affect routes)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 933, f"Expected 845 routes, got {len(paths)}"
+        assert len(paths) == 933, f"Expected 933 routes, got {len(paths)}"
 
     def test_s3b1_13_openapi_snapshot_match(self):
         """S3B1-13: OpenAPI snapshot matches live API."""

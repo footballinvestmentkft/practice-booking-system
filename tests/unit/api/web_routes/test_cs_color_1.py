@@ -19,7 +19,7 @@ CSCOL-11  export_url contains theme={active_theme}
 CSCOL-12  card_studio_shell.html contains cs-color-chip swatch UI
 CSCOL-13  setWelcomeTheme JS present, POST /dashboard/wc-card-theme with X-CSRF-Token
 CSCOL-14  format change URL preserves theme via CardDraft (server-side persistence)
-CSCOL-15  route count == 845
+CSCOL-15  route count == 933
 CSCOL-16  OpenAPI snapshot includes /dashboard/wc-card-theme
 """
 from __future__ import annotations
@@ -378,11 +378,11 @@ class TestCSCOL14FormatThemePersistence:
 
 class TestCSCOL15to16RouteAndSnapshot:
 
-    def test_cscol_15_route_count_845(self):
-        """CSCOL-15: route count = 845 (+1 POST /dashboard/wc-card-theme)."""
+    def test_cscol_15_route_count_933(self):
+        """CSCOL-15: route count = 933."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 933, f"Expected 845 routes, got {len(paths)}"
+        assert len(paths) == 933, f"Expected 933 routes, got {len(paths)}"
 
     def test_cscol_16_openapi_snapshot_includes_wc_card_theme(self):
         """CSCOL-16: OpenAPI snapshot includes /dashboard/wc-card-theme."""
