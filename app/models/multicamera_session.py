@@ -100,7 +100,7 @@ DEVICE_TRANSITIONS = {
 
 CYCLE_TRANSITIONS = {
     CycleStatus.PREPARING: {CycleStatus.RECORDING_PENDING, CycleStatus.ABORTED},
-    CycleStatus.RECORDING_PENDING: {CycleStatus.RECORDING, CycleStatus.FAILED, CycleStatus.ABORTED},
+    CycleStatus.RECORDING_PENDING: {CycleStatus.RECORDING, CycleStatus.STOPPING, CycleStatus.FAILED, CycleStatus.ABORTED},
     CycleStatus.RECORDING: {CycleStatus.STOPPING, CycleStatus.ABORTED},
     CycleStatus.STOPPING: {CycleStatus.COMPLETED, CycleStatus.FAILED, CycleStatus.ABORTED},
     CycleStatus.COMPLETED: set(),
