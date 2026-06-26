@@ -33,7 +33,8 @@ final class PlayerCycleListener: ObservableObject {
     @Published private(set) var state: PlayerListenerState = .idle
 
     private var pollingTask: Task<Void, Never>?
-    var handledCycleIds: Set<Int> = []  // internal visibility for testability
+    var handledCycleIds: Set<Int> = []          // internal visibility for testability
+    private(set) var currentCycle: CaptureCycleDTO?  // latest active cycle; nil when waiting
 
     private let authManager: any AccessTokenProvider
     private let cycleListClient: CycleListClient
@@ -108,19 +109,25 @@ final class PlayerCycleListener: ObservableObject {
         guard let cycle = cycles.first(where: {
             !isTerminal($0.status) && !handledCycleIds.contains($0.id)
         }) else {
+            currentCycle = nil
             return .waitingForCycle
         }
         switch cycle.status {
         case .preparing:
+            currentCycle = nil
             return .waitingForCycle
         case .recordingPending:
+            currentCycle = cycle
             return .pendingCycleDetected(cycleId: cycle.id)
         case .recording:
+            currentCycle = cycle
             return .recordingDetected(cycleId: cycle.id)
         case .stopping:
+            currentCycle = cycle
             return .stoppingDetected(cycleId: cycle.id)
         case .completed, .failed, .aborted:
             handledCycleIds.insert(cycle.id)
+            currentCycle = nil
             return .waitingForCycle
         }
     }
