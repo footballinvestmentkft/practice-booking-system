@@ -46,11 +46,13 @@ class CycleService:
     # ── Session activation ────────────────────────────────────────────────────
 
     def activate_session(self, session_uuid: uuid.UUID, session_revision: int):
-        """Transition session LOBBY → ACTIVE for multi-cycle use."""
+        """Transition session → ACTIVE for multi-cycle use. Idempotent if already active."""
         s = self._require_session(session_uuid)
         if s.revision != session_revision:
             raise RevisionConflictError("session", session_revision, s.revision)
         current = SessionStatus(s.status)
+        if current == SessionStatus.ACTIVE:
+            return s
         if SessionStatus.ACTIVE not in SESSION_TRANSITIONS.get(current, set()):
             raise InvalidTransitionError("session", s.status, "active")
         s.status = SessionStatus.ACTIVE.value

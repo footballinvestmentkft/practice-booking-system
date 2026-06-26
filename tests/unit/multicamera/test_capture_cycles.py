@@ -767,17 +767,74 @@ class TestTransitionGuards:
         result = svc.activate_session(s.session_uuid, s.revision)
         assert SessionStatus(result.status) == SessionStatus.ACTIVE
 
-    def test_tr_02_activate_from_active_raises(self, db, active_session):
-        """TR-02: already ACTIVE session → InvalidTransitionError on second activate."""
+    def test_tr_02_activate_from_active_is_idempotent(self, db, active_session):
+        """TR-02: already ACTIVE session → idempotent success (same revision, no DB write)."""
         s, p_inst, sd1, sd2 = active_session
+        revision_before = s.revision
         svc = CycleService(db)
-        with pytest.raises(InvalidTransitionError):
-            svc.activate_session(s.session_uuid, s.revision)
+        result = svc.activate_session(s.session_uuid, s.revision)
+        assert SessionStatus(result.status) == SessionStatus.ACTIVE
+        assert result.revision == revision_before
 
     def test_tr_03_activate_from_completed_raises(self, db, users):
         """TR-03: COMPLETED session → InvalidTransitionError."""
         instructor, _ = users
         s = MultiCameraSession(created_by_user_id=instructor.id, status=SessionStatus.COMPLETED.value)
+        db.add(s)
+        db.flush()
+        svc = CycleService(db)
+        with pytest.raises(InvalidTransitionError):
+            svc.activate_session(s.session_uuid, s.revision)
+
+    def test_tr_04_activate_twice_from_lobby_second_call_idempotent(self, db, users):
+        """TR-04: LOBBY → ACTIVE (first call), ACTIVE → ACTIVE (second call) — regression for
+        physical-test blocker where Begin Cycle retried on an already-active session.
+
+        Invariants:
+        - Both calls succeed (no exception).
+        - Revision increments exactly once (only the LOBBY → ACTIVE transition writes).
+        - Status remains ACTIVE after both calls.
+        """
+        instructor, _ = users
+        s = MultiCameraSession(
+            created_by_user_id=instructor.id,
+            status=SessionStatus.LOBBY.value,
+        )
+        db.add(s)
+        db.flush()
+        revision_initial = s.revision
+
+        svc = CycleService(db)
+
+        # First call: LOBBY → ACTIVE, revision must increment.
+        r1 = svc.activate_session(s.session_uuid, revision_initial)
+        assert SessionStatus(r1.status) == SessionStatus.ACTIVE
+        assert r1.revision == revision_initial + 1
+
+        # Second call: session already ACTIVE, same revision — must not raise, must not write.
+        r2 = svc.activate_session(s.session_uuid, r1.revision)
+        assert SessionStatus(r2.status) == SessionStatus.ACTIVE
+        assert r2.revision == r1.revision  # revision unchanged
+
+    def test_tr_05_repeated_activate_never_increments_revision(self, db, active_session):
+        """TR-05: N repeated activateSession() calls on an already-ACTIVE session —
+        revision stays constant throughout; status stays ACTIVE.
+
+        Covers the full retry loop an orchestrator might execute before giving up.
+        """
+        s, p_inst, sd1, sd2 = active_session
+        revision_before = s.revision
+        svc = CycleService(db)
+
+        for _ in range(5):
+            result = svc.activate_session(s.session_uuid, revision_before)
+            assert SessionStatus(result.status) == SessionStatus.ACTIVE
+            assert result.revision == revision_before
+
+    def test_tr_06_activate_cancelled_session_raises(self, db, users):
+        """TR-06: CANCELLED session → InvalidTransitionError (not silently treated as active)."""
+        instructor, _ = users
+        s = MultiCameraSession(created_by_user_id=instructor.id, status=SessionStatus.CANCELLED.value)
         db.add(s)
         db.flush()
         svc = CycleService(db)
