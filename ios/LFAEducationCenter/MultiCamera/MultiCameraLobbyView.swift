@@ -6,6 +6,7 @@ struct MultiCameraLobbyView: View {
     @StateObject private var vm: MultiCameraSessionViewModel
     @StateObject private var orchestrator: CycleCaptureOrchestrator
     @StateObject private var captureManager: SessionCaptureManager
+    @StateObject private var playerListener: PlayerCycleListener
     @State private var joinUuid = ""
     @State private var showQRScanner = false
     @State private var qrDecodeError: String?
@@ -15,6 +16,7 @@ struct MultiCameraLobbyView: View {
     init(authManager: AuthManager) {
         let clockSync = ClockSyncService()
         let captureMgr = SessionCaptureManager()
+        let listener = PlayerCycleListener(authManager: authManager)
         let orch = CycleCaptureOrchestrator(
             authManager: authManager,
             clockSyncService: clockSync,
@@ -22,14 +24,16 @@ struct MultiCameraLobbyView: View {
         )
         _captureManager = StateObject(wrappedValue: captureMgr)
         _orchestrator = StateObject(wrappedValue: orch)
+        _playerListener = StateObject(wrappedValue: listener)
         _vm = StateObject(wrappedValue: MultiCameraSessionViewModel(
             authManager: authManager,
             clockSyncService: clockSync,
-            cycleOrchestrator: orch
+            cycleOrchestrator: orch,
+            playerCycleListener: listener
         ))
     }
 
-    private static let buildFingerprint = "mc1-debug-v4-2026-06-26"
+    private static let buildFingerprint = "mc1-debug-v5-2026-06-26"
 
     var body: some View {
         NavigationView {
@@ -237,6 +241,7 @@ struct MultiCameraLobbyView: View {
                             "user_id: \(Self.cachedUserId ?? 0)",
                             "state: \(vm.state)",
                             "orchestrator: \(orchestratorStateDescription)",
+                            "player_listener: \(playerListenerDescription)",
                             "======================================",
                         ].joined(separator: "\n")
                         UIPasteboard.general.string = text
@@ -271,6 +276,7 @@ struct MultiCameraLobbyView: View {
             LabeledRow("Clock", clockSyncDescription)
             LabeledRow("Capture", captureStateDescription)
             LabeledRow("Orchestrator", orchestratorStateDescription)
+            LabeledRow("Listener", playerListenerDescription)
             LabeledRow("DevReg Error", vm.deviceRegisterError ?? "—")
             if case .failed = vm.clockSyncState {
                 Button("Retry Clock Sync") { vm.retryClockSync() }
@@ -321,6 +327,7 @@ struct MultiCameraLobbyView: View {
             "clock: \(clockSyncDescription)",
             "capture: \(captureStateDescription)",
             "orchestrator: \(orchestratorStateDescription)",
+            "player_listener: \(playerListenerDescription)",
             "device_reg_error: \(vm.deviceRegisterError ?? "—")",
             "last_error: \(lastError)",
             "last_orch_failure: \(orchError)",
@@ -381,6 +388,17 @@ struct MultiCameraLobbyView: View {
         case .stopping(let id):        return "stopping(#\(id))"
         case .completed(let id):       return "completed(#\(id)) ✓"
         case .failed(let f):           return "failed: \(f)"
+        }
+    }
+
+    private var playerListenerDescription: String {
+        switch playerListener.state {
+        case .idle:                         return "idle"
+        case .waitingForCycle:              return "waitingForCycle"
+        case .pendingCycleDetected(let id): return "pendingCycle(#\(id))"
+        case .recordingDetected(let id):    return "recording(#\(id))"
+        case .stoppingDetected(let id):     return "stopping(#\(id))"
+        case .failed(let msg):              return "error: \(msg)"
         }
     }
 

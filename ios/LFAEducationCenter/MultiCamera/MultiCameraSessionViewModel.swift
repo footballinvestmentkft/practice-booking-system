@@ -46,19 +46,22 @@ final class MultiCameraSessionViewModel: ObservableObject {
     private static let maxRetries = 3
 
     private let cycleOrchestrator: CycleCaptureOrchestrator?
+    private let playerCycleListener: PlayerCycleListener?
 
     init(
         authManager: AuthManager,
         clockSyncService: ClockSyncService = ClockSyncService(),
         pollingIntervalSeconds: Double = 3.0,
         heartbeatIntervalSeconds: Double = 5.0,
-        cycleOrchestrator: CycleCaptureOrchestrator? = nil
+        cycleOrchestrator: CycleCaptureOrchestrator? = nil,
+        playerCycleListener: PlayerCycleListener? = nil
     ) {
         self.authManager = authManager
         self.clockSyncService = clockSyncService
         self.pollingInterval = UInt64(pollingIntervalSeconds * 1_000_000_000)
         self.heartbeatInterval = UInt64(heartbeatIntervalSeconds * 1_000_000_000)
         self.cycleOrchestrator = cycleOrchestrator
+        self.playerCycleListener = playerCycleListener
     }
 
     deinit {
@@ -105,6 +108,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 startPolling(uuid: session.sessionUuid)
                 startHeartbeat(uuid: session.sessionUuid)
                 startClockSync()
+                playerCycleListener?.start(sessionUuid: session.sessionUuid)
             } catch {
                 state = .error(mapError(error))
             }
@@ -154,6 +158,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         isCreateInProgress = false
         clockSyncState = .notSynced
         cycleOrchestrator?.reset()
+        playerCycleListener?.reset()
         state = .idle
     }
 

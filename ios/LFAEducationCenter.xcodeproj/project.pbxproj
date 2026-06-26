@@ -34,12 +34,14 @@
 		OR000004000000000000001 /* CaptureController.swift in Sources */ = {isa = PBXBuildFile; fileRef = OR000003000000000000001 /* CaptureController.swift */; };
 		OR000004000000000000002 /* CycleIdempotencyKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = OR000003000000000000002 /* CycleIdempotencyKey.swift */; };
 		OR000004000000000000003 /* CycleCaptureOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = OR000003000000000000003 /* CycleCaptureOrchestrator.swift */; };
+		PC000004000000000000001 /* PlayerCycleListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = PC000003000000000000001 /* PlayerCycleListener.swift */; };
 		QR000004000000000000001 /* SessionQRPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = QR000003000000000000001 /* SessionQRPayload.swift */; };
 		QR000004000000000000002 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = QR000003000000000000002 /* QRScannerView.swift */; };
 		QR500004000000000000001 /* SessionQRPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = QR500003000000000000001 /* SessionQRPayloadTests.swift */; };
 		OR500004000000000000001 /* FakeCaptureController.swift in Sources */ = {isa = PBXBuildFile; fileRef = OR500003000000000000001 /* FakeCaptureController.swift */; };
 		OR500004000000000000002 /* CycleIdempotencyKeyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OR500003000000000000002 /* CycleIdempotencyKeyTests.swift */; };
 		OR500004000000000000003 /* CycleCaptureOrchestratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OR500003000000000000003 /* CycleCaptureOrchestratorTests.swift */; };
+		PC500004000000000000001 /* PlayerCycleListenerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = PC500003000000000000001 /* PlayerCycleListenerTests.swift */; };
 		MC500004000000000000003 /* SessionCaptureManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC500003000000000000003 /* SessionCaptureManagerTests.swift */; };
 		DI500004000000000000001 /* DeviceIdentityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DI500003000000000000001 /* DeviceIdentityTests.swift */; };
 		CS500004000000000000001 /* ClockSyncServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS500003000000000000001 /* ClockSyncServiceTests.swift */; };
@@ -281,12 +283,14 @@
 		OR000003000000000000001 /* CaptureController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureController.swift; sourceTree = "<group>"; };
 		OR000003000000000000002 /* CycleIdempotencyKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CycleIdempotencyKey.swift; sourceTree = "<group>"; };
 		OR000003000000000000003 /* CycleCaptureOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CycleCaptureOrchestrator.swift; sourceTree = "<group>"; };
+		PC000003000000000000001 /* PlayerCycleListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCycleListener.swift; sourceTree = "<group>"; };
 		QR000003000000000000001 /* SessionQRPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionQRPayload.swift; sourceTree = "<group>"; };
 		QR000003000000000000002 /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
 		QR500003000000000000001 /* SessionQRPayloadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionQRPayloadTests.swift; sourceTree = "<group>"; };
 		OR500003000000000000001 /* FakeCaptureController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeCaptureController.swift; sourceTree = "<group>"; };
 		OR500003000000000000002 /* CycleIdempotencyKeyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CycleIdempotencyKeyTests.swift; sourceTree = "<group>"; };
 		OR500003000000000000003 /* CycleCaptureOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CycleCaptureOrchestratorTests.swift; sourceTree = "<group>"; };
+		PC500003000000000000001 /* PlayerCycleListenerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCycleListenerTests.swift; sourceTree = "<group>"; };
 		GP000003000000000000005 /* GoProConnectionDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProConnectionDebugView.swift; sourceTree = "<group>"; };
 		GP000003000000000000006 /* CoreBluetoothBLETransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreBluetoothBLETransport.swift; sourceTree = "<group>"; };
 		GP000003000000000000007 /* GoProHTTPClientTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoProHTTPClientTransport.swift; sourceTree = "<group>"; };
@@ -731,6 +735,7 @@
 				OR000003000000000000001 /* CaptureController.swift */,
 				OR000003000000000000002 /* CycleIdempotencyKey.swift */,
 				OR000003000000000000003 /* CycleCaptureOrchestrator.swift */,
+				PC000003000000000000001 /* PlayerCycleListener.swift */,
 				QR000003000000000000001 /* SessionQRPayload.swift */,
 				QR000003000000000000002 /* QRScannerView.swift */,
 				GP000003000000000000005 /* GoProConnectionDebugView.swift */,
@@ -1023,6 +1028,7 @@
 				OR500003000000000000001 /* FakeCaptureController.swift */,
 				OR500003000000000000002 /* CycleIdempotencyKeyTests.swift */,
 				OR500003000000000000003 /* CycleCaptureOrchestratorTests.swift */,
+				PC500003000000000000001 /* PlayerCycleListenerTests.swift */,
 				QR500003000000000000001 /* SessionQRPayloadTests.swift */,
 				MC500003000000000000002 /* session_full.json */,
 				CYC00003000000000000001 /* cycle_full.json */,
@@ -1318,6 +1324,7 @@
 				OR000004000000000000001 /* CaptureController.swift in Sources */,
 				OR000004000000000000002 /* CycleIdempotencyKey.swift in Sources */,
 				OR000004000000000000003 /* CycleCaptureOrchestrator.swift in Sources */,
+				PC000004000000000000001 /* PlayerCycleListener.swift in Sources */,
 				QR000004000000000000001 /* SessionQRPayload.swift in Sources */,
 				QR000004000000000000002 /* QRScannerView.swift in Sources */,
 				GP000004000000000000005 /* GoProConnectionDebugView.swift in Sources */,
@@ -1388,6 +1395,7 @@
 				OR500004000000000000001 /* FakeCaptureController.swift in Sources */,
 				OR500004000000000000002 /* CycleIdempotencyKeyTests.swift in Sources */,
 				OR500004000000000000003 /* CycleCaptureOrchestratorTests.swift in Sources */,
+				PC500004000000000000001 /* PlayerCycleListenerTests.swift in Sources */,
 				QR500004000000000000001 /* SessionQRPayloadTests.swift in Sources */,
 				BB100004000000000000004 /* AnnotationVideoLoaderTests.swift in Sources */,
 				BB100004000000000000005 /* PlaybackBarTests.swift in Sources */,

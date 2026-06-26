@@ -10,6 +10,8 @@ on:
       - 'app/schemas/multicamera_cycle.py'
       - 'app/schemas/multicamera_session.py'
       - 'tests/unit/multicamera/test_mc1_orch2b_e2e.py'
+      - 'ios/LFAEducationCenter/MultiCamera/**'
+      - 'ios/LFAEducationCenterTests/MultiCamera/**'
       - '.github/workflows/mc1-e2e-orch2b.yml'
   push:
     branches: [main]
