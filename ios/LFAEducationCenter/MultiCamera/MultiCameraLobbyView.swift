@@ -1,5 +1,5 @@
 import SwiftUI
-// Repo: football-investment → footballinvestmentkft (2026-06-26)
+// Repo: football-investment → footballinvestmentkft (2026-06-26); ORCH-3C player stop
 
 #if DEBUG
 struct MultiCameraLobbyView: View {
@@ -42,7 +42,7 @@ struct MultiCameraLobbyView: View {
         ))
     }
 
-    private static let buildFingerprint = "mc1-debug-v6-2026-06-26"
+    private static let buildFingerprint = "mc1-debug-v7-2026-06-26"
 
     var body: some View {
         NavigationView {
@@ -421,6 +421,8 @@ struct MultiCameraLobbyView: View {
         case .waitingForStart(let id):      return "waitingForStart(#\(id))"
         case .capturing(let id):            return "capturing(#\(id)) ●"
         case .confirmed(let id):            return "confirmed(#\(id)) ✓"
+        case .stoppingCapture(let id):      return "stoppingCapture(#\(id)) ◼"
+        case .confirmedStop(let id):        return "confirmedStop(#\(id)) ✓✓"
         case .failed(let msg):              return "failed: \(msg)"
         }
     }

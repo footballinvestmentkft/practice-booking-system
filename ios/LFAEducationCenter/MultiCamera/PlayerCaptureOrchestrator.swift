@@ -5,9 +5,11 @@ import Combine
 
 enum PlayerOrchestratorState: Equatable {
     case idle
-    case waitingForStart(cycleId: Int)  // clock wait in progress (or immediate for late-join)
-    case capturing(cycleId: Int)        // startCapture() called; awaiting confirmDeviceStart
-    case confirmed(cycleId: Int)        // confirmDeviceStart succeeded
+    case waitingForStart(cycleId: Int)    // clock wait in progress (or immediate for late-join)
+    case capturing(cycleId: Int)          // startCapture() called; awaiting confirmDeviceStart
+    case confirmed(cycleId: Int)          // confirmDeviceStart succeeded
+    case stoppingCapture(cycleId: Int)    // stopCapture() called; awaiting capture .completed
+    case confirmedStop(cycleId: Int)      // confirmDeviceStop succeeded
     case failed(String)
 }
 
@@ -37,9 +39,11 @@ final class PlayerCaptureOrchestrator: ObservableObject {
     private var listenerSubscription: AnyCancellable?
     private var captureSubscription: AnyCancellable?
     private var startTask: Task<Void, Never>?
-    private var handledCycleIds: Set<Int> = []  // prevents duplicate confirm-start
+    private var stopTask: Task<Void, Never>?
+    private var handledCycleIds: Set<Int> = []      // prevents duplicate confirm-start
+    private var handledStopCycleIds: Set<Int> = []  // prevents duplicate confirm-stop
 
-    // MARK: — Active cycle (stored when start begins; needed for confirmDeviceStart)
+    // MARK: — Active cycle (stored when start begins; needed for confirmDeviceStart/Stop)
     private var activeCycle: CaptureCycleDTO?
 
     // MARK: — Init
@@ -82,6 +86,8 @@ final class PlayerCaptureOrchestrator: ObservableObject {
         listenerSubscription = nil
         startTask?.cancel()
         startTask = nil
+        stopTask?.cancel()
+        stopTask = nil
         captureSubscription?.cancel()
         captureSubscription = nil
         activeCycle = nil
@@ -93,6 +99,7 @@ final class PlayerCaptureOrchestrator: ObservableObject {
     func reset() {
         detach()
         handledCycleIds = []
+        handledStopCycleIds = []
     }
 
     // MARK: — Listener state handler (internal for testability)
@@ -111,8 +118,51 @@ final class PlayerCaptureOrchestrator: ObservableObject {
             guard let cycle = currentCycle else { return }
             beginStart(cycle: cycle, immediate: true)
 
+        case .stoppingDetected(let cycleId):
+            handleStopDetected(cycleId: cycleId, currentCycle: currentCycle)
+
+        case .waitingForCycle:
+            handleTerminalFallback()
+
         default:
             break
+        }
+    }
+
+    // MARK: — Stop detection
+
+    private func handleStopDetected(cycleId: Int, currentCycle: CaptureCycleDTO?) {
+        guard !handledStopCycleIds.contains(cycleId) else { return }
+        guard let cycle = currentCycle else { return }
+        switch state {
+        case .confirmed(let id) where id == cycleId,
+             .capturing(let id) where id == cycleId:
+            beginStop(cycle: cycle)
+        case .waitingForStart(let id) where id == cycleId:
+            // Cycle went stopping before capture started — cancel start, no stopCapture needed.
+            startTask?.cancel()
+            startTask = nil
+            activeCycle = nil
+            state = .idle
+        default:
+            break
+        }
+    }
+
+    // Terminal fallback: cycle went completed/aborted without a visible stopping phase.
+    // Uses stale activeCycle revision; 409 → .confirmedStop (idempotent), 422 → .failed.
+    private func handleTerminalFallback() {
+        guard case .confirmed(let cycleId) = state else { return }
+        guard !handledStopCycleIds.contains(cycleId) else { return }
+        guard let cycle = activeCycle else { return }
+        beginStop(cycle: cycle)
+    }
+
+    private func beginStop(cycle: CaptureCycleDTO) {
+        state = .stoppingCapture(cycleId: cycle.id)
+        stopTask?.cancel()
+        stopTask = Task { [weak self] in
+            await self?.performStop(cycle: cycle)
         }
     }
 
@@ -180,6 +230,88 @@ final class PlayerCaptureOrchestrator: ObservableObject {
             throw CancellationError()
         } catch {
             throw PlayerOrchestratorFailure.timerError(error.localizedDescription)
+        }
+    }
+
+    // MARK: — Stop orchestration
+
+    private func performStop(cycle: CaptureCycleDTO) async {
+        let cycleId = cycle.id
+        guard let uuid = sessionUuid, let sdId = playerSessionDeviceId else { return }
+        guard let token = authManager.accessToken else {
+            state = .failed("noAuth"); return
+        }
+
+        // 1. Stop capture (safe — idempotent if already stopped)
+        captureController.stopCapture()
+
+        // 2. Wait for capture to physically complete (Publisher.values requires iOS 15+)
+        var captureCompleted = false
+        for await captureState in captureController.captureStatePublisher.values {
+            switch captureState {
+            case .completed:
+                captureCompleted = true
+            case .failed, .tornDown, .idle:
+                captureCompleted = false
+            default:
+                continue
+            }
+            break
+        }
+
+        guard !Task.isCancelled else { return }
+
+        if !captureCompleted {
+            state = .failed("captureStopFailed"); return
+        }
+
+        // 3. Server timestamp for stoppedAt
+        guard let stoppedAt = await currentServerTimeISO() else {
+            state = .failed("clockSyncRequired"); return
+        }
+
+        // 4. Find this player's cycle device entry
+        guard let device = cycle.cycleDevices.first(where: { $0.sessionDeviceId == sdId }) else {
+            state = .failed("cycleDeviceMissing(sessionDeviceId: \(sdId))"); return
+        }
+
+        // 5. Duplicate confirm-stop guard
+        guard !handledStopCycleIds.contains(cycleId) else {
+            state = .confirmedStop(cycleId: cycleId); return
+        }
+
+        // 6. Skip API if device already confirmed_stop in this cycle's snapshot
+        if device.recordingStatus == .confirmedStop {
+            handledStopCycleIds.insert(cycleId)
+            state = .confirmedStop(cycleId: cycleId)
+            return
+        }
+
+        // 7. Call confirmDeviceStop
+        do {
+            _ = try await cycleAPIClient.confirmDeviceStop(
+                token: token,
+                uuid: uuid,
+                cycleId: cycleId,
+                sessionDeviceId: sdId,
+                stoppedAt: stoppedAt,
+                cycleDeviceRevision: device.revision
+            )
+            handledStopCycleIds.insert(cycleId)
+            state = .confirmedStop(cycleId: cycleId)
+        } catch {
+            if let apiErr = error as? APIError,
+               case .httpError(let code, let detail) = apiErr {
+                if code == 409 {
+                    // Idempotent: device already confirmed_stop (or stale revision on closed cycle).
+                    handledStopCycleIds.insert(cycleId)
+                    state = .confirmedStop(cycleId: cycleId)
+                } else {
+                    state = .failed("HTTP \(code): \(detail ?? "confirm-stop rejected")")
+                }
+            } else {
+                state = .failed("\(error)")
+            }
         }
     }
 
