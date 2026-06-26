@@ -7,6 +7,7 @@ struct MultiCameraLobbyView: View {
     @StateObject private var orchestrator: CycleCaptureOrchestrator
     @StateObject private var captureManager: SessionCaptureManager
     @StateObject private var playerListener: PlayerCycleListener
+    @StateObject private var playerOrchestrator: PlayerCaptureOrchestrator
     @State private var joinUuid = ""
     @State private var showQRScanner = false
     @State private var qrDecodeError: String?
@@ -22,18 +23,25 @@ struct MultiCameraLobbyView: View {
             clockSyncService: clockSync,
             captureController: captureMgr
         )
+        let playerOrch = PlayerCaptureOrchestrator(
+            authManager: authManager,
+            clockSyncService: clockSync,
+            captureController: captureMgr
+        )
         _captureManager = StateObject(wrappedValue: captureMgr)
         _orchestrator = StateObject(wrappedValue: orch)
         _playerListener = StateObject(wrappedValue: listener)
+        _playerOrchestrator = StateObject(wrappedValue: playerOrch)
         _vm = StateObject(wrappedValue: MultiCameraSessionViewModel(
             authManager: authManager,
             clockSyncService: clockSync,
             cycleOrchestrator: orch,
-            playerCycleListener: listener
+            playerCycleListener: listener,
+            playerCaptureOrchestrator: playerOrch
         ))
     }
 
-    private static let buildFingerprint = "mc1-debug-v5-2026-06-26"
+    private static let buildFingerprint = "mc1-debug-v6-2026-06-26"
 
     var body: some View {
         NavigationView {
@@ -229,6 +237,7 @@ struct MultiCameraLobbyView: View {
                     LabeledRow("User ID", "\(Self.cachedUserId ?? 0)")
                     LabeledRow("State", "\(vm.state)")
                     LabeledRow("Orchestrator", orchestratorStateDescription)
+                    LabeledRow("PlayerOrch", playerOrchestratorDescription)
                     if case .error(let msg) = vm.state {
                         LabeledRow("Error", msg)
                     }
@@ -242,6 +251,7 @@ struct MultiCameraLobbyView: View {
                             "state: \(vm.state)",
                             "orchestrator: \(orchestratorStateDescription)",
                             "player_listener: \(playerListenerDescription)",
+                            "player_orch: \(playerOrchestratorDescription)",
                             "======================================",
                         ].joined(separator: "\n")
                         UIPasteboard.general.string = text
@@ -277,6 +287,7 @@ struct MultiCameraLobbyView: View {
             LabeledRow("Capture", captureStateDescription)
             LabeledRow("Orchestrator", orchestratorStateDescription)
             LabeledRow("Listener", playerListenerDescription)
+            LabeledRow("PlayerOrch", playerOrchestratorDescription)
             LabeledRow("DevReg Error", vm.deviceRegisterError ?? "—")
             if case .failed = vm.clockSyncState {
                 Button("Retry Clock Sync") { vm.retryClockSync() }
@@ -328,6 +339,7 @@ struct MultiCameraLobbyView: View {
             "capture: \(captureStateDescription)",
             "orchestrator: \(orchestratorStateDescription)",
             "player_listener: \(playerListenerDescription)",
+            "player_orch: \(playerOrchestratorDescription)",
             "device_reg_error: \(vm.deviceRegisterError ?? "—")",
             "last_error: \(lastError)",
             "last_orch_failure: \(orchError)",
@@ -399,6 +411,16 @@ struct MultiCameraLobbyView: View {
         case .recordingDetected(let id):    return "recording(#\(id))"
         case .stoppingDetected(let id):     return "stopping(#\(id))"
         case .failed(let msg):              return "error: \(msg)"
+        }
+    }
+
+    private var playerOrchestratorDescription: String {
+        switch playerOrchestrator.state {
+        case .idle:                         return "idle"
+        case .waitingForStart(let id):      return "waitingForStart(#\(id))"
+        case .capturing(let id):            return "capturing(#\(id)) ●"
+        case .confirmed(let id):            return "confirmed(#\(id)) ✓"
+        case .failed(let msg):              return "failed: \(msg)"
         }
     }
 

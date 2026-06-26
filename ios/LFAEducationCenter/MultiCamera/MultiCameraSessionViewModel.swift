@@ -47,6 +47,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
 
     private let cycleOrchestrator: CycleCaptureOrchestrator?
     private let playerCycleListener: PlayerCycleListener?
+    private let playerCaptureOrchestrator: PlayerCaptureOrchestrator?
 
     init(
         authManager: AuthManager,
@@ -54,7 +55,8 @@ final class MultiCameraSessionViewModel: ObservableObject {
         pollingIntervalSeconds: Double = 3.0,
         heartbeatIntervalSeconds: Double = 5.0,
         cycleOrchestrator: CycleCaptureOrchestrator? = nil,
-        playerCycleListener: PlayerCycleListener? = nil
+        playerCycleListener: PlayerCycleListener? = nil,
+        playerCaptureOrchestrator: PlayerCaptureOrchestrator? = nil
     ) {
         self.authManager = authManager
         self.clockSyncService = clockSyncService
@@ -62,6 +64,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         self.heartbeatInterval = UInt64(heartbeatIntervalSeconds * 1_000_000_000)
         self.cycleOrchestrator = cycleOrchestrator
         self.playerCycleListener = playerCycleListener
+        self.playerCaptureOrchestrator = playerCaptureOrchestrator
     }
 
     deinit {
@@ -159,6 +162,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         clockSyncState = .notSynced
         cycleOrchestrator?.reset()
         playerCycleListener?.reset()
+        playerCaptureOrchestrator?.reset()
         state = .idle
     }
 
@@ -207,6 +211,9 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 deviceRevision: sd.revision
             )
             print("[LobbyVM] autoRegisterDevice: device \(sd.id) → ready")
+            if let listener = playerCycleListener, let orch = playerCaptureOrchestrator {
+                orch.attach(listener: listener, sessionUuid: sessionUuid, playerSessionDeviceId: sd.id)
+            }
         } catch {
             deviceRegisterError = "\(error)"
             print("[LobbyVM] autoRegisterDevice: FAILED error=\(error)")
