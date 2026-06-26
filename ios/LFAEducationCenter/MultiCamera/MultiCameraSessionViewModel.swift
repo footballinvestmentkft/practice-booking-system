@@ -32,6 +32,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
     @Published private(set) var state: LobbyState = .idle
     @Published private(set) var sessionDeviceId: Int?
     @Published private(set) var clockSyncState: ClockSyncState = .notSynced
+    @Published private(set) var deviceRegisterError: String?
 
     private var pollingTask: Task<Void, Never>?
     private var heartbeatTask: Task<Void, Never>?
@@ -167,16 +168,17 @@ final class MultiCameraSessionViewModel: ObservableObject {
     // MARK: — Auto device register
 
     private func autoRegisterDevice(sessionUuid: String) async {
-        guard let token = authManager.accessToken else { return }
-        let stableUUID = DeviceIdentity.stableDeviceUUID()
-        let logId = DeviceIdentity.logSafeIdentifier()
+        guard let token = authManager.accessToken else {
+            deviceRegisterError = "No auth token"
+            return
+        }
         #if targetEnvironment(simulator)
         let deviceType: MCDeviceType = .iphone
         #else
         let deviceType: MCDeviceType = UIDevice.current.userInterfaceIdiom == .pad ? .ipad : .iphone
         #endif
         let request = RegisterDeviceRequest(
-            deviceUuid: stableUUID, deviceType: deviceType,
+            deviceUuid: nil, deviceType: deviceType,
             deviceName: UIDevice.current.name, bleIdentifier: nil,
             deviceRole: deviceType == .ipad ? .instructorPrimary : .playerPrimary,
             participantId: nil, managedByDeviceId: nil
@@ -184,10 +186,18 @@ final class MultiCameraSessionViewModel: ObservableObject {
         do {
             let sd = try await MultiCameraAPIClient.registerDevice(token: token, uuid: sessionUuid, request: request)
             sessionDeviceId = sd.id
-            print("[LobbyVM] autoRegisterDevice: OK sdId=\(sd.id) deviceUUID=\(logId)")
+            deviceRegisterError = nil
+            print("[LobbyVM] autoRegisterDevice: OK sdId=\(sd.id)")
         } catch {
-            print("[LobbyVM] autoRegisterDevice: FAILED deviceUUID=\(logId) error=\(error)")
+            deviceRegisterError = "\(error)"
+            print("[LobbyVM] autoRegisterDevice: FAILED error=\(error)")
         }
+    }
+
+    func retryDeviceRegistration() {
+        guard let uuid = sessionUuid else { return }
+        deviceRegisterError = nil
+        Task { await autoRegisterDevice(sessionUuid: uuid) }
     }
 
     // MARK: — Polling
@@ -288,19 +298,22 @@ final class MultiCameraSessionViewModel: ObservableObject {
     }
 
     private func mapError(_ error: Error) -> String {
-        let nsError = error as NSError
-        if nsError.domain == "APIClient" {
-            switch nsError.code {
-            case 401: return "Nincs bejelentkezve"
-            case 403: return "Nincs jogosultság"
-            case 404: return "Session nem található"
-            case 409: return "Session megtelt vagy verzióütközés"
-            case 422: return "Érvénytelen művelet"
-            default: return "Szerverhiba (\(nsError.code))"
+        if error is LobbyError { return "Nincs bejelentkezve" }
+        if let apiErr = error as? APIError {
+            switch apiErr {
+            case .invalidURL:
+                return "Invalid URL"
+            case .httpError(let code, let detail):
+                return "HTTP \(code): \(detail ?? "no detail")"
+            case .decodingError:
+                return "Decode error (response mismatch)"
+            case .networkError(let underlying):
+                return "Network: \(underlying.localizedDescription)"
+            case .unauthorized:
+                return "Unauthorized (token expired?)"
             }
         }
-        if error is LobbyError { return "Nincs bejelentkezve" }
-        return "Hálózati hiba"
+        return "Error: \(error)"
     }
 }
 

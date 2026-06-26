@@ -91,6 +91,24 @@ final class CycleCaptureOrchestrator: ObservableObject {
     // MARK: — Published state
     @Published private(set) var state: OrchestratorState = .idle
 
+    private static func mapToFailure(_ error: Error) -> OrchestratorFailure {
+        if let apiErr = error as? APIError {
+            switch apiErr {
+            case .httpError(let code, let detail):
+                return .apiError(statusCode: code, detail: "HTTP \(code): \(detail ?? "no detail")")
+            case .invalidURL:
+                return .apiError(statusCode: 0, detail: "invalidURL")
+            case .decodingError:
+                return .apiError(statusCode: 0, detail: "decode error (response mismatch)")
+            case .networkError(let e):
+                return .apiError(statusCode: 0, detail: "network: \(e.localizedDescription)")
+            case .unauthorized:
+                return .noAuth
+            }
+        }
+        return .apiError(statusCode: 0, detail: "\(error)")
+    }
+
     // MARK: — Dependencies
     private let authManager: any AccessTokenProvider
     private let clockSyncService: ClockSyncService
@@ -145,8 +163,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
             )
             captureController.stopCapture()
         } catch {
-            let nsErr = error as NSError
-            state = .failed(.apiError(statusCode: nsErr.code, detail: nsErr.localizedDescription))
+            state = .failed(Self.mapToFailure(error))
         }
     }
 
@@ -191,8 +208,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
             )
         } catch {
             if Task.isCancelled { return }
-            let nsErr = error as NSError
-            state = .failed(.apiError(statusCode: nsErr.code, detail: nsErr.localizedDescription))
+            state = .failed(Self.mapToFailure(error))
             return
         }
 
@@ -210,8 +226,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
             )
         } catch {
             if Task.isCancelled { return }
-            let nsErr = error as NSError
-            state = .failed(.apiError(statusCode: nsErr.code, detail: nsErr.localizedDescription))
+            state = .failed(Self.mapToFailure(error))
             return
         }
 
@@ -371,14 +386,15 @@ final class CycleCaptureOrchestrator: ObservableObject {
             )
             currentCycle = updated
         } catch {
-            let nsErr = error as NSError
-            if nsErr.code == 409 {
-                // 409 may be revision mismatch, not just already-confirmed — treat as conflict
-                state = .failed(.revisionConflict(detail: nsErr.localizedDescription))
-            } else if nsErr.code == 422 {
-                state = .failed(.confirmStartRejected(detail: nsErr.localizedDescription))
+            if let apiErr = error as? APIError, case .httpError(let code, let detail) = apiErr {
+                if code == 409 {
+                    state = .failed(.revisionConflict(detail: detail ?? "409"))
+                } else if code == 422 {
+                    state = .failed(.confirmStartRejected(detail: detail ?? "422"))
+                } else {
+                    state = .failed(.apiError(statusCode: code, detail: "confirm-start HTTP \(code): \(detail ?? "")"))
+                }
             } else {
-                // retry once for transient network errors
                 do {
                     let updated = try await cycleAPIClient.confirmDeviceStart(
                         token: token,
@@ -390,14 +406,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
                     )
                     currentCycle = updated
                 } catch let retryError {
-                    let retryNsErr = retryError as NSError
-                    if retryNsErr.code == 409 {
-                        state = .failed(.revisionConflict(detail: retryNsErr.localizedDescription))
-                    } else if retryNsErr.code == 422 {
-                        state = .failed(.confirmStartRejected(detail: retryNsErr.localizedDescription))
-                    } else {
-                        state = .failed(.apiError(statusCode: retryNsErr.code, detail: retryNsErr.localizedDescription))
-                    }
+                    state = .failed(Self.mapToFailure(retryError))
                 }
             }
         }
@@ -433,14 +442,15 @@ final class CycleCaptureOrchestrator: ObservableObject {
             currentCycle = updated
             state = .completed(cycleId: cycleId)
         } catch {
-            let nsErr = error as NSError
-            if nsErr.code == 409 {
-                // 409 may be revision mismatch — do not silently treat as success
-                state = .failed(.revisionConflict(detail: nsErr.localizedDescription))
-            } else if nsErr.code == 422 {
-                state = .failed(.confirmStopRejected(detail: nsErr.localizedDescription))
+            if let apiErr = error as? APIError, case .httpError(let code, let detail) = apiErr {
+                if code == 409 {
+                    state = .failed(.revisionConflict(detail: detail ?? "409"))
+                } else if code == 422 {
+                    state = .failed(.confirmStopRejected(detail: detail ?? "422"))
+                } else {
+                    state = .failed(.apiError(statusCode: code, detail: "confirm-stop HTTP \(code): \(detail ?? "")"))
+                }
             } else {
-                // retry once for transient network errors
                 do {
                     let updated = try await cycleAPIClient.confirmDeviceStop(
                         token: token,
@@ -453,14 +463,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
                     currentCycle = updated
                     state = .completed(cycleId: cycleId)
                 } catch let retryError {
-                    let retryNsErr = retryError as NSError
-                    if retryNsErr.code == 409 {
-                        state = .failed(.revisionConflict(detail: retryNsErr.localizedDescription))
-                    } else if retryNsErr.code == 422 {
-                        state = .failed(.confirmStopRejected(detail: retryNsErr.localizedDescription))
-                    } else {
-                        state = .failed(.apiError(statusCode: retryNsErr.code, detail: retryNsErr.localizedDescription))
-                    }
+                    state = .failed(Self.mapToFailure(retryError))
                 }
             }
         }
