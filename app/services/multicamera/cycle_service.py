@@ -163,8 +163,8 @@ class CycleService:
     ) -> CaptureCycle:
         cycle = self._require_cycle(cycle_id)
         current_status = CycleStatus(cycle.status)
-        if current_status != CycleStatus.RECORDING_PENDING:
-            raise InvalidTransitionError("cycle", cycle.status, "confirm_device_start requires recording_pending")
+        if current_status not in {CycleStatus.RECORDING_PENDING, CycleStatus.RECORDING}:
+            raise InvalidTransitionError("cycle", cycle.status, "confirm_device_start requires recording_pending or recording")
 
         ccd = self._require_cycle_device(cycle_id, session_device_id)
         # Idempotent: already confirmed start — return current cycle state
@@ -183,14 +183,8 @@ class CycleService:
         ccd.revision += 1
         cycle.updated_at = datetime.now(timezone.utc)
 
-        # Check if ALL required devices have confirmed start
-        required = self.repo.get_required_cycle_devices(cycle_id)
-        all_started = all(
-            CycleDeviceRecordingStatus(d.recording_status) == CycleDeviceRecordingStatus.CONFIRMED_START
-            or CycleDeviceRecordingStatus(d.recording_status) == CycleDeviceRecordingStatus.CONFIRMED_STOP
-            for d in required
-        )
-        if all_started:
+        # First required device to confirm start triggers recording_pending → recording
+        if current_status == CycleStatus.RECORDING_PENDING:
             cycle.recording_started_at = datetime.now(timezone.utc)
             self._do_transition(cycle, CycleStatus.RECORDING)
 
