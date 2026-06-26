@@ -9,6 +9,7 @@ struct MultiCameraLobbyView: View {
     @State private var joinUuid = ""
     @State private var showQRScanner = false
     @State private var qrDecodeError: String?
+    @State private var snapshotCopied = false
     @Environment(\.presentationMode) private var presentationMode
 
     init(authManager: AuthManager) {
@@ -28,9 +29,18 @@ struct MultiCameraLobbyView: View {
         ))
     }
 
+    private static let buildFingerprint = "mc1-debug-v2-2026-06-26"
+
     var body: some View {
         NavigationView {
             List {
+                Section {
+                    Text(Self.buildFingerprint)
+                        .font(.system(.caption2, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .listRowBackground(Color.clear)
+                }
                 switch vm.state {
                 case .idle:
                     idleSection
@@ -43,6 +53,7 @@ struct MultiCameraLobbyView: View {
                 case .error(let msg):
                     errorSection(msg)
                 }
+                alwaysVisibleDebugSection
             }
             .navigationTitle("Session Lab")
             .navigationBarTitleDisplayMode(.inline)
@@ -189,16 +200,137 @@ struct MultiCameraLobbyView: View {
                 Button("Cancel Session") { vm.cancelSession() }
                     .foregroundColor(.red)
             }
-            if let sdId = vm.sessionDeviceId {
-                Section("Debug") {
-                    LabeledRow("Session Device ID", "\(sdId)")
-                    LabeledRow("Heartbeat", "Active")
-                    LabeledRow("Clock", clockSyncDescription)
-                    LabeledRow("Capture", captureStateDescription)
-                    LabeledRow("Orchestrator", orchestratorStateDescription)
+            if let err = vm.deviceRegisterError {
+                Section("Device Registration Error") {
+                    Text(err)
+                        .font(.caption2).foregroundColor(.red)
+                        .lineLimit(nil)
+                    Button("Retry Register Device") { vm.retryDeviceRegistration() }
+                        .font(.body.weight(.semibold))
                 }
             }
         }
+    }
+
+    // MARK: — Debug Snapshot (always visible)
+
+    private var alwaysVisibleDebugSection: some View {
+        Group {
+            if case .inLobby(let session) = vm.state {
+                debugSnapshotSection(session)
+            } else {
+                Section("Debug Snapshot") {
+                    LabeledRow("Build", Self.buildFingerprint)
+                    LabeledRow("API", APIConfig.baseURL)
+                    LabeledRow("User ID", "\(Self.cachedUserId ?? 0)")
+                    LabeledRow("State", "\(vm.state)")
+                    LabeledRow("Orchestrator", orchestratorStateDescription)
+                    if case .error(let msg) = vm.state {
+                        LabeledRow("Error", msg)
+                    }
+                    Button {
+                        let text = [
+                            "=== MC1 Session Lab Debug Snapshot ===",
+                            "build: \(Self.buildFingerprint)",
+                            "timestamp: \(ISO8601DateFormatter().string(from: Date()))",
+                            "api_base_url: \(APIConfig.baseURL)",
+                            "user_id: \(Self.cachedUserId ?? 0)",
+                            "state: \(vm.state)",
+                            "orchestrator: \(orchestratorStateDescription)",
+                            "======================================",
+                        ].joined(separator: "\n")
+                        UIPasteboard.general.string = text
+                        snapshotCopied = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { snapshotCopied = false }
+                    } label: {
+                        HStack {
+                            Image(systemName: snapshotCopied ? "checkmark" : "doc.on.doc")
+                            Text(snapshotCopied ? "Copied" : "Copy Debug Snapshot")
+                        }
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(snapshotCopied ? .green : .accentColor)
+                    }
+                }
+            }
+        }
+    }
+
+    private func debugSnapshotSection(_ session: MultiCameraSessionDTO) -> some View {
+        Section("Debug Snapshot") {
+            LabeledRow("Build", Self.buildFingerprint)
+            LabeledRow("API", APIConfig.baseURL)
+            LabeledRow("User ID", "\(Self.cachedUserId ?? 0)")
+            LabeledRow("Role", vm.isInstructor ? "instructor" : "player")
+            LabeledRow("Session UUID", session.sessionUuid)
+            LabeledRow("Status", session.status.rawValue)
+            LabeledRow("Revision", "\(session.revision)")
+            LabeledRow("Participants", "\(session.participants.count)/\(session.maxParticipants)")
+            LabeledRow("Devices", "\(session.devices.count)/\(session.maxDevices)")
+            LabeledRow("Device ID", vm.sessionDeviceId.map { "\($0)" } ?? "—")
+            LabeledRow("Heartbeat", vm.sessionDeviceId != nil ? "Active" : "—")
+            LabeledRow("Clock", clockSyncDescription)
+            LabeledRow("Capture", captureStateDescription)
+            LabeledRow("Orchestrator", orchestratorStateDescription)
+            LabeledRow("DevReg Error", vm.deviceRegisterError ?? "—")
+            if case .failed = vm.clockSyncState {
+                Button("Retry Clock Sync") { vm.retryClockSync() }
+                    .font(.body.weight(.semibold))
+            }
+            Button {
+                UIPasteboard.general.string = buildSnapshotText(session)
+                snapshotCopied = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { snapshotCopied = false }
+            } label: {
+                HStack {
+                    Image(systemName: snapshotCopied ? "checkmark" : "doc.on.doc")
+                    Text(snapshotCopied ? "Copied" : "Copy Debug Snapshot")
+                }
+                .font(.body.weight(.semibold))
+                .foregroundColor(snapshotCopied ? .green : .accentColor)
+            }
+        }
+    }
+
+    private func buildSnapshotText(_ session: MultiCameraSessionDTO) -> String {
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let ts = iso.string(from: Date())
+
+        let lastError: String
+        if case .error(let msg) = vm.state { lastError = msg }
+        else { lastError = "—" }
+
+        let orchError: String
+        if case .failed(let f) = orchestrator.state { orchError = "\(f)" }
+        else { orchError = "—" }
+
+        return [
+            "=== MC1 Session Lab Debug Snapshot ===",
+            "build: \(Self.buildFingerprint)",
+            "timestamp: \(ts)",
+            "api_base_url: \(APIConfig.baseURL)",
+            "user_id: \(Self.cachedUserId ?? 0)",
+            "role: \(vm.isInstructor ? "instructor" : "player")",
+            "session_uuid: \(session.sessionUuid)",
+            "session_status: \(session.status.rawValue)",
+            "session_revision: \(session.revision)",
+            "participants: \(session.participants.count)/\(session.maxParticipants)",
+            "devices: \(session.devices.count)/\(session.maxDevices)",
+            "session_device_id: \(vm.sessionDeviceId.map { "\($0)" } ?? "—")",
+            "heartbeat: \(vm.sessionDeviceId != nil ? "active" : "—")",
+            "clock: \(clockSyncDescription)",
+            "capture: \(captureStateDescription)",
+            "orchestrator: \(orchestratorStateDescription)",
+            "device_reg_error: \(vm.deviceRegisterError ?? "—")",
+            "last_error: \(lastError)",
+            "last_orch_failure: \(orchError)",
+            "======================================",
+        ].joined(separator: "\n")
+    }
+
+    private static var cachedUserId: Int? {
+        let v = UserDefaults.standard.integer(forKey: "lfa_current_user_id")
+        return v > 0 ? v : nil
     }
 
     // MARK: — Error
@@ -220,7 +352,7 @@ struct MultiCameraLobbyView: View {
         case .notSynced:       return "notSynced"
         case .syncing:         return "syncing…"
         case .synced:          return "synced ✓"
-        case .failed(let n, _): return "failed(\(n))"
+        case .failed(let n, let msg): return "failed(\(n)) \(msg ?? "?")"
         }
     }
 
