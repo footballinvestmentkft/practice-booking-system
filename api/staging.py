@@ -84,6 +84,98 @@ def health():
         return JSONResponse(status_code=503, content={"status": "error", "detail": str(e)})
 
 
+@app.post("/api/v1/debug/run-migration-2026-06-24", tags=["debug"])
+def run_capture_cycles_migration():
+    """One-shot: apply 2026_06_24_1000 capture_cycles migration via raw SQL."""
+    import traceback
+    from app.database import SessionLocal
+    steps = []
+    try:
+        db = SessionLocal()
+
+        # Check if already applied
+        col_exists = db.execute(text(
+            "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'capture_cycles')"
+        )).scalar()
+        if col_exists:
+            return {"status": "already_applied", "steps": ["capture_cycles table exists"]}
+
+        # 1. Expand session status constraint
+        db.execute(text("ALTER TABLE multicamera_sessions DROP CONSTRAINT IF EXISTS ck_mcs_status"))
+        db.execute(text(
+            "ALTER TABLE multicamera_sessions ADD CONSTRAINT ck_mcs_status "
+            "CHECK (status IN ('lobby','devices_ready','recording_pending','recording',"
+            "'stopped','finalizing','completed','cancelled','active'))"
+        ))
+        steps.append("ck_mcs_status expanded")
+
+        # 2. capture_cycles table
+        db.execute(text("""
+            CREATE TABLE capture_cycles (
+                id SERIAL PRIMARY KEY,
+                session_id INTEGER NOT NULL REFERENCES multicamera_sessions(id) ON DELETE CASCADE,
+                cycle_index INTEGER NOT NULL CHECK (cycle_index >= 0),
+                status VARCHAR(20) NOT NULL DEFAULT 'preparing'
+                    CHECK (status IN ('preparing','recording_pending','recording','stopping','completed','failed','aborted')),
+                result VARCHAR(20) CHECK (result IS NULL OR result IN ('success','partial','failed')),
+                scheduled_start_at TIMESTAMPTZ,
+                recording_started_at TIMESTAMPTZ,
+                stop_requested_at TIMESTAMPTZ,
+                recording_stopped_at TIMESTAMPTZ,
+                completed_at TIMESTAMPTZ,
+                failure_reason TEXT,
+                created_by_participant_id INTEGER NOT NULL REFERENCES session_participants(id),
+                idempotency_key VARCHAR(64) NOT NULL,
+                revision INTEGER NOT NULL DEFAULT 1,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                CONSTRAINT uq_cc_session_cycle UNIQUE (session_id, cycle_index),
+                CONSTRAINT uq_cc_session_idempotency UNIQUE (session_id, idempotency_key)
+            )
+        """))
+        db.execute(text("CREATE INDEX ix_capture_cycles_session_id ON capture_cycles (session_id)"))
+        steps.append("capture_cycles created")
+
+        # 3. capture_cycle_devices table
+        db.execute(text("""
+            CREATE TABLE capture_cycle_devices (
+                id SERIAL PRIMARY KEY,
+                capture_cycle_id INTEGER NOT NULL REFERENCES capture_cycles(id) ON DELETE CASCADE,
+                session_device_id INTEGER NOT NULL REFERENCES session_devices(id),
+                required BOOLEAN NOT NULL DEFAULT true,
+                recording_status VARCHAR(20) NOT NULL DEFAULT 'pending'
+                    CHECK (recording_status IN ('pending','confirmed_start','confirmed_stop','failed')),
+                started_at TIMESTAMPTZ,
+                stopped_at TIMESTAMPTZ,
+                failure_reason TEXT,
+                revision INTEGER NOT NULL DEFAULT 1,
+                CONSTRAINT uq_ccd_cycle_device UNIQUE (capture_cycle_id, session_device_id)
+            )
+        """))
+        db.execute(text("CREATE INDEX ix_capture_cycle_devices_capture_cycle_id ON capture_cycle_devices (capture_cycle_id)"))
+        steps.append("capture_cycle_devices created")
+
+        # 4. Add capture_cycle_id to capture_streams
+        db.execute(text(
+            "ALTER TABLE capture_streams ADD COLUMN capture_cycle_id INTEGER REFERENCES capture_cycles(id)"
+        ))
+        db.execute(text(
+            "CREATE UNIQUE INDEX uix_cs_cycle_device_type ON capture_streams "
+            "(capture_cycle_id, session_device_id, stream_type) WHERE capture_cycle_id IS NOT NULL"
+        ))
+        steps.append("capture_streams.capture_cycle_id added")
+
+        # 5. Update alembic version
+        db.execute(text("UPDATE alembic_version SET version_num = '2026_06_24_1000'"))
+        steps.append("alembic_version updated")
+
+        db.commit()
+        db.close()
+        return {"status": "applied", "steps": steps}
+    except Exception as e:
+        return {"status": "error", "steps": steps, "error": str(e), "traceback": traceback.format_exc()}
+
+
 @app.get("/api/v1/debug/db-schema", tags=["debug"])
 def debug_db_schema():
     """Check staging DB schema for cycle tables + columns. No auth."""
