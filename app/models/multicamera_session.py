@@ -79,7 +79,7 @@ class CycleResult(str, enum.Enum):
 
 SESSION_TRANSITIONS = {
     SessionStatus.LOBBY: {SessionStatus.DEVICES_READY, SessionStatus.ACTIVE, SessionStatus.CANCELLED},
-    SessionStatus.DEVICES_READY: {SessionStatus.RECORDING_PENDING, SessionStatus.LOBBY, SessionStatus.CANCELLED},
+    SessionStatus.DEVICES_READY: {SessionStatus.RECORDING_PENDING, SessionStatus.ACTIVE, SessionStatus.LOBBY, SessionStatus.CANCELLED},
     SessionStatus.RECORDING_PENDING: {SessionStatus.RECORDING, SessionStatus.DEVICES_READY, SessionStatus.CANCELLED},
     SessionStatus.RECORDING: {SessionStatus.STOPPED},
     SessionStatus.STOPPED: {SessionStatus.FINALIZING, SessionStatus.CANCELLED},
