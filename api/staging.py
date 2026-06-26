@@ -82,3 +82,83 @@ def health():
         return {"status": "ok", "database": "connected", "variant": "staging"}
     except Exception as e:
         return JSONResponse(status_code=503, content={"status": "error", "detail": str(e)})
+
+
+@app.get("/api/v1/debug/db-schema", tags=["debug"])
+def debug_db_schema():
+    """Check staging DB schema for cycle tables + columns. No auth."""
+    import traceback
+    from app.database import SessionLocal
+    result = {"migration_status": "unknown", "tables": {}, "alembic_head": None, "errors": []}
+    try:
+        db = SessionLocal()
+        for tbl in ("capture_cycles", "capture_cycle_devices"):
+            row = db.execute(text(
+                "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = :t)"
+            ), {"t": tbl}).scalar()
+            result["tables"][tbl] = "exists" if row else "MISSING"
+
+        col = db.execute(text(
+            "SELECT EXISTS (SELECT 1 FROM information_schema.columns "
+            "WHERE table_name = 'capture_streams' AND column_name = 'capture_cycle_id')"
+        )).scalar()
+        result["tables"]["capture_streams.capture_cycle_id"] = "exists" if col else "MISSING"
+
+        try:
+            head = db.execute(text("SELECT version_num FROM alembic_version")).scalar()
+            result["alembic_head"] = head
+        except Exception:
+            result["alembic_head"] = "no alembic_version table"
+
+        db.close()
+        result["migration_status"] = "ok"
+    except Exception as e:
+        result["errors"].append(traceback.format_exc())
+    return result
+
+
+@app.get("/api/v1/debug/test-session-create", tags=["debug"])
+def debug_test_session_create():
+    """Simulate session create flow and return any traceback. No auth."""
+    import traceback
+    from app.database import SessionLocal
+    result = {"step": "init", "error": None, "traceback": None}
+    try:
+        db = SessionLocal()
+        result["step"] = "db_connected"
+
+        from app.services.multicamera.session_service import SessionService
+        ss = SessionService(db)
+        result["step"] = "service_created"
+
+        # Find any user to act as creator
+        from app.models.user import User
+        user = db.query(User).filter(User.is_active.is_(True)).first()
+        if not user:
+            result["error"] = "No active user in staging DB"
+            return result
+        result["step"] = f"found_user_{user.id}"
+
+        session = ss.create_session(user.id, max_participants=2, max_devices=4)
+        result["step"] = "session_created"
+        result["session_id"] = session.id
+        result["session_uuid"] = str(session.session_uuid)
+
+        ss.join_session(session.session_uuid, user.id, "instructor")
+        result["step"] = "joined"
+
+        full = ss.get_session(session.session_uuid)
+        result["step"] = "get_session_ok"
+        result["status"] = full.status
+        result["participants"] = len(full.participants)
+        result["devices_count"] = len(full.devices)
+
+        # Cleanup — cancel the test session
+        session.status = "cancelled"
+        db.commit()
+        result["step"] = "cleanup_done"
+        db.close()
+    except Exception as e:
+        result["error"] = str(e)
+        result["traceback"] = traceback.format_exc()
+    return result
