@@ -183,7 +183,7 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
     func test_CYC_O_01_createCycleAPIError_failsWithApiError() async throws {
         let authProvider = FakeAccessTokenProvider()
         let apiClient = MockCycleAPIClient()
-        apiClient.createResult = .failure(NSError(domain: "APIClient", code: 500, userInfo: [NSLocalizedDescriptionKey: "server error"]))
+        apiClient.createResult = .failure(APIError.httpError(statusCode: 500, detail: "server error"))
         let clockService = await makeSyncedClockService()
         let captureController = FakeCaptureController()
         let sleepProvider: (UInt64) async throws -> Void = { _ in } // immediate
@@ -220,7 +220,7 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         let apiClient = MockCycleAPIClient()
         // create OK, schedule fails
         apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
-        apiClient.scheduleResult = .failure(NSError(domain: "APIClient", code: 503, userInfo: [NSLocalizedDescriptionKey: "unavailable"]))
+        apiClient.scheduleResult = .failure(APIError.httpError(statusCode: 503, detail: "unavailable"))
         let clockService = await makeSyncedClockService()
         let captureController = FakeCaptureController()
         let sleepProvider: (UInt64) async throws -> Void = { _ in }
@@ -492,7 +492,7 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         let apiClient = MockCycleAPIClient()
         apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
         apiClient.scheduleResult = .success(makeTestCycle(id: 1, revision: 2, scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
-        apiClient.confirmStartResult = .failure(NSError(domain: "APIClient", code: 409, userInfo: [NSLocalizedDescriptionKey: "conflict"]))
+        apiClient.confirmStartResult = .failure(APIError.httpError(statusCode: 409, detail: "conflict"))
         let clockService = await makeSyncedClockService()
         let captureController = FakeCaptureController()
         let sleepProvider: (UInt64) async throws -> Void = { _ in }
@@ -529,7 +529,7 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         let apiClient = MockCycleAPIClient()
         apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
         apiClient.scheduleResult = .success(makeTestCycle(id: 1, revision: 2, scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
-        apiClient.confirmStartResult = .failure(NSError(domain: "APIClient", code: 422, userInfo: [NSLocalizedDescriptionKey: "invalid transition"]))
+        apiClient.confirmStartResult = .failure(APIError.httpError(statusCode: 422, detail: "invalid transition"))
         let clockService = await makeSyncedClockService()
         let captureController = FakeCaptureController()
         let sleepProvider: (UInt64) async throws -> Void = { _ in }
@@ -615,7 +615,7 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
         apiClient.scheduleResult = .success(makeTestCycle(id: 1, revision: 2, scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
         apiClient.confirmStartResult = .success(makeTestCycle(id: 1, revision: 4, status: .recording))
-        apiClient.confirmStopResult = .failure(NSError(domain: "APIClient", code: 409, userInfo: [NSLocalizedDescriptionKey: "conflict"]))
+        apiClient.confirmStopResult = .failure(APIError.httpError(statusCode: 409, detail: "conflict"))
         let clockService = await makeSyncedClockService()
         let captureController = FakeCaptureController()
         let sleepProvider: (UInt64) async throws -> Void = { _ in }
@@ -664,7 +664,7 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         apiClient.createResult = .success(makeTestCycle(id: 1, revision: 1))
         apiClient.scheduleResult = .success(makeTestCycle(id: 1, revision: 2, scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
         apiClient.confirmStartResult = .success(makeTestCycle(id: 1, revision: 4, status: .recording))
-        apiClient.confirmStopResult = .failure(NSError(domain: "APIClient", code: 422, userInfo: [NSLocalizedDescriptionKey: "invalid stop"]))
+        apiClient.confirmStopResult = .failure(APIError.httpError(statusCode: 422, detail: "invalid stop"))
         let clockService = await makeSyncedClockService()
         let captureController = FakeCaptureController()
         let sleepProvider: (UInt64) async throws -> Void = { _ in }
@@ -843,8 +843,7 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
             scheduledStartAt: futureISO(offsetSeconds: 0.001),
             status: .recordingPending
         ))
-        apiClient.confirmStartResult = .failure(NSError(domain: "APIClient", code: 409,
-            userInfo: [NSLocalizedDescriptionKey: "revision mismatch"]))
+        apiClient.confirmStartResult = .failure(APIError.httpError(statusCode: 409, detail: "revision mismatch"))
         let clockService = await makeSyncedClockService()
         let captureController = FakeCaptureController()
         let sleepProvider: (UInt64) async throws -> Void = { _ in }

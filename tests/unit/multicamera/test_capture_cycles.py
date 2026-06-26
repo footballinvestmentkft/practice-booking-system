@@ -307,15 +307,15 @@ class TestConfirmDeviceStart:
     def _schedule(self, svc, cycle):
         return svc.schedule_cycle(cycle.id, cycle.revision)
 
-    def test_cs_01_first_device_start_stays_recording_pending(self, db, cycle_with_two_devices):
-        """CS-01: First device confirms start; cycle stays RECORDING_PENDING."""
+    def test_cs_01_first_device_start_transitions_to_recording(self, db, cycle_with_two_devices):
+        """CS-01: First device confirms start; cycle immediately transitions to RECORDING."""
         cycle, sd1, sd2, p_inst, s = cycle_with_two_devices
         svc = CycleService(db)
         cycle = self._schedule(svc, cycle)
         ccd1 = next(d for d in cycle.cycle_devices if d.session_device_id == sd1.id)
         now = datetime.now(timezone.utc)
         result = svc.confirm_device_start(cycle.id, sd1.id, now, ccd1.revision)
-        assert CycleStatus(result.status) == CycleStatus.RECORDING_PENDING
+        assert CycleStatus(result.status) == CycleStatus.RECORDING
 
     def test_cs_02_all_devices_start_transitions_to_recording(self, db, cycle_with_two_devices):
         """CS-02: Both required devices confirm start → RECORDING, recording_started_at set."""
