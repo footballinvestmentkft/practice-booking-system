@@ -1,0 +1,79 @@
+name: MC1 ORCH-2B E2E — Instructor Cycle Flow
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'app/api/api_v1/endpoints/multicamera/**'
+      - 'app/services/multicamera/**'
+      - 'app/models/multicamera_session.py'
+      - 'app/schemas/multicamera_cycle.py'
+      - 'app/schemas/multicamera_session.py'
+      - 'tests/unit/multicamera/test_mc1_orch2b_e2e.py'
+      - '.github/workflows/mc1-e2e-orch2b.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: mc1-e2e-orch2b-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mc1-e2e-instructor-flow:
+    name: MC1 ORCH-2B — Instructor Cycle E2E (16 steps)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-timeout
+
+      - name: Write .env
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_db
+          SECRET_KEY=ci-mc1-e2e-orch2b-not-for-production
+          ENVIRONMENT=test
+          TESTING=true
+          DEBUG=false
+          ENABLE_RATE_LIMITING=false
+          EOF
+
+      - name: Run Alembic migrations
+        run: alembic upgrade head
+
+      - name: Run MC1 ORCH-2B E2E test
+        run: |
+          pytest tests/unit/multicamera/test_mc1_orch2b_e2e.py \
+            -v \
+            --tb=long \
+            --timeout=60 \
+            -p no:warnings
