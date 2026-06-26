@@ -41,6 +41,7 @@ extension AuthManager: AccessTokenProvider {}
 // MARK: — CycleAPIClient
 
 protocol CycleAPIClient {
+    func activateSession(token: String, uuid: String, revision: Int) async throws -> MultiCameraSessionDTO
     func createCycle(token: String, uuid: String, idempotencyKey: String) async throws -> CaptureCycleDTO
     func scheduleCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO
     func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO
@@ -51,6 +52,10 @@ protocol CycleAPIClient {
 // MARK: — LiveCycleAPIClient
 
 struct LiveCycleAPIClient: CycleAPIClient {
+    func activateSession(token: String, uuid: String, revision: Int) async throws -> MultiCameraSessionDTO {
+        try await MultiCameraAPIClient.activateSession(token: token, uuid: uuid, revision: revision)
+    }
+
     func createCycle(token: String, uuid: String, idempotencyKey: String) async throws -> CaptureCycleDTO {
         try await MultiCameraAPIClient.createCycle(token: token, uuid: uuid, idempotencyKey: idempotencyKey)
     }
@@ -139,10 +144,10 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
     // MARK: — Public API
 
-    func startCycle(sessionUuid: String, sessionDeviceId: Int) {
+    func startCycle(sessionUuid: String, sessionDeviceId: Int, sessionRevision: Int) {
         startTask?.cancel()
         startTask = Task { [weak self] in
-            await self?.performStartCycle(sessionUuid: sessionUuid, sessionDeviceId: sessionDeviceId)
+            await self?.performStartCycle(sessionUuid: sessionUuid, sessionDeviceId: sessionDeviceId, sessionRevision: sessionRevision)
         }
     }
 
@@ -184,7 +189,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
     // MARK: — Core orchestration
 
-    private func performStartCycle(sessionUuid: String, sessionDeviceId: Int) async {
+    private func performStartCycle(sessionUuid: String, sessionDeviceId: Int, sessionRevision: Int) async {
         // Store for later use
         currentCycleSessionUuid = sessionUuid
         currentSessionDeviceId  = sessionDeviceId
@@ -195,8 +200,27 @@ final class CycleCaptureOrchestrator: ObservableObject {
             return
         }
 
-        // 2. Create cycle
+        // 2. Activate session (idempotent — 200 if already active)
         state = .creating
+        do {
+            _ = try await cycleAPIClient.activateSession(
+                token: token, uuid: sessionUuid, revision: sessionRevision
+            )
+        } catch {
+            if Task.isCancelled { return }
+            if let apiErr = error as? APIError,
+               case .httpError(let code, _) = apiErr,
+               code == 409 {
+                // 409 = already active or revision conflict from concurrent activate — proceed
+            } else {
+                state = .failed(Self.mapToFailure(error))
+                return
+            }
+        }
+
+        if Task.isCancelled { return }
+
+        // 3. Create cycle
         let cycle: CaptureCycleDTO
         do {
             let cycleIndex = 0 // first cycle in session

@@ -156,8 +156,14 @@ final class MultiCameraSessionViewModel: ObservableObject {
     }
 
     func beginCycle() {
-        guard canStartCapture, let uuid = sessionUuid, let sdId = sessionDeviceId else { return }
-        cycleOrchestrator?.startCycle(sessionUuid: uuid, sessionDeviceId: sdId)
+        guard canStartCapture,
+              case .inLobby(let session) = state,
+              let sdId = sessionDeviceId else { return }
+        cycleOrchestrator?.startCycle(
+            sessionUuid: session.sessionUuid,
+            sessionDeviceId: sdId,
+            sessionRevision: session.revision
+        )
     }
 
     func endCycle() {
