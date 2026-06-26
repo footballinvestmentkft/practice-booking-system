@@ -17,6 +17,7 @@ from app.services.action_determiner import (
     CertificateActionHandler,
     DefaultActionHandler,
     LicenseActionHandler,
+    MultiCameraActionHandler,
     ProjectActionHandler,
     QuizActionHandler,
     TournamentActionHandler,
@@ -338,8 +339,82 @@ class TestActionDeterminer:
         result = self.d.determine_action(_req("POST", "/api/v1/auth/login"), _resp(401))
         assert result == AuditAction.LOGIN_FAILED
 
-    def test_determiner_has_seven_handlers(self):
-        assert len(self.d.handlers) == 8
+    def test_determiner_has_eight_handlers(self):
+        assert len(self.d.handlers) == 9
 
     def test_last_handler_is_default(self):
         assert isinstance(self.d.handlers[-1], DefaultActionHandler)
+
+
+class TestMultiCameraActionHandler:
+    h = MultiCameraActionHandler()
+
+    def test_can_handle_multicamera_path(self):
+        assert self.h.can_handle("/api/v1/multicamera/sessions/abc/cycles/1")
+
+    def test_cannot_handle_unrelated_path(self):
+        assert not self.h.can_handle("/api/v1/auth/login")
+
+    def test_confirm_start(self):
+        r = self.h.determine_action("POST", "/api/v1/multicamera/sessions/u/cycles/1/devices/2/confirm-start", 200)
+        assert r == AuditAction.MC_CYCLE_CONFIRM_START
+
+    def test_confirm_stop(self):
+        r = self.h.determine_action("POST", "/api/v1/multicamera/sessions/u/cycles/1/devices/2/confirm-stop", 200)
+        assert r == AuditAction.MC_CYCLE_CONFIRM_STOP
+
+    def test_schedule(self):
+        r = self.h.determine_action("POST", "/api/v1/multicamera/sessions/u/cycles/1/schedule", 200)
+        assert r == AuditAction.MC_CYCLE_SCHEDULED
+
+    def test_stop(self):
+        r = self.h.determine_action("POST", "/api/v1/multicamera/sessions/u/cycles/1/stop", 200)
+        assert r == AuditAction.MC_CYCLE_STOPPED
+
+    def test_join(self):
+        r = self.h.determine_action("POST", "/api/v1/multicamera/sessions/u/join", 200)
+        assert r == AuditAction.MC_SESSION_JOINED
+
+    def test_activate(self):
+        r = self.h.determine_action("POST", "/api/v1/multicamera/sessions/u/activate", 200)
+        assert r == AuditAction.MC_SESSION_ACTIVATED
+
+    def test_create_session(self):
+        r = self.h.determine_action("POST", "/api/v1/multicamera/sessions", 201)
+        assert r == AuditAction.MC_SESSION_CREATED
+
+    def test_get_session(self):
+        r = self.h.determine_action("GET", "/api/v1/multicamera/sessions/u", 200)
+        assert r == AuditAction.MC_SESSION_QUERIED
+
+    def test_register_device(self):
+        r = self.h.determine_action("POST", "/api/v1/multicamera/sessions/u/devices", 201)
+        assert r == AuditAction.MC_DEVICE_REGISTERED
+
+    def test_patch_device_status(self):
+        r = self.h.determine_action("PATCH", "/api/v1/multicamera/sessions/u/devices/1/status", 200)
+        assert r == AuditAction.MC_DEVICE_STATUS_UPDATED
+
+    def test_heartbeat(self):
+        r = self.h.determine_action("POST", "/api/v1/multicamera/sessions/u/devices/1/heartbeat", 200)
+        assert r == AuditAction.MC_DEVICE_HEARTBEAT
+
+    def test_create_cycle(self):
+        r = self.h.determine_action("POST", "/api/v1/multicamera/sessions/u/cycles", 201)
+        assert r == AuditAction.MC_CYCLE_CREATED
+
+    def test_list_cycles(self):
+        r = self.h.determine_action("GET", "/api/v1/multicamera/sessions/u/cycles", 200)
+        assert r == AuditAction.MC_CYCLE_QUERIED
+
+    def test_all_action_constants_within_varchar100(self):
+        from app.models.audit_log import AuditAction as A
+        mc_actions = [
+            A.MC_SESSION_CREATED, A.MC_SESSION_JOINED, A.MC_SESSION_ACTIVATED,
+            A.MC_SESSION_QUERIED, A.MC_DEVICE_REGISTERED, A.MC_DEVICE_STATUS_UPDATED,
+            A.MC_DEVICE_HEARTBEAT, A.MC_CYCLE_CREATED, A.MC_CYCLE_SCHEDULED,
+            A.MC_CYCLE_STOPPED, A.MC_CYCLE_CONFIRM_START, A.MC_CYCLE_CONFIRM_STOP,
+            A.MC_CYCLE_QUERIED, A.MC_SYSTEM_TIME_QUERIED,
+        ]
+        for action in mc_actions:
+            assert len(action) <= 100, f"Action too long for VARCHAR(100): {action} ({len(action)} chars)"
