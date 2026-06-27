@@ -24,6 +24,17 @@
 	<true/>
 	<key>APIBaseURL</key>
 	<string>$(API_BASE_URL)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>hu.lfa.educationcenter.mc1automation</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>lfa-mc1</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

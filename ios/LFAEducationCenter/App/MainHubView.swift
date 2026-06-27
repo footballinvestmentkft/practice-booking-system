@@ -166,6 +166,11 @@ struct MainHubView: View {
         .fullScreenCover(isPresented: $isShowingCaptureTest) {
             SessionCaptureDebugView()
         }
+        // MC1-AUTO-1: lfa-mc1://automate?action=join opens the Session Lab
+        // the same way the "Session Lab" debug button does.
+        .onReceive(MC1AutomationBridge.shared.$presentSessionLab) { show in
+            if show { isShowingSessionLab = true }
+        }
         #endif
         .fullScreenCover(isPresented: $isShowingOnboarding) {
             LFAOnboardingView()

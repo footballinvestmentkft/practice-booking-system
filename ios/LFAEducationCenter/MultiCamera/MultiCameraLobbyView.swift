@@ -81,6 +81,22 @@ struct MultiCameraLobbyView: View {
         }
         .navigationViewStyle(.stack)
         .onDisappear { vm.reset() }
+        // MC1-AUTO-1: dispatches automation commands from lfa-mc1:// deep links
+        // onto the same vm methods the manual buttons call.
+        .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { action in
+            switch action {
+            case .joinSession(let uuid, let role):
+                vm.joinSession(uuid: uuid, role: role)
+            case .markDevicesReady:
+                vm.transitionToDevicesReady()
+            case .beginCycle:
+                vm.beginCycle()
+            case .endCycle:
+                vm.endCycle()
+            case .dumpSnapshot:
+                dumpSnapshotToConsole()
+            }
+        }
         .sheet(isPresented: $showQRScanner) {
             QRScannerView(
                 onScanned: { raw in
@@ -360,6 +376,18 @@ struct MultiCameraLobbyView: View {
     private static var cachedUserId: Int? {
         let v = UserDefaults.standard.integer(forKey: "lfa_current_user_id")
         return v > 0 ? v : nil
+    }
+
+    // MARK: — MC1-AUTO-2: console-based snapshot dump for the regression runner
+
+    private func dumpSnapshotToConsole() {
+        let text: String
+        if case .inLobby(let session) = vm.state {
+            text = buildSnapshotText(session)
+        } else {
+            text = "=== MC1 Session Lab Debug Snapshot ===\nstate: \(vm.state)\n======================================"
+        }
+        print("[MC1-SNAPSHOT-BEGIN]\n\(text)\n[MC1-SNAPSHOT-END]")
     }
 
     // MARK: — Error

@@ -23,7 +23,18 @@ final class PlayerCaptureOrchestrator: ObservableObject {
     private static let scheduledStartToleranceMs: Double = 2_000
 
     // MARK: — Published state
-    @Published private(set) var state: PlayerOrchestratorState = .idle
+    // didSet logs key transitions for MC1-AUTO-1 console-based physical validation —
+    // PASS/FAIL is still decided from backend ground truth, this is corroborating evidence.
+    @Published private(set) var state: PlayerOrchestratorState = .idle {
+        didSet {
+            switch state {
+            case .confirmed(let cycleId): print("[PCO] confirmed start: cycleId=\(cycleId)")
+            case .confirmedStop(let cycleId): print("[PCO] confirmed stop: cycleId=\(cycleId)")
+            case .failed(let message): print("[PCO] FAILURE: \(message)")
+            default: break
+            }
+        }
+    }
 
     // MARK: — Dependencies
     private let authManager: any AccessTokenProvider
