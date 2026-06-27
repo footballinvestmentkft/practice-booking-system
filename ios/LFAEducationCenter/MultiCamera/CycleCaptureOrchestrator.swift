@@ -101,6 +101,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
     // MARK: — Published state
     @Published private(set) var state: OrchestratorState = .idle
     @Published private(set) var revisionConflictRetried: Bool = false
+    @Published private(set) var sessionAlreadyActiveSkipped: Bool = false
 
     private static func mapToFailure(_ error: Error) -> OrchestratorFailure {
         if let apiErr = error as? APIError {
@@ -129,6 +130,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
     // MARK: — Internal tracking
     private var currentCycle: CaptureCycleDTO?
+    private var nextCycleIndex: Int = 0
     private var startTask: Task<Void, Never>?
     private var captureSubscription: AnyCancellable?
 
@@ -187,6 +189,8 @@ final class CycleCaptureOrchestrator: ObservableObject {
         currentCycleSessionUuid = nil
         currentSessionDeviceId  = nil
         revisionConflictRetried = false
+        sessionAlreadyActiveSkipped = false
+        nextCycleIndex = 0
         state = .idle
     }
 
@@ -216,38 +220,44 @@ final class CycleCaptureOrchestrator: ObservableObject {
         } catch {
             if Task.isCancelled { return }
             guard let apiErr = error as? APIError,
-                  case .httpError(let code, _) = apiErr,
-                  code == 409 else {
+                  case .httpError(let code, let detail) = apiErr else {
                 state = .failed(Self.mapToFailure(error))
                 return
             }
-            // 409: fetch fresh session to distinguish "already active" from "stale revision"
-            do {
-                let fresh = try await cycleAPIClient.getSession(token: token, uuid: sessionUuid)
-                if Task.isCancelled { return }
-                if fresh.status != .active {
-                    // Session not yet active — retry with fresh revision (max 1x)
-                    revisionConflictRetried = true
-                    _ = try await cycleAPIClient.activateSession(
-                        token: token, uuid: sessionUuid, revision: fresh.revision
-                    )
+            if code == 409 {
+                // 409: fetch fresh session to distinguish "already active" from "stale revision"
+                do {
+                    let fresh = try await cycleAPIClient.getSession(token: token, uuid: sessionUuid)
                     if Task.isCancelled { return }
+                    if fresh.status != .active {
+                        // Session not yet active — retry with fresh revision (max 1x)
+                        revisionConflictRetried = true
+                        _ = try await cycleAPIClient.activateSession(
+                            token: token, uuid: sessionUuid, revision: fresh.revision
+                        )
+                        if Task.isCancelled { return }
+                    }
+                    // fresh.status == .active: concurrent activation succeeded — proceed
+                } catch {
+                    if Task.isCancelled { return }
+                    state = .failed(.revisionConflict(detail: "activate retry: \(Self.mapToFailure(error))"))
+                    return
                 }
-                // fresh.status == .active: concurrent activation succeeded — proceed
-            } catch {
-                if Task.isCancelled { return }
-                state = .failed(.revisionConflict(detail: "activate retry: \(Self.mapToFailure(error))"))
+            } else if code == 422, detail?.contains("active → active") == true {
+                // Session already ACTIVE (backend idempotency guard race) — proceed to createCycle.
+                sessionAlreadyActiveSkipped = true
+            } else {
+                state = .failed(Self.mapToFailure(error))
                 return
             }
         }
 
         if Task.isCancelled { return }
 
-        // 3. Create cycle
+        // 3. Create cycle — use nextCycleIndex so successive cycles get distinct idempotency keys
         let cycle: CaptureCycleDTO
         do {
-            let cycleIndex = 0 // first cycle in session
-            let idempotencyKey = CycleIdempotencyKey.make(sessionUuid: sessionUuid, cycleIndex: cycleIndex)
+            let idempotencyKey = CycleIdempotencyKey.make(sessionUuid: sessionUuid, cycleIndex: nextCycleIndex)
             cycle = try await cycleAPIClient.createCycle(
                 token: token,
                 uuid: sessionUuid,
@@ -261,7 +271,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
         if Task.isCancelled { return }
 
-        // 3. Schedule cycle
+        // 4. Schedule cycle
         state = .scheduling
         let scheduledCycle: CaptureCycleDTO
         do {
@@ -279,6 +289,9 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
         if Task.isCancelled { return }
         currentCycle = scheduledCycle
+        // Advance index after a fully committed schedule so the next Begin Cycle
+        // creates a genuinely new cycle (different idempotency key).
+        nextCycleIndex = scheduledCycle.cycleIndex + 1
 
         // 4. Wait for scheduled start
         state = .waitingForStart

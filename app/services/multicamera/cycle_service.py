@@ -46,13 +46,21 @@ class CycleService:
     # ── Session activation ────────────────────────────────────────────────────
 
     def activate_session(self, session_uuid: uuid.UUID, session_revision: int):
-        """Transition session → ACTIVE for multi-cycle use. Idempotent if already active."""
+        """Transition session → ACTIVE for multi-cycle use.
+
+        Idempotency: if the session is already ACTIVE the call returns immediately
+        without touching the revision — the caller's revision may be stale (e.g. a
+        concurrent activateSession already bumped it) and that is fine; the session
+        is already in the desired state.  The revision check only applies when an
+        actual state transition is needed.
+        """
         s = self._require_session(session_uuid)
-        if s.revision != session_revision:
-            raise RevisionConflictError("session", session_revision, s.revision)
         current = SessionStatus(s.status)
+        # Idempotency first — skip revision check when already in target state.
         if current == SessionStatus.ACTIVE:
             return s
+        if s.revision != session_revision:
+            raise RevisionConflictError("session", session_revision, s.revision)
         if SessionStatus.ACTIVE not in SESSION_TRANSITIONS.get(current, set()):
             raise InvalidTransitionError("session", s.status, "active")
         s.status = SessionStatus.ACTIVE.value

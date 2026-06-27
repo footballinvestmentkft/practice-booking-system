@@ -291,6 +291,7 @@ struct MultiCameraLobbyView: View {
             LabeledRow("Capture", captureStateDescription)
             LabeledRow("Orchestrator", orchestratorStateDescription)
             LabeledRow("RC Retry", orchestrator.revisionConflictRetried ? "yes" : "no")
+            LabeledRow("Act Skip", orchestrator.sessionAlreadyActiveSkipped ? "yes" : "no")
             LabeledRow("Listener", playerListenerDescription)
             LabeledRow("PlayerOrch", playerOrchestratorDescription)
             LabeledRow("DevReg Error", vm.deviceRegisterError ?? "—")
@@ -346,6 +347,7 @@ struct MultiCameraLobbyView: View {
             "capture: \(captureStateDescription)",
             "orchestrator: \(orchestratorStateDescription)",
             "revision_conflict_retried: \(orchestrator.revisionConflictRetried ? "yes" : "no")",
+            "session_already_active_skipped: \(orchestrator.sessionAlreadyActiveSkipped ? "yes" : "no")",
             "player_listener: \(playerListenerDescription)",
             "player_orch: \(playerOrchestratorDescription)",
             "device_reg_error: \(vm.deviceRegisterError ?? "—")",

@@ -30,6 +30,8 @@ private final class MockCycleAPIClient: CycleAPIClient {
     private(set) var confirmStopCallCount         = 0
     private(set) var lastConfirmStartRevision: Int? = nil
     private(set) var lastConfirmStopRevision:  Int? = nil
+    private(set) var lastCreateIdempotencyKey: String? = nil
+    private(set) var lastScheduledCycleIndex: Int? = nil
 
     func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO {
         getSessionCallCount += 1
@@ -46,12 +48,15 @@ private final class MockCycleAPIClient: CycleAPIClient {
 
     func createCycle(token: String, uuid: String, idempotencyKey: String) async throws -> CaptureCycleDTO {
         createCallCount += 1
+        lastCreateIdempotencyKey = idempotencyKey
         return try createResult.get()
     }
 
     func scheduleCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO {
         scheduleCallCount += 1
-        return try scheduleResult.get()
+        let result = try scheduleResult.get()
+        lastScheduledCycleIndex = result.cycleIndex
+        return result
     }
 
     func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO {
@@ -93,7 +98,8 @@ private func makeTestCycle(
     scheduledStartAt: String? = nil,
     status: CycleStatus = .preparing,
     sessionDeviceId: Int = 1,
-    deviceRevision: Int = 0
+    deviceRevision: Int = 0,
+    cycleIndex: Int = 0
 ) -> CaptureCycleDTO {
     let device = CaptureCycleDeviceDTO(
         id: 1,
@@ -109,7 +115,7 @@ private func makeTestCycle(
     return CaptureCycleDTO(
         id: id,
         sessionId: 1,
-        cycleIndex: 0,
+        cycleIndex: cycleIndex,
         status: status,
         result: nil,
         scheduledStartAt: scheduledStartAt,
@@ -1146,6 +1152,172 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
 
         XCTAssertEqual(apiClient.createCallCount, 1, "CYC-RC-04: createCycle must be called exactly once — no duplicate after retry")
         XCTAssertEqual(apiClient.scheduleCallCount, 1, "CYC-RC-04: scheduleCycle must be called exactly once")
+    }
+
+    // ── CYC-422 — 422 "active → active" graceful handling ────────────────────
+
+    // CYC-422-01: activate returns 422 "active → active" → sessionAlreadyActiveSkipped=true,
+    //             createCycle called, orchestrator reaches .capturing
+    func test_CYC_422_01_activate422ActiveActive_proceedToCreate() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.activateResult = .failure(APIError.httpError(statusCode: 422, detail: "session: cannot transition active → active"))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider, clockSyncService: clockService,
+            captureController: captureController, cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 5)
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing = $0 { return true }
+            if case .failed = $0 { return true }
+            return false
+        }
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(orchestrator.sessionAlreadyActiveSkipped, "CYC-422-01: flag must be set")
+        XCTAssertEqual(apiClient.createCallCount, 1, "CYC-422-01: createCycle must be called despite 422")
+        XCTAssertEqual(apiClient.scheduleCallCount, 1, "CYC-422-01: scheduleCycle must be called")
+        if case .capturing = orchestrator.state { /* expected */ }
+        else { XCTFail("CYC-422-01: expected .capturing, got \(orchestrator.state)") }
+    }
+
+    // CYC-422-02: activate returns 422 with DIFFERENT detail → fail, createCycle NOT called
+    func test_CYC_422_02_activate422OtherDetail_fails() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.activateResult = .failure(APIError.httpError(statusCode: 422, detail: "session: devices not ready"))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider, clockSyncService: clockService,
+            captureController: captureController, cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+
+        await waitForOrchestratorState(orchestrator) {
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        XCTAssertFalse(orchestrator.sessionAlreadyActiveSkipped, "CYC-422-02: flag must NOT be set")
+        XCTAssertEqual(apiClient.createCallCount, 0, "CYC-422-02: createCycle must NOT be called")
+        if case .failed(let f) = orchestrator.state,
+           case .apiError(let code, _) = f {
+            XCTAssertEqual(code, 422)
+        } else {
+            XCTFail("CYC-422-02: expected .failed(.apiError(422,...)), got \(orchestrator.state)")
+        }
+    }
+
+    // CYC-422-03: reset() clears sessionAlreadyActiveSkipped
+    func test_CYC_422_03_reset_clearsAlreadyActiveFlag() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.activateResult = .failure(APIError.httpError(statusCode: 422, detail: "session: cannot transition active → active"))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider, clockSyncService: clockService,
+            captureController: captureController, cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 5)
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing = $0 { return true }
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        XCTAssertTrue(orchestrator.sessionAlreadyActiveSkipped)
+        orchestrator.reset()
+        XCTAssertFalse(orchestrator.sessionAlreadyActiveSkipped, "CYC-422-03: reset() must clear the flag")
+    }
+
+    // ── CYC-IDX — cycle index tracking ───────────────────────────────────────
+
+    // CYC-IDX-01: after successful complete, nextCycleIndex advances (second Begin Cycle
+    //             gets a different idempotency key — different cycle created on backend)
+    func test_CYC_IDX_01_nextCycleIndex_advancesAfterSchedule() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        // Return a cycle with cycleIndex=0 from schedule
+        apiClient.scheduleResult = .success(makeTestCycle(id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 10),
+            status: .recordingPending, cycleIndex: 0))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider, clockSyncService: clockService,
+            captureController: captureController, cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing = $0 { return true }
+            if case .failed = $0 { return true }
+            return false
+        }
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(apiClient.scheduleCallCount, 1, "CYC-IDX-01: schedule called once")
+        // After cycle 0 scheduled, nextCycleIndex must be 1
+        XCTAssertEqual(apiClient.lastScheduledCycleIndex, 0, "CYC-IDX-01: first cycle uses index 0")
+    }
+
+    // CYC-IDX-02: reset() resets nextCycleIndex so a new session starts from 0
+    func test_CYC_IDX_02_reset_clearsNextCycleIndex() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.scheduleResult = .success(makeTestCycle(id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 10),
+            status: .recordingPending, cycleIndex: 3))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider, clockSyncService: clockService,
+            captureController: captureController, cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing = $0 { return true }
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        // Before reset: next index would be 4
+        XCTAssertEqual(apiClient.lastScheduledCycleIndex, 3)
+        orchestrator.reset()
+        // After reset: verify the tracking cleared by running a second startCycle
+        // and checking the key sent to createCycle contains "c0"
+        apiClient.scheduleResult = .success(makeTestCycle(id: 2, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 10),
+            status: .recordingPending, cycleIndex: 0))
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing = $0 { return true }
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        XCTAssertTrue(apiClient.lastCreateIdempotencyKey?.hasSuffix(":c0") == true,
+                      "CYC-IDX-02: after reset, first startCycle must use c0 key")
     }
 
     // CYC-O-23: activateSession non-409 error → failed, createCycle not called

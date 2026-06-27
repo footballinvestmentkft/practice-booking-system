@@ -841,6 +841,48 @@ class TestTransitionGuards:
         with pytest.raises(InvalidTransitionError):
             svc.activate_session(s.session_uuid, s.revision)
 
+    def test_tr_07_activate_already_active_stale_revision_succeeds(self, db, users):
+        """TR-07: ACTIVE session + stale revision → still succeeds (idempotency before revision check).
+
+        Physical-test scenario: iPad activates session (revision N→N+1). iOS poll lags
+        and ViewModel still holds revision N. User presses Begin Cycle again → iOS sends
+        revision N (stale).  The session is already ACTIVE so the call must succeed
+        without 409 or 422.
+        """
+        instructor, _ = users
+        s = MultiCameraSession(
+            created_by_user_id=instructor.id,
+            status=SessionStatus.ACTIVE.value,
+            revision=5,
+        )
+        db.add(s)
+        db.flush()
+        svc = CycleService(db)
+
+        stale_revision = 3  # deliberately wrong
+        result = svc.activate_session(s.session_uuid, stale_revision)
+        assert SessionStatus(result.status) == SessionStatus.ACTIVE
+        assert result.revision == 5  # unchanged
+
+    def test_tr_08_activate_devices_ready_stale_revision_raises(self, db, users):
+        """TR-08: DEVICES_READY session + stale revision → RevisionConflictError (409).
+
+        Revision check still applies when the session is NOT yet ACTIVE, ensuring
+        that a real concurrent modification is caught before the transition.
+        """
+        instructor, _ = users
+        s = MultiCameraSession(
+            created_by_user_id=instructor.id,
+            status=SessionStatus.DEVICES_READY.value,
+            revision=5,
+        )
+        db.add(s)
+        db.flush()
+        svc = CycleService(db)
+
+        with pytest.raises(RevisionConflictError):
+            svc.activate_session(s.session_uuid, 3)  # stale
+
 
 # ── Concurrent idempotency ────────────────────────────────────────────────────
 
