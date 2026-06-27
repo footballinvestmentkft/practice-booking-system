@@ -41,6 +41,7 @@ extension AuthManager: AccessTokenProvider {}
 // MARK: — CycleAPIClient
 
 protocol CycleAPIClient {
+    func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO
     func activateSession(token: String, uuid: String, revision: Int) async throws -> MultiCameraSessionDTO
     func createCycle(token: String, uuid: String, idempotencyKey: String) async throws -> CaptureCycleDTO
     func scheduleCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO
@@ -52,6 +53,10 @@ protocol CycleAPIClient {
 // MARK: — LiveCycleAPIClient
 
 struct LiveCycleAPIClient: CycleAPIClient {
+    func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO {
+        try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
+    }
+
     func activateSession(token: String, uuid: String, revision: Int) async throws -> MultiCameraSessionDTO {
         try await MultiCameraAPIClient.activateSession(token: token, uuid: uuid, revision: revision)
     }
@@ -95,6 +100,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
     // MARK: — Published state
     @Published private(set) var state: OrchestratorState = .idle
+    @Published private(set) var revisionConflictRetried: Bool = false
 
     private static func mapToFailure(_ error: Error) -> OrchestratorFailure {
         if let apiErr = error as? APIError {
@@ -180,6 +186,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
         currentCycle = nil
         currentCycleSessionUuid = nil
         currentSessionDeviceId  = nil
+        revisionConflictRetried = false
         state = .idle
     }
 
@@ -208,12 +215,28 @@ final class CycleCaptureOrchestrator: ObservableObject {
             )
         } catch {
             if Task.isCancelled { return }
-            if let apiErr = error as? APIError,
-               case .httpError(let code, _) = apiErr,
-               code == 409 {
-                // 409 = already active or revision conflict from concurrent activate — proceed
-            } else {
+            guard let apiErr = error as? APIError,
+                  case .httpError(let code, _) = apiErr,
+                  code == 409 else {
                 state = .failed(Self.mapToFailure(error))
+                return
+            }
+            // 409: fetch fresh session to distinguish "already active" from "stale revision"
+            do {
+                let fresh = try await cycleAPIClient.getSession(token: token, uuid: sessionUuid)
+                if Task.isCancelled { return }
+                if fresh.status != .active {
+                    // Session not yet active — retry with fresh revision (max 1x)
+                    revisionConflictRetried = true
+                    _ = try await cycleAPIClient.activateSession(
+                        token: token, uuid: sessionUuid, revision: fresh.revision
+                    )
+                    if Task.isCancelled { return }
+                }
+                // fresh.status == .active: concurrent activation succeeded — proceed
+            } catch {
+                if Task.isCancelled { return }
+                state = .failed(.revisionConflict(detail: "activate retry: \(Self.mapToFailure(error))"))
                 return
             }
         }
@@ -411,6 +434,10 @@ final class CycleCaptureOrchestrator: ObservableObject {
             currentCycle = updated
         } catch {
             if let apiErr = error as? APIError, case .httpError(let code, let detail) = apiErr {
+                // Definitive API failure — cancel subscription and stop orphaned capture
+                captureSubscription?.cancel()
+                captureSubscription = nil
+                captureController.stopCapture()
                 if code == 409 {
                     state = .failed(.revisionConflict(detail: detail ?? "409"))
                 } else if code == 422 {
@@ -419,6 +446,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
                     state = .failed(.apiError(statusCode: code, detail: "confirm-start HTTP \(code): \(detail ?? "")"))
                 }
             } else {
+                // Non-API error — retry once
                 do {
                     let updated = try await cycleAPIClient.confirmDeviceStart(
                         token: token,
@@ -430,6 +458,9 @@ final class CycleCaptureOrchestrator: ObservableObject {
                     )
                     currentCycle = updated
                 } catch let retryError {
+                    captureSubscription?.cancel()
+                    captureSubscription = nil
+                    captureController.stopCapture()
                     state = .failed(Self.mapToFailure(retryError))
                 }
             }

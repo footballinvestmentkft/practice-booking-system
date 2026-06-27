@@ -290,6 +290,7 @@ struct MultiCameraLobbyView: View {
             LabeledRow("Clock", clockSyncDescription)
             LabeledRow("Capture", captureStateDescription)
             LabeledRow("Orchestrator", orchestratorStateDescription)
+            LabeledRow("RC Retry", orchestrator.revisionConflictRetried ? "yes" : "no")
             LabeledRow("Listener", playerListenerDescription)
             LabeledRow("PlayerOrch", playerOrchestratorDescription)
             LabeledRow("DevReg Error", vm.deviceRegisterError ?? "—")
@@ -344,6 +345,7 @@ struct MultiCameraLobbyView: View {
             "clock: \(clockSyncDescription)",
             "capture: \(captureStateDescription)",
             "orchestrator: \(orchestratorStateDescription)",
+            "revision_conflict_retried: \(orchestrator.revisionConflictRetried ? "yes" : "no")",
             "player_listener: \(playerListenerDescription)",
             "player_orch: \(playerOrchestratorDescription)",
             "device_reg_error: \(vm.deviceRegisterError ?? "—")",

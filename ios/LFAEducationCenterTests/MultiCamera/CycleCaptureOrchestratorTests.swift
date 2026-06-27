@@ -13,14 +13,17 @@ private final class FakeAccessTokenProvider: AccessTokenProvider {
 
 @MainActor
 private final class MockCycleAPIClient: CycleAPIClient {
-    var activateResult:     Result<MultiCameraSessionDTO, Error> = .success(makeTestSession())
-    var createResult:       Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 1))
-    var scheduleResult:     Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 2, scheduledStartAt: futureISO(offsetSeconds: 10), status: .recordingPending))
-    var stopResult:         Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 3, status: .stopping))
-    var confirmStartResult: Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 4, status: .recording))
-    var confirmStopResult:  Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 5, status: .completed))
+    var activateResult:      Result<MultiCameraSessionDTO, Error> = .success(makeTestSession())
+    var activateRetryResult: Result<MultiCameraSessionDTO, Error>? = nil
+    var getSessionResult:    Result<MultiCameraSessionDTO, Error> = .success(makeTestSession(status: .active))
+    var createResult:        Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 1))
+    var scheduleResult:      Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 2, scheduledStartAt: futureISO(offsetSeconds: 10), status: .recordingPending))
+    var stopResult:          Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 3, status: .stopping))
+    var confirmStartResult:  Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 4, status: .recording))
+    var confirmStopResult:   Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 5, status: .completed))
 
     private(set) var activateCallCount            = 0
+    private(set) var getSessionCallCount          = 0
     private(set) var createCallCount              = 0
     private(set) var scheduleCallCount            = 0
     private(set) var confirmStartCallCount        = 0
@@ -28,8 +31,16 @@ private final class MockCycleAPIClient: CycleAPIClient {
     private(set) var lastConfirmStartRevision: Int? = nil
     private(set) var lastConfirmStopRevision:  Int? = nil
 
+    func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO {
+        getSessionCallCount += 1
+        return try getSessionResult.get()
+    }
+
     func activateSession(token: String, uuid: String, revision: Int) async throws -> MultiCameraSessionDTO {
         activateCallCount += 1
+        if activateCallCount > 1, let retryResult = activateRetryResult {
+            return try retryResult.get()
+        }
         return try activateResult.get()
     }
 
@@ -1003,6 +1014,138 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
 
         XCTAssertEqual(apiClient.activateCallCount, 1)
         XCTAssertGreaterThanOrEqual(apiClient.createCallCount, 1, "409 on activate should not block createCycle")
+    }
+
+    // MARK: — CYC-RC: Revision Conflict Retry
+
+    // CYC-RC-01: stale revision → 409 → getSession (lobby) → retry with fresh revision → success → cycle created
+    func test_CYC_RC_01_activate409_revisionConflict_refreshAndRetry_success() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.activateResult      = .failure(APIError.httpError(statusCode: 409, detail: "cycle: revision conflict (expected 2, actual 3)"))
+        apiClient.getSessionResult    = .success(makeTestSession(status: .lobby, revision: 3))
+        apiClient.activateRetryResult = .success(makeTestSession(status: .active, revision: 4))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider, clockSyncService: clockService,
+            captureController: captureController, cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 2)
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing = $0 { return true }
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        XCTAssertEqual(apiClient.activateCallCount, 2, "CYC-RC-01: activate must be called twice (original + retry)")
+        XCTAssertEqual(apiClient.getSessionCallCount, 1, "CYC-RC-01: getSession must be called once to refresh revision")
+        XCTAssertGreaterThanOrEqual(apiClient.createCallCount, 1, "CYC-RC-01: createCycle must proceed after successful retry")
+        XCTAssertTrue(orchestrator.revisionConflictRetried, "CYC-RC-01: revisionConflictRetried must be true")
+        if case .failed = orchestrator.state {
+            XCTFail("CYC-RC-01: expected .capturing after successful retry, got \(orchestrator.state)")
+        }
+    }
+
+    // CYC-RC-02: stale revision → 409 → getSession (lobby) → retry also 409 → failed(.revisionConflict)
+    func test_CYC_RC_02_activate409_revisionConflict_retryAlso409_fails() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.activateResult      = .failure(APIError.httpError(statusCode: 409, detail: "cycle: revision conflict (expected 2, actual 3)"))
+        apiClient.getSessionResult    = .success(makeTestSession(status: .lobby, revision: 3))
+        apiClient.activateRetryResult = .failure(APIError.httpError(statusCode: 409, detail: "cycle: revision conflict (expected 3, actual 4)"))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider, clockSyncService: clockService,
+            captureController: captureController, cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 2)
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .failed = $0 { return true }
+            return false
+        }
+
+        XCTAssertEqual(apiClient.activateCallCount, 2, "CYC-RC-02: activate must be called twice (original + retry)")
+        XCTAssertEqual(apiClient.getSessionCallCount, 1, "CYC-RC-02: getSession must be called once")
+        XCTAssertEqual(apiClient.createCallCount, 0, "CYC-RC-02: createCycle must NOT be called after retry failure")
+        if case .failed(let failure) = orchestrator.state {
+            if case .revisionConflict = failure { /* expected */ }
+            else { XCTFail("CYC-RC-02: expected .revisionConflict after double 409, got \(failure)") }
+        } else {
+            XCTFail("CYC-RC-02: expected .failed(.revisionConflict), got \(orchestrator.state)")
+        }
+    }
+
+    // CYC-RC-03: local capture started → confirmDeviceStart 409 → stopCapture called (no orphaned capture)
+    func test_CYC_RC_03_confirmStartFails_stopsOrphanedCapture() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.createResult       = .success(makeTestCycle(id: 1, revision: 1))
+        apiClient.scheduleResult     = .success(makeTestCycle(id: 1, revision: 2, scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
+        apiClient.confirmStartResult = .failure(APIError.httpError(statusCode: 409, detail: "revision conflict"))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider, clockSyncService: clockService,
+            captureController: captureController, cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .failed = $0 { return true }
+            return false
+        }
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(captureController.startCallCount, 1, "CYC-RC-03: local capture must have started before failure")
+        XCTAssertEqual(captureController.stopCallCount, 1, "CYC-RC-03: stopCapture must be called to prevent orphaned capture")
+        if case .failed(let failure) = orchestrator.state {
+            if case .revisionConflict = failure { /* expected */ }
+            else { XCTFail("CYC-RC-03: expected .revisionConflict, got \(failure)") }
+        } else {
+            XCTFail("CYC-RC-03: expected .failed(.revisionConflict), got \(orchestrator.state)")
+        }
+    }
+
+    // CYC-RC-04: successful retry → createCycle called exactly once (no duplicate)
+    func test_CYC_RC_04_successfulRetry_noDuplicateCycleCreate() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.activateResult      = .failure(APIError.httpError(statusCode: 409, detail: "cycle: revision conflict (expected 2, actual 3)"))
+        apiClient.getSessionResult    = .success(makeTestSession(status: .lobby, revision: 3))
+        apiClient.activateRetryResult = .success(makeTestSession(status: .active, revision: 4))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider, clockSyncService: clockService,
+            captureController: captureController, cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 2)
+
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing = $0 { return true }
+            if case .failed = $0 { return true }
+            return false
+        }
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(apiClient.createCallCount, 1, "CYC-RC-04: createCycle must be called exactly once — no duplicate after retry")
+        XCTAssertEqual(apiClient.scheduleCallCount, 1, "CYC-RC-04: scheduleCycle must be called exactly once")
     }
 
     // CYC-O-23: activateSession non-409 error → failed, createCycle not called
