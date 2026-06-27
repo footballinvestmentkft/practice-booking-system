@@ -1,5 +1,5 @@
 import SwiftUI
-// Repo: football-investment → footballinvestmentkft (2026-06-26); ORCH-3C player stop
+// ORCH-4: capture authority — device_role auto-assignment, isController gate, non-controller auto-prepare
 
 #if DEBUG
 struct MultiCameraLobbyView: View {
@@ -38,11 +38,12 @@ struct MultiCameraLobbyView: View {
             clockSyncService: clockSync,
             cycleOrchestrator: orch,
             playerCycleListener: listener,
-            playerCaptureOrchestrator: playerOrch
+            playerCaptureOrchestrator: playerOrch,
+            capturePreparable: captureMgr
         ))
     }
 
-    private static let buildFingerprint = "mc1-debug-v9-2026-06-26"
+    private static let buildFingerprint = "mc1-debug-v9-2026-06-27"
 
     var body: some View {
         NavigationView {
@@ -200,12 +201,12 @@ struct MultiCameraLobbyView: View {
                     }
                     .disabled(captureManager.state == .requestingPermissions)
                 }
-                if vm.canStartCapture && captureManager.state == .ready {
+                if vm.isController && vm.canStartCapture && captureManager.state == .ready {
                     Button("Begin Cycle") { vm.beginCycle() }
                         .font(.body.weight(.semibold))
                         .foregroundColor(.blue)
                 }
-                if case .capturing = orchestrator.state {
+                if vm.isController, case .capturing = orchestrator.state {
                     Button("End Cycle") { vm.endCycle() }
                         .font(.body.weight(.semibold))
                         .foregroundColor(.orange)
@@ -283,6 +284,8 @@ struct MultiCameraLobbyView: View {
             LabeledRow("Participants", "\(session.participants.count)/\(session.maxParticipants)")
             LabeledRow("Devices", "\(session.devices.count)/\(session.maxDevices)")
             LabeledRow("Device ID", vm.sessionDeviceId.map { "\($0)" } ?? "—")
+            LabeledRow("DeviceRole", vm.myDeviceRole?.rawValue ?? "—")
+            LabeledRow("IsController", vm.isController ? "yes" : "no")
             LabeledRow("Heartbeat", vm.sessionDeviceId != nil ? "Active" : "—")
             LabeledRow("Clock", clockSyncDescription)
             LabeledRow("Capture", captureStateDescription)
@@ -335,6 +338,8 @@ struct MultiCameraLobbyView: View {
             "participants: \(session.participants.count)/\(session.maxParticipants)",
             "devices: \(session.devices.count)/\(session.maxDevices)",
             "session_device_id: \(vm.sessionDeviceId.map { "\($0)" } ?? "—")",
+            "device_role: \(vm.myDeviceRole?.rawValue ?? "—")",
+            "is_controller: \(vm.isController ? "yes" : "no")",
             "heartbeat: \(vm.sessionDeviceId != nil ? "active" : "—")",
             "clock: \(clockSyncDescription)",
             "capture: \(captureStateDescription)",
