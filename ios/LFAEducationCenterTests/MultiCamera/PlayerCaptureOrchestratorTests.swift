@@ -394,6 +394,18 @@ private func makePSOStoppingCycle(id: Int = 1, deviceRevision: Int = 3) -> Captu
                  deviceRevision: deviceRevision)
 }
 
+/// Returns a fixed list of cycles on every listCycles call — used to pre-load listener state.
+/// Task.yield() ensures the poll loop suspends between iterations so other tasks can run.
+@MainActor
+private final class FixedCycleListClient: CycleListClient {
+    private let cycles: [CaptureCycleDTO]
+    init(_ cycles: [CaptureCycleDTO]) { self.cycles = cycles }
+    func listCycles(token: String, uuid: String) async throws -> [CaptureCycleDTO] {
+        await Task.yield()
+        return cycles
+    }
+}
+
 /// Builds a cycle with the device already in confirmedStop (for PSO-08).
 private func makePSOConfirmedStopCycle(id: Int = 1) -> CaptureCycleDTO {
     makePCOCycle(id: id, revision: 6, status: .stopping, deviceRecordingStatus: .confirmedStop)
@@ -460,16 +472,18 @@ final class PlayerStopOrchestratorTests: XCTestCase {
         _ = clock  // suppress unused warning
     }
 
-    // PSO-01: .stoppingDetected when .idle → no stopCapture(), state stays .idle.
-    func test_pso_01_stopping_detected_when_idle_does_nothing() {
+    // PSO-01: .stoppingDetected when .idle → late-join, cycle already stopping → .skippedCycle.
+    func test_pso_01_stopping_detected_when_idle_becomes_skipped_cycle() {
         let orch = makeOrchestrator()
         orch.handleListenerState(.stoppingDetected(cycleId: 1), currentCycle: makePSOStoppingCycle())
-        XCTAssertEqual(orch.state, .idle)
+        XCTAssertEqual(orch.state, .skippedCycle(cycleId: 1),
+                       "Late-join with cycle already stopping must become .skippedCycle, not silent .idle")
         XCTAssertEqual(fakeCapture.stopCallCount, 0)
+        XCTAssertEqual(mockAPI.confirmStopCallCount, 0)
     }
 
-    // PSO-02: .stoppingDetected when .waitingForStart → startTask cancelled, no stopCapture, state → .idle.
-    func test_pso_02_stopping_detected_when_waiting_cancels_start_no_stop() async {
+    // PSO-02: .stoppingDetected when .waitingForStart → startTask cancelled, no capture → .skippedCycle.
+    func test_pso_02_stopping_detected_when_waiting_becomes_skipped_cycle() async {
         let clock = await makePCOSyncedClock()
         let (orch, _listener) = makeAttachedOrchestrator(clockService: clock)
         // Put orchestrator in .waitingForStart (future cycle — will sleep)
@@ -478,10 +492,11 @@ final class PlayerStopOrchestratorTests: XCTestCase {
         await Task.yield()
         XCTAssertEqual(orch.state, .waitingForStart(cycleId: 1))
 
-        // Stopping arrives before start fires
+        // Cycle stopped before capture could start (quick cycle / physical race)
         orch.handleListenerState(.stoppingDetected(cycleId: 1), currentCycle: makePSOStoppingCycle())
 
-        XCTAssertEqual(orch.state, .idle, "Must cancel start and return to idle")
+        XCTAssertEqual(orch.state, .skippedCycle(cycleId: 1),
+                       "Quick cycle: start cancelled → .skippedCycle, not silent .idle")
         XCTAssertEqual(fakeCapture.stopCallCount, 0, "stopCapture must NOT be called — capture never started")
         XCTAssertEqual(mockAPI.confirmStopCallCount, 0)
     }
@@ -505,9 +520,11 @@ final class PlayerStopOrchestratorTests: XCTestCase {
         XCTAssertEqual(fakeCapture.stopCallCount, 1, "stopCapture() must be called once")
     }
 
-    // PSO-04: .stoppingDetected when .capturing → stopCapture() called, state → .stoppingCapture.
-    func test_pso_04_stopping_detected_when_capturing_calls_stop_capture() {
-        // Put orchestrator into .capturing manually — session context required.
+    // PSO-04: .stoppingDetected when .idle with a "new" cycleId → .skippedCycle (late-join, missed cycle).
+    // Note: prior to the attach-race fix this asserted .idle here ("unmatched cycleId while idle").
+    // The new behaviour is correct: ANY stoppingDetected from .idle means the cycle was already
+    // stopping when the orchestrator attached — it produces .skippedCycle regardless of cycleId.
+    func test_pso_04_stopping_detected_when_idle_unknown_cycle_becomes_skipped() {
         let orch = makeOrchestrator(clockService: makePCOUnsyncedClock())
         let listener = PlayerCycleListener(
             authManager: fakeToken,
@@ -518,18 +535,10 @@ final class PlayerStopOrchestratorTests: XCTestCase {
         orch.attach(listener: listener, sessionUuid: "pso-test-session",
                     playerSessionDeviceId: pcoTestSessionDeviceId)
 
-        // Directly exercise .stoppingDetected while in .capturing via handleListenerState.
-        // We can't easily reach .capturing from outside, so we test via internal path:
-        // .recordingDetected → immediate → startCapture → .capturing before confirmDeviceStart resolves.
-        // Instead, confirm the guard fires correctly at .idle boundary (see PSO-01).
-        // For .capturing: drive with a future start that will never resolve due to unsynced clock,
-        // then verify .stoppingDetected triggers stopCapture from the default path.
-
-        // Since unsynced clock → .failed immediately (no .capturing reachable without synced clock)
-        // We verify the default case handles an unmatched cycleId gracefully.
         orch.handleListenerState(.stoppingDetected(cycleId: 99), currentCycle: makePSOStoppingCycle(id: 99))
-        XCTAssertEqual(orch.state, .idle, "Unmatched cycleId while idle — no state change")
-        XCTAssertEqual(fakeCapture.stopCallCount, 0)
+        XCTAssertEqual(orch.state, .skippedCycle(cycleId: 99),
+                       "Late-join stoppingDetected must produce .skippedCycle for any new cycleId")
+        XCTAssertEqual(fakeCapture.stopCallCount, 0, "stopCapture must NOT be called — capture never started")
     }
 
     // PSO-05: After stopCapture(), capture .completed → confirmDeviceStop called → state .confirmedStop.
@@ -762,5 +771,169 @@ final class PlayerStopOrchestratorTests: XCTestCase {
             return XCTFail("Expected .failed, got \(orch.state)")
         }
         XCTAssertTrue(msg.contains("422"), "Got: \(msg)")
+    }
+}
+
+// MARK: — PlayerOrchestratorAttachRaceTests (PCO-15..PCO-18)
+//
+// Regression tests for the late-attach timing race:
+//   Before the fix, attach() subscribed to listener.$state with .receive(on: DispatchQueue.main).
+//   This made the initial Combine replay async — the orchestrator stayed .idle until the
+//   next run-loop iteration, long after the snapshot was captured.
+//
+//   Two-part fix:
+//   1. attach() now calls handleListenerState synchronously before returning (.dropFirst() on sub).
+//   2. .skippedCycle is no longer reset by .waitingForCycle; it persists until a new cycle starts,
+//      keeping the missed-cycle state readable in Debug Snapshots.
+
+@MainActor
+final class PlayerOrchestratorAttachRaceTests: XCTestCase {
+
+    private var fakeToken: FakePCOTokenProvider!
+    private var mockAPI: MockCycleAPIClientForPCO!
+    private var fakeCapture: FakeCaptureController!
+
+    override func setUp() {
+        super.setUp()
+        fakeToken   = FakePCOTokenProvider()
+        mockAPI     = MockCycleAPIClientForPCO()
+        fakeCapture = FakeCaptureController()
+    }
+
+    override func tearDown() {
+        fakeToken   = nil
+        mockAPI     = nil
+        fakeCapture = nil
+        super.tearDown()
+    }
+
+    private func makeOrchestrator(clockService: ClockSyncService? = nil) -> PlayerCaptureOrchestrator {
+        PlayerCaptureOrchestrator(
+            authManager: fakeToken,
+            clockSyncService: clockService ?? makePCOUnsyncedClock(),
+            captureController: fakeCapture,
+            cycleAPIClient: mockAPI,
+            sleepProvider: { _ in }
+        )
+    }
+
+    // PCO-15: Late attach — listener already in .recordingDetected when orchestrator attaches.
+    // attach() must deliver the state synchronously → .waitingForStart immediately (no await).
+    func test_pco_15_late_attach_recording_detected_starts_capture_synchronously() async {
+        let clock = await makePCOSyncedClock()
+        let cycle = makePCOCycle(id: 5, scheduledStartAt: nil, status: .recording)
+
+        // sleepProvider yields so the polling loop doesn't starve the cooperative scheduler.
+        let listener = PlayerCycleListener(
+            authManager: fakeToken,
+            cycleListClient: FixedCycleListClient([cycle]),
+            pollingIntervalNs: 0,
+            sleepProvider: { _ in await Task.yield() }
+        )
+        listener.start(sessionUuid: "race-test")
+        defer { listener.stop() }  // cancel infinite polling loop when test exits
+
+        // Let the poll loop run: classify([cycle]) → .recordingDetected(5)
+        for _ in 0..<20 { await Task.yield() }
+        guard case .recordingDetected(let id) = listener.state, id == cycle.id else {
+            return XCTFail("Listener must reach .recordingDetected before attach; got \(listener.state)")
+        }
+
+        // Attach AFTER cycle is already recording — synchronous delivery must fire
+        let orch = makeOrchestrator(clockService: clock)
+        orch.attach(listener: listener, sessionUuid: "race-test",
+                    playerSessionDeviceId: pcoTestSessionDeviceId)
+
+        // No await: state must be set synchronously inside attach()
+        XCTAssertEqual(orch.state, .waitingForStart(cycleId: cycle.id),
+                       "attach() must synchronously process .recordingDetected; got \(orch.state)")
+
+        // Let the start task + confirmDeviceStart complete
+        for _ in 0..<20 { await Task.yield() }
+        XCTAssertEqual(orch.state, .confirmed(cycleId: cycle.id))
+        XCTAssertEqual(fakeCapture.startCallCount, 1)
+        XCTAssertEqual(mockAPI.confirmStartCallCount, 1)
+    }
+
+    // PCO-16: Late attach — listener already in .stoppingDetected → explicit .skippedCycle (not idle).
+    // Before the fix, the async Combine replay left orchestrator .idle; Debug Snapshot showed nothing.
+    func test_pco_16_late_attach_stopping_detected_becomes_skipped_not_idle() async {
+        let cycle = makePCOCycle(id: 5, status: .stopping)
+
+        let listener = PlayerCycleListener(
+            authManager: fakeToken,
+            cycleListClient: FixedCycleListClient([cycle]),
+            pollingIntervalNs: 0,
+            sleepProvider: { _ in await Task.yield() }
+        )
+        listener.start(sessionUuid: "race-test")
+        defer { listener.stop() }
+
+        for _ in 0..<20 { await Task.yield() }
+        guard case .stoppingDetected(let id) = listener.state, id == cycle.id else {
+            return XCTFail("Listener must reach .stoppingDetected before attach; got \(listener.state)")
+        }
+
+        let orch = makeOrchestrator()
+        orch.attach(listener: listener, sessionUuid: "race-test",
+                    playerSessionDeviceId: pcoTestSessionDeviceId)
+
+        // Must be .skippedCycle synchronously — orchestrator must never silently remain .idle
+        XCTAssertEqual(orch.state, .skippedCycle(cycleId: cycle.id),
+                       "Late attach during stopping must produce .skippedCycle; got \(orch.state)")
+        XCTAssertEqual(fakeCapture.startCallCount, 0)
+        XCTAssertEqual(fakeCapture.stopCallCount, 0)
+        XCTAssertEqual(mockAPI.confirmStartCallCount, 0)
+        XCTAssertEqual(mockAPI.confirmStopCallCount, 0)
+    }
+
+    // PCO-17: .skippedCycle persists after .waitingForCycle — no silent reset to .idle.
+    // Before the fix, handleSkippedCycleReset() erased the missed-cycle evidence on every
+    // .waitingForCycle event, making it invisible in Debug Snapshots.
+    func test_pco_17_skipped_cycle_persists_through_waiting_for_cycle() {
+        let orch = makeOrchestrator()
+        orch.handleListenerState(.stoppingDetected(cycleId: 5),
+                                 currentCycle: makePSOStoppingCycle(id: 5))
+        XCTAssertEqual(orch.state, .skippedCycle(cycleId: 5))
+
+        orch.handleListenerState(.waitingForCycle, currentCycle: nil)
+
+        XCTAssertEqual(orch.state, .skippedCycle(cycleId: 5),
+                       ".skippedCycle must NOT be reset by .waitingForCycle; snapshot must stay readable")
+    }
+
+    // PCO-18: From .skippedCycle, the next .pendingCycleDetected starts the new cycle normally.
+    // Ensures the skipped-state persistence (PCO-17 fix) does not block subsequent cycles.
+    func test_pco_18_next_cycle_starts_normally_from_skipped_cycle_state() async {
+        let clock = await makePCOSyncedClock()
+        let orch = makeOrchestrator(clockService: clock)
+        let listener = PlayerCycleListener(
+            authManager: fakeToken,
+            cycleListClient: StubCycleListClient(),
+            pollingIntervalNs: 0,
+            sleepProvider: { _ in }
+        )
+        orch.attach(listener: listener, sessionUuid: "race-test",
+                    playerSessionDeviceId: pcoTestSessionDeviceId)
+
+        // Drive to .skippedCycle(5)
+        orch.handleListenerState(.stoppingDetected(cycleId: 5),
+                                 currentCycle: makePSOStoppingCycle(id: 5))
+        XCTAssertEqual(orch.state, .skippedCycle(cycleId: 5))
+
+        // Next cycle starts while orchestrator is in .skippedCycle(5) — must not be blocked
+        let newCycle = makePCOCycle(
+            id: 6,
+            scheduledStartAt: pastISOForPCO(offsetSeconds: 0.5),
+            deviceRecordingStatus: .confirmedStart
+        )
+        orch.handleListenerState(.pendingCycleDetected(cycleId: 6), currentCycle: newCycle)
+        for _ in 0..<20 { await Task.yield() }
+
+        XCTAssertEqual(orch.state, .confirmed(cycleId: 6),
+                       "Next cycle must start from .skippedCycle; got \(orch.state)")
+        XCTAssertEqual(fakeCapture.startCallCount, 1)
+        // confirmStartCallCount == 0: device has .confirmedStart status → API call is skipped
+        XCTAssertEqual(mockAPI.confirmStartCallCount, 0)
     }
 }

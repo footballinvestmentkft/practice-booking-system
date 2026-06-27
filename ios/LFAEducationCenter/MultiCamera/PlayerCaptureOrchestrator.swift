@@ -10,6 +10,7 @@ enum PlayerOrchestratorState: Equatable {
     case confirmed(cycleId: Int)          // confirmDeviceStart succeeded
     case stoppingCapture(cycleId: Int)    // stopCapture() called; awaiting capture .completed
     case confirmedStop(cycleId: Int)      // confirmDeviceStop succeeded
+    case skippedCycle(cycleId: Int)       // cycle was stopping/completed before capture could start
     case failed(String)
 }
 
@@ -67,18 +68,24 @@ final class PlayerCaptureOrchestrator: ObservableObject {
     // MARK: — Public API
 
     /// Call after autoRegisterDevice completes so playerSessionDeviceId is known.
-    /// Subscribing to listener.$state delivers the current value immediately,
-    /// so late-attach is handled without a separate "read current state" step.
+    /// The current listener state is delivered synchronously before this method returns,
+    /// eliminating the attach timing race where a Combine replay arrives on the next
+    /// run-loop iteration and the orchestrator stays .idle during the gap.
     func attach(listener: PlayerCycleListener, sessionUuid: String, playerSessionDeviceId: Int) {
         self.sessionUuid = sessionUuid
         self.playerSessionDeviceId = playerSessionDeviceId
 
         listenerSubscription?.cancel()
+        // dropFirst: the current value is handled synchronously below; skip the Combine
+        // replay so it isn't delivered a second time on the next run-loop iteration.
         listenerSubscription = listener.$state
+            .dropFirst()
             .receive(on: DispatchQueue.main)
             .sink { [weak self, weak listener] newState in
                 self?.handleListenerState(newState, currentCycle: listener?.currentCycle)
             }
+        // Synchronous snapshot — eliminates the attach timing race.
+        handleListenerState(listener.state, currentCycle: listener.currentCycle)
     }
 
     func detach() {
@@ -107,13 +114,20 @@ final class PlayerCaptureOrchestrator: ObservableObject {
     func handleListenerState(_ listenerState: PlayerListenerState, currentCycle: CaptureCycleDTO?) {
         switch listenerState {
         case .pendingCycleDetected(let cycleId):
-            guard case .idle = state else { return }
+            // Accept from .skippedCycle: a previous cycle was missed but a new one is starting.
+            switch state {
+            case .idle, .skippedCycle: break
+            default: return
+            }
             guard !handledCycleIds.contains(cycleId) else { return }
             guard let cycle = currentCycle else { return }
             beginStart(cycle: cycle, immediate: false)
 
         case .recordingDetected(let cycleId):
-            guard case .idle = state else { return }
+            switch state {
+            case .idle, .skippedCycle: break
+            default: return
+            }
             guard !handledCycleIds.contains(cycleId) else { return }
             guard let cycle = currentCycle else { return }
             beginStart(cycle: cycle, immediate: true)
@@ -123,6 +137,8 @@ final class PlayerCaptureOrchestrator: ObservableObject {
 
         case .waitingForCycle:
             handleTerminalFallback()
+            // .skippedCycle is NOT reset here; it persists until the next cycle begins so
+            // that late-attach missed cycles remain visible in Debug Snapshots.
 
         default:
             break
@@ -133,17 +149,28 @@ final class PlayerCaptureOrchestrator: ObservableObject {
 
     private func handleStopDetected(cycleId: Int, currentCycle: CaptureCycleDTO?) {
         guard !handledStopCycleIds.contains(cycleId) else { return }
-        guard let cycle = currentCycle else { return }
         switch state {
-        case .confirmed(let id) where id == cycleId,
-             .capturing(let id) where id == cycleId:
-            beginStop(cycle: cycle)
+        case .idle:
+            // Late-join: cycle was already stopping when the orchestrator attached.
+            guard !handledCycleIds.contains(cycleId) else { return }
+            handledStopCycleIds.insert(cycleId)
+            handledCycleIds.insert(cycleId)
+            state = .skippedCycle(cycleId: cycleId)
+
         case .waitingForStart(let id) where id == cycleId:
-            // Cycle went stopping before capture started — cancel start, no stopCapture needed.
+            // Quick cycle: cycle stopped before capture could start — cancel and mark skipped.
             startTask?.cancel()
             startTask = nil
             activeCycle = nil
-            state = .idle
+            handledStopCycleIds.insert(cycleId)
+            handledCycleIds.insert(cycleId)
+            state = .skippedCycle(cycleId: cycleId)
+
+        case .confirmed(let id) where id == cycleId,
+             .capturing(let id) where id == cycleId:
+            guard let cycle = currentCycle else { return }
+            beginStop(cycle: cycle)
+
         default:
             break
         }

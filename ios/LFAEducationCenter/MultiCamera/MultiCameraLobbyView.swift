@@ -42,7 +42,7 @@ struct MultiCameraLobbyView: View {
         ))
     }
 
-    private static let buildFingerprint = "mc1-debug-v7-2026-06-26"
+    private static let buildFingerprint = "mc1-debug-v9-2026-06-26"
 
     var body: some View {
         NavigationView {
@@ -423,6 +423,7 @@ struct MultiCameraLobbyView: View {
         case .confirmed(let id):            return "confirmed(#\(id)) ✓"
         case .stoppingCapture(let id):      return "stoppingCapture(#\(id)) ◼"
         case .confirmedStop(let id):        return "confirmedStop(#\(id)) ✓✓"
+        case .skippedCycle(let id):         return "skippedCycle(#\(id)) ⏭"
         case .failed(let msg):              return "failed: \(msg)"
         }
     }
