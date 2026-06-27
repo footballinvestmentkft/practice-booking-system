@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.models.multicamera_session import (
     SESSION_TRANSITIONS, DEVICE_TRANSITIONS,
-    DeviceRole, DeviceStatus, SessionStatus,
+    DeviceRole, DeviceStatus, ParticipantRole, SessionStatus,
     MultiCameraSession, SessionDevice, SessionParticipant,
 )
 from app.repositories.multicamera_session_repo import MultiCameraSessionRepo
@@ -87,6 +87,9 @@ class SessionService:
         count = self.repo.count_active_devices(s.id)
         if count >= s.max_devices:
             raise SessionFullError("devices", count, s.max_devices)
+
+        # Backend decides the authoritative device_role; client hint is overridden.
+        device_role = self._resolve_device_role(s, device_role, participant_id)
 
         self._validate_device_role_invariants(s, device_role, participant_id, managed_by_device_id)
 
@@ -265,6 +268,49 @@ class SessionService:
         if started_at is None and stopped_at is None and capture_result is None:
             return False
         return True
+
+    def _resolve_device_role(
+        self,
+        session: MultiCameraSession,
+        requested_role: str,
+        participant_id: Optional[int],
+    ) -> str:
+        """Override the client-supplied device_role with the authoritative backend assignment.
+
+        Rules:
+          - no participant → passthrough client hint unchanged
+          - auxiliary_camera requested → passthrough unchanged (invariant validation handles participant_id rejection)
+          - instructor participant → always instructor_primary
+          - player participant, no player_primary in session yet → player_primary
+          - player participant, player_primary already exists → player_secondary
+        """
+        if participant_id is None:
+            return requested_role
+        if requested_role == DeviceRole.AUXILIARY_CAMERA.value:
+            return requested_role
+
+        participant = self.db.query(SessionParticipant).filter(
+            SessionParticipant.id == participant_id
+        ).first()
+        if not participant:
+            return requested_role
+
+        try:
+            p_role = ParticipantRole(participant.role)
+        except ValueError:
+            return requested_role
+
+        if p_role == ParticipantRole.INSTRUCTOR:
+            return DeviceRole.INSTRUCTOR_PRIMARY.value
+
+        if p_role == ParticipantRole.PLAYER:
+            has_primary = any(
+                d.device_role == DeviceRole.PLAYER_PRIMARY.value and d.removed_at is None
+                for d in session.devices
+            )
+            return DeviceRole.PLAYER_PRIMARY.value if not has_primary else DeviceRole.PLAYER_SECONDARY.value
+
+        return requested_role
 
     def _require_session(self, session_uuid: uuid.UUID) -> MultiCameraSession:
         s = self.repo.get_session_by_uuid(session_uuid)

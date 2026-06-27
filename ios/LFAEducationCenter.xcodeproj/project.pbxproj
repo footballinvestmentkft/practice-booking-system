@@ -48,6 +48,7 @@
 		DI500004000000000000001 /* DeviceIdentityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DI500003000000000000001 /* DeviceIdentityTests.swift */; };
 		CS500004000000000000001 /* ClockSyncServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS500003000000000000001 /* ClockSyncServiceTests.swift */; };
 		06881AF7704345FF9DCED8DD /* CaptureCycleContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16BA790BA9964D4A9E64F6E3 /* CaptureCycleContractTests.swift */; };
+		CA500004000000000000001 /* CaptureAuthorityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA500003000000000000001 /* CaptureAuthorityTests.swift */; };
 		942FE944E7544114B645BB37 /* MultiCameraSessionViewModelClockSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7923EAF385B2497998AA5258 /* MultiCameraSessionViewModelClockSyncTests.swift */; };
 		GP000004000000000000005 /* GoProConnectionDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000005 /* GoProConnectionDebugView.swift */; };
 		GP000004000000000000006 /* CoreBluetoothBLETransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = GP000003000000000000006 /* CoreBluetoothBLETransport.swift */; };
@@ -305,6 +306,7 @@
 		DI500003000000000000001 /* DeviceIdentityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentityTests.swift; sourceTree = "<group>"; };
 		CS500003000000000000001 /* ClockSyncServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockSyncServiceTests.swift; sourceTree = "<group>"; };
 		16BA790BA9964D4A9E64F6E3 /* CaptureCycleContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureCycleContractTests.swift; sourceTree = "<group>"; };
+		CA500003000000000000001 /* CaptureAuthorityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureAuthorityTests.swift; sourceTree = "<group>"; };
 		7923EAF385B2497998AA5258 /* MultiCameraSessionViewModelClockSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraSessionViewModelClockSyncTests.swift; sourceTree = "<group>"; };
 		MC500003000000000000002 /* session_full.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "session_full.json"; path = "../tests/fixtures/multicamera/session_full.json"; sourceTree = SOURCE_ROOT; };
 		CYC00003000000000000001 /* cycle_full.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "cycle_full.json"; path = "../tests/fixtures/multicamera/cycle_full.json"; sourceTree = SOURCE_ROOT; };
@@ -1030,6 +1032,7 @@
 				CS500003000000000000001 /* ClockSyncServiceTests.swift */,
 				7923EAF385B2497998AA5258 /* MultiCameraSessionViewModelClockSyncTests.swift */,
 				16BA790BA9964D4A9E64F6E3 /* CaptureCycleContractTests.swift */,
+				CA500003000000000000001 /* CaptureAuthorityTests.swift */,
 				OR500003000000000000001 /* FakeCaptureController.swift */,
 				OR500003000000000000002 /* CycleIdempotencyKeyTests.swift */,
 				OR500003000000000000003 /* CycleCaptureOrchestratorTests.swift */,
@@ -1399,6 +1402,7 @@
 				CS500004000000000000001 /* ClockSyncServiceTests.swift in Sources */,
 				942FE944E7544114B645BB37 /* MultiCameraSessionViewModelClockSyncTests.swift in Sources */,
 				06881AF7704345FF9DCED8DD /* CaptureCycleContractTests.swift in Sources */,
+				CA500004000000000000001 /* CaptureAuthorityTests.swift in Sources */,
 				OR500004000000000000001 /* FakeCaptureController.swift in Sources */,
 				OR500004000000000000002 /* CycleIdempotencyKeyTests.swift in Sources */,
 				OR500004000000000000003 /* CycleCaptureOrchestratorTests.swift in Sources */,

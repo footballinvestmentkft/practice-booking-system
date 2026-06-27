@@ -48,6 +48,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
     private let cycleOrchestrator: CycleCaptureOrchestrator?
     private let playerCycleListener: PlayerCycleListener?
     private let playerCaptureOrchestrator: PlayerCaptureOrchestrator?
+    private let capturePreparable: (any CapturePreparable)?
 
     init(
         authManager: AuthManager,
@@ -56,7 +57,8 @@ final class MultiCameraSessionViewModel: ObservableObject {
         heartbeatIntervalSeconds: Double = 5.0,
         cycleOrchestrator: CycleCaptureOrchestrator? = nil,
         playerCycleListener: PlayerCycleListener? = nil,
-        playerCaptureOrchestrator: PlayerCaptureOrchestrator? = nil
+        playerCaptureOrchestrator: PlayerCaptureOrchestrator? = nil,
+        capturePreparable: (any CapturePreparable)? = nil
     ) {
         self.authManager = authManager
         self.clockSyncService = clockSyncService
@@ -65,6 +67,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         self.cycleOrchestrator = cycleOrchestrator
         self.playerCycleListener = playerCycleListener
         self.playerCaptureOrchestrator = playerCaptureOrchestrator
+        self.capturePreparable = capturePreparable
     }
 
     deinit {
@@ -167,7 +170,8 @@ final class MultiCameraSessionViewModel: ObservableObject {
     }
 
     func beginCycle() {
-        guard canStartCapture,
+        guard isController,
+              canStartCapture,
               case .inLobby(let session) = state,
               let sdId = sessionDeviceId else { return }
         cycleOrchestrator?.startCycle(
@@ -178,7 +182,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
     }
 
     func endCycle() {
-        guard sessionUuid != nil else { return }
+        guard isController, sessionUuid != nil else { return }
         Task { await cycleOrchestrator?.stopCycle() }
     }
 
@@ -213,6 +217,9 @@ final class MultiCameraSessionViewModel: ObservableObject {
             print("[LobbyVM] autoRegisterDevice: device \(sd.id) → ready")
             if let listener = playerCycleListener, let orch = playerCaptureOrchestrator {
                 orch.attach(listener: listener, sessionUuid: sessionUuid, playerSessionDeviceId: sd.id)
+            }
+            if sd.deviceRole != .instructorPrimary && sd.deviceRole != .playerPrimary {
+                await capturePreparable?.autoPrepare(sessionUUID: sessionUuid, deviceId: sd.id)
             }
         } catch {
             deviceRegisterError = "\(error)"
@@ -305,6 +312,28 @@ final class MultiCameraSessionViewModel: ObservableObject {
         guard case .inLobby = state else { return false }
         guard isClockSynced else { return false }
         return true
+    }
+
+    // MARK: — Capture authority
+
+    static func resolveDeviceRole(state: LobbyState, sessionDeviceId: Int?) -> MCDeviceRole? {
+        guard case .inLobby(let session) = state, let sdId = sessionDeviceId else { return nil }
+        return session.devices.first { $0.id == sdId && $0.removedAt == nil }?.deviceRole
+    }
+
+    static func resolveIsController(role: MCDeviceRole?) -> Bool {
+        switch role {
+        case .instructorPrimary, .playerPrimary: return true
+        default: return false
+        }
+    }
+
+    var myDeviceRole: MCDeviceRole? {
+        Self.resolveDeviceRole(state: state, sessionDeviceId: sessionDeviceId)
+    }
+
+    var isController: Bool {
+        Self.resolveIsController(role: myDeviceRole)
     }
 
     // MARK: — Helpers

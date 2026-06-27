@@ -2,6 +2,11 @@ import AVFoundation
 import Combine
 import UIKit
 
+@MainActor
+protocol CapturePreparable: AnyObject {
+    func autoPrepare(sessionUUID: String, deviceId: Int) async
+}
+
 enum CaptureState: Equatable {
     case idle
     case requestingPermissions
@@ -304,6 +309,17 @@ final class SessionCaptureManager: NSObject, ObservableObject {
 extension SessionCaptureManager: CaptureController {
     var captureStatePublisher: AnyPublisher<CaptureState, Never> {
         $state.eraseToAnyPublisher()
+    }
+}
+
+// MARK: — CapturePreparable
+
+extension SessionCaptureManager: CapturePreparable {
+    func autoPrepare(sessionUUID: String, deviceId: Int) async {
+        guard state == .idle else { return }
+        await requestPermissions()
+        guard case .configuring = state else { return }
+        prepare(sessionUUID: sessionUUID, deviceId: deviceId)
     }
 }
 
