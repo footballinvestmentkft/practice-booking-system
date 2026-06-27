@@ -93,6 +93,8 @@ struct MultiCameraLobbyView: View {
                 vm.beginCycle()
             case .endCycle:
                 vm.endCycle()
+            case .dumpSnapshot:
+                dumpSnapshotToConsole()
             }
         }
         .sheet(isPresented: $showQRScanner) {
@@ -374,6 +376,18 @@ struct MultiCameraLobbyView: View {
     private static var cachedUserId: Int? {
         let v = UserDefaults.standard.integer(forKey: "lfa_current_user_id")
         return v > 0 ? v : nil
+    }
+
+    // MARK: — MC1-AUTO-2: console-based snapshot dump for the regression runner
+
+    private func dumpSnapshotToConsole() {
+        let text: String
+        if case .inLobby(let session) = vm.state {
+            text = buildSnapshotText(session)
+        } else {
+            text = "=== MC1 Session Lab Debug Snapshot ===\nstate: \(vm.state)\n======================================"
+        }
+        print("[MC1-SNAPSHOT-BEGIN]\n\(text)\n[MC1-SNAPSHOT-END]")
     }
 
     // MARK: — Error

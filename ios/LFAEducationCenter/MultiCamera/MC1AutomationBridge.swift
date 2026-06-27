@@ -8,12 +8,16 @@ import Combine
 // Scheme: lfa-mc1://automate?action=<action>[&session_uuid=<uuid>][&role=<role>]
 //
 // Actions:
-//   join         — join (or resume) a session created via the backend API;
-//                  works for both instructor and player (join_session is
-//                  idempotent server-side for a participant who already exists)
-//   mark-ready   — instructor: LOBBY → DEVICES_READY
-//   begin-cycle  — instructor: vm.beginCycle()
-//   end-cycle    — instructor: vm.endCycle()
+//   join          — join (or resume) a session created via the backend API;
+//                   works for both instructor and player (join_session is
+//                   idempotent server-side for a participant who already exists)
+//   mark-ready    — instructor: LOBBY → DEVICES_READY
+//   begin-cycle   — instructor: vm.beginCycle()
+//   end-cycle     — instructor: vm.endCycle()
+//   dump-snapshot — either device: prints the same text as "Copy Debug Snapshot"
+//                   to the console, wrapped in [MC1-SNAPSHOT-BEGIN]/[MC1-SNAPSHOT-END]
+//                   markers so the regression runner can extract it from
+//                   `xcrun devicectl device console` output.
 //
 // Only the instructor device needs mark-ready/begin-cycle/end-cycle; the
 // player device only ever needs `join` — auto-prepare/auto-start/auto-stop
@@ -25,6 +29,7 @@ enum MC1AutomationAction: Equatable {
     case markDevicesReady
     case beginCycle
     case endCycle
+    case dumpSnapshot
 }
 
 final class MC1AutomationBridge: ObservableObject {
@@ -59,6 +64,9 @@ final class MC1AutomationBridge: ObservableObject {
             return true
         case "end-cycle":
             lastAction = .endCycle
+            return true
+        case "dump-snapshot":
+            lastAction = .dumpSnapshot
             return true
         default:
             return false

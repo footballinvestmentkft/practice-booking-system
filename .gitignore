@@ -224,3 +224,6 @@ xcuserdata/
 # LFAEducationCenter.build, XCBuildData (all build artefacts)
 ios/ios/
 local_models/juggling/*.pth
+
+# MC1 physical regression run artifacts — generated per-run output, not source.
+scripts/mc1_regression_runs/

@@ -76,6 +76,15 @@ final class MC1AutomationBridgeTests: XCTestCase {
         XCTAssertEqual(bridge.lastAction, .endCycle)
     }
 
+    // MARK: — AB-07b: dump-snapshot
+
+    func test_AB_07b_dumpSnapshot() {
+        let bridge = makeBridge()
+        let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=dump-snapshot")!)
+        XCTAssertTrue(handled)
+        XCTAssertEqual(bridge.lastAction, .dumpSnapshot)
+    }
+
     // MARK: — AB-08: unknown action is rejected
 
     func test_AB_08_unknownAction_rejected() {
