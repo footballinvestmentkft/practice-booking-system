@@ -99,7 +99,18 @@ final class CycleCaptureOrchestrator: ObservableObject {
     private static let scheduledStartToleranceMs: Double = 2_000
 
     // MARK: — Published state
-    @Published private(set) var state: OrchestratorState = .idle
+    // didSet logs key transitions for MC1-AUTO-1 console-based physical validation —
+    // PASS/FAIL is still decided from backend ground truth, this is corroborating evidence.
+    @Published private(set) var state: OrchestratorState = .idle {
+        didSet {
+            switch state {
+            case .capturing(let cycleId): print("[CCO] confirmed start: cycleId=\(cycleId)")
+            case .completed(let cycleId): print("[CCO] confirmed stop: cycleId=\(cycleId)")
+            case .failed(let failure): print("[CCO] FAILURE: \(failure)")
+            default: break
+            }
+        }
+    }
     @Published private(set) var revisionConflictRetried: Bool = false
     @Published private(set) var sessionAlreadyActiveSkipped: Bool = false
 

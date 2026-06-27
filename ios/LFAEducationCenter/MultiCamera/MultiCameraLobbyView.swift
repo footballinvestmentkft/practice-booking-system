@@ -81,6 +81,20 @@ struct MultiCameraLobbyView: View {
         }
         .navigationViewStyle(.stack)
         .onDisappear { vm.reset() }
+        // MC1-AUTO-1: dispatches automation commands from lfa-mc1:// deep links
+        // onto the same vm methods the manual buttons call.
+        .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { action in
+            switch action {
+            case .joinSession(let uuid, let role):
+                vm.joinSession(uuid: uuid, role: role)
+            case .markDevicesReady:
+                vm.transitionToDevicesReady()
+            case .beginCycle:
+                vm.beginCycle()
+            case .endCycle:
+                vm.endCycle()
+            }
+        }
         .sheet(isPresented: $showQRScanner) {
             QRScannerView(
                 onScanned: { raw in

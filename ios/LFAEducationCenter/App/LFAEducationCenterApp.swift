@@ -25,6 +25,13 @@ struct LFAEducationCenterApp: App {
                         educationVM.reset()
                     }
                 }
+                #if DEBUG
+                // MC1-AUTO-1: routes lfa-mc1:// deep links to the automation bridge
+                // so a script can drive the Session Lab without manual taps.
+                .onOpenURL { url in
+                    MC1AutomationBridge.shared.handle(url: url)
+                }
+                #endif
         }
     }
 }
