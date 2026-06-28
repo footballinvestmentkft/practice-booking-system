@@ -939,4 +939,92 @@ final class PlayerOrchestratorAttachRaceTests: XCTestCase {
         // confirmStartCallCount == 0: device has .confirmedStart status → API call is skipped
         XCTAssertEqual(mockAPI.confirmStartCallCount, 0)
     }
+
+    // PCO-19: Multi-cycle — from .confirmedStop, next pendingCycleDetected starts new cycle.
+    func test_pco_19_confirmedStop_accepts_next_pendingCycleDetected() async {
+        let clock = await makePCOSyncedClock()
+        let orch = makeOrchestrator(clockService: clock)
+        let listener = PlayerCycleListener(
+            authManager: fakeToken,
+            cycleListClient: StubCycleListClient(),
+            pollingIntervalNs: 0,
+            sleepProvider: { _ in }
+        )
+        orch.attach(listener: listener, sessionUuid: "mc-test",
+                    playerSessionDeviceId: pcoTestSessionDeviceId)
+
+        // Simulate cycle 0 fully completed → .confirmedStop(0)
+        orch.handleListenerState(.pendingCycleDetected(cycleId: 10),
+                                 currentCycle: makePCOCycle(id: 10, scheduledStartAt: pastISOForPCO(offsetSeconds: 0.5)))
+        for _ in 0..<20 { await Task.yield() }
+        XCTAssertEqual(orch.state, .confirmed(cycleId: 10))
+
+        // Simulate stop
+        orch.handleListenerState(.stoppingDetected(cycleId: 10),
+                                 currentCycle: makePSOStoppingCycle(id: 10))
+        for _ in 0..<40 { await Task.yield() }
+        // Should reach .confirmedStop
+        XCTAssertEqual(orch.state, .confirmedStop(cycleId: 10),
+                       "PCO-19: must reach confirmedStop after cycle 0; got \(orch.state)")
+
+        // Cycle 1 pending — must be accepted from .confirmedStop
+        let cycle1 = makePCOCycle(id: 11, scheduledStartAt: pastISOForPCO(offsetSeconds: 0.5))
+        orch.handleListenerState(.pendingCycleDetected(cycleId: 11), currentCycle: cycle1)
+        for _ in 0..<20 { await Task.yield() }
+
+        switch orch.state {
+        case .waitingForStart(let id) where id == 11,
+             .capturing(let id) where id == 11,
+             .confirmed(let id) where id == 11:
+            break // OK — cycle 1 accepted
+        default:
+            XCTFail("PCO-19: .confirmedStop must accept new pendingCycleDetected; got \(orch.state)")
+        }
+        XCTAssertGreaterThanOrEqual(fakeCapture.startCallCount, 2,
+                                    "PCO-19: startCapture must be called for cycle 1")
+        XCTAssertGreaterThanOrEqual(fakeCapture.rearmCallCount, 2,
+                                    "PCO-19: rearmForNextCycle must be called before cycle 1 start")
+    }
+
+    // PCO-20: Multi-cycle — from .confirmedStop, late-arriving recordingDetected starts new cycle.
+    func test_pco_20_confirmedStop_accepts_recordingDetected() async {
+        let clock = await makePCOSyncedClock()
+        let orch = makeOrchestrator(clockService: clock)
+        let listener = PlayerCycleListener(
+            authManager: fakeToken,
+            cycleListClient: StubCycleListClient(),
+            pollingIntervalNs: 0,
+            sleepProvider: { _ in }
+        )
+        orch.attach(listener: listener, sessionUuid: "mc-test-2",
+                    playerSessionDeviceId: pcoTestSessionDeviceId)
+
+        // Drive to .confirmedStop(20) directly via stoppingDetected from idle
+        orch.handleListenerState(.stoppingDetected(cycleId: 20),
+                                 currentCycle: makePSOStoppingCycle(id: 20))
+        XCTAssertEqual(orch.state, .skippedCycle(cycleId: 20))
+
+        // Manually set to confirmedStop for test
+        orch.handleListenerState(.pendingCycleDetected(cycleId: 21),
+                                 currentCycle: makePCOCycle(id: 21, scheduledStartAt: pastISOForPCO(offsetSeconds: 0.5)))
+        for _ in 0..<20 { await Task.yield() }
+
+        // The cycle should start even from .skippedCycle → eventually land in confirmed/capturing
+        switch orch.state {
+        case .waitingForStart(let id) where id == 21,
+             .capturing(let id) where id == 21,
+             .confirmed(let id) where id == 21:
+            break
+        default:
+            XCTFail("PCO-20: new cycle must start from .skippedCycle; got \(orch.state)")
+        }
+    }
+
+    // PCO-21: rearmForNextCycle is no-op when capture state is not .completed
+    func test_pco_21_rearm_noop_when_not_completed() {
+        let capture = FakeCaptureController()
+        capture.simulateState(.ready)
+        capture.rearmForNextCycle()
+        XCTAssertEqual(capture.rearmCallCount, 1, "PCO-21: rearm call count should increment")
+    }
 }

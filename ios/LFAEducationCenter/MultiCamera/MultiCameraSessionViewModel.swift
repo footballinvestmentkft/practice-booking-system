@@ -39,7 +39,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
     private var clockSyncTask: Task<Void, Never>?
     private var isCreateInProgress = false
 
-    private let authManager: AuthManager
+    let authManager: AuthManager
     private let clockSyncService: ClockSyncService
     private let pollingInterval: UInt64
     private let heartbeatInterval: UInt64
@@ -198,10 +198,12 @@ final class MultiCameraSessionViewModel: ObservableObject {
         #else
         let deviceType: MCDeviceType = UIDevice.current.userInterfaceIdiom == .pad ? .ipad : .iphone
         #endif
+        let myRole = self.resolvedParticipantRole
+        let deviceRole: MCDeviceRole = myRole == .instructor ? .instructorPrimary : .playerPrimary
         let request = RegisterDeviceRequest(
             deviceUuid: nil, deviceType: deviceType,
             deviceName: UIDevice.current.name, bleIdentifier: nil,
-            deviceRole: deviceType == .ipad ? .instructorPrimary : .playerPrimary,
+            deviceRole: deviceRole,
             participantId: participantId, managedByDeviceId: nil
         )
         do {
@@ -218,7 +220,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
             if let listener = playerCycleListener, let orch = playerCaptureOrchestrator {
                 orch.attach(listener: listener, sessionUuid: sessionUuid, playerSessionDeviceId: sd.id)
             }
-            if sd.deviceRole != .instructorPrimary {
+            if Self.shouldAutoPrepare(deviceRole: sd.deviceRole) {
                 await capturePreparable?.autoPrepare(sessionUUID: sessionUuid, deviceId: sd.id)
             }
         } catch {
@@ -245,6 +247,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 guard let token = self.authManager.accessToken else { continue }
                 do {
                     let session = try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
+                    guard !Task.isCancelled else { return }
                     self.state = .inLobby(session: session)
                 } catch {
                     // skip iteration, retry next cycle
@@ -333,11 +336,25 @@ final class MultiCameraSessionViewModel: ObservableObject {
         Self.resolveIsController(role: myDeviceRole)
     }
 
+    static func shouldAutoPrepare(deviceRole: MCDeviceRole) -> Bool {
+        switch deviceRole {
+        case .instructorPrimary, .playerPrimary, .playerSecondary:
+            return true
+        case .auxiliaryCamera:
+            return false
+        }
+    }
+
     // MARK: — Helpers
 
     var isInstructor: Bool {
-        guard case .inLobby(let session) = state else { return false }
-        return session.participants.contains { $0.role == .instructor && $0.userId == (Self.cachedUserId ?? 0) }
+        resolvedParticipantRole == .instructor
+    }
+
+    var resolvedParticipantRole: ParticipantRole {
+        guard case .inLobby(let session) = state else { return .player }
+        let isInst = session.participants.contains { $0.role == .instructor && $0.userId == (Self.cachedUserId ?? 0) }
+        return isInst ? .instructor : .player
     }
 
     private static var cachedUserId: Int? {

@@ -116,4 +116,77 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let handled = bridge.handle(url: URL(string: "lfa-mc1://not-automate?action=begin-cycle")!)
         XCTAssertFalse(handled)
     }
+
+    // MARK: — AB-12: reset-session resets ViewModel to .idle between scenarios
+
+    func test_AB_12_resetSession_setsLastAction() {
+        let bridge = makeBridge()
+        let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=reset-session")!)
+        XCTAssertTrue(handled)
+        XCTAssertEqual(bridge.lastAction, .resetSession)
+    }
+
+    // MARK: — AB-12b: gopro-connect
+
+    func test_AB_12b_goProConnect_withDeviceId() {
+        let bridge = makeBridge()
+        let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-connect&gopro_device_id=99")!)
+        XCTAssertTrue(handled)
+        XCTAssertEqual(bridge.lastAction, .goProConnect(goProDeviceId: 99))
+    }
+
+    func test_AB_12c_goProConnect_withoutDeviceId() {
+        let bridge = makeBridge()
+        let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-connect")!)
+        XCTAssertTrue(handled)
+        XCTAssertEqual(bridge.lastAction, .goProConnect(goProDeviceId: nil))
+    }
+
+    // MARK: — AB-13: gopro-start
+
+    func test_AB_13_goProStart() {
+        let bridge = makeBridge()
+        let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-start&gopro_device_id=42")!)
+        XCTAssertTrue(handled)
+        XCTAssertEqual(bridge.lastAction, .goProStartRecording(goProDeviceId: 42))
+    }
+
+    func test_AB_13b_goProStart_missingDeviceId_rejected() {
+        let bridge = makeBridge()
+        let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-start")!)
+        XCTAssertFalse(handled)
+    }
+
+    // MARK: — AB-14: gopro-stop
+
+    func test_AB_14_goProStop() {
+        let bridge = makeBridge()
+        let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-stop&gopro_device_id=42")!)
+        XCTAssertTrue(handled)
+        XCTAssertEqual(bridge.lastAction, .goProStopRecording(goProDeviceId: 42))
+    }
+
+    func test_AB_14b_goProStop_missingDeviceId_rejected() {
+        let bridge = makeBridge()
+        let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-stop")!)
+        XCTAssertFalse(handled)
+    }
+
+    // MARK: — AB-15: gopro-status
+
+    func test_AB_15_goProStatus() {
+        let bridge = makeBridge()
+        let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-status")!)
+        XCTAssertTrue(handled)
+        XCTAssertEqual(bridge.lastAction, .goProStatus)
+    }
+
+    // MARK: — AB-16: gopro-media-list
+
+    func test_AB_16_goProMediaList() {
+        let bridge = makeBridge()
+        let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-media-list")!)
+        XCTAssertTrue(handled)
+        XCTAssertEqual(bridge.lastAction, .goProMediaList)
+    }
 }

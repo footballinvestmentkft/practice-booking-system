@@ -1,10 +1,35 @@
 import Foundation
 import CoreBluetooth
 
+// MARK: — Recording State
+
+enum GoProRecordingState: Equatable {
+    case idle
+    case starting
+    case recording
+    case stopping
+    case stopped
+    case failed(String)
+}
+
+enum GoProRecordingError: Error {
+    case notConnected
+    case alreadyRecording
+    case notRecording
+    case shutterFailed(String)
+}
+
 @MainActor
 final class GoProConnectionManager: ObservableObject {
 
+    static let shared = GoProConnectionManager(
+        bleTransport: CoreBluetoothBLETransport(),
+        httpTransport: GoProHTTPClientTransport(),
+        wifiTransport: SystemWiFiTransport()
+    )
+
     @Published private(set) var state: GoProConnectionState = .idle
+    @Published private(set) var recordingState: GoProRecordingState = .idle
     @Published private(set) var discoveredPeripherals: [GoProPeripheralInfo] = []
     @Published private(set) var diagnosticLog: [GoProDiagnosticEvent] = []
     @Published private(set) var cameraStatus: GoProCameraStatus?
@@ -94,6 +119,46 @@ final class GoProConnectionManager: ObservableObject {
         startConnection()
     }
 
+    // MARK: — Recording control
+
+    func startRecording() async throws {
+        guard case .ready = state else { throw GoProRecordingError.notConnected }
+        guard recordingState == .idle || recordingState == .stopped else { throw GoProRecordingError.alreadyRecording }
+        recordingState = .starting
+        do {
+            _ = try await httpTransport.get(path: GoProSpec.shutterStartPath, timeout: GoProSpec.commandTimeout)
+            recordingState = .recording
+            print("[GOPRO] shutter start OK")
+        } catch {
+            recordingState = .failed("\(error)")
+            print("[GOPRO] shutter start FAILED: \(error)")
+            throw GoProRecordingError.shutterFailed("\(error)")
+        }
+    }
+
+    func stopRecording() async throws {
+        guard recordingState == .recording else { throw GoProRecordingError.notRecording }
+        recordingState = .stopping
+        do {
+            _ = try await httpTransport.get(path: GoProSpec.shutterStopPath, timeout: GoProSpec.commandTimeout)
+            recordingState = .stopped
+            print("[GOPRO] shutter stop OK")
+        } catch {
+            recordingState = .failed("\(error)")
+            print("[GOPRO] shutter stop FAILED: \(error)")
+            throw GoProRecordingError.shutterFailed("\(error)")
+        }
+    }
+
+    func fetchMediaList() async -> Data? {
+        do {
+            return try await httpTransport.get(path: GoProSpec.mediaListPath, timeout: GoProSpec.commandTimeout)
+        } catch {
+            print("[GOPRO] media list failed: \(error)")
+            return nil
+        }
+    }
+
     // MARK: — State transitions
 
     private func transition(to newState: GoProConnectionState, trigger: String) {
@@ -148,6 +213,8 @@ final class GoProConnectionManager: ObservableObject {
             transition(to: .failed(.controlEstablishmentFailed), trigger: trigger)
         case .enablingAccessPoint:
             transition(to: .failed(.apActivationFailed), trigger: trigger)
+        case .connectingWiFi:
+            transition(to: .failed(.wifiJoinFailed), trigger: trigger)
         case .verifyingHTTP(let attempt):
             if attempt < GoProSpec.httpVerifyMaxRetries {
                 transition(to: .verifyingHTTP(attempt: attempt + 1), trigger: trigger)
@@ -188,12 +255,34 @@ final class GoProConnectionManager: ObservableObject {
 
     private func proceedToWiFiJoin() {
         cancelTimeout()
-        guard let ssid = wifiSSID else {
+        guard let ssid = wifiSSID, let password = wifiPassword else {
             transition(to: .failed(.apActivationFailed), trigger: "no_wifi_creds")
             return
         }
         manualWiFiSSID = ssid
-        transition(to: .awaitingManualWiFiJoin(ssid: ssid), trigger: "ap_activated")
+        transition(to: .connectingWiFi(attempt: 1), trigger: "auto_wifi_join")
+        startTimeout(GoProSpec.wifiJoinTimeout, trigger: "wifi_join_timeout")
+        Task { await attemptWiFiJoin(ssid: ssid, password: password) }
+    }
+
+    private func attemptWiFiJoin(ssid: String, password: String) async {
+        do {
+            try await wifiTransport.joinAccessPoint(ssid: ssid, password: password)
+            cancelTimeout()
+            print("[GoPro] WiFi joined via NEHotspotConfiguration: \(ssid)")
+            startHTTPVerify(trigger: "wifi_joined_auto")
+        } catch GoProWiFiError.alreadyAssociated {
+            cancelTimeout()
+            print("[GoPro] WiFi already associated: \(ssid)")
+            startHTTPVerify(trigger: "wifi_already_associated")
+        } catch GoProWiFiError.userDenied {
+            cancelTimeout()
+            transition(to: .failed(.wifiUserDenied), trigger: "wifi_user_denied")
+        } catch {
+            cancelTimeout()
+            print("[GoPro] WiFi auto-join failed: \(error), falling back to manual")
+            transition(to: .awaitingManualWiFiJoin(ssid: ssid), trigger: "wifi_auto_failed_fallback")
+        }
     }
 
     func confirmManualWiFiJoined() {

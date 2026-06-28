@@ -3,6 +3,7 @@ import SwiftUI
 struct GoProConnectionDebugView: View {
 
     @StateObject private var manager: GoProConnectionManager
+    @Environment(\.presentationMode) private var presentationMode
 
     init(manager: GoProConnectionManager) {
         _manager = StateObject(wrappedValue: manager)
@@ -18,6 +19,13 @@ struct GoProConnectionDebugView: View {
             }
             .navigationTitle("GoPro Connection")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { presentationMode.wrappedValue.dismiss() } label: {
+                        Image(systemName: "xmark").font(.system(size: 14, weight: .semibold))
+                    }
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 manager.onForeground()
             }
