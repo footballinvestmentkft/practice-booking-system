@@ -43,6 +43,8 @@ enum MC1AutomationAction: Equatable {
     case goProDownloadLatest
     case skeletonProcess
     case captureInfo
+    // MC1 Block-1: network routing diagnostics (GoPro WiFi + cellular coexistence)
+    case networkRoutingDiag(label: String)
 }
 
 final class MC1AutomationBridge: ObservableObject {
@@ -128,6 +130,11 @@ final class MC1AutomationBridge: ObservableObject {
         case "capture-info":
             print("[MC1-AUTO] received action=capture-info")
             lastAction = .captureInfo
+            return true
+        case "network-routing-diag":
+            let label = value("label") ?? "unlabeled"
+            print("[MC1-AUTO] received action=network-routing-diag label=\(label)")
+            lastAction = .networkRoutingDiag(label: label)
             return true
         default:
             print("[MC1-AUTO] received unknown action=\(action)")

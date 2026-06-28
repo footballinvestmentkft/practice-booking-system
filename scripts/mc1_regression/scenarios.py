@@ -801,6 +801,153 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
     return report
 
 
+NETWORK_ROUTING_DIAG_TIMEOUT_SECONDS = 60   # GoPro connect + updateDeviceStatus
+NETWORK_ROUTING_DIAG_SETTLE_SECONDS = 3
+
+
+def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
+    """MC1 Block-1: GoPro WiFi + backend cellular coexistence validation.
+
+    Validates that iPhone can call the backend (updateDeviceStatus) while
+    simultaneously connected to the GoPro WiFi AP. This is the root cause
+    fix for the GoPro ready-signal 45s timeout.
+
+    PASS criteria (all backend-grounded, no console parsing):
+      1. GoPro device registered in session (backend POST /devices)
+      2. GoPro device_status == "ready" on backend after gopro-connect
+         (proves updateDeviceStatus reached the backend over cellular
+          while iPhone was on GoPro WiFi AP)
+
+    Preconditions (physical):
+      - GoPro HERO13 powered on and in BLE pairing/discoverable mode
+      - iPhone has cellular data enabled
+      - iPhone has the lfa-mc1:// scheme app installed
+
+    The diagnostic `[NET-DIAG]` log lines in the iPhone console are
+    corroborating evidence — they are NOT used for PASS/FAIL.
+    """
+    import time as _time
+
+    report = ScenarioReport(name="gopro-network-routing-diag", passed=False)
+    session = create_session(ctx.api_base, ctx.instructor_token)
+    session_uuid = session["session_uuid"]
+    report.session_uuid = session_uuid
+    print(f"[net-diag] session created: {session_uuid}")
+
+    try:
+        # 1. Join iPhone as instructor (needs active session for deep links to land)
+        print("[net-diag] Joining iPhone as instructor...")
+        send_deep_link(ctx.iphone_udid, "join", session_uuid=session_uuid, role="instructor")
+        _time.sleep(5)  # wait for join + autoRegisterDevice
+
+        def iphone_registered():
+            s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
+            return next((d for d in s.get("devices", [])
+                         if d["device_role"] == "instructor_primary"), None)
+
+        instructor_dev = poll_until(
+            "iPhone registered as instructor_primary",
+            DEVICE_REGISTER_TIMEOUT_SECONDS, iphone_registered,
+        )
+        instructor_id = instructor_dev["id"]
+        report.step("iphone registered as instructor", True, device_id=instructor_id)
+        print(f"[net-diag] iPhone instructor device_id={instructor_id}")
+
+        # 2. Register GoPro managed by iPhone (before connect — gives us a device_id)
+        print(f"[net-diag] Registering GoPro managed_by instructor device_id={instructor_id}...")
+        gopro_sd = register_device(
+            ctx.api_base, ctx.instructor_token, session_uuid,
+            device_role="auxiliary_camera", device_type="gopro",
+            device_name="GoPro HERO13 (net-diag)",
+            managed_by_device_id=instructor_id,
+        )
+        gopro_device_id = gopro_sd["id"]
+        managed_by = gopro_sd.get("managed_by_device_id")
+        if managed_by != instructor_id:
+            report.step("gopro managed_by instructor", False,
+                        expected=instructor_id, actual=managed_by)
+            raise ValidationError(f"GoPro managed_by={managed_by} expected={instructor_id}")
+        report.step("gopro registered (managed by instructor)", True,
+                    gopro_device_id=gopro_device_id)
+        print(f"[net-diag] GoPro registered: session_device_id={gopro_device_id}")
+
+        # 3. Network probe BEFORE GoPro WiFi join (baseline)
+        print("[net-diag] Sending network-routing-diag BEFORE gopro-connect...")
+        send_deep_link(ctx.iphone_udid, "network-routing-diag", label="before-gopro")
+        _time.sleep(NETWORK_ROUTING_DIAG_SETTLE_SECONDS)
+        report.step("pre-connect network probe sent", True)
+
+        # 4. GoPro connect (BLE → WiFi AP → HTTP verify; iOS WiFi Assist needed here)
+        print(f"[net-diag] Sending gopro-connect to iPhone (gopro_device_id={gopro_device_id})...")
+        print("[net-diag] Physical: ensure GoPro is on and in BLE pairing mode.")
+        print("[net-diag] If iOS WiFi join prompt appears on iPhone — tap Join.")
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect deep link sent", True)
+
+        # 5. Network probe AFTER GoPro WiFi join starts (reveals routing state)
+        _time.sleep(15)  # give BLE scan + connect time to start
+        print("[net-diag] Sending network-routing-diag AFTER gopro-connect (mid-connect)...")
+        send_deep_link(ctx.iphone_udid, "network-routing-diag", label="mid-gopro-connect")
+        _time.sleep(NETWORK_ROUTING_DIAG_SETTLE_SECONDS)
+        report.step("mid-connect network probe sent", True)
+
+        # 6. Poll backend for GoPro device_status == ready
+        #    PASS gate: updateDeviceStatus reached backend over cellular while on GoPro WiFi
+        print(f"[net-diag] Polling backend for GoPro device_status=ready "
+              f"(timeout={NETWORK_ROUTING_DIAG_TIMEOUT_SECONDS}s)...")
+
+        def gopro_device_ready():
+            s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
+            for d in s.get("devices", []):
+                if d["id"] == gopro_device_id:
+                    status = d.get("device_status") or d.get("status")
+                    if status == "ready":
+                        return d
+            return None
+
+        try:
+            gp_ready = poll_until(
+                "GoPro device_status==ready on backend",
+                NETWORK_ROUTING_DIAG_TIMEOUT_SECONDS, gopro_device_ready,
+            )
+            print(f"[net-diag] PASS: GoPro device_status=ready on backend "
+                  f"(device_id={gopro_device_id}, revision={gp_ready.get('revision')})")
+            print("[net-diag] => iPhone called updateDeviceStatus over cellular "
+                  "while on GoPro WiFi AP: routing fix CONFIRMED")
+            report.step("gopro device_status==ready (backend-verified)", True,
+                        device_id=gopro_device_id, revision=gp_ready.get("revision"))
+        except ValidationError as e:
+            report.step("gopro device_status==ready (backend-verified)", False, error=str(e))
+            # Send diagnostic probe at timeout point
+            send_deep_link(ctx.iphone_udid, "network-routing-diag", label="at-timeout")
+            send_deep_link(ctx.iphone_udid, "dump-snapshot")
+            _time.sleep(3)
+            raise ValidationError(
+                f"GoPro device_status never reached 'ready' on backend "
+                f"(timeout={NETWORK_ROUTING_DIAG_TIMEOUT_SECONDS}s). "
+                f"Either GoPro didn't connect, or updateDeviceStatus failed "
+                f"(cellular routing issue). Check iPhone console for "
+                f"[GOPRO-AUTO] signalReady and [NET-DIAG] lines."
+            )
+
+        # 7. Final snapshot + post-connect network probe
+        print("[net-diag] Sending post-connect network probe + snapshot...")
+        send_deep_link(ctx.iphone_udid, "network-routing-diag", label="after-ready")
+        _time.sleep(NETWORK_ROUTING_DIAG_SETTLE_SECONDS)
+        send_deep_link(ctx.iphone_udid, "dump-snapshot")
+        _time.sleep(2)
+        report.step("post-connect network probe sent", True)
+
+        report.passed = True
+        print("[net-diag] === PASS: GoPro WiFi + backend cellular routing CONFIRMED ===")
+
+    except ValidationError as e:
+        report.error = str(e)
+        report.passed = False
+        print(f"[net-diag] === FAIL: {e} ===")
+    return report
+
+
 SCENARIOS = {
     "smoke": scenario_smoke,
     "multicycle": scenario_multicycle,
@@ -808,5 +955,6 @@ SCENARIOS = {
     "finalization": scenario_finalization,
     "gopro-tricamera-smoke": scenario_gopro_tricamera_smoke,
     "gopro-iphone-diagnostics": scenario_gopro_iphone_diagnostics,
+    "gopro-network-routing-diag": scenario_gopro_network_routing_diag,
     "tricamera-capture-skeleton-proof": scenario_tricamera_capture_skeleton_proof,
 }

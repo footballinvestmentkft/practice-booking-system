@@ -329,6 +329,8 @@ struct MultiCameraLobbyView: View {
                     return (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? 0
                 }()
                 print("[CAPTURE-INFO] state=\(captureManager.state) outputFile=\(fileURL?.path ?? "nil") size=\(fileSize)")
+            case .networkRoutingDiag(let label):
+                Task { await BackendNetworkDiagnostics.probe(label: label) }
             }
         }
         .sheet(isPresented: $showQRScanner) {
@@ -649,6 +651,9 @@ struct MultiCameraLobbyView: View {
             print("[GOPRO-AUTO] signalReady skipped: no deviceId/auth/session")
             return
         }
+        // Log gopro connection state at call time — if we're on GoPro WiFi here,
+        // the APIClient.backendSession (waitsForConnectivity=true) handles routing.
+        print("[GOPRO-AUTO] signalReady: deviceId=\(did) gopro_state=\(GoProConnectionManager.shared.state)")
         do {
             let sd = try await MultiCameraAPIClient.updateDeviceStatus(
                 token: token, uuid: sessionUuid,
@@ -656,7 +661,11 @@ struct MultiCameraLobbyView: View {
             )
             print("[GOPRO-AUTO] signalReady OK: GoPro device \(did) → ready (rev=\(sd.revision))")
         } catch {
-            print("[GOPRO-AUTO] signalReady failed: \(error)")
+            let urlErr = (error as? APIError).flatMap {
+                if case .networkError(let e) = $0 { return e as? URLError } else { return nil }
+            }
+            let errDetail = urlErr.map { "URLError(\($0.code.rawValue))" } ?? "\(error)"
+            print("[GOPRO-AUTO] signalReady FAILED: \(errDetail)")
         }
     }
 
