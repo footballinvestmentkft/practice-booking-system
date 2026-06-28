@@ -84,21 +84,38 @@ echo "Artifacts: ${OUT_DIR}"
 
 # Capture iOS device logs via idevicesyslog (libimobiledevice).
 # 'log stream --device' is not supported on macOS 26 Tahoe.
-# idevicesyslog relays the syslog/print() output from physical devices.
+# libimobiledevice uses legacy UDID format (hex, no dashes), while xcrun devicectl
+# uses CoreDevice UUID format. We auto-detect legacy UDIDs via idevice_id -l.
 _IDEVICESYSLOG="$(command -v idevicesyslog 2>/dev/null || true)"
+_IDEVICEID="$(command -v idevice_id 2>/dev/null || true)"
+IPAD_CONSOLE_PID=""
+IPHONE_CONSOLE_PID=""
 if [[ -z "${_IDEVICESYSLOG}" ]]; then
   echo "WARNING: idevicesyslog not found. Console capture disabled."
   echo "  Install: brew install libimobiledevice"
-  IPAD_CONSOLE_PID=""
-  IPHONE_CONSOLE_PID=""
+elif [[ -z "${_IDEVICEID}" ]]; then
+  echo "WARNING: idevice_id not found. Console capture disabled."
 else
-  echo "Starting console capture (idevicesyslog → LFAEducationCenter)..."
-  "${_IDEVICESYSLOG}" --udid "${IPAD_UDID}" --process LFAEducationCenter \
-    > "${OUT_DIR}/console/ipad_console.log" 2>&1 &
-  IPAD_CONSOLE_PID=$!
-  "${_IDEVICESYSLOG}" --udid "${IPHONE_UDID}" --process LFAEducationCenter \
-    > "${OUT_DIR}/console/iphone_console.log" 2>&1 &
-  IPHONE_CONSOLE_PID=$!
+  # Get all legacy UDIDs visible to libimobiledevice (USB-connected only)
+  _LEGACY_UDIDS="$("${_IDEVICEID}" -l 2>/dev/null || true)"
+  if [[ -z "${_LEGACY_UDIDS}" ]]; then
+    echo "WARNING: No device visible to idevicesyslog (not USB-connected or not trusted)."
+    echo "  Connect iPhone via USB and trust this Mac on the device."
+  else
+    # Use the first (and typically only) legacy UDID for iphone capture.
+    # If iPad has a different UDID it will appear on a second line.
+    _IPHONE_LEGACY_UDID="$(echo "${_LEGACY_UDIDS}" | head -1)"
+    _IPAD_LEGACY_UDID="$(echo "${_LEGACY_UDIDS}" | sed -n '2p')"
+    [[ -z "${_IPAD_LEGACY_UDID}" ]] && _IPAD_LEGACY_UDID="${_IPHONE_LEGACY_UDID}"
+    echo "Starting console capture (idevicesyslog → LFAEducationCenter)..."
+    echo "  iPhone legacy UDID: ${_IPHONE_LEGACY_UDID}"
+    "${_IDEVICESYSLOG}" --udid "${_IPHONE_LEGACY_UDID}" --process LFAEducationCenter \
+      > "${OUT_DIR}/console/iphone_console.log" 2>&1 &
+    IPHONE_CONSOLE_PID=$!
+    "${_IDEVICESYSLOG}" --udid "${_IPAD_LEGACY_UDID}" --process LFAEducationCenter \
+      > "${OUT_DIR}/console/ipad_console.log" 2>&1 &
+    IPAD_CONSOLE_PID=$!
+  fi
 fi
 
 cleanup() {
