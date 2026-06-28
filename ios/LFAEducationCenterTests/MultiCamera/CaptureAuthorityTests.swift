@@ -122,4 +122,40 @@ final class CaptureAuthorityTests: XCTestCase {
             "CTL-08: auxiliaryCamera must NOT be a controller"
         )
     }
+
+    // MARK: — AP-01: instructorPrimary must auto-prepare
+
+    func test_AP_01_shouldAutoPrepare_instructorPrimary() {
+        XCTAssertTrue(
+            MultiCameraSessionViewModel.shouldAutoPrepare(deviceRole: .instructorPrimary),
+            "AP-01: instructorPrimary must auto-prepare capture pipeline"
+        )
+    }
+
+    // MARK: — AP-02: playerPrimary must auto-prepare
+
+    func test_AP_02_shouldAutoPrepare_playerPrimary() {
+        XCTAssertTrue(
+            MultiCameraSessionViewModel.shouldAutoPrepare(deviceRole: .playerPrimary),
+            "AP-02: playerPrimary must auto-prepare capture pipeline"
+        )
+    }
+
+    // MARK: — AP-03: playerSecondary must auto-prepare
+
+    func test_AP_03_shouldAutoPrepare_playerSecondary() {
+        XCTAssertTrue(
+            MultiCameraSessionViewModel.shouldAutoPrepare(deviceRole: .playerSecondary),
+            "AP-03: playerSecondary must auto-prepare capture pipeline"
+        )
+    }
+
+    // MARK: — AP-04: auxiliaryCamera must NOT auto-prepare (GoPro — separate scope)
+
+    func test_AP_04_shouldAutoPrepare_auxiliaryCamera_false() {
+        XCTAssertFalse(
+            MultiCameraSessionViewModel.shouldAutoPrepare(deviceRole: .auxiliaryCamera),
+            "AP-04: auxiliaryCamera must NOT auto-prepare (external device, separate scope)"
+        )
+    }
 }

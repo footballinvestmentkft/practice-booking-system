@@ -6,4 +6,5 @@ protocol CaptureController: AnyObject {
     var captureStatePublisher: AnyPublisher<CaptureState, Never> { get }
     func startCapture()
     func stopCapture()
+    func rearmForNextCycle()
 }

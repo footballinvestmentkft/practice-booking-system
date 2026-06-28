@@ -38,6 +38,7 @@ final class SessionCaptureManager: NSObject, ObservableObject {
     private var isTornDown = false
 
     var isCapturing: Bool { state == .capturing }
+    var previewSession: AVCaptureSession { captureSession }
 
     var capturedFileDuration: TimeInterval? {
         guard case .completed = state, let url = outputFileURL else { return nil }
@@ -242,6 +243,38 @@ final class SessionCaptureManager: NSObject, ObservableObject {
         captureQueue.async { [weak self] in
             self?.movieOutput.stopRecording()
         }
+    }
+
+    // MARK: — Re-arm for next cycle (multi-cycle support)
+
+    func rearmForNextCycle() {
+        guard case .completed = state else { return }
+        outputFileURL = nil
+        lastValidation = nil
+        state = .ready
+    }
+
+    // MARK: — Reset for reuse (MC1-AUTO scenario isolation)
+
+    func resetForReuse() {
+        removeObservers()
+        captureQueue.async { [weak self] in
+            guard let self else { return }
+            if self.movieOutput.isRecording {
+                self.movieOutput.stopRecording()
+            }
+            self.captureSession.stopRunning()
+            for input in self.captureSession.inputs {
+                self.captureSession.removeInput(input)
+            }
+            for output in self.captureSession.outputs {
+                self.captureSession.removeOutput(output)
+            }
+        }
+        outputFileURL = nil
+        lastValidation = nil
+        isTornDown = false
+        state = .idle
     }
 
     // MARK: — Teardown

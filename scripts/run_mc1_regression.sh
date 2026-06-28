@@ -9,9 +9,10 @@
 #
 # Usage:
 #   IPAD_UDID=... IPHONE_UDID=... API_BASE=... \
-#   INSTRUCTOR_EMAIL=... INSTRUCTOR_PASSWORD=... \
-#   PLAYER_EMAIL=... PLAYER_PASSWORD=... \
 #   ./scripts/run_mc1_regression.sh [--scenario smoke|multicycle|retry|finalization|all] [--cycles N]
+#
+# Credentials (email + password) are prompted interactively — never stored in
+# env vars, files, or logs. Passwords are read via Python getpass (no echo).
 #
 # Default --scenario is "all" (currently: smoke, multicycle; retry and
 # finalization are registered but report SKIPPED until ORCH-7/ORCH-8 land).
@@ -41,11 +42,39 @@ done
 
 : "${IPAD_UDID:?Set IPAD_UDID (see: xcrun devicectl list devices)}"
 : "${IPHONE_UDID:?Set IPHONE_UDID (see: xcrun devicectl list devices)}"
-: "${API_BASE:?Set API_BASE, e.g. https://...vercel.app}"
-: "${INSTRUCTOR_EMAIL:?Set INSTRUCTOR_EMAIL}"
-: "${INSTRUCTOR_PASSWORD:?Set INSTRUCTOR_PASSWORD}"
-: "${PLAYER_EMAIL:?Set PLAYER_EMAIL}"
-: "${PLAYER_PASSWORD:?Set PLAYER_PASSWORD}"
+_DEFAULT_API_BASE="https://practice-booking-system-git-deploy-vercel-staging-lfa-ec-test.vercel.app"
+API_BASE="${API_BASE:-${_DEFAULT_API_BASE}}"
+
+# ── Preflight: verify API_BASE is reachable before prompting credentials ──
+echo
+echo "Checking API_BASE: ${API_BASE}"
+_HEALTH_URL="${API_BASE}/api/v1/system/time"
+_HTTP_CODE="$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${_HEALTH_URL}" 2>/dev/null || true)"
+if [[ "${_HTTP_CODE}" != "200" ]]; then
+  echo
+  echo "ERROR: Backend not reachable (HTTP ${_HTTP_CODE:-000})."
+  echo "  URL tried: ${_HEALTH_URL}"
+  echo
+  echo "  Is the deployment active? Try:"
+  echo "  API_BASE=${_DEFAULT_API_BASE} \\"
+  echo "  ./scripts/run_mc1_regression.sh --scenario all"
+  echo
+  exit 1
+fi
+echo "Backend OK (HTTP ${_HTTP_CODE})."
+
+# ── Credential prompt (before console capture so it appears immediately) ──
+echo
+echo "MC1 Regression — staging credentials"
+echo "────────────────────────────────────"
+read -r -p "Instructor email [staging-instructor@lfa-staging.io]: " _INST_EMAIL
+_INST_EMAIL="${_INST_EMAIL:-staging-instructor@lfa-staging.io}"
+read -r -s -p "Instructor password: " _INST_PASS; echo
+echo
+read -r -p "Player email    [staging-player1@lfa-staging.io]: " _PL_EMAIL
+_PL_EMAIL="${_PL_EMAIL:-staging-player1@lfa-staging.io}"
+read -r -s -p "Player password: " _PL_PASS; echo
+echo
 
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 OUT_DIR="${SCRIPT_DIR}/mc1_regression_runs/${TIMESTAMP}_${SCENARIO}"
@@ -53,31 +82,37 @@ mkdir -p "${OUT_DIR}/console"
 
 echo "Artifacts: ${OUT_DIR}"
 
-xcrun devicectl device console --device "${IPAD_UDID}" > "${OUT_DIR}/console/ipad_console.log" 2>&1 &
+# Capture iOS device logs via 'log stream --device <udid>'.
+# Each device gets its own log file with LFAEducationCenter process output.
+echo "Starting console capture (log stream --device → LFAEducationCenter)..."
+log stream --device "${IPAD_UDID}" --predicate 'process == "LFAEducationCenter"' --level debug \
+  > "${OUT_DIR}/console/ipad_console.log" 2>&1 &
 IPAD_CONSOLE_PID=$!
-xcrun devicectl device console --device "${IPHONE_UDID}" > "${OUT_DIR}/console/iphone_console.log" 2>&1 &
+log stream --device "${IPHONE_UDID}" --predicate 'process == "LFAEducationCenter"' --level debug \
+  > "${OUT_DIR}/console/iphone_console.log" 2>&1 &
 IPHONE_CONSOLE_PID=$!
 
 cleanup() {
   kill "${IPAD_CONSOLE_PID}" "${IPHONE_CONSOLE_PID}" 2>/dev/null || true
+  unset _INST_PASS _PL_PASS _INST_EMAIL _PL_EMAIL
 }
 trap cleanup EXIT
 
-# Let console capture attach before the run starts.
+echo "Waiting for log stream to attach (2s)..."
 sleep 2
+echo "Running regression scenarios..."
+echo
 
 set +e
+_INST_EMAIL="${_INST_EMAIL}" _INST_PASS="${_INST_PASS}" \
+_PL_EMAIL="${_PL_EMAIL}" _PL_PASS="${_PL_PASS}" \
 python3 "${SCRIPT_DIR}/mc1_regression/runner.py" \
   --scenario "${SCENARIO}" \
   --cycles "${CYCLES}" \
   --out-dir "${OUT_DIR}" \
   --api-base "${API_BASE}" \
   --ipad-udid "${IPAD_UDID}" \
-  --iphone-udid "${IPHONE_UDID}" \
-  --instructor-email "${INSTRUCTOR_EMAIL}" \
-  --instructor-password "${INSTRUCTOR_PASSWORD}" \
-  --player-email "${PLAYER_EMAIL}" \
-  --player-password "${PLAYER_PASSWORD}"
+  --iphone-udid "${IPHONE_UDID}"
 PY_EXIT=$?
 set -e
 
