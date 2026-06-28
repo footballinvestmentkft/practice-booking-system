@@ -82,24 +82,34 @@ mkdir -p "${OUT_DIR}/console"
 
 echo "Artifacts: ${OUT_DIR}"
 
-# Capture iOS device logs via 'log stream --device <udid>'.
-# Each device gets its own log file with LFAEducationCenter process output.
-echo "Starting console capture (log stream --device → LFAEducationCenter)..."
-log stream --device "${IPAD_UDID}" --predicate 'process == "LFAEducationCenter"' --level debug \
-  > "${OUT_DIR}/console/ipad_console.log" 2>&1 &
-IPAD_CONSOLE_PID=$!
-log stream --device "${IPHONE_UDID}" --predicate 'process == "LFAEducationCenter"' --level debug \
-  > "${OUT_DIR}/console/iphone_console.log" 2>&1 &
-IPHONE_CONSOLE_PID=$!
+# Capture iOS device logs via idevicesyslog (libimobiledevice).
+# 'log stream --device' is not supported on macOS 26 Tahoe.
+# idevicesyslog relays the syslog/print() output from physical devices.
+_IDEVICESYSLOG="$(command -v idevicesyslog 2>/dev/null || true)"
+if [[ -z "${_IDEVICESYSLOG}" ]]; then
+  echo "WARNING: idevicesyslog not found. Console capture disabled."
+  echo "  Install: brew install libimobiledevice"
+  IPAD_CONSOLE_PID=""
+  IPHONE_CONSOLE_PID=""
+else
+  echo "Starting console capture (idevicesyslog → LFAEducationCenter)..."
+  "${_IDEVICESYSLOG}" --udid "${IPAD_UDID}" --process LFAEducationCenter \
+    > "${OUT_DIR}/console/ipad_console.log" 2>&1 &
+  IPAD_CONSOLE_PID=$!
+  "${_IDEVICESYSLOG}" --udid "${IPHONE_UDID}" --process LFAEducationCenter \
+    > "${OUT_DIR}/console/iphone_console.log" 2>&1 &
+  IPHONE_CONSOLE_PID=$!
+fi
 
 cleanup() {
-  kill "${IPAD_CONSOLE_PID}" "${IPHONE_CONSOLE_PID}" 2>/dev/null || true
+  [[ -n "${IPAD_CONSOLE_PID:-}" ]]   && kill "${IPAD_CONSOLE_PID}"   2>/dev/null || true
+  [[ -n "${IPHONE_CONSOLE_PID:-}" ]] && kill "${IPHONE_CONSOLE_PID}" 2>/dev/null || true
   unset _INST_PASS _PL_PASS _INST_EMAIL _PL_EMAIL
 }
 trap cleanup EXIT
 
-echo "Waiting for log stream to attach (2s)..."
-sleep 2
+echo "Waiting for log stream to attach (3s)..."
+sleep 3
 echo "Running regression scenarios..."
 echo
 

@@ -12,7 +12,6 @@ struct InstructorDashboardView: View {
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-
             VStack(spacing: 0) {
                 topBar
                 cameraGrid
@@ -23,13 +22,34 @@ struct InstructorDashboardView: View {
         .statusBarHidden(true)
     }
 
+    // MARK: - Session device list (source of truth for panels)
+
+    private var sessionDevices: [SessionDeviceDTO] {
+        guard case .inLobby(let session) = vm.state else { return [] }
+        return session.devices.filter { $0.removedAt == nil }
+    }
+
+    // Ordering: instructor first, then players (by id), then auxiliary cameras (GoPro)
+    private var orderedPanels: [SessionDeviceDTO] {
+        let rank: (MCDeviceRole) -> Int = {
+            switch $0 {
+            case .instructorPrimary: return 0
+            case .playerPrimary:     return 1
+            case .playerSecondary:   return 2
+            case .auxiliaryCamera:   return 3
+            }
+        }
+        return sessionDevices.sorted {
+            let ra = rank($0.deviceRole), rb = rank($1.deviceRole)
+            return ra != rb ? ra < rb : $0.id < $1.id
+        }
+    }
+
     // MARK: - Top bar
 
     private var topBar: some View {
         HStack {
-            Button {
-                presentationMode.wrappedValue.dismiss()
-            } label: {
+            Button { presentationMode.wrappedValue.dismiss() } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
@@ -37,13 +57,9 @@ struct InstructorDashboardView: View {
                     .background(.black.opacity(0.5))
                     .clipShape(Circle())
             }
-
             Spacer()
-
             RecordingOverlay(isRecording: isRecording)
-
             Spacer()
-
             sessionBadge
         }
         .padding(.horizontal, 12)
@@ -65,46 +81,72 @@ struct InstructorDashboardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 
-    // MARK: - Camera grid (3 panels: local + iPad remote + GoPro)
+    // MARK: - Camera grid (dynamic — driven by session device list)
 
     private var cameraGrid: some View {
         HStack(spacing: 2) {
-            VStack(spacing: 0) {
-                cameraLabel("iPhone", color: localCameraColor)
-                CapturePreviewLayer(session: captureManager.previewSession)
+            if orderedPanels.isEmpty {
+                // Session not yet joined or devices not registered
+                Color(white: 0.08)
+                    .overlay(
+                        Text("Waiting for devices…")
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.4))
+                    )
                     .aspectRatio(3.0/4.0, contentMode: .fit)
-                    .clipped()
+            } else {
+                ForEach(orderedPanels, id: \.id) { device in
+                    VStack(spacing: 0) {
+                        deviceLabel(device)
+                        devicePreview(device)
+                            .aspectRatio(3.0/4.0, contentMode: .fit)
+                            .clipped()
+                    }
+                    .background(Color(white: 0.08))
+                }
             }
-            .background(Color(white: 0.08))
-
-            VStack(spacing: 0) {
-                cameraLabel("iPad", color: remoteCameraColor)
-                RemoteCameraView(streamService: streamService)
-                    .aspectRatio(3.0/4.0, contentMode: .fit)
-                    .clipped()
-            }
-            .background(Color(white: 0.08))
-
-            VStack(spacing: 0) {
-                cameraLabel("GoPro", color: goProPanelColor)
-                goProPreviewPanel
-                    .aspectRatio(3.0/4.0, contentMode: .fit)
-                    .clipped()
-            }
-            .background(Color(white: 0.08))
         }
     }
 
+    private func deviceLabel(_ device: SessionDeviceDTO) -> some View {
+        let label = panelLabel(for: device)
+        let color = panelStatusColor(for: device)
+        return HStack(spacing: 4) {
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text(label)
+                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .foregroundColor(.white)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 4)
+        .background(Color(white: 0.1))
+    }
+
+    @ViewBuilder
+    private func devicePreview(_ device: SessionDeviceDTO) -> some View {
+        if device.id == vm.sessionDeviceId {
+            // This device — local camera
+            CapturePreviewLayer(session: captureManager.previewSession)
+        } else if device.deviceRole == .auxiliaryCamera {
+            // GoPro (or other managed auxiliary camera)
+            goProPreviewPanel
+        } else {
+            // Remote participant device — WebRTC/peer stream
+            RemoteCameraView(streamService: streamService)
+        }
+    }
+
+    // GoPro preview uses GoProConnectionManager real-time state
     private var goProPreviewPanel: some View {
         ZStack {
             Color.black
             VStack(spacing: 6) {
                 Image(systemName: goProIcon)
                     .font(.system(size: 24))
-                    .foregroundColor(goProPanelColor)
-                Text(goProLabel)
+                    .foregroundColor(goProRealtimeColor)
+                Text(goProRealtimeLabel)
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundColor(goProPanelColor)
+                    .foregroundColor(goProRealtimeColor)
                     .multilineTextAlignment(.center)
                 if let bat = GoProConnectionManager.shared.cameraStatus?.batteryLevel {
                     Text("\(bat)%")
@@ -115,80 +157,21 @@ struct InstructorDashboardView: View {
         }
     }
 
-    private var goProIcon: String {
-        let gp = GoProConnectionManager.shared
-        switch gp.recordingState {
-        case .recording: return "record.circle.fill"
-        case .idle:
-            if case .ready = gp.state { return "camera.fill" }
-            return "camera"
-        default: return "camera"
-        }
-    }
-
-    private var goProLabel: String {
-        let gp = GoProConnectionManager.shared
-        switch gp.recordingState {
-        case .recording: return "REC"
-        case .starting: return "starting..."
-        case .stopping: return "stopping..."
-        case .stopped: return "stopped"
-        case .failed(let m): return "err:\(m.prefix(15))"
-        case .idle:
-            if case .ready = gp.state { return "ready" }
-            return "offline"
-        }
-    }
-
-    private var goProPanelColor: Color {
-        let gp = GoProConnectionManager.shared
-        if gp.recordingState == .recording { return .red }
-        if case .ready = gp.state { return .green }
-        if case .failed = gp.recordingState { return .orange }
-        return .gray
-    }
-
-    private func cameraLabel(_ text: String, color: Color) -> some View {
-        HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 6, height: 6)
-            Text(text)
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                .foregroundColor(.white)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 4)
-        .background(Color(white: 0.1))
-    }
-
-    private var localCameraColor: Color {
-        switch captureManager.state {
-        case .ready: return .green
-        case .capturing: return .red
-        case .failed: return .orange
-        default: return .gray
-        }
-    }
-
-    private var remoteCameraColor: Color {
-        switch streamService.peerState {
-        case .connected where streamService.lastReceivedFrame != nil && streamService.lastFrameAge < 2:
-            return .green
-        case .connected:
-            return .yellow
-        case .connecting:
-            return .orange
-        case .disconnected:
-            return .red
-        }
-    }
-
-    // MARK: - Status bar
+    // MARK: - Status bar (dynamic)
 
     private var statusBar: some View {
         HStack(spacing: 1) {
-            statusCell("iPhone", ipadStatus, ipadColor)
-            statusCell("iPad", remoteStatus, remoteCameraColor)
-            goProStatusCell
+            if orderedPanels.isEmpty {
+                statusCell("—", "waiting", .gray)
+            } else {
+                ForEach(orderedPanels, id: \.id) { device in
+                    statusCell(
+                        panelLabel(for: device),
+                        panelStatusText(for: device),
+                        panelStatusColor(for: device)
+                    )
+                }
+            }
         }
         .background(Color(white: 0.1))
     }
@@ -203,53 +186,113 @@ struct InstructorDashboardView: View {
         .background(Color(white: 0.12))
     }
 
-    private var goProStatusCell: some View {
-        let gp = GoProConnectionManager.shared
-        let isConn: Bool = { if case .ready = gp.state { return true }; return false }()
-        let color: Color = gp.recordingState == .recording ? .red : isConn ? .green : .gray
-        let status: String = {
-            switch gp.recordingState {
-            case .recording: return "recording"
-            case .idle: return isConn ? "ready" : "offline"
-            default: return "\(gp.recordingState)"
+    // MARK: - Panel label helpers
+
+    private func panelLabel(for device: SessionDeviceDTO) -> String {
+        switch device.deviceRole {
+        case .instructorPrimary:
+            return "Instructor"
+        case .playerPrimary, .playerSecondary:
+            let players = orderedPanels.filter {
+                $0.deviceRole == .playerPrimary || $0.deviceRole == .playerSecondary
             }
-        }()
-        return VStack(spacing: 2) {
-            Text("GoPro").font(.system(size: 10, weight: .semibold)).foregroundColor(.white)
-            Text(status).font(.system(size: 9, design: .monospaced)).foregroundColor(color)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
-        .background(Color(white: 0.12))
-    }
-
-    private var ipadStatus: String {
-        switch orchestrator.state {
-        case .idle: return captureManager.state == .ready ? "ready" : "preparing"
-        case .capturing: return "recording"
-        case .completed: return "done"
-        case .failed: return "error"
-        default: return "..."
+            if players.count == 1 { return "Player" }
+            let idx = players.firstIndex(where: { $0.id == device.id }) ?? 0
+            return "Player \(idx + 1)"
+        case .auxiliaryCamera:
+            let aux = orderedPanels.filter { $0.deviceRole == .auxiliaryCamera }
+            if aux.count == 1 { return "GoPro" }
+            let idx = aux.firstIndex(where: { $0.id == device.id }) ?? 0
+            return "GoPro \(idx + 1)"
         }
     }
 
-    private var ipadColor: Color {
-        switch orchestrator.state {
+    private func panelStatusColor(for device: SessionDeviceDTO) -> Color {
+        if device.deviceRole == .auxiliaryCamera {
+            return goProRealtimeColor
+        }
+        if device.id == vm.sessionDeviceId {
+            return localCaptureColor
+        }
+        return backendStatusColor(device.status)
+    }
+
+    private func panelStatusText(for device: SessionDeviceDTO) -> String {
+        if device.deviceRole == .auxiliaryCamera {
+            return goProRealtimeLabel
+        }
+        if device.id == vm.sessionDeviceId {
+            return localCaptureStatus
+        }
+        return device.status.rawValue
+    }
+
+    // MARK: - Local device status (this iPhone)
+
+    private var localCaptureColor: Color {
+        switch captureManager.state {
+        case .ready:     return .green
         case .capturing: return .red
-        case .completed: return .green
-        case .failed: return .orange
-        case .idle: return captureManager.state == .ready ? .green : .gray
-        default: return .yellow
+        case .failed:    return .orange
+        default:         return .gray
         }
     }
 
-    private var remoteStatus: String {
-        switch streamService.peerState {
-        case .disconnected: return "offline"
-        case .connecting: return "connecting"
-        case .connected where streamService.lastReceivedFrame != nil: return "streaming"
-        case .connected: return "connected"
+    private var localCaptureStatus: String {
+        switch orchestrator.state {
+        case .idle:             return captureManager.state == .ready ? "ready" : "preparing"
+        case .creating:         return "creating cycle"
+        case .scheduling:       return "scheduling"
+        case .waitingForStart:  return "starting"
+        case .stopping:         return "stopping"
+        case .completed:        return "done"
+        case .failed:           return "error"
+        case .capturing:        return "recording"
         }
+    }
+
+    // MARK: - Backend status color (remote devices polled from API)
+
+    private func backendStatusColor(_ status: MCDeviceStatus) -> Color {
+        switch status {
+        case .ready:        return .green
+        case .recording:    return .red
+        case .registered:   return .gray
+        case .stopped:      return .green
+        case .disconnected: return .red
+        case .error:        return .orange
+        }
+    }
+
+    // MARK: - GoPro real-time state (GoProConnectionManager singleton)
+
+    private var goProRealtimeColor: Color {
+        let gp = GoProConnectionManager.shared
+        if gp.recordingState == .recording     { return .red }
+        if case .ready = gp.state             { return .green }
+        if case .failed = gp.recordingState   { return .orange }
+        return .gray
+    }
+
+    private var goProRealtimeLabel: String {
+        let gp = GoProConnectionManager.shared
+        switch gp.recordingState {
+        case .recording:        return "REC"
+        case .starting:         return "starting…"
+        case .stopping:         return "stopping…"
+        case .stopped:          return "stopped"
+        case .failed(let m):    return "err:\(m.prefix(15))"
+        case .idle:
+            if case .ready = gp.state { return "ready" }
+            return "offline"
+        }
+    }
+
+    private var goProIcon: String {
+        let gp = GoProConnectionManager.shared
+        if gp.recordingState == .recording { return "record.circle.fill" }
+        if case .ready = gp.state          { return "camera.fill" }
+        return "camera"
     }
 
     // MARK: - Control bar
@@ -290,22 +333,25 @@ struct InstructorDashboardView: View {
         .background(.black)
     }
 
-    // MARK: - Helpers
+    // MARK: - Computed helpers
 
-    private var isRecording: Bool { if case .capturing = orchestrator.state { return true }; return false }
+    private var isRecording: Bool {
+        if case .capturing = orchestrator.state { return true }
+        return false
+    }
     private var canBeginCycle: Bool { vm.isController && vm.canStartCapture && !isRecording }
     private var canEndCycle: Bool { if case .capturing = orchestrator.state { return true }; return false }
 
     private var orchestratorLabel: String {
         switch orchestrator.state {
-        case .idle: return captureManager.state == .ready ? "Ready" : "Preparing..."
-        case .creating: return "Creating cycle..."
-        case .scheduling: return "Scheduling..."
-        case .waitingForStart: return "Starting..."
-        case .stopping: return "Stopping..."
-        case .completed: return "Cycle complete"
-        case .failed(let f): return "Error: \(f)"
-        case .capturing: return "Recording"
+        case .idle:             return captureManager.state == .ready ? "Ready" : "Preparing…"
+        case .creating:         return "Creating cycle…"
+        case .scheduling:       return "Scheduling…"
+        case .waitingForStart:  return "Starting…"
+        case .stopping:         return "Stopping…"
+        case .completed:        return "Cycle complete"
+        case .failed(let f):    return "Error: \(f)"
+        case .capturing:        return "Recording"
         }
     }
 }
