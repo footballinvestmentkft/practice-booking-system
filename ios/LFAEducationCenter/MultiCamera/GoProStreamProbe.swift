@@ -661,4 +661,103 @@ enum GoProStreamDiagWriter {
         print("[GOPRO-STREAM-POC] wrote \(fileName): \(diag)")
     }
 }
+
+// MARK: — GoPro Preview + Recording Combined Cycle Proof (Block 3, debug-only)
+//
+// Preview (stream/start, validated above) and recording (shutter/start, the
+// existing record-then-download model from docs/AN3B_PR4B_GOPRO_CAPTURE_POC_PLAN.md)
+// are two independent GoPro Open GoPro API calls — this had never been
+// validated together. Runs both concurrently for the same window and proves,
+// via media/list diffing (not console logs), that a new file actually lands
+// on the GoPro's SD card while the preview keeps decoding frames.
+private struct GoProMediaListResponse: Decodable {
+    struct Directory: Decodable {
+        struct MediaFile: Decodable { let n: String }
+        let d: String
+        let fs: [MediaFile]
+    }
+    let media: [Directory]
+}
+
+enum GoProRecordingCycleProbe {
+
+    /// Starts GoPro recording (shutter/start) and the live preview
+    /// (GoProStreamProbe) concurrently for `previewDurationSeconds`, then
+    /// stops recording (shutter/stop) and diffs media/list before vs after
+    /// to detect a genuinely new file on the GoPro's SD card.
+    static func run(previewDurationSeconds: TimeInterval = 15) async -> [String: Any] {
+        var diag: [String: Any] = ["timestamp": ISO8601DateFormatter().string(from: Date())]
+        let gp = GoProConnectionManager.shared
+        let transport = GoProHTTPClientTransport()
+
+        let before = await fetchMediaFileNames(transport: transport)
+        diag["mediaCountBefore"] = before.count
+        print("[GOPRO-RECORDING-POC] media before: \(before.count) file(s)")
+
+        do {
+            try await gp.startRecording()
+            diag["shutterStartOK"] = true
+            print("[GOPRO-RECORDING-POC] shutter/start OK")
+        } catch {
+            diag["shutterStartOK"] = false
+            diag["shutterStartError"] = "\(error)"
+            print("[GOPRO-RECORDING-POC] shutter/start FAILED: \(error)")
+        }
+        diag["recordingStateAfterStart"] = "\(await gp.recordingState)"
+
+        // Preview runs for the SAME window recording is active — this IS the
+        // "combined" proof. GoProStreamProbe.run() internally sleeps for
+        // previewDurationSeconds, so awaiting it doubles as the record window.
+        let previewDiag = await GoProStreamProbe.shared.run(durationSeconds: previewDurationSeconds)
+        GoProStreamDiagWriter.write(previewDiag)
+        diag["previewRanConcurrently"] = true
+        diag["previewDecodeAttempts"] = previewDiag["decodeAttempts"] ?? 0
+        diag["previewDecodeSuccesses"] = previewDiag["decodeSuccesses"] ?? 0
+
+        do {
+            try await gp.stopRecording()
+            diag["shutterStopOK"] = true
+            print("[GOPRO-RECORDING-POC] shutter/stop OK")
+        } catch {
+            diag["shutterStopOK"] = false
+            diag["shutterStopError"] = "\(error)"
+            print("[GOPRO-RECORDING-POC] shutter/stop FAILED: \(error)")
+        }
+        diag["recordingStateAfterStop"] = "\(await gp.recordingState)"
+
+        try? await Task.sleep(nanoseconds: 3_000_000_000) // let the GoPro finalize the file
+
+        let after = await fetchMediaFileNames(transport: transport)
+        diag["mediaCountAfter"] = after.count
+        let newFiles = after.subtracting(before)
+        diag["newFilesDetected"] = Array(newFiles).sorted()
+        diag["newFileCountDelta"] = after.count - before.count
+        print("[GOPRO-RECORDING-POC] media after: \(after.count) file(s), new: \(newFiles.sorted())")
+
+        return diag
+    }
+
+    private static func fetchMediaFileNames(transport: GoProHTTPClientTransport) async -> Set<String> {
+        guard let data = try? await transport.get(path: GoProSpec.mediaListPath, timeout: 10) else { return [] }
+        guard let decoded = try? JSONDecoder().decode(GoProMediaListResponse.self, from: data) else { return [] }
+        var names: Set<String> = []
+        for dir in decoded.media {
+            for f in dir.fs { names.insert("\(dir.d)/\(f.n)") }
+        }
+        return names
+    }
+}
+
+enum GoProRecordingDiagWriter {
+    static let fileName = "gopro_recording_diag.json"
+
+    static func write(_ diag: [String: Any]) {
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+              JSONSerialization.isValidJSONObject(diag),
+              let data = try? JSONSerialization.data(withJSONObject: diag, options: [.prettyPrinted]) else { return }
+        let url = docs.appendingPathComponent(fileName)
+        try? data.write(to: url, options: .atomic)
+        print("[GOPRO-RECORDING-POC] wrote \(fileName): \(diag)")
+    }
+}
 #endif

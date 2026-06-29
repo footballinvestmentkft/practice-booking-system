@@ -1279,6 +1279,218 @@ def scenario_gopro_preview_poc(ctx: ScenarioContext) -> ScenarioReport:
     return report
 
 
+COMBINED_CYCLE_TIMEOUT_SECONDS = 180
+COMBINED_CYCLE_RECORD_DURATION_SECONDS = 15  # how long both recording + preview run concurrently
+COMBINED_CYCLE_SETTLE_SECONDS = 8  # 3s on-device finalize + margin for devicectl copy
+
+
+def scenario_gopro_combined_cycle_proof(ctx: ScenarioContext) -> ScenarioReport:
+    """MC1 GoPro Block 3: preview + recording combined cycle proof.
+
+    Preview (stream/start, proven working as of commit a078598c — HEVC,
+    19fps decode) and recording (shutter/start, the documented
+    record-then-download model) are two independent GoPro Open GoPro API
+    calls that had never been validated running together. This scenario:
+      1. Repeats the Block 1 connect + manual-WiFi-join flow (precondition)
+      2. Reads GoPro media/list BEFORE recording
+      3. Starts recording (shutter/start) AND the live preview concurrently,
+         for the same ~15s window
+      4. Stops recording (shutter/stop)
+      5. Reads GoPro media/list AFTER recording, diffs against the before
+         snapshot
+
+    PASS criteria (gopro_recording_diag.json + gopro_stream_diag.json
+    grounded, not console-log-grounded):
+      1. shutterStartOK == true, recordingStateAfterStart == "recording"
+      2. shutterStopOK == true, recordingStateAfterStop == "stopped"
+      3. newFileCountDelta > 0 (a new file genuinely appeared on the SD card)
+      4. previewDecodeSuccesses > 0 (preview kept decoding while recording —
+         proves the two GoPro API paths don't interfere with each other)
+    """
+    import json
+    import time as _time
+    from pathlib import Path
+
+    report = ScenarioReport(name="gopro-combined-cycle-proof", passed=False)
+    session = create_session(ctx.api_base, ctx.instructor_token)
+    session_uuid = session["session_uuid"]
+    report.session_uuid = session_uuid
+    print(f"[combined-cycle] session created: {session_uuid}")
+
+    try:
+        # 1. Join + register + connect, same manual-join gate as Block 1/POC.
+        print("[combined-cycle] Joining iPhone as instructor...")
+        send_deep_link(ctx.iphone_udid, "join", session_uuid=session_uuid, role="instructor")
+        _time.sleep(5)
+
+        def iphone_registered():
+            s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
+            return next((d for d in s.get("devices", [])
+                         if d["device_role"] == "instructor_primary"), None)
+
+        instructor_dev = poll_until(
+            "iPhone registered as instructor_primary",
+            DEVICE_REGISTER_TIMEOUT_SECONDS, iphone_registered,
+        )
+        instructor_id = instructor_dev["id"]
+        report.step("iphone registered as instructor", True, device_id=instructor_id)
+
+        gopro_sd = register_device(
+            ctx.api_base, ctx.instructor_token, session_uuid,
+            device_role="auxiliary_camera", device_type="gopro",
+            device_name="GoPro HERO13 (combined-cycle)",
+            managed_by_device_id=instructor_id,
+        )
+        gopro_device_id = gopro_sd["id"]
+        report.step("gopro registered (managed by instructor)", True,
+                    gopro_device_id=gopro_device_id)
+        print(f"[combined-cycle] GoPro registered: session_device_id={gopro_device_id}")
+
+        print(f"[combined-cycle] Sending gopro-connect to iPhone (gopro_device_id={gopro_device_id})...")
+        print("[combined-cycle] Physical: ensure GoPro is on and in BLE pairing mode.")
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect deep link sent", True)
+        print("[combined-cycle] >>> GoPro Wi-Fi auto-join unavailable under current provisioning")
+        print("[combined-cycle] >>> Manual action required: iPhone Settings -> Wi-Fi -> select GoPro SSID")
+        print("[combined-cycle] >>> Return to LFA app after Wi-Fi connection")
+        print("[combined-cycle] >>> App will verify GoPro HTTP and signal backend ready")
+
+        _time.sleep(15)
+        send_deep_link(ctx.iphone_udid, "dump-snapshot")
+        print("[combined-cycle] >>> Check console/iphone_console.log just written above for "
+              "'gopro_connection: Csatlakozz: <SSID>' — that <SSID> is the GoPro WiFi network name.")
+
+        input(
+            "\n[combined-cycle] >>> Join the GoPro WiFi network on the iPhone now "
+            "(Settings -> Wi-Fi -> GoPro SSID), then return to the LFA app.\n"
+            "[combined-cycle] >>> Press ENTER here ONLY after the iPhone shows it is "
+            "connected to the GoPro WiFi network: "
+        )
+        print("[combined-cycle] Operator confirmed manual WiFi join — resending gopro-connect...")
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect re-sent after manual join", True)
+
+        print(f"[combined-cycle] Polling backend for GoPro device_status=ready "
+              f"(timeout={COMBINED_CYCLE_TIMEOUT_SECONDS}s)...")
+
+        def gopro_device_ready():
+            s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
+            for d in s.get("devices", []):
+                if d["id"] == gopro_device_id:
+                    status = d.get("device_status") or d.get("status")
+                    if status == "ready":
+                        return d
+            return None
+
+        try:
+            gp_ready = poll_until(
+                "GoPro device_status==ready on backend",
+                COMBINED_CYCLE_TIMEOUT_SECONDS, gopro_device_ready,
+            )
+            print(f"[combined-cycle] GoPro device_status=ready on backend "
+                  f"(device_id={gopro_device_id}, revision={gp_ready.get('revision')})")
+            report.step("gopro device_status==ready (backend-verified)", True,
+                        device_id=gopro_device_id, revision=gp_ready.get("revision"))
+        except ValidationError as e:
+            report.step("gopro device_status==ready (backend-verified)", False, error=str(e))
+            raise ValidationError(
+                f"GoPro never reached device_status=ready — this is the Block 1 "
+                f"precondition, not the combined cycle proof itself. {e}"
+            )
+
+        # 2-4. Trigger the combined recording+preview run on-device.
+        print(f"[combined-cycle] Sending gopro-combined-cycle-proof "
+              f"(duration_s={COMBINED_CYCLE_RECORD_DURATION_SECONDS})...")
+        send_deep_link(ctx.iphone_udid, "gopro-combined-cycle-proof",
+                        duration_s=str(COMBINED_CYCLE_RECORD_DURATION_SECONDS))
+        report.step("gopro-combined-cycle-proof deep link sent", True)
+        wait_s = COMBINED_CYCLE_RECORD_DURATION_SECONDS + COMBINED_CYCLE_SETTLE_SECONDS
+        print(f"[combined-cycle] Waiting {wait_s}s for on-device "
+              f"shutter/start + preview -> shutter/stop -> media/list diff to complete...")
+        _time.sleep(wait_s)
+
+        # 5. Pull gopro_recording_diag.json (authoritative for shutter/media)
+        #    and gopro_stream_diag.json (authoritative for the concurrent preview).
+        local_rec_diag = str(ctx.artifact.dir / "gopro_recording_diag.json")
+        if not copy_app_container_file(ctx.iphone_udid, "Documents/gopro_recording_diag.json", local_rec_diag):
+            report.step("gopro_recording_diag.json collected", False, error="copy failed")
+            raise ValidationError(
+                "gopro_recording_diag.json was not collectable — check that the iPhone "
+                "build includes GoProRecordingCycleProbe and that the app was on Session Lab."
+            )
+        try:
+            diag = json.loads(Path(local_rec_diag).read_text())
+        except (OSError, json.JSONDecodeError) as e:
+            report.step("gopro_recording_diag.json collected", False, error=f"unparseable: {e}")
+            raise ValidationError(f"gopro_recording_diag.json copied but unparseable: {e}")
+        report.step("gopro_recording_diag.json collected", True, **diag)
+        print(f"[combined-cycle] gopro_recording_diag.json: {json.dumps(diag, indent=2)}")
+
+        local_stream_diag = str(ctx.artifact.dir / "gopro_stream_diag.json")
+        copy_app_container_file(ctx.iphone_udid, "Documents/gopro_stream_diag.json", local_stream_diag)
+
+        # 6. Layer-by-layer PASS/FAIL.
+        start_ok = bool(diag.get("shutterStartOK")) and diag.get("recordingStateAfterStart") == "recording"
+        stop_ok = bool(diag.get("shutterStopOK")) and diag.get("recordingStateAfterStop") == "stopped"
+        new_file_ok = (diag.get("newFileCountDelta") or 0) > 0
+        preview_ok = (diag.get("previewDecodeSuccesses") or 0) > 0
+
+        report.step("[layer] shutter/start -> recording", start_ok,
+                    ok=diag.get("shutterStartOK"), state=diag.get("recordingStateAfterStart"))
+        report.step("[layer] shutter/stop -> stopped", stop_ok,
+                    ok=diag.get("shutterStopOK"), state=diag.get("recordingStateAfterStop"))
+        report.step("[layer] new media file on SD card", new_file_ok,
+                    before=diag.get("mediaCountBefore"), after=diag.get("mediaCountAfter"),
+                    new_files=diag.get("newFilesDetected"))
+        report.step("[layer] preview decoded concurrently", preview_ok,
+                    attempts=diag.get("previewDecodeAttempts"), successes=diag.get("previewDecodeSuccesses"))
+
+        print(f"[combined-cycle] LAYER BREAKDOWN: "
+              f"SHUTTER-START={'OK' if start_ok else 'FAIL'} | "
+              f"SHUTTER-STOP={'OK' if stop_ok else 'FAIL'} | "
+              f"NEW-FILE={'OK' if new_file_ok else 'FAIL'} "
+              f"(delta={diag.get('newFileCountDelta')}, files={diag.get('newFilesDetected')}) | "
+              f"PREVIEW-CONCURRENT={'OK' if preview_ok else 'FAIL'} "
+              f"({diag.get('previewDecodeSuccesses', 0)}/{diag.get('previewDecodeAttempts', 0)})")
+
+        if not start_ok:
+            raise ValidationError(
+                f"shutter/start did not result in recording state: "
+                f"shutterStartOK={diag.get('shutterStartOK')} "
+                f"recordingStateAfterStart={diag.get('recordingStateAfterStart')} "
+                f"error={diag.get('shutterStartError')}"
+            )
+        if not stop_ok:
+            raise ValidationError(
+                f"shutter/stop did not result in stopped state: "
+                f"shutterStopOK={diag.get('shutterStopOK')} "
+                f"recordingStateAfterStop={diag.get('recordingStateAfterStop')} "
+                f"error={diag.get('shutterStopError')}"
+            )
+        if not new_file_ok:
+            raise ValidationError(
+                f"No new file detected on the GoPro SD card after the recording "
+                f"window (mediaCountBefore={diag.get('mediaCountBefore')}, "
+                f"mediaCountAfter={diag.get('mediaCountAfter')}) — recording state "
+                f"transitioned correctly but no file evidence backs it up."
+            )
+        if not preview_ok:
+            raise ValidationError(
+                "Recording + new file confirmed, but the concurrent preview decoded "
+                "0 frames — recording and preview may interfere with each other on "
+                "this firmware/connection."
+            )
+
+        report.passed = True
+        print("[combined-cycle] === PASS: GoPro recorded a new file AND preview decoded frames concurrently ===")
+
+    except ValidationError as e:
+        report.error = str(e)
+        report.passed = False
+        print(f"[combined-cycle] === FAIL: {e} ===")
+    return report
+
+
 SCENARIOS = {
     "smoke": scenario_smoke,
     "multicycle": scenario_multicycle,
@@ -1288,5 +1500,6 @@ SCENARIOS = {
     "gopro-iphone-diagnostics": scenario_gopro_iphone_diagnostics,
     "gopro-network-routing-diag": scenario_gopro_network_routing_diag,
     "gopro-preview-poc": scenario_gopro_preview_poc,
+    "gopro-combined-cycle-proof": scenario_gopro_combined_cycle_proof,
     "tricamera-capture-skeleton-proof": scenario_tricamera_capture_skeleton_proof,
 }

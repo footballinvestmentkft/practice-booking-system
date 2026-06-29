@@ -47,6 +47,8 @@ enum MC1AutomationAction: Equatable {
     case networkRoutingDiag(label: String)
     // GoPro live preview POC (docs/GOPRO_LIVE_PREVIEW_POC_PLAN.md) — debug-only
     case goProPreviewPOC(durationSeconds: TimeInterval)
+    // GoPro Block 3: preview + recording combined cycle proof — debug-only
+    case goProCombinedCycleProof(durationSeconds: TimeInterval)
 }
 
 final class MC1AutomationBridge: ObservableObject {
@@ -142,6 +144,11 @@ final class MC1AutomationBridge: ObservableObject {
             let duration = value("duration_s").flatMap(Double.init) ?? 25
             print("[MC1-AUTO] received action=gopro-preview-poc duration_s=\(duration)")
             lastAction = .goProPreviewPOC(durationSeconds: duration)
+            return true
+        case "gopro-combined-cycle-proof":
+            let duration = value("duration_s").flatMap(Double.init) ?? 15
+            print("[MC1-AUTO] received action=gopro-combined-cycle-proof duration_s=\(duration)")
+            lastAction = .goProCombinedCycleProof(durationSeconds: duration)
             return true
         default:
             print("[MC1-AUTO] received unknown action=\(action)")
