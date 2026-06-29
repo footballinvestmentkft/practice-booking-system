@@ -329,6 +329,7 @@ struct MultiCameraLobbyView: View {
                     return (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? 0
                 }()
                 print("[CAPTURE-INFO] state=\(captureManager.state) outputFile=\(fileURL?.path ?? "nil") size=\(fileSize)")
+                CaptureMetadataDiagWriter.write(from: captureManager)
             case .networkRoutingDiag(let label):
                 Task { await BackendNetworkDiagnostics.probe(label: label) }
             case .goProPreviewPOC(let durationSeconds):
@@ -340,6 +341,11 @@ struct MultiCameraLobbyView: View {
                 Task {
                     let diag = await GoProRecordingCycleProbe.run(previewDurationSeconds: durationSeconds)
                     GoProRecordingDiagWriter.write(diag)
+                }
+            case .goProCameraStateProbe:
+                Task {
+                    let diag = await GoProCameraStateProbe.run()
+                    GoProCameraStateDiagWriter.write(diag)
                 }
             }
         }

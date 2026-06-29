@@ -26,6 +26,10 @@ final class SessionCaptureManager: NSObject, ObservableObject {
     @Published private(set) var state: CaptureState = .idle
     @Published private(set) var outputFileURL: URL?
     @Published private(set) var lastValidation: CaptureFileValidation?
+    /// Resolved at `prepare()` time by `CaptureFormatSelector` — .hd720 unless
+    /// the device's camera can't satisfy 1280x720@30fps, in which case .sd360.
+    /// nil until prepare() has run once.
+    @Published private(set) var activeCaptureProfile: CaptureProfile?
 
     private let permissionProvider: PermissionProvider
     private let fileStore: CaptureFileStore
@@ -111,9 +115,6 @@ final class SessionCaptureManager: NSObject, ObservableObject {
             log("prepare: beginConfiguration")
             self.captureSession.beginConfiguration()
 
-            log("prepare: sessionPreset = .high")
-            self.captureSession.sessionPreset = .high
-
             log("prepare: discovering rear camera...")
             let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
             log("prepare: rear camera = \(camera?.localizedName ?? "nil")")
@@ -122,6 +123,32 @@ final class SessionCaptureManager: NSObject, ObservableObject {
                 DispatchQueue.main.async { if !self.isTornDown { self.state = .failed("Rear kamera nem található") } }
                 return
             }
+
+            // Capture quality policy (docs/MEDIA_PIPELINE_PLAN.md): explicit
+            // 1280x720@30fps primary, 640x360@30fps fallback — NOT `.high`
+            // (device-default, unspecified resolution/fps).
+            var resolvedProfile: CaptureProfile?
+            if let selection = CaptureFormatSelector.selectRealFormat(for: camera) {
+                do {
+                    // .inputPriority tells AVCaptureSession to respect our explicit
+                    // activeFormat instead of silently overriding it per sessionPreset.
+                    self.captureSession.sessionPreset = .inputPriority
+                    try camera.lockForConfiguration()
+                    camera.activeFormat = selection.format
+                    camera.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
+                    camera.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
+                    camera.unlockForConfiguration()
+                    resolvedProfile = selection.profile
+                    log("prepare: capture profile = \(selection.profile.label)@30fps")
+                } catch {
+                    log("prepare: lockForConfiguration failed: \(error) — falling back to .high preset")
+                    self.captureSession.sessionPreset = .high
+                }
+            } else {
+                log("prepare: no 720p or 360p format available — falling back to .high preset")
+                self.captureSession.sessionPreset = .high
+            }
+            DispatchQueue.main.async { self.activeCaptureProfile = resolvedProfile }
 
             var videoInput: AVCaptureDeviceInput?
             do {
@@ -182,9 +209,13 @@ final class SessionCaptureManager: NSObject, ObservableObject {
             self.captureSession.addOutput(self.movieOutput)
             log("prepare: movie output added")
 
-            if let conn = self.movieOutput.connection(with: .video), conn.isVideoOrientationSupported {
-                conn.videoOrientation = .portrait
-                log("prepare: orientation set to portrait")
+            if let conn = self.movieOutput.connection(with: .video) {
+                // Explicit H.264 — broader cross-device/decoder compatibility than
+                // letting AVFoundation pick HEVC by device default; predictable for
+                // the eventual upload pipeline (docs/MEDIA_PIPELINE_PLAN.md).
+                self.movieOutput.setOutputSettings([AVVideoCodecKey: AVVideoCodecType.h264], for: conn)
+                OrientationMapper.applyCurrentOrientation(to: conn)
+                log("prepare: codec=h264, orientation=\(OrientationMapper.currentOrientationLabel)")
             }
 
             log("prepare: commitConfiguration")
@@ -292,6 +323,14 @@ final class SessionCaptureManager: NSObject, ObservableObject {
     // MARK: — Observers
 
     private func registerObservers() {
+        // A single orientation assignment at prepare() time is exactly the bug
+        // this replaces — re-apply on every rotation so portrait↔landscape
+        // mid-session (or simply starting in landscape) records correctly.
+        UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+        observers.append(NotificationCenter.default.addObserver(
+            forName: UIDevice.orientationDidChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.updateOrientation() })
+
         observers.append(NotificationCenter.default.addObserver(
             forName: .AVCaptureSessionWasInterrupted, object: captureSession, queue: .main
         ) { [weak self] _ in self?.handleInterruption() })
@@ -325,6 +364,12 @@ final class SessionCaptureManager: NSObject, ObservableObject {
     private func removeObservers() {
         observers.forEach { NotificationCenter.default.removeObserver($0) }
         observers.removeAll()
+        UIDevice.current.endGeneratingDeviceOrientationNotifications()
+    }
+
+    private func updateOrientation() {
+        guard let conn = movieOutput.connection(with: .video) else { return }
+        OrientationMapper.applyCurrentOrientation(to: conn)
     }
 
     private func handleInterruption() {
@@ -387,5 +432,52 @@ extension SessionCaptureManager: AVCaptureFileOutputRecordingDelegate {
                 state = .failed(reason)
             }
         }
+    }
+}
+
+// MARK: — Capture metadata diagnostics (Capture Quality + Metadata block)
+//
+// Structured, file-based evidence — idevicesyslog print() capture has
+// repeatedly proven unreliable on physical devices this session (see
+// gopro_diag.json / gopro_stream_diag.json history). capture-info now
+// writes the same fields it prints, to Documents/capture_metadata_diag.json,
+// pulled by the regression script via the established devicectl
+// appDataContainer copy pattern.
+enum CaptureMetadataDiagWriter {
+    static let fileName = "capture_metadata_diag.json"
+
+    @MainActor
+    static func write(from manager: SessionCaptureManager) {
+        var diag: [String: Any] = [
+            "timestamp": ISO8601DateFormatter().string(from: Date()),
+            "state": "\(manager.state)",
+            "outputFilePath": manager.outputFileURL?.path ?? NSNull(),
+            "requestedProfile": manager.activeCaptureProfile?.label ?? NSNull(),
+            "requestedFPS": manager.activeCaptureProfile?.targetFPS ?? NSNull(),
+        ]
+        if let url = manager.outputFileURL {
+            let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? 0
+            diag["fileSizeBytes"] = size ?? 0
+        }
+        if case .valid(let duration, let resolution, let orientation, let hasAudio, _, let fps, let codec) = manager.lastValidation {
+            diag["actualDurationSeconds"] = duration
+            diag["actualResolution"] = "\(Int(resolution.width))x\(Int(resolution.height))"
+            diag["actualOrientation"] = orientation
+            diag["actualHasAudio"] = hasAudio
+            diag["actualFPS"] = fps
+            diag["actualCodec"] = codec
+        } else if case .invalid(let reason) = manager.lastValidation {
+            diag["validationError"] = reason
+        }
+        // Upload pipeline does not exist yet (docs/MEDIA_PIPELINE_PLAN.md) — explicit
+        // placeholder so the field is never silently absent from the diag schema.
+        diag["uploadStatus"] = "not_implemented"
+        diag["backendMediaId"] = NSNull()
+
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+              JSONSerialization.isValidJSONObject(diag),
+              let data = try? JSONSerialization.data(withJSONObject: diag, options: [.prettyPrinted]) else { return }
+        try? data.write(to: docs.appendingPathComponent(fileName), options: .atomic)
+        print("[CAPTURE-METADATA] wrote \(fileName): \(diag)")
     }
 }

@@ -22,9 +22,7 @@ struct CapturePreviewLayer: UIViewRepresentable {
 
         override func layoutSubviews() {
             super.layoutSubviews()
-            if let connection = previewLayer.connection, connection.isVideoOrientationSupported {
-                connection.videoOrientation = .portrait
-            }
+            OrientationMapper.applyCurrentOrientation(to: previewLayer.connection)
         }
     }
 }

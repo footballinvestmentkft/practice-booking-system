@@ -27,9 +27,10 @@ final class MockCaptureFileStore: CaptureFileStore {
     var availableStorage: UInt64 = 500_000_000
     var files: [URL: UInt64] = [:]
     var validationResult: CaptureFileValidation = .valid(
-        duration: 10.0, resolution: CGSize(width: 1920, height: 1080),
+        duration: 10.0, resolution: CGSize(width: 1280, height: 720),
         displayOrientation: "portrait", hasAudio: true,
-        transform: "a=0.0 b=1.0 c=-1.0 d=0.0 tx=1080.0 ty=0.0"
+        transform: "a=0.0 b=1.0 c=-1.0 d=0.0 tx=1080.0 ty=0.0",
+        fps: 30.0, codec: "hevc"
     )
     var removedURLs: [URL] = []
     private var dirCreated = false
@@ -147,9 +148,10 @@ final class SessionCaptureManagerTests: XCTestCase {
     func test_SC_08_delegate_finish_valid() async {
         let (mgr, _, fs) = makeManager()
         fs.validationResult = .valid(
-            duration: 10.0, resolution: CGSize(width: 1920, height: 1080),
+            duration: 10.0, resolution: CGSize(width: 1280, height: 720),
             displayOrientation: "portrait", hasAudio: true,
-            transform: "a=0.0 b=1.0 c=-1.0 d=0.0 tx=1080.0 ty=0.0"
+            transform: "a=0.0 b=1.0 c=-1.0 d=0.0 tx=1080.0 ty=0.0",
+            fps: 30.0, codec: "hevc"
         )
         let testURL = fs.outputURL(sessionUUID: "test", deviceId: 0)
         // Simulate delegate callback directly
@@ -164,11 +166,13 @@ final class SessionCaptureManagerTests: XCTestCase {
         if case .completed(let url) = mgr.state {
             XCTAssertEqual(url, testURL)
             XCTAssertNotNil(mgr.lastValidation)
-            if case .valid(let dur, let res, let orient, let audio, _) = mgr.lastValidation {
+            if case .valid(let dur, let res, let orient, let audio, _, let fps, let codec) = mgr.lastValidation {
                 XCTAssertEqual(dur, 10.0)
-                XCTAssertEqual(res, CGSize(width: 1920, height: 1080))
+                XCTAssertEqual(res, CGSize(width: 1280, height: 720))
                 XCTAssertEqual(orient, "portrait")
                 XCTAssertTrue(audio)
+                XCTAssertEqual(fps, 30.0)
+                XCTAssertEqual(codec, "hevc")
             }
         } else {
             XCTFail("Expected .completed, got \(mgr.state)")

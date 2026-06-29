@@ -121,6 +121,13 @@ struct GoProConnectionDebugView: View {
                 }
                 .disabled(streamProbe.isRunning)
                 .foregroundColor(.blue)
+                Button("Read camera/state (raw, no settings change)") {
+                    Task {
+                        let diag = await GoProCameraStateProbe.run()
+                        GoProCameraStateDiagWriter.write(diag)
+                    }
+                }
+                .foregroundColor(.blue)
             default:
                 Button("Cancel") {
                     manager.cancel()

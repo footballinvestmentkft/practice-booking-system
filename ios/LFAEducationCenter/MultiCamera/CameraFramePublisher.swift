@@ -15,12 +15,19 @@ final class CameraFramePublisher: NSObject, ObservableObject {
     private nonisolated(unsafe) var lastSentTime: CFTimeInterval = 0
     private var publishCount = 0
     private var fpsWindowStart = Date()
+    private var orientationObserver: NSObjectProtocol?
 
     var previewSession: AVCaptureSession { captureSession }
 
+    deinit {
+        if let token = orientationObserver {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
+
     func configure() {
         captureSession.beginConfiguration()
-        captureSession.sessionPreset = .medium
+        captureSession.sessionPreset = .medium // preview profile — intentionally separate/lower-fidelity than archival recording
 
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
               let input = try? AVCaptureDeviceInput(device: camera),
@@ -42,12 +49,19 @@ final class CameraFramePublisher: NSObject, ObservableObject {
         }
         captureSession.addOutput(videoOutput)
 
-        if let connection = videoOutput.connection(with: .video), connection.isVideoOrientationSupported {
-            connection.videoOrientation = .portrait
-        }
+        OrientationMapper.applyCurrentOrientation(to: videoOutput.connection(with: .video))
 
         captureSession.commitConfiguration()
-        print("[FramePublisher] configured: preset=medium, target=\(Int(1.0/Self.targetInterval))fps")
+        print("[FramePublisher] configured: preset=medium, target=\(Int(1.0/Self.targetInterval))fps, "
+              + "orientation=\(OrientationMapper.currentOrientationLabel)")
+
+        UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+        orientationObserver = NotificationCenter.default.addObserver(
+            forName: UIDevice.orientationDidChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            OrientationMapper.applyCurrentOrientation(to: self.videoOutput.connection(with: .video))
+        }
     }
 
     func startCapture(streamService: CameraStreamService) {

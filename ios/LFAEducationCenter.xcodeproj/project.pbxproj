@@ -16,6 +16,8 @@
 		6416AA6D49E0959286DD9D4F /* SkeletonProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D4B8AF7A77B55FB95FCA4B /* SkeletonProcessor.swift */; };
 		794C134BE77C45D7A6CAE38E /* BackendNetworkDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC63267DAB6A44C9916FC7D6 /* BackendNetworkDiagnostics.swift */; };
 		97F321C32E30697A29A7BD4E /* GoProStreamProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84746E41ADCE17E02CA8A9BA /* GoProStreamProbe.swift */; };
+		EE17B48457527F7794F443C8 /* CaptureFormatSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF129189081C742189A7992 /* CaptureFormatSelector.swift */; };
+		454C32E7DA3BE12D732D0262 /* OrientationMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */; };
 		686220A0F4100D89AC13A181 /* RecordingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D54BAB82A7CBBC4E3EC9A67 /* RecordingOverlay.swift */; };
 		7FC19EF38DE99E82AE19FBE0 /* JugglingVideoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */; };
 		87BED4D6C4B4C29E7F7DA470 /* CapturePreviewLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65C2BB6FD929990D04B3B473 /* CapturePreviewLayer.swift */; };
@@ -244,6 +246,8 @@
 		MC500004000000000000001 /* MultiCameraSessionContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC500003000000000000001 /* MultiCameraSessionContractTests.swift */; };
 		MC500004000000000000002 /* session_full.json in Resources */ = {isa = PBXBuildFile; fileRef = MC500003000000000000002 /* session_full.json */; };
 		MC500004000000000000003 /* SessionCaptureManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MC500003000000000000003 /* SessionCaptureManagerTests.swift */; };
+		8D3C9B9F25E5C9CA90F53199 /* CaptureFormatSelectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E20204260D01DB3359F5EA /* CaptureFormatSelectorTests.swift */; };
+		118981C49C4F6AA2B02E51DD /* OrientationMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C24984DD07DC19535579B38 /* OrientationMapperTests.swift */; };
 		OR000004000000000000001 /* CaptureController.swift in Sources */ = {isa = PBXBuildFile; fileRef = OR000003000000000000001 /* CaptureController.swift */; };
 		OR000004000000000000002 /* CycleIdempotencyKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = OR000003000000000000002 /* CycleIdempotencyKey.swift */; };
 		OR000004000000000000003 /* CycleCaptureOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = OR000003000000000000003 /* CycleCaptureOrchestrator.swift */; };
@@ -290,6 +294,8 @@
 		61D4B8AF7A77B55FB95FCA4B /* SkeletonProcessor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkeletonProcessor.swift; sourceTree = "<group>"; };
 		EC63267DAB6A44C9916FC7D6 /* BackendNetworkDiagnostics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackendNetworkDiagnostics.swift; sourceTree = "<group>"; };
 		84746E41ADCE17E02CA8A9BA /* GoProStreamProbe.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GoProStreamProbe.swift; sourceTree = "<group>"; };
+		CEF129189081C742189A7992 /* CaptureFormatSelector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CaptureFormatSelector.swift; sourceTree = "<group>"; };
+		B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrientationMapper.swift; sourceTree = "<group>"; };
 		65C2BB6FD929990D04B3B473 /* CapturePreviewLayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CapturePreviewLayer.swift; sourceTree = "<group>"; };
 		78224C0D4526FCB6A5998DE2 /* CameraFramePublisher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CameraFramePublisher.swift; sourceTree = "<group>"; };
 		7923EAF385B2497998AA5258 /* MultiCameraSessionViewModelClockSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraSessionViewModelClockSyncTests.swift; sourceTree = "<group>"; };
@@ -525,6 +531,8 @@
 		MC500003000000000000001 /* MultiCameraSessionContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraSessionContractTests.swift; sourceTree = "<group>"; };
 		MC500003000000000000002 /* session_full.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = session_full.json; path = ../tests/fixtures/multicamera/session_full.json; sourceTree = SOURCE_ROOT; };
 		MC500003000000000000003 /* SessionCaptureManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCaptureManagerTests.swift; sourceTree = "<group>"; };
+		42E20204260D01DB3359F5EA /* CaptureFormatSelectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFormatSelectorTests.swift; sourceTree = "<group>"; };
+		8C24984DD07DC19535579B38 /* OrientationMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrientationMapperTests.swift; sourceTree = "<group>"; };
 		OR000003000000000000001 /* CaptureController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureController.swift; sourceTree = "<group>"; };
 		OR000003000000000000002 /* CycleIdempotencyKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CycleIdempotencyKey.swift; sourceTree = "<group>"; };
 		OR000003000000000000003 /* CycleCaptureOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CycleCaptureOrchestrator.swift; sourceTree = "<group>"; };
@@ -1047,6 +1055,8 @@
 				61D4B8AF7A77B55FB95FCA4B /* SkeletonProcessor.swift */,
 				EC63267DAB6A44C9916FC7D6 /* BackendNetworkDiagnostics.swift */,
 				84746E41ADCE17E02CA8A9BA /* GoProStreamProbe.swift */,
+				CEF129189081C742189A7992 /* CaptureFormatSelector.swift */,
+				B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */,
 			);
 			path = MultiCamera;
 			sourceTree = "<group>";
@@ -1057,6 +1067,8 @@
 				GP500003000000000000001 /* GoProConnectionStateMachineTests.swift */,
 				MC500003000000000000001 /* MultiCameraSessionContractTests.swift */,
 				MC500003000000000000003 /* SessionCaptureManagerTests.swift */,
+				42E20204260D01DB3359F5EA /* CaptureFormatSelectorTests.swift */,
+				8C24984DD07DC19535579B38 /* OrientationMapperTests.swift */,
 				DI500003000000000000001 /* DeviceIdentityTests.swift */,
 				CS500003000000000000001 /* ClockSyncServiceTests.swift */,
 				7923EAF385B2497998AA5258 /* MultiCameraSessionViewModelClockSyncTests.swift */,
@@ -1396,6 +1408,8 @@
 				6416AA6D49E0959286DD9D4F /* SkeletonProcessor.swift in Sources */,
 				794C134BE77C45D7A6CAE38E /* BackendNetworkDiagnostics.swift in Sources */,
 				97F321C32E30697A29A7BD4E /* GoProStreamProbe.swift in Sources */,
+				EE17B48457527F7794F443C8 /* CaptureFormatSelector.swift in Sources */,
+				454C32E7DA3BE12D732D0262 /* OrientationMapper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1453,6 +1467,8 @@
 				GP500004000000000000001 /* GoProConnectionStateMachineTests.swift in Sources */,
 				MC500004000000000000001 /* MultiCameraSessionContractTests.swift in Sources */,
 				MC500004000000000000003 /* SessionCaptureManagerTests.swift in Sources */,
+				8D3C9B9F25E5C9CA90F53199 /* CaptureFormatSelectorTests.swift in Sources */,
+				118981C49C4F6AA2B02E51DD /* OrientationMapperTests.swift in Sources */,
 				DI500004000000000000001 /* DeviceIdentityTests.swift in Sources */,
 				CS500004000000000000001 /* ClockSyncServiceTests.swift in Sources */,
 				942FE944E7544114B645BB37 /* MultiCameraSessionViewModelClockSyncTests.swift in Sources */,

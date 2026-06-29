@@ -29,9 +29,11 @@ struct SessionCaptureDebugView: View {
                 if let v = manager.lastValidation {
                     Section("Validation") {
                         switch v {
-                        case .valid(let dur, let res, let orient, let audio, let transform):
+                        case .valid(let dur, let res, let orient, let audio, let transform, let fps, let codec):
                             Text("Duration: \(dur, specifier: "%.1f")s")
                             Text("Resolution: \(Int(res.width))×\(Int(res.height))")
+                            Text("FPS: \(fps, specifier: "%.0f")")
+                            Text("Codec: \(codec)")
                             Text("Orientation: \(orient)")
                             Text("Audio: \(audio ? "Yes" : "No")")
                             Text("Transform: \(transform)").font(.system(size: 9, design: .monospaced))
