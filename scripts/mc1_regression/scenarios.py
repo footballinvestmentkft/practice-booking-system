@@ -1881,6 +1881,175 @@ def scenario_gopro_preview_aspect_probe(ctx: ScenarioContext) -> ScenarioReport:
     return report
 
 
+PRESET_VALIDATION_TIMEOUT_SECONDS = 180
+PRESET_VALIDATION_WAIT_SECONDS = 90  # writes (~9s) + verify + recording proof (15s preview+settle) + margin
+
+
+def scenario_gopro_preset_write_validation(ctx: ScenarioContext) -> ScenarioReport:
+    """GoPro 8:7 Recording Preset Read/Write Validation — the first GoPro
+    scenario that actually WRITES a camera setting (VideoAspectRatio=8:7,
+    VideoResolution=4K_8:7_V2 or 5.3K_8:7_V2 fallback, FPS=30), with
+    MANDATORY rollback on any failure at any step (write/verify/recording
+    proof/preview-after-write).
+
+    PASS criteria — STRICT, per explicit product requirement:
+      Only outcome=="applied_full_chain_pass" in gopro_preset_final_diag.json
+      counts as PASS. ANY rollback-triggered path (outcome starting with
+      "handled_fail_") is a HANDLED FAIL, not PASS, even though the camera
+      was safely restored. ANY rollback FAILURE (outcome starting with
+      "critical_fail_") is reported as CRITICAL FAIL — the camera may be in
+      an unknown state and needs manual verification.
+
+    Pulls 6 artifacts: gopro_preset_before_diag.json, gopro_preset_write_diag.json,
+    gopro_preset_after_diag.json, gopro_recording_diag.json,
+    gopro_preview_aspect_diag.json, gopro_preset_final_diag.json.
+    """
+    import json
+    import time as _time
+    from pathlib import Path
+
+    report = ScenarioReport(name="gopro-preset-write-validation", passed=False)
+    session = create_session(ctx.api_base, ctx.instructor_token)
+    session_uuid = session["session_uuid"]
+    report.session_uuid = session_uuid
+    print(f"[preset-validation] session created: {session_uuid}")
+
+    try:
+        print("[preset-validation] Joining iPhone as instructor...")
+        send_deep_link(ctx.iphone_udid, "join", session_uuid=session_uuid, role="instructor")
+        _time.sleep(5)
+
+        def iphone_registered():
+            s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
+            return next((d for d in s.get("devices", [])
+                         if d["device_role"] == "instructor_primary"), None)
+
+        instructor_dev = poll_until(
+            "iPhone registered as instructor_primary",
+            DEVICE_REGISTER_TIMEOUT_SECONDS, iphone_registered,
+        )
+        instructor_id = instructor_dev["id"]
+        report.step("iphone registered as instructor", True, device_id=instructor_id)
+
+        gopro_sd = register_device(
+            ctx.api_base, ctx.instructor_token, session_uuid,
+            device_role="auxiliary_camera", device_type="gopro",
+            device_name="GoPro HERO13 (preset-write-validation)",
+            managed_by_device_id=instructor_id,
+        )
+        gopro_device_id = gopro_sd["id"]
+        report.step("gopro registered (managed by instructor)", True,
+                    gopro_device_id=gopro_device_id)
+
+        print(f"[preset-validation] Sending gopro-connect to iPhone (gopro_device_id={gopro_device_id})...")
+        print("[preset-validation] Physical: ensure GoPro is on and in BLE pairing mode.")
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect deep link sent", True)
+        print("[preset-validation] >>> GoPro Wi-Fi auto-join unavailable under current provisioning")
+        print("[preset-validation] >>> Manual action required: iPhone Settings -> Wi-Fi -> select GoPro SSID")
+        print("[preset-validation] >>> Return to LFA app after Wi-Fi connection")
+
+        _time.sleep(15)
+        send_deep_link(ctx.iphone_udid, "dump-snapshot")
+        print("[preset-validation] >>> Check console/iphone_console.log for "
+              "'gopro_connection: Csatlakozz: <SSID>' — that <SSID> is the GoPro WiFi network name.")
+
+        input(
+            "\n[preset-validation] >>> Join the GoPro WiFi network on the iPhone now "
+            "(Settings -> Wi-Fi -> GoPro SSID), then return to the LFA app.\n"
+            "[preset-validation] >>> Press ENTER here ONLY after the iPhone shows it is "
+            "connected to the GoPro WiFi network: "
+        )
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect re-sent after manual join", True)
+
+        def gopro_device_ready():
+            s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
+            for d in s.get("devices", []):
+                if d["id"] == gopro_device_id:
+                    status = d.get("device_status") or d.get("status")
+                    if status == "ready":
+                        return d
+            return None
+
+        try:
+            poll_until("GoPro device_status==ready on backend",
+                       PRESET_VALIDATION_TIMEOUT_SECONDS, gopro_device_ready)
+            report.step("gopro device_status==ready (backend-verified)", True)
+        except ValidationError as e:
+            report.step("gopro device_status==ready (backend-verified)", False, error=str(e))
+            raise ValidationError(f"GoPro never reached device_status=ready. {e}")
+
+        print("[preset-validation] >>> WRITE OPERATION STARTING — this will change GoPro "
+              "settings (VideoAspectRatio, VideoResolution, possibly FPS), with mandatory "
+              "rollback on any failure. Do not touch the camera during this run.")
+        send_deep_link(ctx.iphone_udid, "gopro-preset-write-validation")
+        report.step("gopro-preset-write-validation deep link sent", True)
+        print(f"[preset-validation] Waiting {PRESET_VALIDATION_WAIT_SECONDS}s for the full "
+              f"read -> write -> verify -> recording-proof -> preview-after-write -> "
+              f"(rollback if needed) chain to complete...")
+        _time.sleep(PRESET_VALIDATION_WAIT_SECONDS)
+
+        artifacts = {
+            "before": "gopro_preset_before_diag.json",
+            "write": "gopro_preset_write_diag.json",
+            "after": "gopro_preset_after_diag.json",
+            "recording": "gopro_recording_diag.json",
+            "preview_aspect": "gopro_preview_aspect_diag.json",
+            "final": "gopro_preset_final_diag.json",
+        }
+        collected: dict[str, dict] = {}
+        for label, filename in artifacts.items():
+            local_path = str(ctx.artifact.dir / filename)
+            ok = copy_app_container_file(ctx.iphone_udid, f"Documents/{filename}", local_path)
+            report.step(f"[artifact] {filename} collected", ok)
+            if ok:
+                try:
+                    collected[label] = json.loads(Path(local_path).read_text())
+                except (OSError, json.JSONDecodeError) as e:
+                    print(f"[preset-validation] {filename} copied but unparseable: {e}")
+
+        if "final" not in collected:
+            raise ValidationError(
+                "gopro_preset_final_diag.json was not collectable — the write chain may not "
+                "have completed, or the deep link never reached MultiCameraLobbyView. "
+                "CRITICAL: physically check the GoPro's current settings before reusing it."
+            )
+
+        final = collected["final"]
+        outcome = final.get("outcome", "unknown")
+        print(f"[preset-validation] gopro_preset_final_diag.json outcome={outcome}")
+        print(f"[preset-validation] FULL final diag: {json.dumps(final, indent=2)}")
+
+        report.step("[outcome] final diag outcome", outcome == "applied_full_chain_pass",
+                    outcome=outcome, rollbackAttempted=final.get("rollbackAttempted"),
+                    rollbackConfirmed=final.get("rollbackConfirmed"))
+
+        if outcome == "applied_full_chain_pass":
+            print("[preset-validation] === PASS: 8:7 preset applied, verified, recorded, "
+                  "and preview measured (full chain, no rollback needed) ===")
+            report.passed = True
+        elif outcome.startswith("handled_fail_"):
+            raise ValidationError(
+                f"HANDLED FAIL: write chain did not complete, but rollback was CONFIRMED "
+                f"(camera restored to original settings). outcome={outcome}"
+            )
+        elif outcome.startswith("critical_fail_"):
+            raise ValidationError(
+                f"*** CRITICAL FAIL *** rollback did NOT confirm — the GoPro may be in an "
+                f"UNKNOWN STATE. Physically check camera settings before any further use. "
+                f"outcome={outcome} afterRollbackState={final.get('afterRollbackState')}"
+            )
+        else:
+            raise ValidationError(f"Unrecognized outcome value: {outcome}")
+
+    except ValidationError as e:
+        report.error = str(e)
+        report.passed = False
+        print(f"[preset-validation] === FAIL: {e} ===")
+    return report
+
+
 SCENARIOS = {
     "smoke": scenario_smoke,
     "multicycle": scenario_multicycle,
@@ -1893,5 +2062,6 @@ SCENARIOS = {
     "gopro-combined-cycle-proof": scenario_gopro_combined_cycle_proof,
     "gopro-camera-state-probe": scenario_gopro_camera_state_probe,
     "gopro-preview-aspect-probe": scenario_gopro_preview_aspect_probe,
+    "gopro-preset-write-validation": scenario_gopro_preset_write_validation,
     "tricamera-capture-skeleton-proof": scenario_tricamera_capture_skeleton_proof,
 }

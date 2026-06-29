@@ -54,6 +54,9 @@ enum MC1AutomationAction: Equatable {
     // GoPro Preview Aspect Probe: starts live preview, measures actual decoded
     // width/height/aspect — distinct from goProCameraStateProbe (no preview there)
     case goProPreviewAspectProbe(durationSeconds: TimeInterval)
+    // GoPro 8:7 Recording Preset Read/Write Validation — the first GoPro POC
+    // that actually WRITES a setting, with mandatory rollback on any failure.
+    case goProPresetWriteValidation
 }
 
 final class MC1AutomationBridge: ObservableObject {
@@ -163,6 +166,10 @@ final class MC1AutomationBridge: ObservableObject {
             let duration = value("duration_s").flatMap(Double.init) ?? 20
             print("[MC1-AUTO] received action=gopro-preview-aspect-probe duration_s=\(duration)")
             lastAction = .goProPreviewAspectProbe(durationSeconds: duration)
+            return true
+        case "gopro-preset-write-validation":
+            print("[MC1-AUTO] received action=gopro-preset-write-validation")
+            lastAction = .goProPresetWriteValidation
             return true
         default:
             print("[MC1-AUTO] received unknown action=\(action)")

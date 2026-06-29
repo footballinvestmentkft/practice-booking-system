@@ -354,6 +354,11 @@ struct MultiCameraLobbyView: View {
                     GoProStreamDiagWriter.write(diag)
                     GoProPreviewAspectDiagWriter.write(from: diag)
                 }
+            case .goProPresetWriteValidation:
+                Task {
+                    print("[GOPRO-PRESET-POC] starting 8:7 preset read/write/verify/recording/preview chain...")
+                    _ = await GoProRecordingPresetProbe.run()
+                }
             }
         }
         .sheet(isPresented: $showQRScanner) {

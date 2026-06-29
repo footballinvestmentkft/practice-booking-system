@@ -16,6 +16,7 @@
 		6416AA6D49E0959286DD9D4F /* SkeletonProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D4B8AF7A77B55FB95FCA4B /* SkeletonProcessor.swift */; };
 		794C134BE77C45D7A6CAE38E /* BackendNetworkDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC63267DAB6A44C9916FC7D6 /* BackendNetworkDiagnostics.swift */; };
 		97F321C32E30697A29A7BD4E /* GoProStreamProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84746E41ADCE17E02CA8A9BA /* GoProStreamProbe.swift */; };
+		8DB0F2D2C1774ABF0AB3C7E8 /* GoProRecordingPresetProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4021078EF983D5389C9A3A30 /* GoProRecordingPresetProbe.swift */; };
 		EE17B48457527F7794F443C8 /* CaptureFormatSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF129189081C742189A7992 /* CaptureFormatSelector.swift */; };
 		454C32E7DA3BE12D732D0262 /* OrientationMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */; };
 		686220A0F4100D89AC13A181 /* RecordingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D54BAB82A7CBBC4E3EC9A67 /* RecordingOverlay.swift */; };
@@ -294,6 +295,7 @@
 		61D4B8AF7A77B55FB95FCA4B /* SkeletonProcessor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkeletonProcessor.swift; sourceTree = "<group>"; };
 		EC63267DAB6A44C9916FC7D6 /* BackendNetworkDiagnostics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackendNetworkDiagnostics.swift; sourceTree = "<group>"; };
 		84746E41ADCE17E02CA8A9BA /* GoProStreamProbe.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GoProStreamProbe.swift; sourceTree = "<group>"; };
+		4021078EF983D5389C9A3A30 /* GoProRecordingPresetProbe.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GoProRecordingPresetProbe.swift; sourceTree = "<group>"; };
 		CEF129189081C742189A7992 /* CaptureFormatSelector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CaptureFormatSelector.swift; sourceTree = "<group>"; };
 		B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrientationMapper.swift; sourceTree = "<group>"; };
 		65C2BB6FD929990D04B3B473 /* CapturePreviewLayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CapturePreviewLayer.swift; sourceTree = "<group>"; };
@@ -1055,6 +1057,7 @@
 				61D4B8AF7A77B55FB95FCA4B /* SkeletonProcessor.swift */,
 				EC63267DAB6A44C9916FC7D6 /* BackendNetworkDiagnostics.swift */,
 				84746E41ADCE17E02CA8A9BA /* GoProStreamProbe.swift */,
+				4021078EF983D5389C9A3A30 /* GoProRecordingPresetProbe.swift */,
 				CEF129189081C742189A7992 /* CaptureFormatSelector.swift */,
 				B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */,
 			);
@@ -1408,6 +1411,7 @@
 				6416AA6D49E0959286DD9D4F /* SkeletonProcessor.swift in Sources */,
 				794C134BE77C45D7A6CAE38E /* BackendNetworkDiagnostics.swift in Sources */,
 				97F321C32E30697A29A7BD4E /* GoProStreamProbe.swift in Sources */,
+				8DB0F2D2C1774ABF0AB3C7E8 /* GoProRecordingPresetProbe.swift in Sources */,
 				EE17B48457527F7794F443C8 /* CaptureFormatSelector.swift in Sources */,
 				454C32E7DA3BE12D732D0262 /* OrientationMapper.swift in Sources */,
 			);
