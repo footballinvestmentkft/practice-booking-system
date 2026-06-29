@@ -16,22 +16,32 @@ name: E2E Load Gate (Phase 6.3 — 50 VUs / 10 min)
 #   GATE-4  DB metrics: slow_queries_total + invariant_violations_total = 0
 #   GATE-5  LOAD_REPORT_{YYYYMMDD}.md artifact uploaded
 #
-# Required branch protection (GitHub → Settings → Branches → main):
-#   - Require status checks: load-smoke ✅
-#   - Require branches to be up to date: ✅
+# NOTE (2026-06-29): this workflow is NOT in the actual main branch protection
+# required-checks list (verified via GitHub API — only "Unit Tests (Baseline...)"
+# and "MC1 ORCH-2B..." are required). The comment below describing it as a
+# mandatory merge gate is aspirational/stale documentation, not configured
+# protection. Moved off push/pull_request to nightly + manual trigger only —
+# this was consuming ~1600 CI minutes per 9-day window running on every push
+# and PR regardless of whether load-sensitive code changed.
+#
+# Previously documented (not actually enforced) branch protection intent:
+#   - Require status checks: load-smoke
+#   - Require branches to be up to date
 # ──────────────────────────────────────────────────────────────────────────────
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+  schedule:
+    - cron: '0 3 * * *'  # nightly at 03:00 UTC
   workflow_dispatch:
     inputs:
       peak_vus:
         description: 'Peak VU count override (default: 50 for CI)'
         required: false
         default: '50'
+
+concurrency:
+  group: e2e-load-gate-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   load-smoke:

@@ -35,6 +35,10 @@ on:
         required: false
         default: 'manual verification'
 
+concurrency:
+  group: al-difficulty-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   al-difficulty-progression:
     name: AL Difficulty Progression (schema + ordering + dedup + template)

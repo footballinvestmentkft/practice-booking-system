@@ -50,6 +50,10 @@ on:
         required: false
         default: 'manual verification'
 
+concurrency:
+  group: card-export-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   card-export-gate:
     name: Card Export Gate (PNG export + Playwright smoke)

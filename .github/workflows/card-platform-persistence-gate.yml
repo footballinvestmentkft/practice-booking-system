@@ -46,6 +46,10 @@ on:
         required: false
         default: 'manual verification'
 
+concurrency:
+  group: card-platform-persistence-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   card-platform-persistence:
     name: Card Platform Persistence (save/load pipeline — CP-01..08)

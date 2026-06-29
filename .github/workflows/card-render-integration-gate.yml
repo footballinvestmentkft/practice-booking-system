@@ -42,6 +42,10 @@ on:
         required: false
         default: 'manual verification'
 
+concurrency:
+  group: card-render-integration-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   card-render-integration:
     name: Card Render Integration (theme CSS vars + variant routing + fallback)

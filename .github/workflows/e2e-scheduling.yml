@@ -53,6 +53,10 @@ on:
         required: false
         default: 'manual verification'
 
+concurrency:
+  group: e2e-scheduling-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sched-regression:
     runs-on: ubuntu-latest

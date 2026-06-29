@@ -39,6 +39,10 @@ on:
         required: false
         default: 'manual verification'
 
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ios-build-and-test:
     name: iOS Build + Unit Tests (iOS 15 min-target)

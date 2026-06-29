@@ -46,6 +46,10 @@ on:
         required: false
         default: 'manual verification'
 
+concurrency:
+  group: performance-regression-gate-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   performance-query-budget:
     name: Query Budget + ORM Regression (≤15 queries, no SELECT *)

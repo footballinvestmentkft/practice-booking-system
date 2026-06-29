@@ -40,6 +40,10 @@ on:
         required: false
         default: 'manual verification'
 
+concurrency:
+  group: card-unlock-apply-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   card-unlock-apply:
     name: Card Unlock+Apply (unlock→active, idempotent, no split-brain)

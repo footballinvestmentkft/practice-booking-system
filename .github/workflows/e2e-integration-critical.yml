@@ -11,6 +11,10 @@ on:
       - 'tests/e2e/integration_critical/**'
       - '.github/workflows/e2e-integration-critical.yml'
 
+concurrency:
+  group: e2e-integration-critical-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   integration-critical-suite:
     runs-on: ubuntu-latest
