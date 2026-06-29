@@ -9,7 +9,7 @@
 #
 # Usage:
 #   IPAD_UDID=... IPHONE_UDID=... API_BASE=... \
-#   ./scripts/run_mc1_regression.sh [--scenario smoke|multicycle|retry|finalization|all] [--cycles N]
+#   ./scripts/run_mc1_regression.sh [--scenario smoke|multicycle|retry|finalization|gopro-network-routing-diag|all] [--cycles N]
 #
 # Credentials (email + password) are prompted interactively — never stored in
 # env vars, files, or logs. Passwords are read via Python getpass (no echo).
@@ -17,6 +17,14 @@
 # Default --scenario is "all" (currently: smoke, multicycle; retry and
 # finalization are registered but report SKIPPED until ORCH-7/ORCH-8 land).
 # Default --cycles is 3 (only affects the multicycle scenario).
+#
+# gopro-network-routing-diag (MC1 Block 1) requires a manual operator step:
+# in-app GoPro WiFi auto-join is unavailable under the current personal/free
+# Apple Developer team (HotspotConfiguration entitlement not provisionable),
+# so the operator must join the GoPro WiFi network by hand from iPhone
+# Settings > Wi-Fi when the script prompts for it. This is a
+# physical-validation workaround, not the final product UX — see
+# README_mc1_regression.md "Block 1: GoPro WiFi manual join workaround".
 #
 # Find device UDIDs with: xcrun devicectl list devices
 # Output: scripts/mc1_regression_runs/<timestamp>_<scenario>/

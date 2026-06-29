@@ -44,9 +44,70 @@ PLAYER_PASSWORD=<player-password> \
 | `multicycle` | implemented | N cycles (default 3) in one session — same assertions as `smoke`, repeated, catching cross-cycle regressions (e.g. cycleIndex tracking). |
 | `retry` | **registered, not implemented** | Orchestrator retry without full session reset — blocked on ORCH-7, which doesn't exist yet. Running it reports SKIPPED. |
 | `finalization` | **registered, not implemented** | Session finalize flow — blocked on ORCH-8 (iOS finalize call not built). Running it reports SKIPPED. |
+| `gopro-network-routing-diag` | implemented, **requires manual operator step** | GoPro WiFi + backend cellular coexistence (Block 1). See [Block 1: GoPro WiFi manual join workaround](#block-1-gopro-wifi-manual-join-workaround) below — this scenario pauses mid-run for a human to join the GoPro WiFi AP from iPhone Settings. |
 
 Add a new scenario by writing a `scenario_xxx(ctx) -> ScenarioReport` function
 in `mc1_regression/scenarios.py` and registering it in `SCENARIOS`.
+
+## Block 1: GoPro WiFi manual join workaround
+
+**Status (as of commit `c02c04dc`): this is a physical-validation workaround,
+not the final product UX.** In-app automatic GoPro WiFi join
+(`NEHotspotConfiguration`) requires the
+`com.apple.developer.networking.HotspotConfiguration` entitlement, and Apple
+does not grant that entitlement to personal/free-tier Apple Developer teams.
+Under the current provisioning (`DEVELOPMENT_TEAM = 4D7V9ZWVHY`, personal
+team), `SystemWiFiTransport.joinAccessPoint` always throws `.unavailable`,
+and the app falls back to `GoProConnectionState.awaitingManualWiFiJoin(ssid:)`
+— a human must join the GoPro WiFi network by hand. Closing this gap for
+real requires either a paid Apple Developer Program membership or a
+different networking strategy (tracked separately, not part of this fix).
+
+### PASS criteria (current, manual-join era)
+
+1. App falls back to `awaitingManualWiFiJoin(ssid:)` (auto-join unavailable,
+   handled gracefully — not a crash/hang).
+2. Operator manually joins the GoPro WiFi AP via iPhone Settings → Wi-Fi.
+3. App, back in foreground, confirms GoPro HTTP reachable.
+4. `fetchCameraState` succeeds.
+5. Backend reports `device_status=ready` for the GoPro device.
+6. `[NET-DIAG]` and `[GOPRO-AUTO]` lines present in the iPhone console
+   artifact (corroborating evidence, not PASS/FAIL gates).
+
+### Physical test steps (plain language, for the person running the test)
+
+1. **Turn on the GoPro** and put it into pairing/discoverable mode (the
+   Bluetooth icon on its screen should be blinking).
+2. **Plug the iPhone into your Mac via USB** (needed for console capture).
+3. **On the iPhone, open the LFA app** and make sure you're on the main
+   screen (not Session Lab — the script opens that for you).
+4. **Start the script** (`./scripts/run_mc1_regression.sh --scenario
+   gopro-network-routing-diag ...` — see Run section above for the full
+   env vars). Don't touch the phone yet.
+5. **Watch the terminal.** When you see these four lines, that's your cue:
+   ```
+   [net-diag] >>> GoPro Wi-Fi auto-join unavailable under current provisioning
+   [net-diag] >>> Manual action required: iPhone Settings -> Wi-Fi -> select GoPro SSID
+   [net-diag] >>> Return to LFA app after Wi-Fi connection
+   [net-diag] >>> App will verify GoPro HTTP and signal backend ready
+   ```
+6. **Go to iPhone Settings → Wi-Fi** and tap the GoPro's network name in the
+   list (it looks like `GP13XXXXXXXXX`). Enter the GoPro's WiFi password if
+   asked (shown on the GoPro's own screen).
+7. **Once the iPhone shows it's connected to the GoPro WiFi**, go back to
+   the LFA app (press the Home button / swipe up, then tap the app icon
+   again — don't force-quit it).
+8. **Wait.** You don't need to do anything else — the app detects it's back
+   in the foreground and automatically checks the GoPro connection and
+   tells the backend it's ready. This can take up to ~3 minutes total from
+   when the four lines appeared.
+9. **Watch the terminal again.** You'll see either:
+   - `[net-diag] === PASS: GoPro WiFi + backend cellular routing CONFIRMED ===`
+     → done, test passed.
+   - `[net-diag] === FAIL: ...===` → something didn't connect in time; check
+     that you joined the right WiFi network and the GoPro stayed powered on.
+10. **No need to restart anything** — neither the iPhone nor the GoPro
+    need a reboot for this test.
 
 ## What gets saved (per run)
 

@@ -801,7 +801,7 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
     return report
 
 
-NETWORK_ROUTING_DIAG_TIMEOUT_SECONDS = 60   # GoPro connect + updateDeviceStatus
+NETWORK_ROUTING_DIAG_TIMEOUT_SECONDS = 180  # GoPro connect (manual WiFi join) + updateDeviceStatus
 NETWORK_ROUTING_DIAG_SETTLE_SECONDS = 3
 
 
@@ -812,9 +812,22 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
     simultaneously connected to the GoPro WiFi AP. This is the root cause
     fix for the GoPro ready-signal 45s timeout.
 
+    KNOWN LIMITATION (as of c02c04dc): in-app automatic GoPro WiFi join via
+    NEHotspotConfiguration requires the com.apple.developer.networking.
+    HotspotConfiguration entitlement, which Apple does not grant to personal/
+    free-tier development teams. SystemWiFiTransport.joinAccessPoint always
+    throws .unavailable under the current provisioning, so the app falls
+    back to GoProConnectionState.awaitingManualWiFiJoin(ssid:) and a HUMAN
+    must join the GoPro WiFi AP manually via iPhone Settings > Wi-Fi. This is
+    a physical-validation workaround, NOT the final product UX — a paid
+    Apple Developer Program membership (or an alternative networking
+    strategy) is required before automatic in-app join can return.
+
     PASS criteria (all backend-grounded, no console parsing):
       1. GoPro device registered in session (backend POST /devices)
-      2. GoPro device_status == "ready" on backend after gopro-connect
+      2. App reaches awaitingManualWiFiJoin(ssid:) (manual fallback engaged)
+      3. Human joins the GoPro WiFi AP manually, returns to the app
+      4. GoPro device_status == "ready" on backend after gopro-connect
          (proves updateDeviceStatus reached the backend over cellular
           while iPhone was on GoPro WiFi AP)
 
@@ -822,9 +835,11 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
       - GoPro HERO13 powered on and in BLE pairing/discoverable mode
       - iPhone has cellular data enabled
       - iPhone has the lfa-mc1:// scheme app installed
+      - Operator is present to manually join the GoPro WiFi AP from
+        iPhone Settings > Wi-Fi when prompted (see console output below)
 
-    The diagnostic `[NET-DIAG]` log lines in the iPhone console are
-    corroborating evidence — they are NOT used for PASS/FAIL.
+    The diagnostic `[NET-DIAG]` and `[GOPRO-AUTO]` log lines in the iPhone
+    console are corroborating evidence — they are NOT used for PASS/FAIL.
     """
     import time as _time
 
@@ -877,12 +892,15 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
         _time.sleep(NETWORK_ROUTING_DIAG_SETTLE_SECONDS)
         report.step("pre-connect network probe sent", True)
 
-        # 4. GoPro connect (BLE → WiFi AP → HTTP verify; iOS WiFi Assist needed here)
+        # 4. GoPro connect (BLE → WiFi AP → HTTP verify)
         print(f"[net-diag] Sending gopro-connect to iPhone (gopro_device_id={gopro_device_id})...")
         print("[net-diag] Physical: ensure GoPro is on and in BLE pairing mode.")
-        print("[net-diag] If iOS WiFi join prompt appears on iPhone — tap Join.")
         send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
         report.step("gopro-connect deep link sent", True)
+        print("[net-diag] >>> GoPro Wi-Fi auto-join unavailable under current provisioning")
+        print("[net-diag] >>> Manual action required: iPhone Settings -> Wi-Fi -> select GoPro SSID")
+        print("[net-diag] >>> Return to LFA app after Wi-Fi connection")
+        print("[net-diag] >>> App will verify GoPro HTTP and signal backend ready")
 
         # 5. Network probe AFTER GoPro WiFi join starts (reveals routing state)
         _time.sleep(15)  # give BLE scan + connect time to start
