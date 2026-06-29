@@ -45,6 +45,7 @@ PLAYER_PASSWORD=<player-password> \
 | `retry` | **registered, not implemented** | Orchestrator retry without full session reset — blocked on ORCH-7, which doesn't exist yet. Running it reports SKIPPED. |
 | `finalization` | **registered, not implemented** | Session finalize flow — blocked on ORCH-8 (iOS finalize call not built). Running it reports SKIPPED. |
 | `gopro-network-routing-diag` | implemented, **requires manual operator step** | GoPro WiFi + backend cellular coexistence (Block 1). See [Block 1: GoPro WiFi manual join workaround](#block-1-gopro-wifi-manual-join-workaround) below — this scenario pauses mid-run for a human to join the GoPro WiFi AP from iPhone Settings. |
+| `gopro-preview-poc` | implemented, **POC, requires manual operator step** | GoPro live preview (docs/GOPRO_LIVE_PREVIEW_POC_PLAN.md). Repeats the same manual-WiFi-join flow as `gopro-network-routing-diag`, then triggers `GoProStreamProbe` on-device and pulls `gopro_stream_diag.json` for a layer-by-layer (HTTP/UDP/MPEG-TS/NAL/decode) PASS/FAIL. |
 
 Add a new scenario by writing a `scenario_xxx(ctx) -> ScenarioReport` function
 in `mc1_regression/scenarios.py` and registering it in `SCENARIOS`.
