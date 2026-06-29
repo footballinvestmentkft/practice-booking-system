@@ -1037,6 +1037,216 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
     return report
 
 
+PREVIEW_POC_TIMEOUT_SECONDS = 180   # GoPro connect (manual WiFi join) + updateDeviceStatus
+PREVIEW_POC_STREAM_DURATION_SECONDS = 25  # how long GoProStreamProbe runs on-device
+PREVIEW_POC_SETTLE_SECONDS = 5      # margin after the on-device run before pulling the diag file
+
+
+def scenario_gopro_preview_poc(ctx: ScenarioContext) -> ScenarioReport:
+    """MC1 GoPro live preview POC (docs/GOPRO_LIVE_PREVIEW_POC_PLAN.md).
+
+    Repeats the gopro-network-routing-diag connect + manual-WiFi-join flow
+    (Block 1, already proven working as of commit 3bcd035e) as a precondition,
+    then triggers GoProStreamProbe (stream/start → UDP receive → MPEG-TS demux
+    → H.264 decode) and pulls Documents/gopro_stream_diag.json — no console
+    log parsing, same evidence pattern as gopro_diag.json.
+
+    PASS criteria (backend/diag-file grounded, not console-log-grounded):
+      1. GoPro reaches device_status=ready on backend (same gate as Block 1)
+      2. gopro_stream_diag.json collectable
+      3. streamStartHTTPStatus == "ok"
+      4. udpPacketsReceived > 0
+      5. videoPIDFound == true (MPEG-TS demux identified the H.264 PID)
+      6. decodeSuccesses > 0 (VideoToolbox decoded at least one frame)
+
+    A failure at any layer (HTTP / UDP / MPEG-TS-PID / NAL-SPS-PPS / decode)
+    is reported with the diag file's layer-by-layer fields, per the POC plan's
+    "honest pass/fail" requirement — this scenario does NOT require full
+    decode success to produce useful, actionable output.
+    """
+    import json
+    import time as _time
+    from pathlib import Path
+
+    report = ScenarioReport(name="gopro-preview-poc", passed=False)
+    session = create_session(ctx.api_base, ctx.instructor_token)
+    session_uuid = session["session_uuid"]
+    report.session_uuid = session_uuid
+    print(f"[preview-poc] session created: {session_uuid}")
+
+    try:
+        # 1. Join iPhone as instructor
+        print("[preview-poc] Joining iPhone as instructor...")
+        send_deep_link(ctx.iphone_udid, "join", session_uuid=session_uuid, role="instructor")
+        _time.sleep(5)
+
+        def iphone_registered():
+            s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
+            return next((d for d in s.get("devices", [])
+                         if d["device_role"] == "instructor_primary"), None)
+
+        instructor_dev = poll_until(
+            "iPhone registered as instructor_primary",
+            DEVICE_REGISTER_TIMEOUT_SECONDS, iphone_registered,
+        )
+        instructor_id = instructor_dev["id"]
+        report.step("iphone registered as instructor", True, device_id=instructor_id)
+
+        # 2. Register GoPro
+        gopro_sd = register_device(
+            ctx.api_base, ctx.instructor_token, session_uuid,
+            device_role="auxiliary_camera", device_type="gopro",
+            device_name="GoPro HERO13 (preview-poc)",
+            managed_by_device_id=instructor_id,
+        )
+        gopro_device_id = gopro_sd["id"]
+        report.step("gopro registered (managed by instructor)", True,
+                    gopro_device_id=gopro_device_id)
+        print(f"[preview-poc] GoPro registered: session_device_id={gopro_device_id}")
+
+        # 3. Connect (BLE → WiFi AP). Same manual-join gate as Block 1.
+        print(f"[preview-poc] Sending gopro-connect to iPhone (gopro_device_id={gopro_device_id})...")
+        print("[preview-poc] Physical: ensure GoPro is on and in BLE pairing mode.")
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect deep link sent", True)
+        print("[preview-poc] >>> GoPro Wi-Fi auto-join unavailable under current provisioning")
+        print("[preview-poc] >>> Manual action required: iPhone Settings -> Wi-Fi -> select GoPro SSID")
+        print("[preview-poc] >>> Return to LFA app after Wi-Fi connection")
+        print("[preview-poc] >>> App will verify GoPro HTTP and signal backend ready")
+
+        _time.sleep(15)  # give BLE scan + AP-activation time to reach awaitingManualWiFiJoin
+        send_deep_link(ctx.iphone_udid, "dump-snapshot")
+        print("[preview-poc] >>> Check console/iphone_console.log just written above for "
+              "'gopro_connection: Csatlakozz: <SSID>' — that <SSID> is the GoPro WiFi network name.")
+
+        input(
+            "\n[preview-poc] >>> Join the GoPro WiFi network on the iPhone now "
+            "(Settings -> Wi-Fi -> GoPro SSID), then return to the LFA app.\n"
+            "[preview-poc] >>> Press ENTER here ONLY after the iPhone shows it is "
+            "connected to the GoPro WiFi network: "
+        )
+        print("[preview-poc] Operator confirmed manual WiFi join — resending gopro-connect...")
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect re-sent after manual join", True)
+
+        # 4. Poll backend for GoPro device_status == ready (Block 1 precondition)
+        print(f"[preview-poc] Polling backend for GoPro device_status=ready "
+              f"(timeout={PREVIEW_POC_TIMEOUT_SECONDS}s)...")
+
+        def gopro_device_ready():
+            s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
+            for d in s.get("devices", []):
+                if d["id"] == gopro_device_id:
+                    status = d.get("device_status") or d.get("status")
+                    if status == "ready":
+                        return d
+            return None
+
+        try:
+            gp_ready = poll_until(
+                "GoPro device_status==ready on backend",
+                PREVIEW_POC_TIMEOUT_SECONDS, gopro_device_ready,
+            )
+            print(f"[preview-poc] GoPro device_status=ready on backend "
+                  f"(device_id={gopro_device_id}, revision={gp_ready.get('revision')})")
+            report.step("gopro device_status==ready (backend-verified)", True,
+                        device_id=gopro_device_id, revision=gp_ready.get("revision"))
+        except ValidationError as e:
+            report.step("gopro device_status==ready (backend-verified)", False, error=str(e))
+            raise ValidationError(
+                f"GoPro never reached device_status=ready — this is the Block 1 "
+                f"precondition, not the preview POC itself. {e}"
+            )
+
+        # 5. Trigger the live preview POC on-device, wait for it to finish.
+        print(f"[preview-poc] Sending gopro-preview-poc "
+              f"(duration_s={PREVIEW_POC_STREAM_DURATION_SECONDS})...")
+        send_deep_link(ctx.iphone_udid, "gopro-preview-poc",
+                        duration_s=str(PREVIEW_POC_STREAM_DURATION_SECONDS))
+        report.step("gopro-preview-poc deep link sent", True)
+        wait_s = PREVIEW_POC_STREAM_DURATION_SECONDS + PREVIEW_POC_SETTLE_SECONDS
+        print(f"[preview-poc] Waiting {wait_s}s for on-device stream/start -> UDP -> "
+              f"decode -> stream/stop to complete...")
+        _time.sleep(wait_s)
+
+        # 6. Pull gopro_stream_diag.json — authoritative, layer-by-layer evidence.
+        local_diag = str(ctx.artifact.dir / "gopro_stream_diag.json")
+        if not copy_app_container_file(ctx.iphone_udid, "Documents/gopro_stream_diag.json", local_diag):
+            report.step("gopro_stream_diag.json collected", False, error="copy failed")
+            raise ValidationError(
+                "gopro_stream_diag.json was not collectable — check that the iPhone "
+                "build includes GoProStreamProbe (commit ec424a27 or later) and that "
+                "the deep link actually reached MultiCameraLobbyView (app must be on "
+                "Session Lab, not backgrounded)."
+            )
+        try:
+            diag = json.loads(Path(local_diag).read_text())
+        except (OSError, json.JSONDecodeError) as e:
+            report.step("gopro_stream_diag.json collected", False, error=f"unparseable: {e}")
+            raise ValidationError(f"gopro_stream_diag.json copied but unparseable: {e}")
+
+        report.step("gopro_stream_diag.json collected", True, **diag)
+        print(f"[preview-poc] gopro_stream_diag.json: {json.dumps(diag, indent=2)}")
+
+        # 7. Layer-by-layer PASS/FAIL — report every layer regardless of where
+        #    it stops, per the POC plan's "honest pass/fail" requirement.
+        http_ok = diag.get("streamStartHTTPStatus") == "ok"
+        udp_ok = (diag.get("udpPacketsReceived") or 0) > 0
+        mpegts_ok = bool(diag.get("videoPIDFound"))
+        nal_ok = bool(diag.get("spsSeen")) and bool(diag.get("ppsSeen"))
+        decode_ok = (diag.get("decodeSuccesses") or 0) > 0
+
+        report.step("[layer] HTTP stream/start", http_ok, value=diag.get("streamStartHTTPStatus"))
+        report.step("[layer] UDP packets received", udp_ok, value=diag.get("udpPacketsReceived"))
+        report.step("[layer] MPEG-TS video PID found", mpegts_ok, value=diag.get("videoPIDFound"))
+        report.step("[layer] H.264 SPS/PPS seen", nal_ok,
+                    sps=diag.get("spsSeen"), pps=diag.get("ppsSeen"))
+        report.step("[layer] VideoToolbox decode success", decode_ok,
+                    attempts=diag.get("decodeAttempts"), successes=diag.get("decodeSuccesses"))
+
+        print(f"[preview-poc] LAYER BREAKDOWN: "
+              f"HTTP={'OK' if http_ok else 'FAIL'} | "
+              f"UDP={'OK' if udp_ok else 'FAIL'} ({diag.get('udpPacketsReceived', 0)} pkts) | "
+              f"MPEG-TS/PID={'OK' if mpegts_ok else 'FAIL'} | "
+              f"NAL/SPS-PPS={'OK' if nal_ok else 'FAIL'} | "
+              f"DECODE={'OK' if decode_ok else 'FAIL'} "
+              f"({diag.get('decodeSuccesses', 0)}/{diag.get('decodeAttempts', 0)}) | "
+              f"fps={diag.get('fps', 0)}")
+
+        if not http_ok:
+            raise ValidationError(f"stream/start HTTP failed: {diag.get('streamStartHTTPStatus')}")
+        if not udp_ok:
+            raise ValidationError(
+                "No UDP packets received on port 8554 — either stream/start didn't "
+                "actually start streaming, the GoPro AP routing dropped it, or the "
+                "NWListener bound to the wrong interface."
+            )
+        if not mpegts_ok:
+            raise ValidationError(
+                "UDP packets received but no H.264 PID found in PAT/PMT — the "
+                "stream format may not be MPEG-TS as assumed, or the demux is broken."
+            )
+        if not nal_ok:
+            raise ValidationError(
+                "Video PID found but no SPS/PPS NAL seen — H.264 parameter sets "
+                "never arrived or weren't recognized."
+            )
+        if not decode_ok:
+            raise ValidationError(
+                "SPS/PPS seen but VideoToolbox never decoded a frame — check "
+                "decodeAttempts vs decodeSuccesses and errorReason in the diag file."
+            )
+
+        report.passed = True
+        print("[preview-poc] === PASS: GoPro live preview decoded at least one frame ===")
+
+    except ValidationError as e:
+        report.error = str(e)
+        report.passed = False
+        print(f"[preview-poc] === FAIL: {e} ===")
+    return report
+
+
 SCENARIOS = {
     "smoke": scenario_smoke,
     "multicycle": scenario_multicycle,
@@ -1045,5 +1255,6 @@ SCENARIOS = {
     "gopro-tricamera-smoke": scenario_gopro_tricamera_smoke,
     "gopro-iphone-diagnostics": scenario_gopro_iphone_diagnostics,
     "gopro-network-routing-diag": scenario_gopro_network_routing_diag,
+    "gopro-preview-poc": scenario_gopro_preview_poc,
     "tricamera-capture-skeleton-proof": scenario_tricamera_capture_skeleton_proof,
 }
