@@ -331,6 +331,11 @@ struct MultiCameraLobbyView: View {
                 print("[CAPTURE-INFO] state=\(captureManager.state) outputFile=\(fileURL?.path ?? "nil") size=\(fileSize)")
             case .networkRoutingDiag(let label):
                 Task { await BackendNetworkDiagnostics.probe(label: label) }
+            case .goProPreviewPOC(let durationSeconds):
+                Task {
+                    let diag = await GoProStreamProbe.shared.run(durationSeconds: durationSeconds)
+                    GoProStreamDiagWriter.write(diag)
+                }
             }
         }
         .sheet(isPresented: $showQRScanner) {

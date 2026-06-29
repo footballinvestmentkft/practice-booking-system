@@ -45,6 +45,8 @@ enum MC1AutomationAction: Equatable {
     case captureInfo
     // MC1 Block-1: network routing diagnostics (GoPro WiFi + cellular coexistence)
     case networkRoutingDiag(label: String)
+    // GoPro live preview POC (docs/GOPRO_LIVE_PREVIEW_POC_PLAN.md) — debug-only
+    case goProPreviewPOC(durationSeconds: TimeInterval)
 }
 
 final class MC1AutomationBridge: ObservableObject {
@@ -135,6 +137,11 @@ final class MC1AutomationBridge: ObservableObject {
             let label = value("label") ?? "unlabeled"
             print("[MC1-AUTO] received action=network-routing-diag label=\(label)")
             lastAction = .networkRoutingDiag(label: label)
+            return true
+        case "gopro-preview-poc":
+            let duration = value("duration_s").flatMap(Double.init) ?? 25
+            print("[MC1-AUTO] received action=gopro-preview-poc duration_s=\(duration)")
+            lastAction = .goProPreviewPOC(durationSeconds: duration)
             return true
         default:
             print("[MC1-AUTO] received unknown action=\(action)")

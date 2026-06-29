@@ -3,6 +3,7 @@ import SwiftUI
 struct GoProConnectionDebugView: View {
 
     @StateObject private var manager: GoProConnectionManager
+    @ObservedObject private var streamProbe = GoProStreamProbe.shared
     @Environment(\.presentationMode) private var presentationMode
 
     init(manager: GoProConnectionManager) {
@@ -13,6 +14,7 @@ struct GoProConnectionDebugView: View {
         NavigationView {
             List {
                 statusSection
+                livePreviewSection
                 actionsSection
                 cameraSection
                 diagnosticSection
@@ -48,6 +50,26 @@ struct GoProConnectionDebugView: View {
                 Label("Firmware: \(fw)", systemImage: "checkmark.seal")
                     .font(.caption)
                     .foregroundColor(.green)
+            }
+        }
+    }
+
+    // MARK: — Live preview POC (docs/GOPRO_LIVE_PREVIEW_POC_PLAN.md)
+
+    @ViewBuilder
+    private var livePreviewSection: some View {
+        if streamProbe.lastFrame != nil || streamProbe.isRunning {
+            Section("Live Preview POC") {
+                if let frame = streamProbe.lastFrame {
+                    Image(uiImage: frame)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxHeight: 200)
+                } else {
+                    Text("Waiting for first decoded frame…")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
         }
     }
@@ -91,6 +113,14 @@ struct GoProConnectionDebugView: View {
                     manager.disconnect()
                 }
                 .foregroundColor(.red)
+                Button(streamProbe.isRunning ? "Live Preview POC running…" : "Start Live Preview POC (25s)") {
+                    Task {
+                        let diag = await streamProbe.run(durationSeconds: 25)
+                        GoProStreamDiagWriter.write(diag)
+                    }
+                }
+                .disabled(streamProbe.isRunning)
+                .foregroundColor(.blue)
             default:
                 Button("Cancel") {
                     manager.cancel()

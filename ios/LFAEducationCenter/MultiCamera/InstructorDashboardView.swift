@@ -7,6 +7,7 @@ struct InstructorDashboardView: View {
     @ObservedObject var streamService: CameraStreamService
     @ObservedObject var orchestrator: CycleCaptureOrchestrator
     @ObservedObject var vm: MultiCameraSessionViewModel
+    @ObservedObject private var goProStreamProbe = GoProStreamProbe.shared
     @Environment(\.presentationMode) private var presentationMode
 
     var body: some View {
@@ -136,22 +137,36 @@ struct InstructorDashboardView: View {
         }
     }
 
-    // GoPro preview uses GoProConnectionManager real-time state
+    // GoPro preview: live decoded frame from GoProStreamProbe POC (see
+    // docs/GOPRO_LIVE_PREVIEW_POC_PLAN.md) when available, else fall back to
+    // the GoProConnectionManager connection-state placeholder — same fallback
+    // pattern as RemoteCameraView's "Waiting for player..." when no frame yet.
     private var goProPreviewPanel: some View {
         ZStack {
             Color.black
-            VStack(spacing: 6) {
-                Image(systemName: goProIcon)
-                    .font(.system(size: 24))
-                    .foregroundColor(goProRealtimeColor)
-                Text(goProRealtimeLabel)
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundColor(goProRealtimeColor)
-                    .multilineTextAlignment(.center)
-                if let bat = GoProConnectionManager.shared.cameraStatus?.batteryLevel {
-                    Text("\(bat)%")
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.5))
+            if let frame = goProStreamProbe.lastFrame {
+                Image(uiImage: frame)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                VStack(spacing: 6) {
+                    Image(systemName: goProIcon)
+                        .font(.system(size: 24))
+                        .foregroundColor(goProRealtimeColor)
+                    Text(goProRealtimeLabel)
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundColor(goProRealtimeColor)
+                        .multilineTextAlignment(.center)
+                    if let bat = GoProConnectionManager.shared.cameraStatus?.batteryLevel {
+                        Text("\(bat)%")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    if goProStreamProbe.isRunning {
+                        Text("preview poc running…")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundColor(.yellow)
+                    }
                 }
             }
         }
