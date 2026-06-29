@@ -141,14 +141,38 @@ deep link itself right after you confirm.
 
 ### If it FAILs — what to capture before retrying
 
+idevicesyslog does not reliably capture Swift `print()` output on a physical
+device (privacy redaction depends on attach timing / lock state — in one run
+the entire `[NET-DIAG]`/`[GOPRO-AUTO]`/`[GoPro]` line set was silently
+missing from `console/iphone_console.log` despite the app working as
+expected). Because of that, **do not rely on the console log as your primary
+evidence.** Instead:
+
+- **Check `gopro_diag.json` in the run's artifact directory first.** The app
+  writes this file directly (via `GoProDiagRecorder`, see
+  `MultiCameraLobbyView.swift`) every time it attempts to tell the backend
+  the GoPro is ready, success or failure. The script pulls it automatically
+  on both PASS and FAIL via `devicectl device copy from --domain-type
+  appDataContainer` — no console log parsing involved. It contains:
+  `timestamp`, `goProDeviceId`, `localState` (the app's GoPro connection
+  state at attempt time), `outcome` (`signalReady_ok` /
+  `signalReady_failed` / `connect_failed` / `wait_timeout_45s` /
+  `skipped_no_context`), `httpStatus` (if the backend responded with an
+  HTTP error), and `detail` (URLError code or backend response body).
+  The script also prints this inline:
+  `[net-diag] gopro_diag.json: outcome=... localState=... httpStatus=... detail=... timestamp=...`
+  — and the FAIL message itself now includes these fields directly.
+- If `gopro_diag.json` could not be collected (printed as `copy or parse
+  failed`), the iPhone's installed build predates commit `8bc3a204`'s
+  follow-up `GoProDiagRecorder` fix — reinstall a current build first.
 - **Screenshot the iPhone's Settings → Wi-Fi screen** showing which network
   it's actually connected to (confirms whether it really joined the GoPro
   AP or fell back to your normal WiFi/cellular).
 - **Copy the full terminal output** from the `[net-diag] === FAIL` line
   upward to the most recent `[net-diag] >>>` block.
-- **Copy** `scripts/mc1_regression_runs/<latest-timestamp>_gopro-network-routing-diag/console/iphone_console.log`
-  — this has every `[NET-DIAG]`, `[GOPRO-AUTO]`, and `[GoPro]` line from the
-  run, including the exact failure point.
+- **Copy** `scripts/mc1_regression_runs/<latest-timestamp>_gopro-network-routing-diag/`
+  in full (both `gopro_diag.json` and `console/iphone_console.log`, even if
+  the latter turns out empty of useful lines).
 - **Note whether the GoPro's screen was still on** when the test failed —
   GoPro HERO13 can auto-sleep its WiFi AP after a few minutes of no client
   activity, which looks identical to a routing failure from the app's side.

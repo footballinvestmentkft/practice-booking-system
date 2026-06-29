@@ -23,6 +23,7 @@ from .lib import (
     ValidationError,
     confirm_device_start,
     confirm_device_stop,
+    copy_app_container_file,
     copy_from_device,
     create_session,
     device_recording_status,
@@ -841,7 +842,9 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
     The diagnostic `[NET-DIAG]` and `[GOPRO-AUTO]` log lines in the iPhone
     console are corroborating evidence — they are NOT used for PASS/FAIL.
     """
+    import json
     import time as _time
+    from pathlib import Path
 
     report = ScenarioReport(name="gopro-network-routing-diag", passed=False)
     session = create_session(ctx.api_base, ctx.instructor_token)
@@ -955,6 +958,24 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
                         return d
             return None
 
+        # gopro_diag.json is written by GoProDiagRecorder on every
+        # signalGoProReady attempt (success or failure) — pulled via
+        # devicectl appDataContainer copy, independent of console log
+        # capture (idevicesyslog print() capture is unreliable on-device).
+        def _pull_gopro_diag() -> dict | None:
+            local_diag = str(ctx.artifact.dir / "gopro_diag.json")
+            if not copy_app_container_file(ctx.iphone_udid, "Documents/gopro_diag.json", local_diag):
+                return None
+            try:
+                diag = json.loads(Path(local_diag).read_text())
+            except (OSError, json.JSONDecodeError) as e:
+                print(f"[net-diag] gopro_diag.json unreadable: {e}")
+                return None
+            print(f"[net-diag] gopro_diag.json: outcome={diag.get('outcome')} "
+                  f"localState={diag.get('localState')} httpStatus={diag.get('httpStatus')} "
+                  f"detail={diag.get('detail')} timestamp={diag.get('timestamp')}")
+            return diag
+
         try:
             gp_ready = poll_until(
                 "GoPro device_status==ready on backend",
@@ -966,18 +987,36 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
                   "while on GoPro WiFi AP: routing fix CONFIRMED")
             report.step("gopro device_status==ready (backend-verified)", True,
                         device_id=gopro_device_id, revision=gp_ready.get("revision"))
+            diag = _pull_gopro_diag()
+            if diag:
+                report.step("gopro_diag.json collected", True, **diag)
         except ValidationError as e:
             report.step("gopro device_status==ready (backend-verified)", False, error=str(e))
-            # Send diagnostic probe at timeout point
+            # Send diagnostic probe at timeout point, then pull the on-device
+            # diagnostic file — this is the authoritative source for WHY
+            # signalGoProReady didn't reach the backend (HTTP status/URLError,
+            # local GoPro state, last attempt timestamp), since console log
+            # capture cannot be relied on for this.
             send_deep_link(ctx.iphone_udid, "network-routing-diag", label="at-timeout")
             send_deep_link(ctx.iphone_udid, "dump-snapshot")
             _time.sleep(3)
+            diag = _pull_gopro_diag()
+            if diag:
+                report.step("gopro_diag.json collected", True, **diag)
+                raise ValidationError(
+                    f"GoPro device_status never reached 'ready' on backend "
+                    f"(timeout={NETWORK_ROUTING_DIAG_TIMEOUT_SECONDS}s). "
+                    f"gopro_diag.json says: outcome={diag.get('outcome')} "
+                    f"localState={diag.get('localState')} httpStatus={diag.get('httpStatus')} "
+                    f"detail={diag.get('detail')}"
+                )
+            report.step("gopro_diag.json collected", False, error="copy or parse failed")
             raise ValidationError(
                 f"GoPro device_status never reached 'ready' on backend "
                 f"(timeout={NETWORK_ROUTING_DIAG_TIMEOUT_SECONDS}s). "
-                f"Either GoPro didn't connect, or updateDeviceStatus failed "
-                f"(cellular routing issue). Check iPhone console for "
-                f"[GOPRO-AUTO] signalReady and [NET-DIAG] lines."
+                f"gopro_diag.json was not collectable either — check that the "
+                f"build on the iPhone includes GoProDiagRecorder (commit after "
+                f"8bc3a204) and that Documents/gopro_diag.json exists."
             )
 
         # 7. Final snapshot + post-connect network probe
