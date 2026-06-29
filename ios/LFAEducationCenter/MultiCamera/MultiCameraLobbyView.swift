@@ -658,22 +658,55 @@ struct MultiCameraLobbyView: View {
         // Log gopro connection state at call time — if we're on GoPro WiFi here,
         // the APIClient.backendSession (waitsForConnectivity=true) handles routing.
         print("[GOPRO-AUTO] signalReady: deviceId=\(did) gopro_state=\(GoProConnectionManager.shared.state)")
+        // session_device.revision server_default is 1, not 0 (see
+        // app/models/multicamera_session.py) — a freshly-registered device is
+        // already at revision=1. Fetch the current revision instead of
+        // assuming 0, same 409-retry pattern as CycleCaptureOrchestrator.
+        var revision = 0
+        if let session = try? await MultiCameraAPIClient.getSession(token: token, uuid: sessionUuid),
+           let device = session.devices.first(where: { $0.id == did }) {
+            revision = device.revision
+        }
         do {
-            let sd = try await MultiCameraAPIClient.updateDeviceStatus(
-                token: token, uuid: sessionUuid,
-                sessionDeviceId: did, targetStatus: .ready, deviceRevision: 0
-            )
+            let sd = try await updateGoProStatus(token: token, sessionUuid: sessionUuid, did: did, revision: revision)
             print("[GOPRO-AUTO] signalReady OK: GoPro device \(did) → ready (rev=\(sd.revision))")
             GoProDiagRecorder.write(
                 goProDeviceId: did, localState: "\(GoProConnectionManager.shared.state)",
                 outcome: "signalReady_ok", httpStatus: nil, detail: "revision=\(sd.revision)"
             )
         } catch {
-            let urlErr = (error as? APIError).flatMap {
-                if case .networkError(let e) = $0 { return e as? URLError } else { return nil }
-            }
             let httpErr = (error as? APIError).flatMap {
                 if case .httpError(let code, let detail) = $0 { return (code, detail) } else { return nil }
+            }
+            // 409 on first attempt: another update raced us to bump the
+            // revision between getSession and the PATCH — refetch once more
+            // and retry, exactly like CycleCaptureOrchestrator's begin/end-cycle retry.
+            if httpErr?.0 == 409,
+               let session = try? await MultiCameraAPIClient.getSession(token: token, uuid: sessionUuid),
+               let device = session.devices.first(where: { $0.id == did }) {
+                do {
+                    let sd = try await updateGoProStatus(token: token, sessionUuid: sessionUuid, did: did, revision: device.revision)
+                    print("[GOPRO-AUTO] signalReady OK after 409 retry: GoPro device \(did) → ready (rev=\(sd.revision))")
+                    GoProDiagRecorder.write(
+                        goProDeviceId: did, localState: "\(GoProConnectionManager.shared.state)",
+                        outcome: "signalReady_ok_after_409_retry", httpStatus: nil, detail: "revision=\(sd.revision)"
+                    )
+                    return
+                } catch {
+                    let retryHttpErr = (error as? APIError).flatMap {
+                        if case .httpError(let code, let detail) = $0 { return (code, detail) } else { return nil }
+                    }
+                    print("[GOPRO-AUTO] signalReady FAILED after 409 retry: \(error)")
+                    GoProDiagRecorder.write(
+                        goProDeviceId: did, localState: "\(GoProConnectionManager.shared.state)",
+                        outcome: "signalReady_failed_after_409_retry",
+                        httpStatus: retryHttpErr?.0, detail: retryHttpErr?.1 ?? "\(error)"
+                    )
+                    return
+                }
+            }
+            let urlErr = (error as? APIError).flatMap {
+                if case .networkError(let e) = $0 { return e as? URLError } else { return nil }
             }
             let errDetail = urlErr.map { "URLError(\($0.code.rawValue))" } ?? "\(error)"
             print("[GOPRO-AUTO] signalReady FAILED: \(errDetail)")
@@ -682,6 +715,13 @@ struct MultiCameraLobbyView: View {
                 outcome: "signalReady_failed", httpStatus: httpErr?.0, detail: httpErr?.1 ?? errDetail
             )
         }
+    }
+
+    private func updateGoProStatus(token: String, sessionUuid: String, did: Int, revision: Int) async throws -> SessionDeviceDTO {
+        try await MultiCameraAPIClient.updateDeviceStatus(
+            token: token, uuid: sessionUuid,
+            sessionDeviceId: did, targetStatus: .ready, deviceRevision: revision
+        )
     }
 
     private func waitAndSignalGoProReady(goProDeviceId: Int?) async {
