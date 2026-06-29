@@ -760,4 +760,55 @@ enum GoProRecordingDiagWriter {
         print("[GOPRO-RECORDING-POC] wrote \(fileName): \(diag)")
     }
 }
+
+// MARK: — GoPro camera/state RAW read (Capture Quality block, step "read it out first")
+//
+// GoProCameraStatus (GoProConnectionManager.swift) decodes camera/state into
+// firmwareVersion/isRecording/batteryLevel/sdCardSpaceRemaining — but every
+// physical run so far has shown firmware="unknown", which means that decode
+// has likely NEVER matched the real HERO13 response shape (Open GoPro
+// camera/state is documented to return nested {"status": {...}, "settings":
+// {...}} with NUMERIC setting IDs, not these flat named fields). Rather than
+// guess which numeric ID maps to resolution/fps without a confirmed spec,
+// this probe captures and surfaces the RAW response text so a human can
+// read the actual current preset before any preset-WRITE code is attempted.
+enum GoProCameraStateProbe {
+
+    static func run() async -> [String: Any] {
+        let transport = GoProHTTPClientTransport()
+        var diag: [String: Any] = ["timestamp": ISO8601DateFormatter().string(from: Date())]
+        do {
+            let data = try await transport.get(path: GoProSpec.cameraStatePath, timeout: 10)
+            let text = String(data: data, encoding: .utf8) ?? "(binary \(data.count)B)"
+            diag["rawResponseOK"] = true
+            diag["rawResponseText"] = text
+            diag["rawResponseByteCount"] = data.count
+            // Best-effort: if the response IS valid JSON, also surface its
+            // top-level keys so we know the actual shape without parsing
+            // assumptions (e.g. "status"/"settings" vs flat fields).
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                diag["topLevelKeys"] = json.keys.sorted()
+            }
+            print("[GOPRO-CAMERA-STATE-POC] camera/state raw: \(text.prefix(2000))")
+        } catch {
+            diag["rawResponseOK"] = false
+            diag["error"] = "\(error)"
+            print("[GOPRO-CAMERA-STATE-POC] camera/state FAILED: \(error)")
+        }
+        return diag
+    }
+}
+
+enum GoProCameraStateDiagWriter {
+    static let fileName = "gopro_camera_state_diag.json"
+
+    static func write(_ diag: [String: Any]) {
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+              JSONSerialization.isValidJSONObject(diag),
+              let data = try? JSONSerialization.data(withJSONObject: diag, options: [.prettyPrinted]) else { return }
+        let url = docs.appendingPathComponent(fileName)
+        try? data.write(to: url, options: .atomic)
+        print("[GOPRO-CAMERA-STATE-POC] wrote \(fileName)")
+    }
+}
 #endif

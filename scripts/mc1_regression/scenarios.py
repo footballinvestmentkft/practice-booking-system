@@ -238,6 +238,91 @@ def scenario_multicycle(ctx: ScenarioContext) -> ScenarioReport:
     return report
 
 
+def scenario_capture_quality_proof(ctx: ScenarioContext) -> ScenarioReport:
+    """Capture Quality + Metadata block: runs one ordinary smoke cycle (both
+    iPad + iPhone recording locally, the proven 2-device flow), then pulls
+    capture_metadata_diag.json from BOTH devices and validates the explicit
+    720p/30fps-or-360p/30fps-fallback profile actually took effect — not the
+    old device-default `.high` preset.
+
+    PASS criteria (per device, capture_metadata_diag.json-grounded):
+      1. actualResolution in {"1280x720", "640x360"}
+      2. actualFPS within [28, 32] (nominal frame rate tolerance around 30)
+      3. actualCodec is a non-empty, known value ("h264")
+      4. actualOrientation is portrait/landscape, not "unknown(...)"
+    """
+    import json
+    from pathlib import Path
+
+    report = ScenarioReport(name="capture-quality-proof", passed=False)
+    session = create_session(ctx.api_base, ctx.instructor_token)
+    session_uuid = session["session_uuid"]
+    report.session_uuid = session_uuid
+    print(f"[capture-quality] session created: {session_uuid}")
+
+    try:
+        instructor_id, player_id = _join_both_devices(ctx, report, session_uuid)
+        _mark_devices_ready(ctx, report, session_uuid)
+        ok = _run_one_cycle(ctx, report, session_uuid, instructor_id, player_id, cycle_index=0)
+        if not ok:
+            raise ValidationError("base smoke cycle did not complete — capture quality cannot be assessed")
+
+        send_deep_link(ctx.ipad_udid, "capture-info")
+        send_deep_link(ctx.iphone_udid, "capture-info")
+        import time as _time
+        _time.sleep(3)
+
+        def _check_device(udid: str, label: str) -> dict:
+            local_diag = str(ctx.artifact.dir / f"capture_metadata_diag_{label}.json")
+            if not copy_app_container_file(udid, "Documents/capture_metadata_diag.json", local_diag):
+                report.step(f"[{label}] capture_metadata_diag.json collected", False, error="copy failed")
+                raise ValidationError(f"capture_metadata_diag.json not collectable from {label}")
+            try:
+                diag = json.loads(Path(local_diag).read_text())
+            except (OSError, json.JSONDecodeError) as e:
+                report.step(f"[{label}] capture_metadata_diag.json collected", False, error=f"unparseable: {e}")
+                raise ValidationError(f"capture_metadata_diag.json from {label} unparseable: {e}")
+            report.step(f"[{label}] capture_metadata_diag.json collected", True, **diag)
+            print(f"[capture-quality] {label} diag: {json.dumps(diag, indent=2)}")
+            return diag
+
+        for udid, label in ((ctx.ipad_udid, "ipad"), (ctx.iphone_udid, "iphone")):
+            diag = _check_device(udid, label)
+            resolution = diag.get("actualResolution")
+            fps = diag.get("actualFPS")
+            codec = diag.get("actualCodec")
+            orientation = diag.get("actualOrientation")
+
+            res_ok = resolution in ("1280x720", "640x360")
+            fps_ok = isinstance(fps, (int, float)) and 28 <= fps <= 32
+            codec_ok = codec in ("h264",)
+            orient_ok = orientation in ("portrait", "landscapeLeft", "landscapeRight", "portraitUpsideDown")
+
+            report.step(f"[{label}] resolution in {{720p,360p}}", res_ok, value=resolution)
+            report.step(f"[{label}] fps ~30", fps_ok, value=fps)
+            report.step(f"[{label}] codec explicit", codec_ok, value=codec)
+            report.step(f"[{label}] orientation known", orient_ok, value=orientation)
+
+            print(f"[capture-quality] {label}: resolution={'OK' if res_ok else 'FAIL'}({resolution}) "
+                  f"fps={'OK' if fps_ok else 'FAIL'}({fps}) codec={'OK' if codec_ok else 'FAIL'}({codec}) "
+                  f"orientation={'OK' if orient_ok else 'FAIL'}({orientation})")
+
+            if not (res_ok and fps_ok and codec_ok and orient_ok):
+                raise ValidationError(
+                    f"{label} capture quality check failed: resolution={resolution} fps={fps} "
+                    f"codec={codec} orientation={orientation}"
+                )
+
+        report.passed = True
+        print("[capture-quality] === PASS: both devices recorded at the explicit profile ===")
+
+    except ValidationError as e:
+        report.error = str(e)
+        report.passed = False
+        print(f"[capture-quality] === FAIL: {e} ===")
+    return report
+
+
 def scenario_retry(ctx: ScenarioContext) -> ScenarioReport:
     raise NotImplementedError(
         "retry scenario is registered but not implemented — blocked on ORCH-7 "
@@ -1491,6 +1576,135 @@ def scenario_gopro_combined_cycle_proof(ctx: ScenarioContext) -> ScenarioReport:
     return report
 
 
+CAMERA_STATE_PROBE_TIMEOUT_SECONDS = 180
+
+
+def scenario_gopro_camera_state_probe(ctx: ScenarioContext) -> ScenarioReport:
+    """Capture Quality block, step 1: READ (never write) the GoPro's current
+    camera/state, raw. GoProCameraStatus has decoded firmware="unknown" on
+    every physical run this session — meaning the flat-field decode
+    (firmware_version/is_recording/battery_level/sd_card_space_remaining)
+    has likely never matched the real HERO13 response shape. This scenario
+    captures the raw response text + top-level JSON keys so a human can
+    read the actual current resolution/fps/lens-mode preset before any
+    preset-WRITE code is attempted (docs/MEDIA_PIPELINE_PLAN.md, Capture
+    Quality block).
+
+    PASS criteria: rawResponseOK == true (HTTP succeeded) AND the diag file
+    is collectable. This does NOT validate resolution/fps content — that's
+    a human-readable judgment call until the real schema is confirmed.
+    """
+    import json
+    import time as _time
+    from pathlib import Path
+
+    report = ScenarioReport(name="gopro-camera-state-probe", passed=False)
+    session = create_session(ctx.api_base, ctx.instructor_token)
+    session_uuid = session["session_uuid"]
+    report.session_uuid = session_uuid
+    print(f"[camera-state] session created: {session_uuid}")
+
+    try:
+        print("[camera-state] Joining iPhone as instructor...")
+        send_deep_link(ctx.iphone_udid, "join", session_uuid=session_uuid, role="instructor")
+        _time.sleep(5)
+
+        def iphone_registered():
+            s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
+            return next((d for d in s.get("devices", [])
+                         if d["device_role"] == "instructor_primary"), None)
+
+        instructor_dev = poll_until(
+            "iPhone registered as instructor_primary",
+            DEVICE_REGISTER_TIMEOUT_SECONDS, iphone_registered,
+        )
+        instructor_id = instructor_dev["id"]
+        report.step("iphone registered as instructor", True, device_id=instructor_id)
+
+        gopro_sd = register_device(
+            ctx.api_base, ctx.instructor_token, session_uuid,
+            device_role="auxiliary_camera", device_type="gopro",
+            device_name="GoPro HERO13 (camera-state-probe)",
+            managed_by_device_id=instructor_id,
+        )
+        gopro_device_id = gopro_sd["id"]
+        report.step("gopro registered (managed by instructor)", True,
+                    gopro_device_id=gopro_device_id)
+
+        print(f"[camera-state] Sending gopro-connect to iPhone (gopro_device_id={gopro_device_id})...")
+        print("[camera-state] Physical: ensure GoPro is on and in BLE pairing mode.")
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect deep link sent", True)
+        print("[camera-state] >>> GoPro Wi-Fi auto-join unavailable under current provisioning")
+        print("[camera-state] >>> Manual action required: iPhone Settings -> Wi-Fi -> select GoPro SSID")
+        print("[camera-state] >>> Return to LFA app after Wi-Fi connection")
+
+        _time.sleep(15)
+        send_deep_link(ctx.iphone_udid, "dump-snapshot")
+        print("[camera-state] >>> Check console/iphone_console.log for "
+              "'gopro_connection: Csatlakozz: <SSID>' — that <SSID> is the GoPro WiFi network name.")
+
+        input(
+            "\n[camera-state] >>> Join the GoPro WiFi network on the iPhone now "
+            "(Settings -> Wi-Fi -> GoPro SSID), then return to the LFA app.\n"
+            "[camera-state] >>> Press ENTER here ONLY after the iPhone shows it is "
+            "connected to the GoPro WiFi network: "
+        )
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect re-sent after manual join", True)
+
+        def gopro_device_ready():
+            s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
+            for d in s.get("devices", []):
+                if d["id"] == gopro_device_id:
+                    status = d.get("device_status") or d.get("status")
+                    if status == "ready":
+                        return d
+            return None
+
+        try:
+            poll_until("GoPro device_status==ready on backend",
+                       CAMERA_STATE_PROBE_TIMEOUT_SECONDS, gopro_device_ready)
+            report.step("gopro device_status==ready (backend-verified)", True)
+        except ValidationError as e:
+            report.step("gopro device_status==ready (backend-verified)", False, error=str(e))
+            raise ValidationError(f"GoPro never reached device_status=ready. {e}")
+
+        print("[camera-state] Sending gopro-camera-state-probe...")
+        send_deep_link(ctx.iphone_udid, "gopro-camera-state-probe")
+        report.step("gopro-camera-state-probe deep link sent", True)
+        _time.sleep(5)
+
+        local_diag = str(ctx.artifact.dir / "gopro_camera_state_diag.json")
+        if not copy_app_container_file(ctx.iphone_udid, "Documents/gopro_camera_state_diag.json", local_diag):
+            report.step("gopro_camera_state_diag.json collected", False, error="copy failed")
+            raise ValidationError("gopro_camera_state_diag.json was not collectable.")
+        try:
+            diag = json.loads(Path(local_diag).read_text())
+        except (OSError, json.JSONDecodeError) as e:
+            report.step("gopro_camera_state_diag.json collected", False, error=f"unparseable: {e}")
+            raise ValidationError(f"gopro_camera_state_diag.json copied but unparseable: {e}")
+        report.step("gopro_camera_state_diag.json collected", True,
+                    rawResponseOK=diag.get("rawResponseOK"), topLevelKeys=diag.get("topLevelKeys"))
+
+        print(f"[camera-state] rawResponseOK={diag.get('rawResponseOK')} "
+              f"topLevelKeys={diag.get('topLevelKeys')}")
+        print(f"[camera-state] >>> FULL RAW RESPONSE (read this to find the real "
+              f"resolution/fps/lens-mode fields):\n{diag.get('rawResponseText')}")
+
+        if not diag.get("rawResponseOK"):
+            raise ValidationError(f"camera/state HTTP call failed: {diag.get('error')}")
+
+        report.passed = True
+        print("[camera-state] === PASS: camera/state raw response captured ===")
+
+    except ValidationError as e:
+        report.error = str(e)
+        report.passed = False
+        print(f"[camera-state] === FAIL: {e} ===")
+    return report
+
+
 SCENARIOS = {
     "smoke": scenario_smoke,
     "multicycle": scenario_multicycle,
@@ -1501,5 +1715,6 @@ SCENARIOS = {
     "gopro-network-routing-diag": scenario_gopro_network_routing_diag,
     "gopro-preview-poc": scenario_gopro_preview_poc,
     "gopro-combined-cycle-proof": scenario_gopro_combined_cycle_proof,
+    "gopro-camera-state-probe": scenario_gopro_camera_state_probe,
     "tricamera-capture-skeleton-proof": scenario_tricamera_capture_skeleton_proof,
 }

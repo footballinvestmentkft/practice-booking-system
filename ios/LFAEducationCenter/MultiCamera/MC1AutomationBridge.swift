@@ -49,6 +49,8 @@ enum MC1AutomationAction: Equatable {
     case goProPreviewPOC(durationSeconds: TimeInterval)
     // GoPro Block 3: preview + recording combined cycle proof — debug-only
     case goProCombinedCycleProof(durationSeconds: TimeInterval)
+    // Capture Quality block: read (not write) the GoPro's current camera/state — debug-only
+    case goProCameraStateProbe
 }
 
 final class MC1AutomationBridge: ObservableObject {
@@ -149,6 +151,10 @@ final class MC1AutomationBridge: ObservableObject {
             let duration = value("duration_s").flatMap(Double.init) ?? 15
             print("[MC1-AUTO] received action=gopro-combined-cycle-proof duration_s=\(duration)")
             lastAction = .goProCombinedCycleProof(durationSeconds: duration)
+            return true
+        case "gopro-camera-state-probe":
+            print("[MC1-AUTO] received action=gopro-camera-state-probe")
+            lastAction = .goProCameraStateProbe
             return true
         default:
             print("[MC1-AUTO] received unknown action=\(action)")

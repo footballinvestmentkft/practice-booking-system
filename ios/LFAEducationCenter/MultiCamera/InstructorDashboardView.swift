@@ -102,6 +102,7 @@ struct InstructorDashboardView: View {
                         devicePreview(device)
                             .aspectRatio(3.0/4.0, contentMode: .fit)
                             .clipped()
+                        metadataRow(device)
                     }
                     .background(Color(white: 0.08))
                 }
@@ -135,6 +136,69 @@ struct InstructorDashboardView: View {
             // Remote participant device — WebRTC/peer stream
             RemoteCameraView(streamService: streamService)
         }
+    }
+
+    // MARK: - Metadata row (Capture Quality + Metadata block)
+    //
+    // No source should ever record without a visible answer to "what
+    // resolution/fps/codec, where did the file go, did it upload" — see
+    // docs/MEDIA_PIPELINE_PLAN.md. Upload/media-ID are explicit
+    // "not_implemented" placeholders, not silently absent fields.
+
+    @ViewBuilder
+    private func metadataRow(_ device: SessionDeviceDTO) -> some View {
+        if device.id == vm.sessionDeviceId {
+            localMetadataRow
+        } else if device.deviceRole == .auxiliaryCamera {
+            goProMetadataRow
+        } else {
+            metadataLine("remote — no metadata channel yet", color: .secondary)
+        }
+    }
+
+    private var localMetadataRow: some View {
+        VStack(spacing: 0) {
+            if case .valid(_, let res, let orient, _, _, let fps, let codec) = captureManager.lastValidation {
+                metadataLine("\(Int(res.width))×\(Int(res.height)) @ \(Int(fps))fps · \(codec) · \(orient)")
+            } else if let profile = captureManager.activeCaptureProfile {
+                metadataLine("target: \(profile.label)@\(Int(profile.targetFPS))fps — recording in progress")
+            } else {
+                metadataLine("no metadata yet")
+            }
+            fileStatusLine
+        }
+    }
+
+    private var fileStatusLine: some View {
+        Group {
+            if let url = captureManager.outputFileURL {
+                let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? 0
+                metadataLine("file: \(url.lastPathComponent) (\((size ?? 0) / 1024)KB) · upload: not_implemented")
+            } else {
+                metadataLine("no local file yet")
+            }
+        }
+    }
+
+    private var goProMetadataRow: some View {
+        // GoProCameraStatus does not yet reliably decode resolution/fps from
+        // camera/state (firmware has shown "unknown" on every physical run —
+        // see GoProCameraStateProbe). Showing battery/recording only, which
+        // ARE confirmed-decoding fields, rather than guessing at others.
+        let gp = GoProConnectionManager.shared
+        let battery = gp.cameraStatus?.batteryLevel.map { "\($0)%" } ?? "—"
+        return metadataLine("battery: \(battery) · resolution/fps: see camera_state_diag · upload: not_implemented")
+    }
+
+    private func metadataLine(_ text: String, color: Color = .white.opacity(0.6)) -> some View {
+        Text(text)
+            .font(.system(size: 8, design: .monospaced))
+            .foregroundColor(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 2)
+            .background(Color(white: 0.05))
     }
 
     // GoPro preview: live decoded frame from GoProStreamProbe POC (see
