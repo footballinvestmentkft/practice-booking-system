@@ -336,6 +336,11 @@ struct MultiCameraLobbyView: View {
                     let diag = await GoProStreamProbe.shared.run(durationSeconds: durationSeconds)
                     GoProStreamDiagWriter.write(diag)
                 }
+            case .goProCombinedCycleProof(let durationSeconds):
+                Task {
+                    let diag = await GoProRecordingCycleProbe.run(previewDurationSeconds: durationSeconds)
+                    GoProRecordingDiagWriter.write(diag)
+                }
             }
         }
         .sheet(isPresented: $showQRScanner) {
