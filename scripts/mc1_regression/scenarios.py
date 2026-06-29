@@ -892,7 +892,15 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
         _time.sleep(NETWORK_ROUTING_DIAG_SETTLE_SECONDS)
         report.step("pre-connect network probe sent", True)
 
-        # 4. GoPro connect (BLE → WiFi AP → HTTP verify)
+        # 4. GoPro connect (BLE → WiFi AP). The app's wait-for-ready loop
+        #    (waitAndSignalGoProReady) only watches GoProConnectionManager.state
+        #    for 45s after THIS deep link, and the manual-join confirmation
+        #    (confirmManualWiFiJoined) is only invoked when a gopro-connect
+        #    deep link arrives WHILE the app is in .awaitingManualWiFiJoin.
+        #    A human joining WiFi by hand does not retrigger that check on its
+        #    own — so we block here on operator confirmation, THEN resend
+        #    gopro-connect to pick up the manual join and start a fresh 45s
+        #    HTTP-verify window.
         print(f"[net-diag] Sending gopro-connect to iPhone (gopro_device_id={gopro_device_id})...")
         print("[net-diag] Physical: ensure GoPro is on and in BLE pairing mode.")
         send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
@@ -903,11 +911,35 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
         print("[net-diag] >>> App will verify GoPro HTTP and signal backend ready")
 
         # 5. Network probe AFTER GoPro WiFi join starts (reveals routing state)
-        _time.sleep(15)  # give BLE scan + connect time to start
+        _time.sleep(15)  # give BLE scan + AP-activation time to reach awaitingManualWiFiJoin
         print("[net-diag] Sending network-routing-diag AFTER gopro-connect (mid-connect)...")
         send_deep_link(ctx.iphone_udid, "network-routing-diag", label="mid-gopro-connect")
         _time.sleep(NETWORK_ROUTING_DIAG_SETTLE_SECONDS)
         report.step("mid-connect network probe sent", True)
+
+        # The exact GoPro WiFi SSID is read live from the camera over BLE and
+        # is NOT printed by [GoPro]/[NET-DIAG] log lines — it only appears in
+        # the Debug Snapshot's "gopro_connection: Csatlakozz: <ssid>" line.
+        # Dump it now so the operator (and this artifact) has the real SSID.
+        print("[net-diag] Dumping snapshot to read the exact GoPro WiFi SSID...")
+        send_deep_link(ctx.iphone_udid, "dump-snapshot")
+        _time.sleep(2)
+        print("[net-diag] >>> Check console/iphone_console.log just written above for "
+              "'gopro_connection: Csatlakozz: <SSID>' — that <SSID> is the GoPro WiFi network name.")
+
+        # 5b. Block here until the operator has manually joined the GoPro WiFi
+        #     network and returned to the LFA app. Do not press Enter early —
+        #     the BLE handshake needs the ~15s above to even show the SSID.
+        input(
+            "\n[net-diag] >>> Join the GoPro WiFi network on the iPhone now "
+            "(Settings -> Wi-Fi -> GoPro SSID), then return to the LFA app.\n"
+            "[net-diag] >>> Press ENTER here ONLY after the iPhone shows it is "
+            "connected to the GoPro WiFi network: "
+        )
+        print("[net-diag] Operator confirmed manual WiFi join — resending gopro-connect "
+              "to trigger confirmManualWiFiJoined()...")
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect re-sent after manual join", True)
 
         # 6. Poll backend for GoPro device_status == ready
         #    PASS gate: updateDeviceStatus reached backend over cellular while on GoPro WiFi

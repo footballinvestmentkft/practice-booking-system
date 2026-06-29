@@ -67,12 +67,22 @@ different networking strategy (tracked separately, not part of this fix).
 
 1. App falls back to `awaitingManualWiFiJoin(ssid:)` (auto-join unavailable,
    handled gracefully — not a crash/hang).
-2. Operator manually joins the GoPro WiFi AP via iPhone Settings → Wi-Fi.
-3. App, back in foreground, confirms GoPro HTTP reachable.
+2. Operator manually joins the GoPro WiFi AP via iPhone Settings → Wi-Fi,
+   then confirms in the terminal (the script blocks on this — see below).
+3. The script resends the `gopro-connect` deep link, which the app reads as
+   "manual join confirmed" and verifies GoPro HTTP reachable.
 4. `fetchCameraState` succeeds.
 5. Backend reports `device_status=ready` for the GoPro device.
 6. `[NET-DIAG]` and `[GOPRO-AUTO]` lines present in the iPhone console
    artifact (corroborating evidence, not PASS/FAIL gates).
+
+**Important code-level note:** the app's `waitAndSignalGoProReady` loop only
+watches the connection state for 45 seconds after each `gopro-connect` deep
+link, and the manual-join confirmation (`confirmManualWiFiJoined`) only
+fires when a `gopro-connect` deep link arrives while the app is already in
+`awaitingManualWiFiJoin`. Joining WiFi by hand does **not** auto-resume the
+flow — that's why the script pauses on an `ENTER` prompt and resends the
+deep link itself right after you confirm.
 
 ### Physical test steps (plain language, for the person running the test)
 
@@ -83,31 +93,65 @@ different networking strategy (tracked separately, not part of this fix).
    screen (not Session Lab — the script opens that for you).
 4. **Start the script** (`./scripts/run_mc1_regression.sh --scenario
    gopro-network-routing-diag ...` — see Run section above for the full
-   env vars). Don't touch the phone yet.
-5. **Watch the terminal.** When you see these four lines, that's your cue:
+   env vars). Don't touch the phone yet — the script joins the session and
+   opens Session Lab on the iPhone for you.
+5. **Watch the terminal.** When you see these four lines, that's your cue
+   that the app has started trying to connect to the GoPro:
    ```
    [net-diag] >>> GoPro Wi-Fi auto-join unavailable under current provisioning
    [net-diag] >>> Manual action required: iPhone Settings -> Wi-Fi -> select GoPro SSID
    [net-diag] >>> Return to LFA app after Wi-Fi connection
    [net-diag] >>> App will verify GoPro HTTP and signal backend ready
    ```
-6. **Go to iPhone Settings → Wi-Fi** and tap the GoPro's network name in the
-   list (it looks like `GP13XXXXXXXXX`). Enter the GoPro's WiFi password if
-   asked (shown on the GoPro's own screen).
-7. **Once the iPhone shows it's connected to the GoPro WiFi**, go back to
+6. **A few seconds later** the terminal prints a line telling you to check
+   the console log for the exact GoPro WiFi network name:
+   ```
+   [net-diag] >>> Check console/iphone_console.log just written above for
+   'gopro_connection: Csatlakozz: <SSID>' — that <SSID> is the GoPro WiFi network name.
+   ```
+   Open `scripts/mc1_regression_runs/<latest-timestamp>_gopro-network-routing-diag/console/iphone_console.log`
+   in another window (or just scroll the terminal if it's printed there too)
+   and find that line — it tells you exactly which Wi-Fi network to join.
+7. **Go to iPhone Settings → Wi-Fi** and tap that exact network name in the
+   list (GoPro SSIDs look like `GP13XXXXXXXXX`). Enter the GoPro's WiFi
+   password if asked (shown on the GoPro's own screen).
+8. **Once the iPhone shows it's connected to the GoPro WiFi**, go back to
    the LFA app (press the Home button / swipe up, then tap the app icon
-   again — don't force-quit it).
-8. **Wait.** You don't need to do anything else — the app detects it's back
-   in the foreground and automatically checks the GoPro connection and
-   tells the backend it's ready. This can take up to ~3 minutes total from
-   when the four lines appeared.
-9. **Watch the terminal again.** You'll see either:
-   - `[net-diag] === PASS: GoPro WiFi + backend cellular routing CONFIRMED ===`
-     → done, test passed.
-   - `[net-diag] === FAIL: ...===` → something didn't connect in time; check
-     that you joined the right WiFi network and the GoPro stayed powered on.
-10. **No need to restart anything** — neither the iPhone nor the GoPro
+   again — don't force-quit it). You should still be on the Session Lab
+   screen.
+9. **Now, and only now, go back to the terminal** — it is waiting at a
+   prompt:
+   ```
+   [net-diag] >>> Press ENTER here ONLY after the iPhone shows it is
+   connected to the GoPro WiFi network:
+   ```
+   Press **Enter**. This tells the script to resend the connect signal to
+   the app, which is what actually makes it check the GoPro and tell the
+   backend it's ready.
+10. **Wait up to ~3 minutes.** You don't need to touch the phone again —
+    watch the terminal.
+11. **Watch the terminal.** You'll see either:
+    - `[net-diag] === PASS: GoPro WiFi + backend cellular routing CONFIRMED ===`
+      → done, test passed.
+    - `[net-diag] === FAIL: ...===` → something didn't connect in time; check
+      that you joined the right WiFi network (step 6's exact SSID) and that
+      the GoPro stayed powered on and didn't go to sleep.
+12. **No need to restart anything** — neither the iPhone nor the GoPro
     need a reboot for this test.
+
+### If it FAILs — what to capture before retrying
+
+- **Screenshot the iPhone's Settings → Wi-Fi screen** showing which network
+  it's actually connected to (confirms whether it really joined the GoPro
+  AP or fell back to your normal WiFi/cellular).
+- **Copy the full terminal output** from the `[net-diag] === FAIL` line
+  upward to the most recent `[net-diag] >>>` block.
+- **Copy** `scripts/mc1_regression_runs/<latest-timestamp>_gopro-network-routing-diag/console/iphone_console.log`
+  — this has every `[NET-DIAG]`, `[GOPRO-AUTO]`, and `[GoPro]` line from the
+  run, including the exact failure point.
+- **Note whether the GoPro's screen was still on** when the test failed —
+  GoPro HERO13 can auto-sleep its WiFi AP after a few minutes of no client
+  activity, which looks identical to a routing failure from the app's side.
 
 ## What gets saved (per run)
 
