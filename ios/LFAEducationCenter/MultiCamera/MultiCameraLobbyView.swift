@@ -649,6 +649,10 @@ struct MultiCameraLobbyView: View {
               let token = vm.authManager.accessToken,
               let sessionUuid = vm.sessionUuid else {
             print("[GOPRO-AUTO] signalReady skipped: no deviceId/auth/session")
+            GoProDiagRecorder.write(
+                goProDeviceId: goProDeviceId, localState: "\(GoProConnectionManager.shared.state)",
+                outcome: "skipped_no_context", httpStatus: nil, detail: nil
+            )
             return
         }
         // Log gopro connection state at call time — if we're on GoPro WiFi here,
@@ -660,12 +664,23 @@ struct MultiCameraLobbyView: View {
                 sessionDeviceId: did, targetStatus: .ready, deviceRevision: 0
             )
             print("[GOPRO-AUTO] signalReady OK: GoPro device \(did) → ready (rev=\(sd.revision))")
+            GoProDiagRecorder.write(
+                goProDeviceId: did, localState: "\(GoProConnectionManager.shared.state)",
+                outcome: "signalReady_ok", httpStatus: nil, detail: "revision=\(sd.revision)"
+            )
         } catch {
             let urlErr = (error as? APIError).flatMap {
                 if case .networkError(let e) = $0 { return e as? URLError } else { return nil }
             }
+            let httpErr = (error as? APIError).flatMap {
+                if case .httpError(let code, let detail) = $0 { return (code, detail) } else { return nil }
+            }
             let errDetail = urlErr.map { "URLError(\($0.code.rawValue))" } ?? "\(error)"
             print("[GOPRO-AUTO] signalReady FAILED: \(errDetail)")
+            GoProDiagRecorder.write(
+                goProDeviceId: did, localState: "\(GoProConnectionManager.shared.state)",
+                outcome: "signalReady_failed", httpStatus: httpErr?.0, detail: httpErr?.1 ?? errDetail
+            )
         }
     }
 
@@ -681,10 +696,18 @@ struct MultiCameraLobbyView: View {
             }
             if case .failed(let err) = gp.state {
                 print("[GOPRO-AUTO] GoPro connect failed: \(err)")
+                GoProDiagRecorder.write(
+                    goProDeviceId: goProDeviceId, localState: "\(gp.state)",
+                    outcome: "connect_failed", httpStatus: nil, detail: "\(err)"
+                )
                 return
             }
         }
         print("[GOPRO-AUTO] GoPro connect timeout (45s), state=\(gp.state)")
+        GoProDiagRecorder.write(
+            goProDeviceId: goProDeviceId, localState: "\(gp.state)",
+            outcome: "wait_timeout_45s", httpStatus: nil, detail: nil
+        )
     }
 
     private static func isoNow() -> String {
@@ -805,6 +828,40 @@ private struct LabeledRow: View {
             Spacer()
             Text(value).font(.caption.weight(.semibold))
         }
+    }
+}
+
+// MARK: — GoPro ready-signal diagnostics (Block 1)
+//
+// idevicesyslog does not reliably capture Swift print() output on physical
+// devices (privacy redaction varies by attach timing/lock state), so the
+// outcome of every signalGoProReady attempt is also persisted to a fixed
+// path in the app's Documents directory. The regression script pulls this
+// file directly via `devicectl device copy from --domain-type
+// appDataContainer`, which needs no console log parsing at all.
+private struct GoProDiagRecord: Codable {
+    let timestamp: String
+    let goProDeviceId: Int?
+    let localState: String
+    let outcome: String
+    let httpStatus: Int?
+    let detail: String?
+}
+
+enum GoProDiagRecorder {
+    static let fileName = "gopro_diag.json"
+
+    static func write(goProDeviceId: Int?, localState: String, outcome: String,
+                       httpStatus: Int?, detail: String?) {
+        let record = GoProDiagRecord(
+            timestamp: ISO8601DateFormatter().string(from: Date()),
+            goProDeviceId: goProDeviceId, localState: localState,
+            outcome: outcome, httpStatus: httpStatus, detail: detail
+        )
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+              let data = try? JSONEncoder().encode(record) else { return }
+        let url = docs.appendingPathComponent(fileName)
+        try? data.write(to: url, options: .atomic)
     }
 }
 #endif

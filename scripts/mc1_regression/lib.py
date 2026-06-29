@@ -180,6 +180,31 @@ def copy_from_device(udid: str, device_path: str, local_path: str) -> bool:
     return False
 
 
+LFA_BUNDLE_ID = "com.lovas-zoltan.lfa-education-center"
+
+
+def copy_app_container_file(udid: str, relative_path: str, local_path: str,
+                             bundle_id: str = LFA_BUNDLE_ID) -> bool:
+    """Copy a file from the app's Documents directory via devicectl's
+    appDataContainer domain. Unlike copy_from_device, this needs no absolute
+    on-device path discovered from a console log line — only the bundle ID
+    and a path relative to the app's data container, which is fixed and
+    known in advance. Use for diagnostic files the app writes proactively
+    (e.g. gopro_diag.json) where console log capture cannot be relied on.
+    """
+    result = subprocess.run(
+        ["xcrun", "devicectl", "device", "copy", "from", "--device", udid,
+         "--domain-type", "appDataContainer", "--domain-identifier", bundle_id,
+         "--source", relative_path, "--destination", local_path],
+        capture_output=True, text=True, timeout=60,
+    )
+    if result.returncode == 0:
+        print(f"  -> copied app container file: {relative_path} → {local_path}")
+        return True
+    print(f"  -> app container copy failed: {result.stderr.strip()[:300]}")
+    return False
+
+
 def extract_capture_path_from_log(console_log: str, tag: str = "[CAPTURE-INFO]") -> str | None:
     """Parse outputFile= from console log CAPTURE-INFO line."""
     for line in console_log.splitlines():
