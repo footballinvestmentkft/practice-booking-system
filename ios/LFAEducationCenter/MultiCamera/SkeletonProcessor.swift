@@ -124,17 +124,18 @@ final class SkeletonProcessor: ObservableObject {
             "frames": frames
         ]
 
-        let outputDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("skeleton_output", isDirectory: true)
-        try? FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)
-        let outputFile = outputDir.appendingPathComponent("skeleton_\(deviceId)_\(sessionUuid.prefix(8)).json")
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            state = .failed("no Documents directory")
+            return
+        }
+        let outputFile = docs.appendingPathComponent("skeleton_output.json")
 
         do {
             let data = try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
-            try data.write(to: outputFile)
+            try data.write(to: outputFile, options: .atomic)
             outputURL = outputFile
             state = .completed(frameCount: frames.count, jointsDetected: detectedJoints)
-            print("[Skeleton] done: \(frames.count) frames, \(detectedJoints) joints → \(outputFile.path)")
+            print("[SKELETON-RESULT] file=\(outputFile.path) frames=\(frames.count) joints=\(detectedJoints)")
         } catch {
             state = .failed("write: \(error.localizedDescription)")
         }

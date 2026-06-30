@@ -311,15 +311,8 @@ struct MultiCameraLobbyView: View {
                     let sessionUuid = vm.sessionUuid ?? "unknown"
                     let deviceId = vm.sessionDeviceId.map { "\($0)" } ?? "unknown"
                     await processor.process(videoURL: videoURL, sessionUuid: sessionUuid, deviceId: deviceId)
-                    switch processor.state {
-                    case .completed(let frames, let joints):
-                        if let url = processor.outputURL {
-                            print("[SKELETON-RESULT] file=\(url.path) frames=\(frames) joints=\(joints)")
-                        }
-                    case .failed(let msg):
+                    if case .failed(let msg) = processor.state {
                         print("[SKELETON-RESULT] FAILED: \(msg)")
-                    default:
-                        print("[SKELETON-RESULT] unexpected state: \(processor.state)")
                     }
                 }
             case .captureInfo:

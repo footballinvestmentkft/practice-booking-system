@@ -673,9 +673,26 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         gopro_device_id = gopro_sd["id"]
         report.step("gopro registered", True, gopro_device_id=gopro_device_id, managed_by=instructor_id)
 
-        # 3. GoPro connect on iPhone
-        print(f"[proof] gopro-connect → iPhone...")
+        # 3. GoPro connect on iPhone — BLE scan + manual WiFi join required.
+        #    Same pattern as gopro-network-routing-diag: send gopro-connect to
+        #    start BLE scan, wait for app to show the SSID, operator joins WiFi
+        #    manually (HotspotConfiguration entitlement not available), then
+        #    operator confirms here and gopro-connect is re-sent to trigger
+        #    confirmManualWiFiJoined() and a fresh 45s HTTP-verify window.
+        print(f"[proof] gopro-connect → iPhone (BLE scan start, gopro_device_id={gopro_device_id})...")
         send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        _time.sleep(15)  # give BLE scan time to reach awaitingManualWiFiJoin and print SSID
+        send_deep_link(ctx.iphone_udid, "dump-snapshot")
+        _time.sleep(2)
+        print("[proof] >>> Check iphone_console.log for 'gopro_connection: Csatlakozz: <SSID>' to get the WiFi name.")
+        input(
+            "\n[proof] >>> MANUAL ACTION: iPhone Settings → Wi-Fi → connect to GoPro SSID, "
+            "then return to LFA app.\n"
+            "[proof] >>> Press ENTER here ONLY after iPhone is connected to GoPro WiFi: "
+        )
+        print("[proof] Operator confirmed manual WiFi join — re-sending gopro-connect to trigger confirmManualWiFiJoined()...")
+        send_deep_link(ctx.iphone_udid, "gopro-connect", gopro_device_id=str(gopro_device_id))
+        report.step("gopro-connect re-sent after manual join", True)
 
         def gopro_device_ready():
             s = get_session(ctx.api_base, ctx.instructor_token, session_uuid)
@@ -685,11 +702,12 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
             return None
 
         try:
-            poll_until("GoPro ready (backend)", GOPRO_CONNECT_TIMEOUT_SECONDS, gopro_device_ready)
+            poll_until("GoPro ready (backend)", NETWORK_ROUTING_DIAG_TIMEOUT_SECONDS, gopro_device_ready)
             report.step("gopro ready", True)
         except ValidationError as e:
             report.step("gopro ready", False, error=str(e))
             send_deep_link(ctx.iphone_udid, "gopro-status")
+            send_deep_link(ctx.iphone_udid, "dump-snapshot")
             _time.sleep(2)
             raise
 
@@ -817,64 +835,80 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         send_deep_link(ctx.iphone_udid, "dump-snapshot")
         _time.sleep(3)
 
-        # 17. Artifact collection — read console logs, extract paths, copy files
+        # 17. Artifact collection — copy_app_container_file (reliable, no console parsing).
+        #     capture_metadata_diag.json is written by CaptureMetadataDiagWriter when
+        #     the capture-info deep link fires (step 13 above).
+        #     skeleton_output.json is written by SkeletonProcessor to Documents/ (fixed name).
         print("[proof] === ARTIFACT COLLECTION ===")
+        import json as _json
         import os
-
-        iphone_log_path = ctx.artifact.iphone_console_log
-        ipad_log_path = ctx.artifact.ipad_console_log
-        iphone_log = iphone_log_path.read_text() if iphone_log_path.exists() else ""
-        ipad_log = ipad_log_path.read_text() if ipad_log_path.exists() else ""
 
         artifacts_dir = ctx.artifact.dir / "video_artifacts"
         artifacts_dir.mkdir(parents=True, exist_ok=True)
 
-        # 17a. iPhone video
-        iphone_video_path = extract_capture_path_from_log(iphone_log)
-        if iphone_video_path:
-            local_iphone_video = str(artifacts_dir / "iphone_capture.mov")
-            if copy_from_device(ctx.iphone_udid, iphone_video_path, local_iphone_video):
-                size = os.path.getsize(local_iphone_video) if os.path.exists(local_iphone_video) else 0
-                report.step("iphone video collected", size > 0, path=local_iphone_video, size=size)
-            else:
-                report.step("iphone video collected", False, error="copy failed")
+        # 17a. iPhone capture metadata (contains outputFilePath, fileSizeBytes, duration, codec)
+        local_iphone_meta = str(artifacts_dir / "iphone_capture_metadata.json")
+        iphone_meta_ok = copy_app_container_file(ctx.iphone_udid, "Documents/capture_metadata_diag.json", local_iphone_meta)
+        if iphone_meta_ok:
+            try:
+                meta = _json.loads(open(local_iphone_meta).read())
+                file_size = meta.get("fileSizeBytes", 0) or 0
+                report.step("iphone capture metadata", file_size > 0,
+                            fileSizeBytes=file_size, outputFilePath=meta.get("outputFilePath"),
+                            durationSeconds=meta.get("actualDurationSeconds"),
+                            codec=meta.get("actualCodec"))
+            except Exception as e:
+                report.step("iphone capture metadata", False, error=f"parse error: {e}")
         else:
-            report.step("iphone video collected", False, error="path not found in console log")
+            report.step("iphone capture metadata", False, error="copy_app_container_file failed")
 
-        # 17b. iPad video
-        ipad_video_path = extract_capture_path_from_log(ipad_log)
-        if ipad_video_path:
-            local_ipad_video = str(artifacts_dir / "ipad_capture.mov")
-            if copy_from_device(ctx.ipad_udid, ipad_video_path, local_ipad_video):
-                size = os.path.getsize(local_ipad_video) if os.path.exists(local_ipad_video) else 0
-                report.step("ipad video collected", size > 0, path=local_ipad_video, size=size)
-            else:
-                report.step("ipad video collected", False, error="copy failed")
+        # 17b. iPad capture metadata
+        local_ipad_meta = str(artifacts_dir / "ipad_capture_metadata.json")
+        ipad_meta_ok = copy_app_container_file(ctx.ipad_udid, "Documents/capture_metadata_diag.json", local_ipad_meta)
+        if ipad_meta_ok:
+            try:
+                meta = _json.loads(open(local_ipad_meta).read())
+                file_size = meta.get("fileSizeBytes", 0) or 0
+                report.step("ipad capture metadata", file_size > 0,
+                            fileSizeBytes=file_size, outputFilePath=meta.get("outputFilePath"),
+                            durationSeconds=meta.get("actualDurationSeconds"),
+                            codec=meta.get("actualCodec"))
+            except Exception as e:
+                report.step("ipad capture metadata", False, error=f"parse error: {e}")
         else:
-            report.step("ipad video collected", False, error="path not found in console log")
+            report.step("ipad capture metadata", False, error="copy_app_container_file failed")
 
-        # 17c. GoPro evidence (media list in console log)
+        # 17c. GoPro recording evidence: media list in iPhone console log
+        iphone_log_path = ctx.artifact.iphone_console_log
+        iphone_log = iphone_log_path.read_text() if iphone_log_path.exists() else ""
         gopro_media_found = "[GOPRO-MEDIA-BEGIN]" in iphone_log
         report.step("gopro media evidence", gopro_media_found,
-                     note="media list found in iPhone console log" if gopro_media_found else "not found")
+                    note="media list found in iPhone console log" if gopro_media_found else "not found in log")
 
-        # 17d. Skeleton JSON
-        skeleton_path = extract_skeleton_path_from_log(iphone_log)
-        if skeleton_path:
-            local_skeleton = str(artifacts_dir / "skeleton.json")
-            if copy_from_device(ctx.iphone_udid, skeleton_path, local_skeleton):
-                size = os.path.getsize(local_skeleton) if os.path.exists(local_skeleton) else 0
-                report.step("skeleton json collected", size > 100, path=local_skeleton, size=size)
-            else:
-                report.step("skeleton json collected", False, error="copy failed")
+        # 17d. Skeleton JSON (SkeletonProcessor writes to Documents/skeleton_output.json)
+        local_skeleton = str(artifacts_dir / "skeleton_output.json")
+        skeleton_ok = copy_app_container_file(ctx.iphone_udid, "Documents/skeleton_output.json", local_skeleton)
+        if skeleton_ok:
+            try:
+                skel = _json.loads(open(local_skeleton).read())
+                frames = skel.get("sampled_frames", 0) or 0
+                joints = skel.get("total_joints_detected", 0) or 0
+                report.step("skeleton json collected", frames > 0,
+                            sampled_frames=frames, total_joints_detected=joints,
+                            video_duration_s=skel.get("video_duration_s"))
+            except Exception as e:
+                report.step("skeleton json collected", False, error=f"parse error: {e}")
         else:
-            report.step("skeleton json collected", False, error="path not found in console log")
+            report.step("skeleton json collected", False, error="copy_app_container_file failed — SkeletonProcessor may not have completed")
 
-        # 18. Final PASS: all critical steps must be OK
+        # 18. Final PASS: all critical backend-grounded steps must be OK.
+        #     Artifact steps (capture metadata, skeleton) are corroborating evidence
+        #     and are reported but do NOT gate the PASS — backend confirmed_stop is
+        #     the authoritative proof that all 3 cameras recorded.
         critical_ok = all(
             s.get("ok") for s in report.steps
             if s["description"] in (
-                "iphone+ipad confirmed_start", "gopro confirmed_start",
+                "instructor+player confirmed_start", "gopro confirmed_start",
                 "all 3 confirmed_stop", "timestamp sync report",
             )
         )
