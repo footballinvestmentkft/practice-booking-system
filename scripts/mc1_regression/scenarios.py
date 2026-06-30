@@ -644,10 +644,29 @@ ARTIFACT_COLLECT_SECONDS = 5
 
 
 def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioReport:
-    """End-to-end proof: 3-camera capture + skeleton overlay.
+    """End-to-end proof: 3-camera capture + live skeleton overlay.
 
     iPhone=instructor+GoPro controller, iPad=player, GoPro=auxiliary.
-    After capture: collect 3 video artifacts + run skeleton processing on iPhone video.
+
+    AUTOMATED PASS criteria (backend-grounded):
+      - instructor+player confirmed_start  (cycle_devices recording_status)
+      - gopro confirmed_start              (cycle_devices recording_status)
+      - all 3 confirmed_stop               (cycle_devices recording_status)
+      - timestamp sync report saved        (proof_cycle_timing.json written)
+
+    MANUAL VISUAL PASS criteria (human operator, cannot be automated):
+      - iPhone panel: cyan skeleton overlay visible during preview
+      - iPad panel:   cyan skeleton overlay visible during preview
+      - GoPro panel:  cyan skeleton overlay visible during preview
+        (GoPro frames are pushed via GoProStreamProbe.lastFrame → feed())
+      → Operator must screenshot the dashboard showing all 3 skeleton overlays
+        and save as: artifacts/visual_skeleton_overlay.png
+
+    CORROBORATING evidence (reported, does NOT gate PASS):
+      - iphone_capture_metadata.json  (fileSizeBytes > 0)
+      - ipad_capture_metadata.json    (fileSizeBytes > 0)
+      - skeleton_output.json          (post-capture SkeletonProcessor run)
+      - gopro media evidence          ([GOPRO-MEDIA-BEGIN] in iPhone log)
     """
     import time as _time
 
