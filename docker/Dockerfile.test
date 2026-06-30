@@ -41,11 +41,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # ── Python dependencies (cached layer — only rebuilds when requirements change)
-COPY requirements.txt streamlit_requirements.txt ./
+COPY requirements.txt ./
 
 RUN pip install --no-cache-dir \
     -r requirements.txt \
-    -r streamlit_requirements.txt \
     playwright \
     pytest \
     pytest-playwright
