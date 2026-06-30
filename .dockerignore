@@ -31,6 +31,17 @@ tests_e2e/videos/
 scripts/smart_snap_poc1/
 scripts/mc1_regression/
 
+# Large local model weights (not needed in Docker test image)
+local_models/
+
+# Logs
+logs/
+
+# Coverage reports
+.coverage
+coverage.xml
+htmlcov/
+
 # Misc
 .DS_Store
 *.log
