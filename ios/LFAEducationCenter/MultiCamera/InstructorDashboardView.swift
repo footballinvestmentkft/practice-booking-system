@@ -8,6 +8,12 @@ struct InstructorDashboardView: View {
     @ObservedObject var orchestrator: CycleCaptureOrchestrator
     @ObservedObject var vm: MultiCameraSessionViewModel
     @ObservedObject private var goProStreamProbe = GoProStreamProbe.shared
+
+    // Live skeleton overlay — one processor per panel source.
+    @StateObject private var localPoseOverlay  = LivePoseOverlayProcessor()
+    @StateObject private var remotePoseOverlay = LivePoseOverlayProcessor()
+    @StateObject private var goProPoseOverlay  = LivePoseOverlayProcessor()
+
     @Environment(\.presentationMode) private var presentationMode
 
     var body: some View {
@@ -21,6 +27,24 @@ struct InstructorDashboardView: View {
             }
         }
         .statusBarHidden(true)
+        .onAppear {
+            localPoseOverlay.attach(to: captureManager.previewSession)
+        }
+        .onDisappear {
+            localPoseOverlay.detach(from: captureManager.previewSession)
+        }
+        // Feed remote (iPad) frames to the remote overlay processor.
+        .onReceive(streamService.objectWillChange) { [self] in
+            if let data = streamService.lastReceivedFrame, let img = UIImage(data: data) {
+                remotePoseOverlay.feed(img)
+            }
+        }
+        // Feed GoPro frames to the GoPro overlay processor.
+        .onReceive(goProStreamProbe.objectWillChange) { [self] in
+            if let img = goProStreamProbe.lastFrame {
+                goProPoseOverlay.feed(img)
+            }
+        }
     }
 
     // MARK: - Session device list (source of truth for panels)
@@ -126,16 +150,28 @@ struct InstructorDashboardView: View {
 
     @ViewBuilder
     private func devicePreview(_ device: SessionDeviceDTO) -> some View {
-        if device.id == vm.sessionDeviceId {
-            // This device — local camera
-            CapturePreviewLayer(session: captureManager.previewSession)
-        } else if device.deviceRole == .auxiliaryCamera {
-            // GoPro (or other managed auxiliary camera)
-            goProPreviewPanel
-        } else {
-            // Remote participant device — WebRTC/peer stream
-            RemoteCameraView(streamService: streamService)
+        ZStack {
+            if device.id == vm.sessionDeviceId {
+                CapturePreviewLayer(session: captureManager.previewSession)
+            } else if device.deviceRole == .auxiliaryCamera {
+                goProPreviewPanel
+            } else {
+                RemoteCameraView(streamService: streamService)
+            }
+
+            // Skeleton overlay — same visual as annotation screen (ContinuousSkeletonOverlayView).
+            // showSyntheticFeet=false: synthetic foot estimation needs the ankle→knee vector
+            // from post-processed video; live Vision results provide real ankle points directly.
+            if let f = poseProcessor(for: device).frame {
+                ContinuousSkeletonOverlayView(frame: f, showSyntheticFeet: false)
+            }
         }
+    }
+
+    private func poseProcessor(for device: SessionDeviceDTO) -> LivePoseOverlayProcessor {
+        if device.id == vm.sessionDeviceId { return localPoseOverlay }
+        if device.deviceRole == .auxiliaryCamera { return goProPoseOverlay }
+        return remotePoseOverlay
     }
 
     // MARK: - Metadata row (Capture Quality + Metadata block)
