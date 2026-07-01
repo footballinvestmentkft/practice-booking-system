@@ -30,6 +30,13 @@ final class SessionCaptureManager: NSObject, ObservableObject {
     /// the device's camera can't satisfy 1280x720@30fps, in which case .sd360.
     /// nil until prepare() has run once.
     @Published private(set) var activeCaptureProfile: CaptureProfile?
+    /// Device interface orientation ("portrait"/"landscape"/"unknown") captured live, on
+    /// MainActor, at the moment startCapture() commits to recording — i.e. the ground-truth
+    /// orientation the connection's videoOrientation should have been set to. Compared against
+    /// the FILE's actual baked-in orientation (from the AVAsset preferredTransform, read back
+    /// in CaptureMetadataDiagWriter) to catch a stale/hardcoded orientation regression
+    /// (2026-07-01 flow audit — closes the loop the `.portrait` hardcode bug left open).
+    @Published private(set) var orientationAtRecordingStart: String?
 
     private let permissionProvider: PermissionProvider
     private let fileStore: CaptureFileStore
@@ -261,6 +268,9 @@ final class SessionCaptureManager: NSObject, ObservableObject {
             state = .failed("Könyvtár hiba: \(error.localizedDescription)")
             return
         }
+        // Captured here (MainActor, synchronously) — NOT re-derived later from the file —
+        // so it reflects the device's actual orientation at the moment recording commits.
+        orientationAtRecordingStart = OrientationMapper.currentOrientationLabel
         let url = fileStore.outputURL(sessionUUID: sessionUUID, deviceId: deviceId)
         captureQueue.async { [weak self] in
             guard let self else { return }
@@ -466,8 +476,47 @@ enum CaptureMetadataDiagWriter {
             diag["actualHasAudio"] = hasAudio
             diag["actualFPS"] = fps
             diag["actualCodec"] = codec
+
+            // Orientation/aspect consistency assertion (2026-07-01 flow audit) — closes the
+            // loop the `.portrait` hardcode bug left open: is the orientation ACTUALLY BAKED
+            // INTO THE FILE (from the AVAsset preferredTransform) consistent with the DEVICE'S
+            // OWN interface orientation, captured live at startCapture() time? A stale/hardcoded
+            // orientation would silently diverge from this without ever failing to "record" —
+            // the file would still be valid, just rotated wrong.
+            let portraitOrientations: Set<String> = ["portrait", "portraitUpsideDown"]
+            let landscapeOrientations: Set<String> = ["landscapeLeft", "landscapeRight"]
+            let fileOrientationCoarse: String =
+                portraitOrientations.contains(orientation) ? "portrait" :
+                landscapeOrientations.contains(orientation) ? "landscape" : "unknown"
+            let preparedLabel = manager.orientationAtRecordingStart ?? "unknown"
+            let orientationConsistent = fileOrientationCoarse != "unknown"
+                && preparedLabel != "unknown"
+                && fileOrientationCoarse == preparedLabel
+            diag["deviceOrientationAtRecordingStart"] = preparedLabel
+            diag["fileOrientationCoarse"] = fileOrientationCoarse
+            diag["orientationConsistent"] = orientationConsistent
+
+            // Effective (post-rotation) display dimensions + aspect ratio. naturalSize is the
+            // sensor's raw pixel dimensions (always landscape-shaped for this app's capture
+            // profiles — see CaptureFormatSelector); the preferredTransform rotation is what a
+            // player applies before display, so a portrait-oriented file's EFFECTIVE displayed
+            // width/height are naturalSize's height/width swapped.
+            let isPortraitFile = portraitOrientations.contains(orientation)
+            let effectiveWidth  = isPortraitFile ? resolution.height : resolution.width
+            let effectiveHeight = isPortraitFile ? resolution.width  : resolution.height
+            diag["effectiveDisplayWidth"] = Int(effectiveWidth)
+            diag["effectiveDisplayHeight"] = Int(effectiveHeight)
+            if effectiveWidth > 0, effectiveHeight > 0 {
+                func gcd(_ a: Int, _ b: Int) -> Int { b == 0 ? a : gcd(b, a % b) }
+                let w = Int(effectiveWidth), h = Int(effectiveHeight)
+                let d = gcd(w, h)
+                diag["effectiveAspectRatio"] = d > 0 ? "\(w / d):\(h / d)" : NSNull()
+            } else {
+                diag["effectiveAspectRatio"] = NSNull()
+            }
         } else if case .invalid(let reason) = manager.lastValidation {
             diag["validationError"] = reason
+            diag["orientationConsistent"] = false
         }
         // Upload pipeline does not exist yet (docs/MEDIA_PIPELINE_PLAN.md) — explicit
         // placeholder so the field is never silently absent from the diag schema.

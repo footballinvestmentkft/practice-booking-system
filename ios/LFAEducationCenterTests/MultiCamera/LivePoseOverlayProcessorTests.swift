@@ -58,4 +58,59 @@ final class LivePoseOverlayProcessorTests: XCTestCase {
         // 5fps → 0.2s interval
         XCTAssertEqual(LivePoseOverlayProcessor.minInterval, 0.2, accuracy: 0.001)
     }
+
+    // MARK: — Per-panel diagnostics (2026-07-01 flow audit)
+
+    @MainActor
+    func test_diagnostics_allZeroNil_initially() {
+        let processor = LivePoseOverlayProcessor()
+        XCTAssertEqual(processor.framesReceived, 0)
+        XCTAssertEqual(processor.framesProcessed, 0)
+        XCTAssertEqual(processor.visionDetectionSuccesses, 0)
+        XCTAssertEqual(processor.framesWithSkeletonPoints, 0)
+        XCTAssertNil(processor.lastFrameReceivedAt)
+    }
+
+    @MainActor
+    func test_feed_incrementsFramesReceivedAndLastFrameReceivedAt_synchronously() {
+        let processor = LivePoseOverlayProcessor()
+        let blank = UIImage(systemName: "square") ?? UIImage()
+        processor.feed(blank)
+        // framesReceived/lastFrameReceivedAt are set synchronously inside feed() (MainActor),
+        // unlike framesProcessed/visionDetectionSuccesses which hop through poseQueue.
+        XCTAssertEqual(processor.framesReceived, 1)
+        XCTAssertNotNil(processor.lastFrameReceivedAt)
+    }
+
+    @MainActor
+    func test_feed_multipleFrames_incrementsFramesReceivedEachTime() {
+        let processor = LivePoseOverlayProcessor()
+        let blank = UIImage(systemName: "square") ?? UIImage()
+        processor.feed(blank)
+        processor.feed(blank)
+        processor.feed(blank)
+        XCTAssertEqual(processor.framesReceived, 3, "framesReceived must count every feed() call, pre-throttle")
+    }
+
+    @MainActor
+    func test_feed_blankImage_eventuallyProcessesButFindsNoSkeleton() async {
+        let processor = LivePoseOverlayProcessor()
+        let blank = UIImage(systemName: "square") ?? UIImage()
+        processor.feed(blank)
+        for _ in 0..<30 { await Task.yield() }
+
+        XCTAssertEqual(processor.framesProcessed, 1, "first feed() is never throttled — must reach Vision")
+        XCTAssertEqual(processor.framesWithSkeletonPoints, 0, "a blank system icon has no detectable body")
+        XCTAssertNil(processor.frame)
+    }
+
+    @MainActor
+    func test_diagnosticSnapshot_containsAllFiveMetrics() {
+        let processor = LivePoseOverlayProcessor()
+        let snapshot = processor.diagnosticSnapshot
+        for key in ["framesReceived", "framesProcessed", "visionDetectionSuccesses",
+                    "framesWithSkeletonPoints", "lastFrameReceivedAt"] {
+            XCTAssertNotNil(snapshot[key], "diagnosticSnapshot must include \(key)")
+        }
+    }
 }

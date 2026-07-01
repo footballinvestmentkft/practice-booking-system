@@ -42,6 +42,23 @@ from .lib import (
 DEVICE_REGISTER_TIMEOUT_SECONDS = 120
 CYCLE_CONFIRM_TIMEOUT_SECONDS = 30
 RECORD_SECONDS = 4
+
+
+def _aspect_ratio_matches(aspect_str, expected_w=16, expected_h=9, tolerance=0.02):
+    """Tolerant "W:H" string check — real pixel dims don't always GCD-reduce to an
+    exact "16:9" string, so this compares the numeric ratio within a tolerance
+    instead of doing a strict string match."""
+    if not aspect_str or ":" not in str(aspect_str):
+        return False
+    try:
+        w_str, h_str = str(aspect_str).split(":")
+        w, h = float(w_str), float(h_str)
+        if h == 0:
+            return False
+        return abs((w / h) - (expected_w / expected_h)) <= tolerance
+    except ValueError:
+        return False
+
 # After the script PATCHes session to DEVICES_READY the iOS VM needs one 3s poll
 # cycle to see the updated status + fresh revision before begin-cycle is sent.
 # CCO already retries activateSession on 409, so 4s is a safe conservative buffer.
@@ -862,6 +879,13 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         send_deep_link(ctx.iphone_udid, "dump-snapshot")
         _time.sleep(3)
 
+        # 16.5. Per-panel pose overlay diagnostics (instructor/player/gopro frame traffic).
+        # Sent while InstructorDashboardView is still on screen (never dismissed in this
+        # scenario) so PoseOverlayDiagWriter reads the 3 processors' live counters.
+        print("[proof] pose-overlay-diag → iPhone (Instructor/Player/GoPro panel frame counters)...")
+        send_deep_link(ctx.iphone_udid, "pose-overlay-diag")
+        _time.sleep(2)
+
         # 17. Artifact collection — copy_app_container_file (reliable, no console parsing).
         #     capture_metadata_diag.json is written by CaptureMetadataDiagWriter when
         #     the capture-info deep link fires (step 13 above).
@@ -884,6 +908,18 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
                             fileSizeBytes=file_size, outputFilePath=meta.get("outputFilePath"),
                             durationSeconds=meta.get("actualDurationSeconds"),
                             codec=meta.get("actualCodec"))
+                # Orientation/aspect automatic assertions (2026-07-01 flow audit) — not just
+                # recorded in the JSON, actually checked: does the FILE's baked-in rotation
+                # match the device's own interface orientation at recording start, and is the
+                # effective (post-rotation) aspect ratio the expected 16:9?
+                report.step("iphone orientation consistent", meta.get("orientationConsistent") is True,
+                            deviceOrientationAtRecordingStart=meta.get("deviceOrientationAtRecordingStart"),
+                            fileOrientationCoarse=meta.get("fileOrientationCoarse"))
+                report.step("iphone effective aspect ratio is 16:9",
+                            _aspect_ratio_matches(meta.get("effectiveAspectRatio")),
+                            effectiveAspectRatio=meta.get("effectiveAspectRatio"),
+                            effectiveDisplayWidth=meta.get("effectiveDisplayWidth"),
+                            effectiveDisplayHeight=meta.get("effectiveDisplayHeight"))
             except Exception as e:
                 report.step("iphone capture metadata", False, error=f"parse error: {e}")
         else:
@@ -900,6 +936,14 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
                             fileSizeBytes=file_size, outputFilePath=meta.get("outputFilePath"),
                             durationSeconds=meta.get("actualDurationSeconds"),
                             codec=meta.get("actualCodec"))
+                report.step("ipad orientation consistent", meta.get("orientationConsistent") is True,
+                            deviceOrientationAtRecordingStart=meta.get("deviceOrientationAtRecordingStart"),
+                            fileOrientationCoarse=meta.get("fileOrientationCoarse"))
+                report.step("ipad effective aspect ratio is 16:9",
+                            _aspect_ratio_matches(meta.get("effectiveAspectRatio")),
+                            effectiveAspectRatio=meta.get("effectiveAspectRatio"),
+                            effectiveDisplayWidth=meta.get("effectiveDisplayWidth"),
+                            effectiveDisplayHeight=meta.get("effectiveDisplayHeight"))
             except Exception as e:
                 report.step("ipad capture metadata", False, error=f"parse error: {e}")
         else:
@@ -911,6 +955,90 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         gopro_media_found = "[GOPRO-MEDIA-BEGIN]" in iphone_log
         report.step("gopro media evidence", gopro_media_found,
                     note="media list found in iPhone console log" if gopro_media_found else "not found in log")
+
+        # 17c-2. GoPro stream preview quality (gopro_stream_diag.json, written by
+        # GoProStreamProbe.run() when the gopro-stream-start deep link fires, step 4.5
+        # above). This is the ONLY automated evidence that the GoPro preview actually
+        # received UDP data, located the video PID, and decoded frames during this run —
+        # before this check existed, a silently-failed GoPro preview was invisible to
+        # anything but a human eyeballing the dashboard (2026-07-01 flow audit).
+        # PASS requires: at least one UDP packet received, a video PID located, and at
+        # least one successfully decoded frame. Missing file (probe never wrote it —
+        # e.g. Task never completed within the run) or zero decoded frames → FAIL.
+        local_gopro_stream_diag = str(artifacts_dir / "gopro_stream_diag.json")
+        gopro_stream_diag_ok = copy_app_container_file(
+            ctx.iphone_udid, "Documents/gopro_stream_diag.json", local_gopro_stream_diag)
+        if gopro_stream_diag_ok:
+            try:
+                stream_diag = _json.loads(open(local_gopro_stream_diag).read())
+                packets = stream_diag.get("udpPacketsReceived", 0) or 0
+                video_pid_found = bool(stream_diag.get("videoPIDFound", False))
+                decodes = stream_diag.get("decodeSuccesses", 0) or 0
+                preview_ok = packets > 0 and video_pid_found and decodes > 0
+                report.step(
+                    "gopro preview stream quality", preview_ok,
+                    udpPacketsReceived=packets, videoPIDFound=video_pid_found,
+                    decodeSuccesses=decodes,
+                    reasonNoVideoPID=stream_diag.get("reasonNoVideoPID"),
+                    previewAspectRatio=stream_diag.get("previewAspectRatio"),
+                )
+                # Checked SEPARATELY from stream quality, per the audit's explicit ask: the
+                # GoPro panel must show 16:9, not just "some" decoded frames. previewAspectRatio
+                # is measured from the actually-decoded SPS (see GoProStreamProbe.swift), not
+                # assumed from a stream/start query parameter. "No distorting stretch" is a
+                # SwiftUI layout property (contentMode: .fit vs .fill), not a runtime data
+                # question — that half is covered by the static preflight check instead.
+                report.step(
+                    "gopro preview aspect ratio is 16:9",
+                    _aspect_ratio_matches(stream_diag.get("previewAspectRatio")),
+                    previewAspectRatio=stream_diag.get("previewAspectRatio"),
+                    previewWidth=stream_diag.get("previewWidth"), previewHeight=stream_diag.get("previewHeight"),
+                )
+            except Exception as e:
+                report.step("gopro preview stream quality", False, error=f"parse error: {e}")
+                report.step("gopro preview aspect ratio is 16:9", False, error=f"parse error: {e}")
+        else:
+            report.step("gopro preview stream quality", False,
+                        error="gopro_stream_diag.json not found — GoProStreamProbe.run() "
+                              "never completed/wrote its diag (timeout or crash)")
+            report.step("gopro preview aspect ratio is 16:9", False,
+                        error="gopro_stream_diag.json not found")
+
+        # 17c-3. Per-panel pose overlay frame traffic (pose_overlay_diag.json, written by
+        # PoseOverlayDiagWriter when the pose-overlay-diag deep link fires, step 16.5 above).
+        # PASS requires at least MIN_PANEL_FRAMES frames reached EACH of the three panels'
+        # LivePoseOverlayProcessor instances — this proves frame TRAFFIC flowed end-to-end
+        # (local capture / MultiPeer / GoPro decode → feed()) for all three panels. It does
+        # NOT require a detected skeleton (visionDetectionSuccesses/framesWithSkeletonPoints
+        # are reported as corroborating evidence only) — whether a human was actually visible
+        # in frame at any given moment is a physical-setup concern, not a wiring bug, and
+        # remains the one manual/visual check the screenshot requirement exists for.
+        MIN_PANEL_FRAMES = 1
+        local_pose_diag = str(artifacts_dir / "pose_overlay_diag.json")
+        pose_diag_ok = copy_app_container_file(ctx.iphone_udid, "Documents/pose_overlay_diag.json", local_pose_diag)
+        if pose_diag_ok:
+            try:
+                pose_diag = _json.loads(open(local_pose_diag).read())
+                for panel_name in ("instructor", "player", "gopro"):
+                    panel = pose_diag.get(panel_name, {}) or {}
+                    frames_received = panel.get("framesReceivedByProcessor", 0) or 0
+                    report.step(
+                        f"{panel_name} panel frame traffic", frames_received >= MIN_PANEL_FRAMES,
+                        framesReceivedByProcessor=frames_received,
+                        sourceFramesSeen=panel.get("sourceFramesSeen"),
+                        framesProcessed=panel.get("framesProcessed"),
+                        visionDetectionSuccesses=panel.get("visionDetectionSuccesses"),
+                        framesWithSkeletonPoints=panel.get("framesWithSkeletonPoints"),
+                        lastFrameReceivedAt=panel.get("lastFrameReceivedAt"),
+                    )
+            except Exception as e:
+                for panel_name in ("instructor", "player", "gopro"):
+                    report.step(f"{panel_name} panel frame traffic", False, error=f"parse error: {e}")
+        else:
+            for panel_name in ("instructor", "player", "gopro"):
+                report.step(f"{panel_name} panel frame traffic", False,
+                            error="pose_overlay_diag.json not found — pose-overlay-diag deep "
+                                  "link may not have completed")
 
         # 17d. Skeleton JSON (SkeletonProcessor writes to Documents/skeleton_output.json)
         local_skeleton = str(artifacts_dir / "skeleton_output.json")
@@ -937,6 +1065,10 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
             if s["description"] in (
                 "instructor+player confirmed_start", "gopro confirmed_start",
                 "all 3 confirmed_stop", "timestamp sync report",
+                "gopro preview stream quality", "gopro preview aspect ratio is 16:9",
+                "instructor panel frame traffic", "player panel frame traffic", "gopro panel frame traffic",
+                "iphone orientation consistent", "iphone effective aspect ratio is 16:9",
+                "ipad orientation consistent", "ipad effective aspect ratio is 16:9",
             )
         )
         report.passed = critical_ok

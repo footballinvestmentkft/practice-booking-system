@@ -214,7 +214,17 @@ final class MultiCameraSessionViewModel: ObservableObject {
             // Attach PCO immediately after registration — must not be gated on updateDeviceStatus.
             // If updateDeviceStatus throws (revision conflict, network), PCO would never subscribe
             // to PCL state changes and the player would stay "pending" forever.
-            if let listener = playerCycleListener, let orch = playerCaptureOrchestrator {
+            //
+            // Explicit POSITIVE role gate (2026-07-01 flow audit): only player-role devices may
+            // attach a PlayerCaptureOrchestrator. Before this gate, attach() ran unconditionally
+            // for EVERY device role including the instructor — so the instructor's own PCO
+            // independently reacted to the same cycle its CycleCaptureOrchestrator was already
+            // driving, racing it for confirmDeviceStart/Stop on the instructor's own device_id.
+            // Whichever orchestrator's confirm call landed second got a stale-revision 409, and
+            // CCO's error handler treats any confirm-start HTTP error as fatal — tearing down the
+            // instructor's OWN capture even though the backend already showed confirmed_start=true.
+            if Self.shouldAttachPlayerCaptureOrchestrator(deviceRole: sd.deviceRole),
+               let listener = playerCycleListener, let orch = playerCaptureOrchestrator {
                 orch.attach(listener: listener, sessionUuid: sessionUuid, playerSessionDeviceId: sd.id)
             }
             if Self.shouldAutoPrepare(deviceRole: sd.deviceRole) {
@@ -348,6 +358,19 @@ final class MultiCameraSessionViewModel: ObservableObject {
         case .instructorPrimary, .playerPrimary, .playerSecondary:
             return true
         case .auxiliaryCamera:
+            return false
+        }
+    }
+
+    /// Explicit POSITIVE allow-list — only these device roles may attach a
+    /// PlayerCaptureOrchestrator to a PlayerCycleListener. Deliberately positive
+    /// (not `!= .instructorPrimary`) so a future new MCDeviceRole case defaults to
+    /// NOT attaching unless someone explicitly adds it here.
+    static func shouldAttachPlayerCaptureOrchestrator(deviceRole: MCDeviceRole) -> Bool {
+        switch deviceRole {
+        case .playerPrimary, .playerSecondary:
+            return true
+        case .instructorPrimary, .auxiliaryCamera:
             return false
         }
     }

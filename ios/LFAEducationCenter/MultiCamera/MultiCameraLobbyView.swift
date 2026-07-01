@@ -356,10 +356,20 @@ struct MultiCameraLobbyView: View {
                 // Non-blocking: fire-and-forget for the recording window duration.
                 // Dashboard's onReceive(goProStreamProbe.objectWillChange) feeds the
                 // GoPro panel's LivePoseOverlayProcessor as frames arrive.
+                //
+                // The diag dict MUST be written (not discarded) — it is the only
+                // automated evidence that the GoPro preview actually received UDP
+                // data, found the video PID, and decoded frames during THIS scenario
+                // run. Before this fix the dict was thrown away (`_ = await ...`),
+                // so a silently-failed GoPro preview was invisible to anything but a
+                // human eyeballing the dashboard screenshot (2026-07-01 flow audit).
                 Task {
                     print("[MC1-AUTO] gopro-stream-start → GoProStreamProbe.shared.run(60s)")
-                    _ = await GoProStreamProbe.shared.run(durationSeconds: 60)
+                    let diag = await GoProStreamProbe.shared.run(durationSeconds: 60)
+                    GoProStreamDiagWriter.write(diag)
                 }
+            case .poseOverlayDiag:
+                break // handled by InstructorDashboardView, which owns the 3 processor instances
             }
         }
         .sheet(isPresented: $showQRScanner) {

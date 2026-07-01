@@ -60,6 +60,10 @@ enum MC1AutomationAction: Equatable {
     // Start GoProStreamProbe while the InstructorDashboard is live so the GoPro
     // panel receives frames and skeleton overlay can be validated in-scenario.
     case goProStreamStart
+    // Export per-panel (instructor/player/gopro) LivePoseOverlayProcessor frame
+    // diagnostics to Documents/pose_overlay_diag.json — handled directly by
+    // InstructorDashboardView (owns the 3 processor instances), not MultiCameraLobbyView.
+    case poseOverlayDiag
 }
 
 final class MC1AutomationBridge: ObservableObject {
@@ -177,6 +181,10 @@ final class MC1AutomationBridge: ObservableObject {
         case "gopro-stream-start":
             print("[MC1-AUTO] received action=gopro-stream-start")
             lastAction = .goProStreamStart
+            return true
+        case "pose-overlay-diag":
+            print("[MC1-AUTO] received action=pose-overlay-diag")
+            lastAction = .poseOverlayDiag
             return true
         default:
             print("[MC1-AUTO] received unknown action=\(action)")

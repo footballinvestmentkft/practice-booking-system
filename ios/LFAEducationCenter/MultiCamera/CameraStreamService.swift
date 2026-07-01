@@ -17,6 +17,12 @@ final class CameraStreamService: NSObject, ObservableObject {
     @Published private(set) var lastReceivedFrame: Data?
     @Published private(set) var receivedFPS: Double = 0
     @Published private(set) var lastFrameAge: TimeInterval = 0
+    /// Total MultiPeer frames received for the lifetime of this instance — unlike
+    /// frameReceiveCount (reset every 1s FPS window), this is a monotonic counter used
+    /// as the "source frame" diagnostic for the player panel's pose overlay processor
+    /// (2026-07-01 flow audit — distinguishes "MPC never delivered a frame" from
+    /// "MPC delivered frames but they failed to decode into a UIImage").
+    @Published private(set) var totalFramesReceived: Int = 0
 
     private let myPeerID: MCPeerID
     private var session: MCSession?
@@ -131,6 +137,7 @@ extension CameraStreamService: MCSessionDelegate {
             lastReceivedFrame = data
             lastFrameTime = Date()
             frameReceiveCount += 1
+            totalFramesReceived += 1
         }
     }
 

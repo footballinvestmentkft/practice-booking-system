@@ -45,6 +45,16 @@ struct InstructorDashboardView: View {
                 goProPoseOverlay.feed(img)
             }
         }
+        // pose-overlay-diag deep link → export per-panel frame diagnostics. Handled here
+        // (not MultiCameraLobbyView) because the 3 processor instances are owned by this view.
+        .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { [self] action in
+            guard case .poseOverlayDiag = action else { return }
+            PoseOverlayDiagWriter.write(
+                instructor: localPoseOverlay,
+                player: remotePoseOverlay, playerSourceFramesSeen: streamService.totalFramesReceived,
+                gopro: goProPoseOverlay, goProSourceFramesSeen: goProStreamProbe.decodeSuccesses
+            )
+        }
     }
 
     // MARK: - Session device list (source of truth for panels)

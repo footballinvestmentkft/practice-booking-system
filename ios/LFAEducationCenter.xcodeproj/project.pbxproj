@@ -175,6 +175,7 @@
 		BT000004000000000000007 /* DailyProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT000003000000000000007 /* DailyProgressView.swift */; };
 		BT500004000000000000001 /* BallTrainingHubVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BT500003000000000000001 /* BallTrainingHubVMTests.swift */; };
 		CA500004000000000000001 /* CaptureAuthorityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA500003000000000000001 /* CaptureAuthorityTests.swift */; };
+		PG500004000000000000001 /* PCOInstructorRoleGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = PG500003000000000000001 /* PCOInstructorRoleGateTests.swift */; };
 		CC400004000000000000001 /* JugglingVideoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000001 /* JugglingVideoTests.swift */; };
 		CC400004000000000000005 /* ContactTaxonomyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000005 /* ContactTaxonomyTests.swift */; };
 		CC400004000000000000006 /* LocalAnnotationStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC300003000000000000006 /* LocalAnnotationStoreTests.swift */; };
@@ -458,6 +459,7 @@
 		BT500003000000000000001 /* BallTrainingHubVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrainingHubVMTests.swift; sourceTree = "<group>"; };
 		C2FD7851919C9B8A9FC46733 /* JugglingVideoItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoItem.swift; sourceTree = "<group>"; };
 		CA500003000000000000001 /* CaptureAuthorityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureAuthorityTests.swift; sourceTree = "<group>"; };
+		PG500003000000000000001 /* PCOInstructorRoleGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PCOInstructorRoleGateTests.swift; sourceTree = "<group>"; };
 		CC100003000000000000001 /* LFAEducationCenterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LFAEducationCenterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CC300003000000000000001 /* JugglingVideoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JugglingVideoTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000005 /* ContactTaxonomyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTaxonomyTests.swift; sourceTree = "<group>"; };
@@ -1082,6 +1084,7 @@
 				7923EAF385B2497998AA5258 /* MultiCameraSessionViewModelClockSyncTests.swift */,
 				16BA790BA9964D4A9E64F6E3 /* CaptureCycleContractTests.swift */,
 				CA500003000000000000001 /* CaptureAuthorityTests.swift */,
+				PG500003000000000000001 /* PCOInstructorRoleGateTests.swift */,
 				OR500003000000000000001 /* FakeCaptureController.swift */,
 				OR500003000000000000002 /* CycleIdempotencyKeyTests.swift */,
 				OR500003000000000000003 /* CycleCaptureOrchestratorTests.swift */,
@@ -1485,6 +1488,7 @@
 				942FE944E7544114B645BB37 /* MultiCameraSessionViewModelClockSyncTests.swift in Sources */,
 				06881AF7704345FF9DCED8DD /* CaptureCycleContractTests.swift in Sources */,
 				CA500004000000000000001 /* CaptureAuthorityTests.swift in Sources */,
+				PG500004000000000000001 /* PCOInstructorRoleGateTests.swift in Sources */,
 				AB500004000000000000001 /* MC1AutomationBridgeTests.swift in Sources */,
 				LP500004000000000000001 /* LivePoseOverlayProcessorTests.swift in Sources */,
 				OR500004000000000000001 /* FakeCaptureController.swift in Sources */,

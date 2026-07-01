@@ -158,4 +158,40 @@ final class CaptureAuthorityTests: XCTestCase {
             "AP-04: auxiliaryCamera must NOT auto-prepare (external device, separate scope)"
         )
     }
+
+    // MARK: — PCA-01..04: shouldAttachPlayerCaptureOrchestrator (2026-07-01 flow audit fix)
+    //
+    // Regression coverage for the dual-orchestrator race: before this explicit positive
+    // gate existed, autoRegisterDevice() attached a PlayerCaptureOrchestrator for EVERY
+    // device role, including the instructor — whose own PCO then raced its
+    // CycleCaptureOrchestrator for confirmDeviceStart/Stop on the instructor's own
+    // device_id. See PCOInstructorRoleGateTests.swift for the end-to-end behavioral proof.
+
+    func test_PCA_01_shouldAttachPCO_instructorPrimary_false() {
+        XCTAssertFalse(
+            MultiCameraSessionViewModel.shouldAttachPlayerCaptureOrchestrator(deviceRole: .instructorPrimary),
+            "PCA-01: instructorPrimary must NEVER attach a PlayerCaptureOrchestrator"
+        )
+    }
+
+    func test_PCA_02_shouldAttachPCO_playerPrimary_true() {
+        XCTAssertTrue(
+            MultiCameraSessionViewModel.shouldAttachPlayerCaptureOrchestrator(deviceRole: .playerPrimary),
+            "PCA-02: playerPrimary must attach a PlayerCaptureOrchestrator"
+        )
+    }
+
+    func test_PCA_03_shouldAttachPCO_playerSecondary_true() {
+        XCTAssertTrue(
+            MultiCameraSessionViewModel.shouldAttachPlayerCaptureOrchestrator(deviceRole: .playerSecondary),
+            "PCA-03: playerSecondary must attach a PlayerCaptureOrchestrator"
+        )
+    }
+
+    func test_PCA_04_shouldAttachPCO_auxiliaryCamera_false() {
+        XCTAssertFalse(
+            MultiCameraSessionViewModel.shouldAttachPlayerCaptureOrchestrator(deviceRole: .auxiliaryCamera),
+            "PCA-04: auxiliaryCamera (GoPro) must NEVER attach a PlayerCaptureOrchestrator"
+        )
+    }
 }

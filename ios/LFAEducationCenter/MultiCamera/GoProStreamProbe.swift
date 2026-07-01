@@ -289,7 +289,9 @@ final class GoProStreamProbe: ObservableObject {
     private var firstPacketAt: Date?
     private var lastPacketAt: Date?
     private var decodeAttempts = 0
-    private var decodeSuccesses = 0
+    // Published (not private) so the dashboard can read live decode-success count as the
+    // GoPro panel's "source frame" diagnostic (2026-07-01 flow audit — PoseOverlayDiagWriter).
+    @Published private(set) var decodeSuccesses = 0
     private var lastError: String?
     private var frameTimestamps: [Date] = []
 

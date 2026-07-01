@@ -151,15 +151,31 @@ def run(args: argparse.Namespace) -> int:
         status = "PASS" if report.passed else "FAIL"
         print(f"  {name}: {status}")
 
+    # A skipped static preflight (SKIP_STATIC_PREFLIGHT=1, set by run_mc1_regression.sh)
+    # means known-regression classes were never re-checked before this physical run.
+    # Such a run can NEVER be read back as a valid PASS, no matter what every scenario
+    # reported — force overall_pass=False and stamp the report unambiguously.
+    static_preflight_skipped = os.environ.get("MC1_STATIC_PREFLIGHT_SKIPPED") == "1"
+    static_preflight_skip_reason = os.environ.get("MC1_STATIC_PREFLIGHT_SKIP_REASON")
+    if static_preflight_skipped:
+        overall_pass = False
+
     final = {
         "timestamp": utc_now_iso(),
         "scenario_arg": args.scenario,
         "overall_pass": overall_pass,
+        "static_preflight_skipped": static_preflight_skipped,
+        "static_preflight_skip_reason": static_preflight_skip_reason,
         "scenarios": summary,
     }
     artifact.write_json("report.json", final)
 
     lines = [f"=== MC1 regression report ({utc_now_iso()}) ===", f"scenario(s): {args.scenario}", ""]
+    if static_preflight_skipped:
+        lines.append("!!! STATIC PREFLIGHT WAS SKIPPED (SKIP_STATIC_PREFLIGHT=1) !!!")
+        lines.append(f"!!! reason: {static_preflight_skip_reason} !!!")
+        lines.append("!!! THIS RUN IS NOT A VALID PASS, REGARDLESS OF SCENARIO RESULTS BELOW !!!")
+        lines.append("")
     for s in summary:
         if s.get("skipped"):
             lines.append(f"{s['name']}: SKIPPED — {s.get('reason')}")
@@ -170,7 +186,8 @@ def run(args: argparse.Namespace) -> int:
             mark = "OK" if step["ok"] else "FAIL"
             lines.append(f"  [{mark}] {step['description']}")
     lines.append("")
-    lines.append(f"OVERALL: {'PASS' if overall_pass else 'FAIL'}")
+    lines.append(f"OVERALL: {'PASS' if overall_pass else 'FAIL'}"
+                  + (" (static preflight skipped — cannot be a valid PASS)" if static_preflight_skipped else ""))
     report_text = "\n".join(lines)
     artifact.write_text("report.txt", report_text)
     print("\n" + report_text)

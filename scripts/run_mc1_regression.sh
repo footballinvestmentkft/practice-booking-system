@@ -53,6 +53,48 @@ done
 _DEFAULT_API_BASE="https://practice-booking-system-git-deploy-vercel-staging-lfa-ec-test.vercel.app"
 API_BASE="${API_BASE:-${_DEFAULT_API_BASE}}"
 
+# ── Static preflight: catch known-regression wiring gaps BEFORE touching any
+# device or network (2026-07-01 flow audit). Checks deep-link action parity,
+# GoPro preview start ordering, PCO attach role-gating, skeleton feed wiring,
+# device routing, artifact collector completeness, log-capture config.
+#
+# SKIP_STATIC_PREFLIGHT=1 is a documented DEVELOPER EMERGENCY ESCAPE HATCH ONLY.
+# It is NOT a normal run mode: both SKIP_STATIC_PREFLIGHT=1 AND a non-empty
+# SKIP_STATIC_PREFLIGHT_REASON are required, every skip is appended to
+# scripts/mc1_regression_runs/static_preflight_skip_audit.log, and the run is
+# passed through to runner.py as MC1_STATIC_PREFLIGHT_SKIPPED=1 — which forces
+# overall_pass=False and stamps the report so it can never be read back as a
+# valid PASS, no matter what the scenario itself reports.
+echo
+echo "Running static preflight check (no devices required)..."
+if [[ "${SKIP_STATIC_PREFLIGHT:-0}" == "1" ]]; then
+  if [[ -z "${SKIP_STATIC_PREFLIGHT_REASON:-}" ]]; then
+    echo
+    echo "ERROR: SKIP_STATIC_PREFLIGHT=1 requires SKIP_STATIC_PREFLIGHT_REASON=\"<explanation>\"."
+    echo "  Skipping the static preflight without a recorded reason is not permitted."
+    exit 1
+  fi
+  echo "WARNING: SKIP_STATIC_PREFLIGHT=1 — skipping static preflight check."
+  echo "  Reason: ${SKIP_STATIC_PREFLIGHT_REASON}"
+  echo "  This run will be marked overall_pass=false regardless of scenario outcome —"
+  echo "  a skipped-preflight run is NEVER a valid PASS."
+  _SKIP_AUDIT_LOG="${SCRIPT_DIR}/mc1_regression_runs/static_preflight_skip_audit.log"
+  mkdir -p "$(dirname "${_SKIP_AUDIT_LOG}")"
+  printf '%s | user=%s | reason=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(whoami)" "${SKIP_STATIC_PREFLIGHT_REASON}" >> "${_SKIP_AUDIT_LOG}"
+  export MC1_STATIC_PREFLIGHT_SKIPPED=1
+  export MC1_STATIC_PREFLIGHT_SKIP_REASON="${SKIP_STATIC_PREFLIGHT_REASON}"
+else
+  if ! python3 "${SCRIPT_DIR}/mc1_regression/preflight_static_check.py"; then
+    echo
+    echo "ERROR: static preflight check FAILED — see failures above."
+    echo "  These are known-regression classes that have caused physical-test"
+    echo "  failures before; fix them first, or set SKIP_STATIC_PREFLIGHT=1 with"
+    echo "  SKIP_STATIC_PREFLIGHT_REASON=\"...\" to proceed anyway (emergency only —"
+    echo "  the run will NOT count as a valid PASS)."
+    exit 1
+  fi
+fi
+
 # ── Preflight: verify API_BASE is reachable before prompting credentials ──
 echo
 echo "Checking API_BASE: ${API_BASE}"
