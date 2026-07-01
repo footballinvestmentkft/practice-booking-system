@@ -5,6 +5,13 @@
 **Státusz:** TERVEZÉSI DOKUMENTUM — implementáció külön fázisokban, jóváhagyással  
 **Kötött sorrend:** Phase 1 → 2 → 3 → 4 → 5 (korábbi fázis lezárása előfeltétele a következőnek)
 
+> **2026-06-29 frissítés**: a "Videó és metaadat átvitel" szakasz (lent) kizárólag a
+> record-then-download (GoPro lokális rögzítés + utólagos `media/list` HTTP letöltés)
+> útvonalat írja le. Ez **a capture/archívum pipeline szempontjából továbbra is érvényes**,
+> de **nem elégíti ki** az instructor dashboard live preview követelményét (minden
+> connected kamera élőképe egy képernyőn, GoPro HERO13-mal együtt). A live preview külön,
+> e mellett futó útvonal — lásd [GOPRO_LIVE_PREVIEW_POC_PLAN.md](GOPRO_LIVE_PREVIEW_POC_PLAN.md).
+
 ---
 
 ## Phase 1 — Single-player 3D skeleton foundation

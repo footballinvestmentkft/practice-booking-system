@@ -3,6 +3,11 @@
 **Date:** 2026-06-21
 **Status:** Audit + terv — implementáció kizárólag külön jóváhagyás után.
 
+> **2026-06-29 frissítés**: ez a dokumentum a GoPro vezérlést és a capture/letöltés
+> (record-then-download) modellt írja le — ez érvényes marad. Nem fedi le az instructor
+> dashboard live preview követelményét (GoPro élőkép megjelenítése a többi kamera mellett);
+> arra lásd [GOPRO_LIVE_PREVIEW_POC_PLAN.md](GOPRO_LIVE_PREVIEW_POC_PLAN.md).
+
 ---
 
 ## I. Jelenlegi iOS állapot

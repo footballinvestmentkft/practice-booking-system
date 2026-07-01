@@ -1352,4 +1352,56 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
             XCTFail("Expected .failed(.apiError(500, ...)), got \(orchestrator.state)")
         }
     }
+
+    // CYC-MC-01: multi-cycle — after cycle 0 completes, cycle 1 calls rearmForNextCycle
+    // before startCapture, so capture pipeline re-enters .ready → .capturing
+    func test_CYC_MC_01_rearmCalledBeforeSecondCycleStart() async throws {
+        let authProvider = FakeAccessTokenProvider()
+        let apiClient = MockCycleAPIClient()
+        apiClient.scheduleResult = .success(makeTestCycle(id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 10),
+            status: .recordingPending, cycleIndex: 0))
+        apiClient.activateResult = .success(makeTestSession(status: .active))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: authProvider, clockSyncService: clockService,
+            captureController: captureController, cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+
+        // Cycle 0
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing = $0 { return true }
+            return false
+        }
+        XCTAssertEqual(captureController.startCallCount, 1)
+        XCTAssertEqual(captureController.rearmCallCount, 1, "CYC-MC-01: rearm called before first cycle too")
+
+        // Cycle 1: set up new cycle response
+        apiClient.scheduleResult = .success(makeTestCycle(id: 2, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 10),
+            status: .recordingPending, cycleIndex: 1))
+        apiClient.createResult = .success(makeTestCycle(id: 2, revision: 1, cycleIndex: 1))
+        apiClient.confirmStartResult = .success(makeTestCycle(id: 2, revision: 4, status: .recording, cycleIndex: 1))
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 5)
+        await waitForOrchestratorState(orchestrator, timeout: 3.0) {
+            if case .capturing(let id) = $0, id == 2 { return true }
+            return false
+        }
+
+        XCTAssertEqual(captureController.rearmCallCount, 2, "CYC-MC-01: rearm called before second cycle")
+        XCTAssertEqual(captureController.startCallCount, 2, "CYC-MC-01: startCapture called for second cycle")
+    }
+
+    // CYC-MC-02: rearmForNextCycle on FakeCaptureController transitions .completed → .ready
+    func test_CYC_MC_02_rearmTransitionsCompletedToReady() {
+        let captureController = FakeCaptureController()
+        captureController.simulateState(.completed(fileURL: URL(fileURLWithPath: "/tmp/test.mov")))
+        captureController.rearmForNextCycle()
+        XCTAssertEqual(captureController.rearmCallCount, 1)
+    }
 }

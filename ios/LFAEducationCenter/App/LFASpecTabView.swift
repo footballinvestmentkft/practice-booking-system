@@ -200,13 +200,7 @@ private struct LFAProfileTab: View {
             .frame(height: 48)
         }
         .fullScreenCover(isPresented: $isShowingGoProDebug) {
-            GoProConnectionDebugView(
-                manager: GoProConnectionManager(
-                    bleTransport: CoreBluetoothBLETransport(),
-                    httpTransport: GoProHTTPClientTransport(),
-                    wifiTransport: SystemWiFiTransport()
-                )
-            )
+            GoProConnectionDebugView(manager: GoProConnectionManager.shared)
         }
     }
     #endif

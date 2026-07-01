@@ -3,6 +3,8 @@ import SwiftUI
 struct GoProConnectionDebugView: View {
 
     @StateObject private var manager: GoProConnectionManager
+    @ObservedObject private var streamProbe = GoProStreamProbe.shared
+    @Environment(\.presentationMode) private var presentationMode
 
     init(manager: GoProConnectionManager) {
         _manager = StateObject(wrappedValue: manager)
@@ -12,12 +14,20 @@ struct GoProConnectionDebugView: View {
         NavigationView {
             List {
                 statusSection
+                livePreviewSection
                 actionsSection
                 cameraSection
                 diagnosticSection
             }
             .navigationTitle("GoPro Connection")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { presentationMode.wrappedValue.dismiss() } label: {
+                        Image(systemName: "xmark").font(.system(size: 14, weight: .semibold))
+                    }
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 manager.onForeground()
             }
@@ -40,6 +50,26 @@ struct GoProConnectionDebugView: View {
                 Label("Firmware: \(fw)", systemImage: "checkmark.seal")
                     .font(.caption)
                     .foregroundColor(.green)
+            }
+        }
+    }
+
+    // MARK: — Live preview POC (docs/GOPRO_LIVE_PREVIEW_POC_PLAN.md)
+
+    @ViewBuilder
+    private var livePreviewSection: some View {
+        if streamProbe.lastFrame != nil || streamProbe.isRunning {
+            Section("Live Preview POC") {
+                if let frame = streamProbe.lastFrame {
+                    Image(uiImage: frame)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxHeight: 200)
+                } else {
+                    Text("Waiting for first decoded frame…")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
         }
     }
@@ -83,6 +113,21 @@ struct GoProConnectionDebugView: View {
                     manager.disconnect()
                 }
                 .foregroundColor(.red)
+                Button(streamProbe.isRunning ? "Live Preview POC running…" : "Start Live Preview POC (25s)") {
+                    Task {
+                        let diag = await streamProbe.run(durationSeconds: 25)
+                        GoProStreamDiagWriter.write(diag)
+                    }
+                }
+                .disabled(streamProbe.isRunning)
+                .foregroundColor(.blue)
+                Button("Read camera/state (raw, no settings change)") {
+                    Task {
+                        let diag = await GoProCameraStateProbe.run()
+                        GoProCameraStateDiagWriter.write(diag)
+                    }
+                }
+                .foregroundColor(.blue)
             default:
                 Button("Cancel") {
                     manager.cancel()

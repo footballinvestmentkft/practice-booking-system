@@ -125,9 +125,8 @@ final class PlayerCaptureOrchestrator: ObservableObject {
     func handleListenerState(_ listenerState: PlayerListenerState, currentCycle: CaptureCycleDTO?) {
         switch listenerState {
         case .pendingCycleDetected(let cycleId):
-            // Accept from .skippedCycle: a previous cycle was missed but a new one is starting.
             switch state {
-            case .idle, .skippedCycle: break
+            case .idle, .skippedCycle, .confirmedStop: break
             default: return
             }
             guard !handledCycleIds.contains(cycleId) else { return }
@@ -136,7 +135,7 @@ final class PlayerCaptureOrchestrator: ObservableObject {
 
         case .recordingDetected(let cycleId):
             switch state {
-            case .idle, .skippedCycle: break
+            case .idle, .skippedCycle, .confirmedStop: break
             default: return
             }
             guard !handledCycleIds.contains(cycleId) else { return }
@@ -232,6 +231,7 @@ final class PlayerCaptureOrchestrator: ObservableObject {
 
         guard !Task.isCancelled else { return }
 
+        captureController.rearmForNextCycle()
         subscribeToCaptureState()
         captureController.startCapture()
     }

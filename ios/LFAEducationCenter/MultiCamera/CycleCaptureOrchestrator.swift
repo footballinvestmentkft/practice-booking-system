@@ -320,7 +320,10 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
         if Task.isCancelled { return }
 
-        // 5. Subscribe to capture state BEFORE starting capture
+        // 5. Re-arm capture from previous cycle's .completed state
+        captureController.rearmForNextCycle()
+
+        // 6. Subscribe to capture state BEFORE starting capture
         subscribeToCaptureState(
             token: token,
             sessionUuid: sessionUuid,
@@ -328,7 +331,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
             sessionDeviceId: sessionDeviceId
         )
 
-        // 6. Start capture
+        // 7. Start capture
         captureController.startCapture()
     }
 
