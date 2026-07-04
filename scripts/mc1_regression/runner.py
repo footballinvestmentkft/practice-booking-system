@@ -26,6 +26,7 @@ from mc1_regression.lib import (  # noqa: E402
     ConsoleOffsetTracker,
     ScenarioContext,
     ValidationError,
+    check_dual_console_precondition,
     login,
     preflight_url_scheme,
     send_deep_link,
@@ -55,6 +56,18 @@ def run(args: argparse.Namespace) -> int:
     out_dir = Path(args.out_dir)
     artifact = ArtifactRun(out_dir)
     offsets = ConsoleOffsetTracker(artifact)
+
+    # Dual-console hard precondition (2026-07-04 RCA): tricamera scenarios
+    # exercise the PLAYER capture chain — running them without the iPad
+    # console capture already cost one physical test day's evidence. The
+    # shell wrapper enforces this too; this is defense-in-depth for direct
+    # runner.py invocations.
+    console_errors = check_dual_console_precondition([args.scenario], artifact.console_dir)
+    if console_errors:
+        for err in console_errors:
+            print(f"ERROR: {err}")
+        print("Aborting before any scenario runs — fix USB/console capture and retry.")
+        return 2
 
     instructor_email, instructor_password, player_email, player_password = _prompt_credentials()
 

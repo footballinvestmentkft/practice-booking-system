@@ -139,6 +139,35 @@ def _dump_session_state(ctx: ScenarioContext, session_uuid: str, label: str) -> 
         print(f"  [{label}] diagnostic dump failed: {e}")
 
 
+def _pull_pco_failure_diag(ctx: ScenarioContext, report: ScenarioReport,
+                           scenario_started_at) -> None:
+    """Pull the player-side PCO failure evidence (Documents/pco_failure_diag.json,
+    written by PCOFailureDiagWriter on every PlayerCaptureOrchestrator .failed
+    transition — 2026-07-04 RCA). Best-effort: turns a bare
+    "Timeout waiting for: instructor+player confirmed_start" into a concrete
+    player-side reason (e.g. captureStartTimeout with the last capture state).
+    Never raises; reported as evidence, never gates PASS."""
+    local = str(ctx.artifact.dir / "pco_failure_diag.json")
+    try:
+        if not copy_app_container_file(ctx.ipad_udid, "Documents/pco_failure_diag.json", local):
+            report.step("player pco failure diag", False,
+                        error="pco_failure_diag.json not found on iPad — player PCO "
+                              "never transitioned to .failed during this run "
+                              "(cycle never seen, or hang predates the watchdog build)")
+            return
+        diag, stale_reason = load_fresh_diag(local, scenario_started_at)
+        if diag is None:
+            report.step("player pco failure diag", False, error=stale_reason)
+            return
+        report.step("player pco failure diag", True,
+                    reason=diag.get("reason"),
+                    cycleId=diag.get("cycleId"),
+                    lastObservedCaptureState=diag.get("lastObservedCaptureState"),
+                    diagTimestamp=diag.get("timestamp"))
+    except Exception as e:  # noqa: BLE001 — evidence pull must never mask the scenario error
+        report.step("player pco failure diag", False, error=f"pull failed: {e}")
+
+
 def _mark_devices_ready(ctx: ScenarioContext, report: ScenarioReport, session_uuid: str) -> None:
     import time as _time
     # Script-driven backend transition: GET fresh revision + PATCH devices_ready.
@@ -747,6 +776,7 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
             (ctx.iphone_udid, "Documents/skeleton_output.json"),
             (ctx.iphone_udid, "Documents/gopro_diag.json"),
             (ctx.ipad_udid, "Documents/capture_metadata_diag.json"),
+            (ctx.ipad_udid, "Documents/pco_failure_diag.json"),
         ])
 
         # 1. Join both devices
@@ -1141,6 +1171,11 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
     except ValidationError as e:
         report.error = str(e)
         report.passed = False
+        # 2026-07-04 RCA: a bare confirmed_start timeout carried zero player-side
+        # evidence. Pull the PCO failure diag from the iPad and dump backend
+        # state so the report explains the failure, not just names it.
+        _pull_pco_failure_diag(ctx, report, scenario_started_at)
+        _dump_session_state(ctx, session_uuid, "tricamera-fail")
     return report
 
 

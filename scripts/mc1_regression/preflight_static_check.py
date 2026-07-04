@@ -390,6 +390,20 @@ def check_log_capture_config() -> None:
     check("order-based legacy-UDID guessing (head -1 / sed -n 2p) is gone",
           not order_heuristic)
 
+    # 2026-07-04 RCA: tricamera ran with the iPad console capture silently
+    # SKIPPED (WARN only) — the player-side failure left zero console evidence.
+    # Both the shell wrapper and the runner must hard-fail tricamera scenarios
+    # when either device console capture is unavailable.
+    check("run_mc1_regression.sh hard-fails tricamera scenarios without dual console capture",
+          "Dual-console hard precondition" in src and "exit 1" in src)
+    runner_src = read(REPO_ROOT / "scripts" / "mc1_regression" / "runner.py")
+    lib_src = read(REPO_ROOT / "scripts" / "mc1_regression" / "lib.py")
+    check("runner.py enforces check_dual_console_precondition before scenarios",
+          "check_dual_console_precondition" in runner_src)
+    check("lib.DUAL_CONSOLE_REQUIRED_SCENARIOS covers the tricamera proof",
+          '"tricamera-capture-skeleton-proof"' in lib_src
+          and "DUAL_CONSOLE_REQUIRED_SCENARIOS" in lib_src)
+
 
 # ── CHECK 11: pose overlay diag writer↔reader key contract ──────────────────
 #

@@ -225,6 +225,29 @@ PYEOF
   fi
 fi
 
+# ── Dual-console hard precondition (tricamera scenarios) ──────────────────
+# The 2026-07-04 tricamera run failed on the PLAYER (iPad) side while the
+# WARN-only path above had silently skipped the iPad console capture — the
+# exact evidence the failure needed was never collected. Tricamera scenarios
+# exercise the player-side capture chain, so BOTH device consoles are a hard
+# precondition: both devices must be USB-connected, trusted, and visible to
+# idevicesyslog. (runner.py re-checks this — defense in depth.)
+if [[ "${SCENARIO}" == *tricamera* ]]; then
+  if [[ -z "${IPHONE_CONSOLE_PID}" || -z "${IPAD_CONSOLE_PID}" ]]; then
+    echo
+    echo "ERROR: scenario '${SCENARIO}' requires console capture from BOTH devices."
+    echo "  iPhone console capture: $([[ -n "${IPHONE_CONSOLE_PID}" ]] && echo running || echo MISSING)"
+    echo "  iPad   console capture: $([[ -n "${IPAD_CONSOLE_PID}" ]] && echo running || echo MISSING)"
+    echo
+    echo "  Connect BOTH devices via USB, trust this Mac on each, then verify:"
+    echo "    idevice_id -l   # must list both legacy UDIDs"
+    echo "  Manual overrides: IPHONE_LEGACY_UDID / IPAD_LEGACY_UDID env vars."
+    [[ -n "${IPHONE_CONSOLE_PID}" ]] && kill "${IPHONE_CONSOLE_PID}" 2>/dev/null || true
+    [[ -n "${IPAD_CONSOLE_PID}" ]]   && kill "${IPAD_CONSOLE_PID}"   2>/dev/null || true
+    exit 1
+  fi
+fi
+
 cleanup() {
   [[ -n "${IPAD_CONSOLE_PID:-}" ]]   && kill "${IPAD_CONSOLE_PID}"   2>/dev/null || true
   [[ -n "${IPHONE_CONSOLE_PID:-}" ]] && kill "${IPHONE_CONSOLE_PID}" 2>/dev/null || true
