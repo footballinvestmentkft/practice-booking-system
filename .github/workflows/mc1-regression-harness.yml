@@ -1,0 +1,60 @@
+name: MC1 Regression Harness — Preflight + Diag Contract
+
+# ── Purpose ────────────────────────────────────────────────────────────────────
+# Guards the MC1 physical-regression EVIDENCE CHAIN (P0 hardening, 2026-07-04):
+#   1. Static preflight (scripts/mc1_regression/preflight_static_check.py):
+#      deep-link parity, PCO role gate, artifact collectors, stale-artifact
+#      invalidation wiring, action-consume mechanism, console-log UDID mapping.
+#   2. pytest (scripts/mc1_regression/tests/): devicectl invocation contract,
+#      transition body contract, and the Swift-writer ↔ Python-reader diag JSON
+#      key contract (the framesReceived gate bug class) + load_fresh_diag
+#      stale-artifact rejection semantics.
+#
+# No devices, no backend, no secrets — pure source-level + unit-level checks.
+# A red run here means a physical tricamera run would produce a false verdict.
+# ──────────────────────────────────────────────────────────────────────────────
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'scripts/mc1_regression/**'
+      - 'scripts/run_mc1_regression.sh'
+      - 'ios/LFAEducationCenter/MultiCamera/**'
+      - '.github/workflows/mc1-regression-harness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/mc1_regression/**'
+      - 'scripts/run_mc1_regression.sh'
+      - 'ios/LFAEducationCenter/MultiCamera/**'
+      - '.github/workflows/mc1-regression-harness.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: mc1-regression-harness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preflight-and-contract:
+    name: Static preflight + diag key contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Run static preflight check
+        run: python3 scripts/mc1_regression/preflight_static_check.py
+
+      - name: Run mc1_regression unit + contract tests
+        run: python3 -m pytest scripts/mc1_regression/tests/ -q

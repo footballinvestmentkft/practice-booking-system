@@ -97,7 +97,17 @@ struct MultiCameraLobbyView: View {
         }
         // MC1-AUTO-1: dispatches automation commands from lfa-mc1:// deep links
         // onto the same vm methods the manual buttons call.
-        .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { action in
+        //
+        // consume() gate (P0 hardening): @Published replays the last envelope to
+        // every new subscription — without the consume() claim, a re-built view
+        // would re-execute the last action (double GoPro shutter, spurious
+        // reset-session). consume() returns true exactly once per posted action.
+        .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { envelope in
+            // poseOverlayDiag belongs to InstructorDashboardView (owns the 3
+            // processor instances) — leave it unconsumed for that view.
+            if case .poseOverlayDiag = envelope.action { return }
+            guard MC1AutomationBridge.shared.consume(envelope) else { return }
+            let action = envelope.action
             switch action {
             case .joinSession(let uuid, let role):
                 print("[MC1-AUTO] dispatching action=join uuid=\(uuid) role=\(role) state=\(vm.state)")

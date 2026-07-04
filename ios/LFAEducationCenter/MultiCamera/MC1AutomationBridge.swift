@@ -66,6 +66,21 @@ enum MC1AutomationAction: Equatable {
     case poseOverlayDiag
 }
 
+/// One posted automation action with a monotonically increasing sequence number.
+///
+/// The sequence number exists because `@Published var lastAction` REPLAYS its
+/// current value to every new subscriber — a re-presented MultiCameraLobbyView /
+/// InstructorDashboardView would otherwise re-execute the last deep-link action
+/// (double GoPro shutter + duplicate confirmDeviceStart, spurious resetSession,
+/// pose_overlay_diag.json clobbered with zeroed counters). Consumers must call
+/// `MC1AutomationBridge.consume(_:)` before dispatching; it returns true exactly
+/// once per posted action, so a Combine replay of an already-handled envelope is
+/// a no-op (P0 hardening, 2026-07-04 review).
+struct MC1SequencedAction: Equatable {
+    let seq: Int
+    let action: MC1AutomationAction
+}
+
 final class MC1AutomationBridge: ObservableObject {
     static let shared = MC1AutomationBridge()
     private init() {}
@@ -73,7 +88,24 @@ final class MC1AutomationBridge: ObservableObject {
     static let urlScheme = "lfa-mc1"
 
     @Published var presentSessionLab = false
-    @Published private(set) var lastAction: MC1AutomationAction?
+    @Published private(set) var lastAction: MC1SequencedAction?
+
+    private var nextSeq = 1
+    private var consumedSeqs: Set<Int> = []
+
+    private func post(_ action: MC1AutomationAction) {
+        lastAction = MC1SequencedAction(seq: nextSeq, action: action)
+        nextSeq += 1
+    }
+
+    /// Claims an envelope for execution. Returns true exactly once per posted
+    /// action; any later delivery of the same envelope (Combine replay on view
+    /// rebuild / re-subscription) returns false and must not be dispatched.
+    func consume(_ envelope: MC1SequencedAction) -> Bool {
+        guard !consumedSeqs.contains(envelope.seq) else { return false }
+        consumedSeqs.insert(envelope.seq)
+        return true
+    }
 
     /// Returns true if the URL matched this bridge's scheme and was handled.
     @discardableResult
@@ -89,102 +121,102 @@ final class MC1AutomationBridge: ObservableObject {
             let role: ParticipantRole = value("role") == "instructor" ? .instructor : .player
             print("[MC1-AUTO] received action=join uuid=\(uuid) role=\(role)")
             presentSessionLab = true
-            lastAction = .joinSession(uuid: uuid, role: role)
+            post(.joinSession(uuid: uuid, role: role))
             return true
         case "mark-ready":
             print("[MC1-AUTO] received action=mark-ready")
-            lastAction = .markDevicesReady
+            post(.markDevicesReady)
             return true
         case "begin-cycle":
             print("[MC1-AUTO] received action=begin-cycle")
-            lastAction = .beginCycle
+            post(.beginCycle)
             return true
         case "end-cycle":
             print("[MC1-AUTO] received action=end-cycle")
-            lastAction = .endCycle
+            post(.endCycle)
             return true
         case "dump-snapshot":
             print("[MC1-AUTO] received action=dump-snapshot")
-            lastAction = .dumpSnapshot
+            post(.dumpSnapshot)
             return true
         case "reset-session":
             print("[MC1-AUTO] received action=reset-session")
-            lastAction = .resetSession
+            post(.resetSession)
             return true
         case "gopro-connect":
             let did = value("gopro_device_id").flatMap(Int.init)
             print("[MC1-AUTO] received action=gopro-connect gopro_device_id=\(did ?? -1)")
-            lastAction = .goProConnect(goProDeviceId: did)
+            post(.goProConnect(goProDeviceId: did))
             return true
         case "gopro-start":
             guard let did = value("gopro_device_id").flatMap(Int.init) else { return false }
             print("[MC1-AUTO] received action=gopro-start gopro_device_id=\(did)")
-            lastAction = .goProStartRecording(goProDeviceId: did)
+            post(.goProStartRecording(goProDeviceId: did))
             return true
         case "gopro-stop":
             guard let did = value("gopro_device_id").flatMap(Int.init) else { return false }
             print("[MC1-AUTO] received action=gopro-stop gopro_device_id=\(did)")
-            lastAction = .goProStopRecording(goProDeviceId: did)
+            post(.goProStopRecording(goProDeviceId: did))
             return true
         case "gopro-status":
             print("[MC1-AUTO] received action=gopro-status")
-            lastAction = .goProStatus
+            post(.goProStatus)
             return true
         case "gopro-media-list":
             print("[MC1-AUTO] received action=gopro-media-list")
-            lastAction = .goProMediaList
+            post(.goProMediaList)
             return true
         case "gopro-http-diag":
             print("[MC1-AUTO] received action=gopro-http-diag")
-            lastAction = .goProHttpDiag
+            post(.goProHttpDiag)
             return true
         case "gopro-download-latest":
             print("[MC1-AUTO] received action=gopro-download-latest")
-            lastAction = .goProDownloadLatest
+            post(.goProDownloadLatest)
             return true
         case "skeleton-process":
             print("[MC1-AUTO] received action=skeleton-process")
-            lastAction = .skeletonProcess
+            post(.skeletonProcess)
             return true
         case "capture-info":
             print("[MC1-AUTO] received action=capture-info")
-            lastAction = .captureInfo
+            post(.captureInfo)
             return true
         case "network-routing-diag":
             let label = value("label") ?? "unlabeled"
             print("[MC1-AUTO] received action=network-routing-diag label=\(label)")
-            lastAction = .networkRoutingDiag(label: label)
+            post(.networkRoutingDiag(label: label))
             return true
         case "gopro-preview-poc":
             let duration = value("duration_s").flatMap(Double.init) ?? 25
             print("[MC1-AUTO] received action=gopro-preview-poc duration_s=\(duration)")
-            lastAction = .goProPreviewPOC(durationSeconds: duration)
+            post(.goProPreviewPOC(durationSeconds: duration))
             return true
         case "gopro-combined-cycle-proof":
             let duration = value("duration_s").flatMap(Double.init) ?? 15
             print("[MC1-AUTO] received action=gopro-combined-cycle-proof duration_s=\(duration)")
-            lastAction = .goProCombinedCycleProof(durationSeconds: duration)
+            post(.goProCombinedCycleProof(durationSeconds: duration))
             return true
         case "gopro-camera-state-probe":
             print("[MC1-AUTO] received action=gopro-camera-state-probe")
-            lastAction = .goProCameraStateProbe
+            post(.goProCameraStateProbe)
             return true
         case "gopro-preview-aspect-probe":
             let duration = value("duration_s").flatMap(Double.init) ?? 20
             print("[MC1-AUTO] received action=gopro-preview-aspect-probe duration_s=\(duration)")
-            lastAction = .goProPreviewAspectProbe(durationSeconds: duration)
+            post(.goProPreviewAspectProbe(durationSeconds: duration))
             return true
         case "gopro-preset-write-validation":
             print("[MC1-AUTO] received action=gopro-preset-write-validation")
-            lastAction = .goProPresetWriteValidation
+            post(.goProPresetWriteValidation)
             return true
         case "gopro-stream-start":
             print("[MC1-AUTO] received action=gopro-stream-start")
-            lastAction = .goProStreamStart
+            post(.goProStreamStart)
             return true
         case "pose-overlay-diag":
             print("[MC1-AUTO] received action=pose-overlay-diag")
-            lastAction = .poseOverlayDiag
+            post(.poseOverlayDiag)
             return true
         default:
             print("[MC1-AUTO] received unknown action=\(action)")

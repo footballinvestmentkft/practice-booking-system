@@ -205,6 +205,95 @@ def copy_app_container_file(udid: str, relative_path: str, local_path: str,
     return False
 
 
+# ── Stale-artifact protection (P0 hardening, 2026-07-04 review) ─────────────
+#
+# Diag files persist in the app's Documents/ directory across runs, and
+# devicectl has no delete verb for the appDataContainer domain — so a scenario
+# whose on-device probe silently never ran could previously copy back a STALE
+# file from an earlier run and PASS on old evidence. Two-layer defence:
+#
+#   1. invalidate_app_container_file(): at scenario start, every diag file the
+#      scenario will later gate on is OVERWRITTEN with a sentinel JSON
+#      ({"mc1_invalidated": true, ...}). Only the app writing a fresh diag
+#      during THIS run replaces the sentinel.
+#   2. load_fresh_diag(): when the gate reads the copied-back file, it rejects
+#      (a) the sentinel and (b) any diag whose own timestamp predates the
+#      scenario start (belt-and-braces for clock-skewed devices).
+
+STALE_DIAG_SENTINEL_KEY = "mc1_invalidated"
+# Device wall clock vs. script wall clock can disagree; the sentinel is the
+# primary defence, the timestamp check only needs to catch grossly old files.
+DIAG_FRESHNESS_SKEW_TOLERANCE_S = 120.0
+
+
+def push_app_container_file(udid: str, local_path: str, relative_path: str,
+                            bundle_id: str = LFA_BUNDLE_ID) -> bool:
+    """Copy a local file INTO the app's data container (inverse of
+    copy_app_container_file)."""
+    result = subprocess.run(
+        ["xcrun", "devicectl", "device", "copy", "to", "--device", udid,
+         "--domain-type", "appDataContainer", "--domain-identifier", bundle_id,
+         "--source", local_path, "--destination", relative_path],
+        capture_output=True, text=True, timeout=60,
+    )
+    if result.returncode == 0:
+        print(f"  -> pushed app container file: {local_path} → {relative_path}")
+        return True
+    print(f"  -> app container push failed ({relative_path}): {result.stderr.strip()[:300]}")
+    return False
+
+
+def invalidate_app_container_file(udid: str, relative_path: str, run_id: str,
+                                  scratch_dir: Path,
+                                  bundle_id: str = LFA_BUNDLE_ID) -> bool:
+    """Overwrite one on-device diag file with a stale-marker sentinel."""
+    sentinel = {
+        STALE_DIAG_SENTINEL_KEY: True,
+        "invalidated_at": utc_now_iso(),
+        "run_id": run_id,
+        "note": "overwritten at scenario start; a gate reading this sentinel "
+                "means the app never wrote a fresh diag during this run",
+    }
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+    local = scratch_dir / f"sentinel_{Path(relative_path).name}"
+    local.write_text(json.dumps(sentinel, indent=2))
+    return push_app_container_file(udid, str(local), relative_path, bundle_id=bundle_id)
+
+
+def load_fresh_diag(local_path: str, scenario_started_at: datetime,
+                    timestamp_keys: tuple[str, ...] = ("timestamp", "generated_at"),
+                    ) -> tuple[dict | None, str | None]:
+    """Load a copied-back diag JSON, rejecting stale evidence.
+
+    Returns (diag_dict, None) when the file is fresh, or (None, reason) when it
+    must not be trusted: sentinel still in place, unparseable, missing its
+    timestamp, or timestamped before scenario start (minus skew tolerance).
+    """
+    try:
+        diag = json.loads(Path(local_path).read_text())
+    except (OSError, json.JSONDecodeError) as e:
+        return None, f"unreadable diag file: {e}"
+    if not isinstance(diag, dict):
+        return None, "diag file is not a JSON object"
+    if diag.get(STALE_DIAG_SENTINEL_KEY) is True:
+        return None, ("stale sentinel still in place — the app never wrote this "
+                      "diag during the current run")
+    ts_raw = next((diag[k] for k in timestamp_keys if diag.get(k)), None)
+    if not ts_raw:
+        return None, f"diag has no freshness timestamp (looked for {timestamp_keys})"
+    try:
+        ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None, f"diag timestamp unparseable: {ts_raw!r}"
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    threshold = scenario_started_at.timestamp() - DIAG_FRESHNESS_SKEW_TOLERANCE_S
+    if ts.timestamp() < threshold:
+        return None, (f"diag timestamp {ts_raw} predates scenario start "
+                      f"{scenario_started_at.isoformat()} — stale artifact from an earlier run")
+    return diag, None
+
+
 def extract_capture_path_from_log(console_log: str, tag: str = "[CAPTURE-INFO]") -> str | None:
     """Parse outputFile= from console log CAPTURE-INFO line."""
     for line in console_log.splitlines():
