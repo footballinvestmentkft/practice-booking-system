@@ -31,13 +31,29 @@ from .lib import (
     extract_skeleton_path_from_log,
     get_server_time_iso,
     get_session,
+    invalidate_app_container_file,
     latest_cycle,
     list_cycles,
+    load_fresh_diag,
     poll_until,
     register_device,
     send_deep_link,
     transition_session,
+    utc_now_iso,
 )
+
+# Scenarios that block on operator input() (manual GoPro WiFi join, visual
+# checks). runner.py MUST exclude these from an unattended `--scenario all`
+# run — they only run when named explicitly (P0 hardening, 2026-07-04 review).
+INTERACTIVE_SCENARIOS = {
+    "tricamera-capture-skeleton-proof",
+    "gopro-network-routing-diag",
+    "gopro-preview-poc",
+    "gopro-combined-cycle-proof",
+    "gopro-camera-state-probe",
+    "gopro-preview-aspect-probe",
+    "gopro-preset-write-validation",
+}
 
 DEVICE_REGISTER_TIMEOUT_SECONDS = 120
 CYCLE_CONFIRM_TIMEOUT_SECONDS = 30
@@ -142,6 +158,28 @@ def _mark_devices_ready(ctx: ScenarioContext, report: ScenarioReport, session_uu
 
     print(f"Waiting {POST_DEVICES_READY_SETTLE_SECONDS}s for iOS VM to poll updated session...")
     _time.sleep(POST_DEVICES_READY_SETTLE_SECONDS)
+
+
+def _invalidate_stale_diags(ctx: ScenarioContext, report: ScenarioReport,
+                            targets: list[tuple[str, str]], run_id: str,
+                            step_name: str = "stale diag artifacts invalidated") -> bool:
+    """Overwrite every on-device diag file this scenario will gate on with a
+    stale-marker sentinel (P0 hardening — see lib.invalidate_app_container_file).
+
+    `targets` is a list of (udid, container-relative path). Records one report
+    step; returns True only if EVERY target was invalidated. A failed
+    invalidation means this run cannot distinguish fresh evidence from a
+    previous run's leftovers, so callers must treat False as gate-critical.
+    """
+    results = {}
+    all_ok = True
+    scratch = ctx.artifact.dir / "diag_sentinels"
+    for udid, relative_path in targets:
+        ok = invalidate_app_container_file(udid, relative_path, run_id, scratch)
+        results[f"{udid[:8]}:{relative_path}"] = ok
+        all_ok = all_ok and ok
+    report.step(step_name, all_ok, run_id=run_id, **results)
+    return all_ok
 
 
 def _run_one_cycle(
@@ -686,8 +724,11 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
       - gopro media evidence          ([GOPRO-MEDIA-BEGIN] in iPhone log)
     """
     import time as _time
+    from datetime import datetime as _dt, timezone as _tz
 
     report = ScenarioReport(name="tricamera-capture-skeleton-proof", passed=False)
+    scenario_started_at = _dt.now(_tz.utc)
+    run_id = f"tricamera-capture-skeleton-proof-{scenario_started_at.strftime('%Y%m%dT%H%M%SZ')}"
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -695,6 +736,19 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
     print(f"[proof] iPhone=instructor+GoPro, iPad=player")
 
     try:
+        # 0. Stale-artifact protection (P0 hardening): overwrite every diag file
+        #    this scenario later gates on with a sentinel, so a leftover file from
+        #    a previous run can never be read back as this run's evidence. This
+        #    step is gate-critical — if it fails, no PASS is possible.
+        _invalidate_stale_diags(ctx, report, run_id=run_id, targets=[
+            (ctx.iphone_udid, "Documents/capture_metadata_diag.json"),
+            (ctx.iphone_udid, "Documents/gopro_stream_diag.json"),
+            (ctx.iphone_udid, "Documents/pose_overlay_diag.json"),
+            (ctx.iphone_udid, "Documents/skeleton_output.json"),
+            (ctx.iphone_udid, "Documents/gopro_diag.json"),
+            (ctx.ipad_udid, "Documents/capture_metadata_diag.json"),
+        ])
+
         # 1. Join both devices
         instructor_id, player_id = _join_both_devices(ctx, report, session_uuid)
 
@@ -891,8 +945,6 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         #     the capture-info deep link fires (step 13 above).
         #     skeleton_output.json is written by SkeletonProcessor to Documents/ (fixed name).
         print("[proof] === ARTIFACT COLLECTION ===")
-        import json as _json
-        import os
 
         artifacts_dir = ctx.artifact.dir / "video_artifacts"
         artifacts_dir.mkdir(parents=True, exist_ok=True)
@@ -901,8 +953,12 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         local_iphone_meta = str(artifacts_dir / "iphone_capture_metadata.json")
         iphone_meta_ok = copy_app_container_file(ctx.iphone_udid, "Documents/capture_metadata_diag.json", local_iphone_meta)
         if iphone_meta_ok:
-            try:
-                meta = _json.loads(open(local_iphone_meta).read())
+            meta, stale_reason = load_fresh_diag(local_iphone_meta, scenario_started_at)
+            if meta is None:
+                report.step("iphone capture metadata", False, error=stale_reason)
+                report.step("iphone orientation consistent", False, error=stale_reason)
+                report.step("iphone effective aspect ratio is 16:9", False, error=stale_reason)
+            else:
                 file_size = meta.get("fileSizeBytes", 0) or 0
                 report.step("iphone capture metadata", file_size > 0,
                             fileSizeBytes=file_size, outputFilePath=meta.get("outputFilePath"),
@@ -920,8 +976,6 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
                             effectiveAspectRatio=meta.get("effectiveAspectRatio"),
                             effectiveDisplayWidth=meta.get("effectiveDisplayWidth"),
                             effectiveDisplayHeight=meta.get("effectiveDisplayHeight"))
-            except Exception as e:
-                report.step("iphone capture metadata", False, error=f"parse error: {e}")
         else:
             report.step("iphone capture metadata", False, error="copy_app_container_file failed")
 
@@ -929,8 +983,12 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         local_ipad_meta = str(artifacts_dir / "ipad_capture_metadata.json")
         ipad_meta_ok = copy_app_container_file(ctx.ipad_udid, "Documents/capture_metadata_diag.json", local_ipad_meta)
         if ipad_meta_ok:
-            try:
-                meta = _json.loads(open(local_ipad_meta).read())
+            meta, stale_reason = load_fresh_diag(local_ipad_meta, scenario_started_at)
+            if meta is None:
+                report.step("ipad capture metadata", False, error=stale_reason)
+                report.step("ipad orientation consistent", False, error=stale_reason)
+                report.step("ipad effective aspect ratio is 16:9", False, error=stale_reason)
+            else:
                 file_size = meta.get("fileSizeBytes", 0) or 0
                 report.step("ipad capture metadata", file_size > 0,
                             fileSizeBytes=file_size, outputFilePath=meta.get("outputFilePath"),
@@ -944,8 +1002,6 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
                             effectiveAspectRatio=meta.get("effectiveAspectRatio"),
                             effectiveDisplayWidth=meta.get("effectiveDisplayWidth"),
                             effectiveDisplayHeight=meta.get("effectiveDisplayHeight"))
-            except Exception as e:
-                report.step("ipad capture metadata", False, error=f"parse error: {e}")
         else:
             report.step("ipad capture metadata", False, error="copy_app_container_file failed")
 
@@ -969,8 +1025,11 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         gopro_stream_diag_ok = copy_app_container_file(
             ctx.iphone_udid, "Documents/gopro_stream_diag.json", local_gopro_stream_diag)
         if gopro_stream_diag_ok:
-            try:
-                stream_diag = _json.loads(open(local_gopro_stream_diag).read())
+            stream_diag, stale_reason = load_fresh_diag(local_gopro_stream_diag, scenario_started_at)
+            if stream_diag is None:
+                report.step("gopro preview stream quality", False, error=stale_reason)
+                report.step("gopro preview aspect ratio is 16:9", False, error=stale_reason)
+            else:
                 packets = stream_diag.get("udpPacketsReceived", 0) or 0
                 video_pid_found = bool(stream_diag.get("videoPIDFound", False))
                 decodes = stream_diag.get("decodeSuccesses", 0) or 0
@@ -994,9 +1053,6 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
                     previewAspectRatio=stream_diag.get("previewAspectRatio"),
                     previewWidth=stream_diag.get("previewWidth"), previewHeight=stream_diag.get("previewHeight"),
                 )
-            except Exception as e:
-                report.step("gopro preview stream quality", False, error=f"parse error: {e}")
-                report.step("gopro preview aspect ratio is 16:9", False, error=f"parse error: {e}")
         else:
             report.step("gopro preview stream quality", False,
                         error="gopro_stream_diag.json not found — GoProStreamProbe.run() "
@@ -1017,23 +1073,28 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         local_pose_diag = str(artifacts_dir / "pose_overlay_diag.json")
         pose_diag_ok = copy_app_container_file(ctx.iphone_udid, "Documents/pose_overlay_diag.json", local_pose_diag)
         if pose_diag_ok:
-            try:
-                pose_diag = _json.loads(open(local_pose_diag).read())
+            pose_diag, stale_reason = load_fresh_diag(local_pose_diag, scenario_started_at)
+            if pose_diag is None:
+                for panel_name in ("instructor", "player", "gopro"):
+                    report.step(f"{panel_name} panel frame traffic", False, error=stale_reason)
+            else:
                 for panel_name in ("instructor", "player", "gopro"):
                     panel = pose_diag.get(panel_name, {}) or {}
-                    frames_received = panel.get("framesReceivedByProcessor", 0) or 0
+                    # Key contract with PoseOverlayDiagWriter (LivePoseOverlayProcessor.swift):
+                    # the writer emits "framesReceived" — pinned by
+                    # tests/test_diag_contract.py and the static preflight, after the
+                    # 2026-07-04 review found this gate reading a key the writer never
+                    # emits (guaranteed false FAIL on every physical run).
+                    frames_received = panel.get("framesReceived", 0) or 0
                     report.step(
                         f"{panel_name} panel frame traffic", frames_received >= MIN_PANEL_FRAMES,
-                        framesReceivedByProcessor=frames_received,
+                        framesReceived=frames_received,
                         sourceFramesSeen=panel.get("sourceFramesSeen"),
                         framesProcessed=panel.get("framesProcessed"),
                         visionDetectionSuccesses=panel.get("visionDetectionSuccesses"),
                         framesWithSkeletonPoints=panel.get("framesWithSkeletonPoints"),
                         lastFrameReceivedAt=panel.get("lastFrameReceivedAt"),
                     )
-            except Exception as e:
-                for panel_name in ("instructor", "player", "gopro"):
-                    report.step(f"{panel_name} panel frame traffic", False, error=f"parse error: {e}")
         else:
             for panel_name in ("instructor", "player", "gopro"):
                 report.step(f"{panel_name} panel frame traffic", False,
@@ -1044,15 +1105,15 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         local_skeleton = str(artifacts_dir / "skeleton_output.json")
         skeleton_ok = copy_app_container_file(ctx.iphone_udid, "Documents/skeleton_output.json", local_skeleton)
         if skeleton_ok:
-            try:
-                skel = _json.loads(open(local_skeleton).read())
+            skel, stale_reason = load_fresh_diag(local_skeleton, scenario_started_at)
+            if skel is None:
+                report.step("skeleton json collected", False, error=stale_reason)
+            else:
                 frames = skel.get("sampled_frames", 0) or 0
                 joints = skel.get("total_joints_detected", 0) or 0
                 report.step("skeleton json collected", frames > 0,
                             sampled_frames=frames, total_joints_detected=joints,
                             video_duration_s=skel.get("video_duration_s"))
-            except Exception as e:
-                report.step("skeleton json collected", False, error=f"parse error: {e}")
         else:
             report.step("skeleton json collected", False, error="copy_app_container_file failed — SkeletonProcessor may not have completed")
 
@@ -1063,6 +1124,9 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         critical_ok = all(
             s.get("ok") for s in report.steps
             if s["description"] in (
+                # If sentinel invalidation failed, this run cannot distinguish fresh
+                # evidence from a previous run's leftovers — no PASS is possible.
+                "stale diag artifacts invalidated",
                 "instructor+player confirmed_start", "gopro confirmed_start",
                 "all 3 confirmed_stop", "timestamp sync report",
                 "gopro preview stream quality", "gopro preview aspect ratio is 16:9",
@@ -1125,6 +1189,12 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-network-routing-diag", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-network-routing-diag-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -1347,6 +1417,12 @@ def scenario_gopro_preview_poc(ctx: ScenarioContext) -> ScenarioReport:
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-preview-poc", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-preview-poc-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_stream_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -1590,6 +1666,13 @@ def scenario_gopro_combined_cycle_proof(ctx: ScenarioContext) -> ScenarioReport:
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-combined-cycle-proof", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-combined-cycle-proof-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_recording_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_stream_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -1792,6 +1875,12 @@ def scenario_gopro_camera_state_probe(ctx: ScenarioContext) -> ScenarioReport:
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-camera-state-probe", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-camera-state-probe-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_camera_state_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -1934,6 +2023,13 @@ def scenario_gopro_preview_aspect_probe(ctx: ScenarioContext) -> ScenarioReport:
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-preview-aspect-probe", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-preview-aspect-probe-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_preview_aspect_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_stream_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -2102,6 +2198,17 @@ def scenario_gopro_preset_write_validation(ctx: ScenarioContext) -> ScenarioRepo
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-preset-write-validation", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-preset-write-validation-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_preset_before_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_preset_write_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_preset_after_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_recording_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_preview_aspect_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_preset_final_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid

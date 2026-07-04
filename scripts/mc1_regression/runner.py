@@ -31,7 +31,7 @@ from mc1_regression.lib import (  # noqa: E402
     send_deep_link,
     utc_now_iso,
 )
-from mc1_regression.scenarios import SCENARIOS  # noqa: E402
+from mc1_regression.scenarios import INTERACTIVE_SCENARIOS, SCENARIOS  # noqa: E402
 
 _DEFAULT_INSTRUCTOR_EMAIL = "staging-instructor@lfa-staging.io"
 _DEFAULT_PLAYER_EMAIL = "staging-player1@lfa-staging.io"
@@ -72,7 +72,21 @@ def run(args: argparse.Namespace) -> int:
     preflight_url_scheme(args.iphone_udid, "iPhone")
 
     if args.scenario == "all":
-        scenario_names = [k for k in SCENARIOS.keys() if not k.startswith("gopro-")]
+        # `all` must stay unattended: exclude gopro-* (physical GoPro required)
+        # AND any scenario that blocks on operator input() (INTERACTIVE_SCENARIOS).
+        # Before this filter, tricamera-capture-skeleton-proof slipped into `all`
+        # and hung the whole run on an input() prompt (P0 hardening, 2026-07-04).
+        scenario_names = [
+            k for k in SCENARIOS.keys()
+            if not k.startswith("gopro-") and k not in INTERACTIVE_SCENARIOS
+        ]
+        excluded_interactive = [
+            k for k in SCENARIOS.keys()
+            if not k.startswith("gopro-") and k in INTERACTIVE_SCENARIOS
+        ]
+        for name in excluded_interactive:
+            print(f"NOTE: '{name}' is interactive (operator input required) — excluded "
+                  f"from 'all'. Run it explicitly: --scenario {name}")
     else:
         scenario_names = [args.scenario]
     overall_pass = True

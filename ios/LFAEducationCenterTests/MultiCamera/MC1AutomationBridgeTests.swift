@@ -19,7 +19,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=join&session_uuid=abc-123&role=player")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .joinSession(uuid: "abc-123", role: .player))
+        XCTAssertEqual(bridge.lastAction?.action, .joinSession(uuid: "abc-123", role: .player))
         XCTAssertTrue(bridge.presentSessionLab)
     }
 
@@ -29,7 +29,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=join&session_uuid=xyz-789&role=instructor")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .joinSession(uuid: "xyz-789", role: .instructor))
+        XCTAssertEqual(bridge.lastAction?.action, .joinSession(uuid: "xyz-789", role: .instructor))
     }
 
     // MARK: — AB-03: join with missing role defaults to player
@@ -38,7 +38,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=join&session_uuid=def-456")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .joinSession(uuid: "def-456", role: .player))
+        XCTAssertEqual(bridge.lastAction?.action, .joinSession(uuid: "def-456", role: .player))
     }
 
     // MARK: — AB-04: join with missing session_uuid is rejected
@@ -55,7 +55,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=mark-ready")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .markDevicesReady)
+        XCTAssertEqual(bridge.lastAction?.action, .markDevicesReady)
     }
 
     // MARK: — AB-06: begin-cycle
@@ -64,7 +64,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=begin-cycle")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .beginCycle)
+        XCTAssertEqual(bridge.lastAction?.action, .beginCycle)
     }
 
     // MARK: — AB-07: end-cycle
@@ -73,7 +73,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=end-cycle")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .endCycle)
+        XCTAssertEqual(bridge.lastAction?.action, .endCycle)
     }
 
     // MARK: — AB-07b: dump-snapshot
@@ -82,7 +82,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=dump-snapshot")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .dumpSnapshot)
+        XCTAssertEqual(bridge.lastAction?.action, .dumpSnapshot)
     }
 
     // MARK: — AB-08: unknown action is rejected
@@ -123,7 +123,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=reset-session")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .resetSession)
+        XCTAssertEqual(bridge.lastAction?.action, .resetSession)
     }
 
     // MARK: — AB-12b: gopro-connect
@@ -132,14 +132,14 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-connect&gopro_device_id=99")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .goProConnect(goProDeviceId: 99))
+        XCTAssertEqual(bridge.lastAction?.action, .goProConnect(goProDeviceId: 99))
     }
 
     func test_AB_12c_goProConnect_withoutDeviceId() {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-connect")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .goProConnect(goProDeviceId: nil))
+        XCTAssertEqual(bridge.lastAction?.action, .goProConnect(goProDeviceId: nil))
     }
 
     // MARK: — AB-13: gopro-start
@@ -148,7 +148,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-start&gopro_device_id=42")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .goProStartRecording(goProDeviceId: 42))
+        XCTAssertEqual(bridge.lastAction?.action, .goProStartRecording(goProDeviceId: 42))
     }
 
     func test_AB_13b_goProStart_missingDeviceId_rejected() {
@@ -163,7 +163,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-stop&gopro_device_id=42")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .goProStopRecording(goProDeviceId: 42))
+        XCTAssertEqual(bridge.lastAction?.action, .goProStopRecording(goProDeviceId: 42))
     }
 
     func test_AB_14b_goProStop_missingDeviceId_rejected() {
@@ -178,7 +178,7 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-status")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .goProStatus)
+        XCTAssertEqual(bridge.lastAction?.action, .goProStatus)
     }
 
     // MARK: — AB-16: gopro-media-list
@@ -187,6 +187,48 @@ final class MC1AutomationBridgeTests: XCTestCase {
         let bridge = makeBridge()
         let handled = bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-media-list")!)
         XCTAssertTrue(handled)
-        XCTAssertEqual(bridge.lastAction, .goProMediaList)
+        XCTAssertEqual(bridge.lastAction?.action, .goProMediaList)
+    }
+
+    // MARK: — AB-17: consume() replay protection (P0 hardening, 2026-07-04 review)
+    //
+    // @Published lastAction replays its current value to every new subscriber.
+    // consume() must return true exactly once per posted action so a view
+    // rebuild / re-subscription cannot re-dispatch a stale gopro-start,
+    // reset-session, or pose-overlay-diag.
+
+    func test_AB_17_consume_returnsTrueExactlyOnce() {
+        let bridge = makeBridge()
+        bridge.handle(url: URL(string: "lfa-mc1://automate?action=gopro-start&gopro_device_id=7")!)
+        guard let envelope = bridge.lastAction else { return XCTFail("no action posted") }
+        XCTAssertTrue(bridge.consume(envelope), "first delivery must be dispatchable")
+        XCTAssertFalse(bridge.consume(envelope), "replayed envelope must NOT be dispatchable")
+        XCTAssertFalse(bridge.consume(envelope), "every further replay must stay consumed")
+    }
+
+    func test_AB_17b_identicalActionsGetDistinctSeqs_eachConsumableOnce() {
+        let bridge = makeBridge()
+        bridge.handle(url: URL(string: "lfa-mc1://automate?action=begin-cycle")!)
+        guard let first = bridge.lastAction else { return XCTFail("no first action") }
+        bridge.handle(url: URL(string: "lfa-mc1://automate?action=begin-cycle")!)
+        guard let second = bridge.lastAction else { return XCTFail("no second action") }
+
+        XCTAssertEqual(first.action, second.action)
+        XCTAssertNotEqual(first.seq, second.seq, "identical actions must be distinguishable by seq")
+        XCTAssertGreaterThan(second.seq, first.seq, "seq must be monotonically increasing")
+        XCTAssertTrue(bridge.consume(first))
+        XCTAssertTrue(bridge.consume(second), "a genuinely new identical action must still run")
+        XCTAssertFalse(bridge.consume(first))
+        XCTAssertFalse(bridge.consume(second))
+    }
+
+    func test_AB_17c_resetSessionReplay_notDispatchableTwice() {
+        let bridge = makeBridge()
+        bridge.handle(url: URL(string: "lfa-mc1://automate?action=reset-session")!)
+        guard let envelope = bridge.lastAction else { return XCTFail("no action posted") }
+        XCTAssertTrue(bridge.consume(envelope))
+        // Simulates the fullScreenCover re-present: a new .onReceive subscription
+        // receives the same envelope via @Published replay.
+        XCTAssertFalse(bridge.consume(envelope), "re-presented view must not re-run reset-session")
     }
 }

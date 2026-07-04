@@ -47,8 +47,13 @@ struct InstructorDashboardView: View {
         }
         // pose-overlay-diag deep link → export per-panel frame diagnostics. Handled here
         // (not MultiCameraLobbyView) because the 3 processor instances are owned by this view.
-        .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { [self] action in
-            guard case .poseOverlayDiag = action else { return }
+        //
+        // consume() gate (P0 hardening): without it, a re-presented dashboard would
+        // replay a stale .poseOverlayDiag and clobber pose_overlay_diag.json with
+        // freshly-zeroed counters before the regression script copies it.
+        .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { [self] envelope in
+            guard case .poseOverlayDiag = envelope.action,
+                  MC1AutomationBridge.shared.consume(envelope) else { return }
             PoseOverlayDiagWriter.write(
                 instructor: localPoseOverlay,
                 player: remotePoseOverlay, playerSourceFramesSeen: streamService.totalFramesReceived,
