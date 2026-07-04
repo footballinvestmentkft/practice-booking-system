@@ -342,19 +342,29 @@ def check_orientation_aspect_wiring() -> None:
     critical_block_match = re.search(r"critical_ok = all\(.*?\n        \)", body, re.S)
     critical_block = critical_block_match.group(0) if critical_block_match else ""
     orientation_gate_steps = [
-        "iphone orientation consistent", "iphone effective aspect ratio is 16:9",
-        "ipad orientation consistent", "ipad effective aspect ratio is 16:9",
+        "iphone orientation consistent", "iphone effective aspect ratio matches orientation",
+        "iphone encoded aspect ratio is 16:9",
+        "ipad orientation consistent", "ipad effective aspect ratio matches orientation",
+        "ipad encoded aspect ratio is 16:9",
         "gopro preview aspect ratio is 16:9",
     ]
     scenario_asserts_ok = all(f'"{step}"' in body for step in orientation_gate_steps)
     missing_steps = [s for s in orientation_gate_steps if f'"{s}"' not in body]
-    check("scenario asserts orientation-consistency + 16:9 aspect for iPhone/iPad/GoPro",
+    check("scenario asserts orientation-consistency + orientation-aware aspect for iPhone/iPad/GoPro",
           scenario_asserts_ok,
           f"missing report.step(...) for: {missing_steps}" if not scenario_asserts_ok else "")
     # Scoped to the tricamera critical_ok block (2026-07-04 hardening) — the
     # previous whole-file regex could match a different scenario's gate.
     gated_ok = all(f'"{step}"' in critical_block for step in orientation_gate_steps)
     check("orientation/aspect assertions gate PASS (critical_ok)", gated_ok)
+
+    # The effective-aspect EXPECTATION must be orientation-aware (2026-07-04
+    # physical-run proof): a portrait-mandated run (RC checklist J / #357)
+    # records a correct 9:16 effective aspect, so an unconditional 16:9
+    # expectation is unsatisfiable there. Pin the mapping itself.
+    aware_ok = bool(re.search(r'"portrait":\s*\(9,\s*16\)', scenarios_src)) \
+        and bool(re.search(r'"landscape":\s*\(16,\s*9\)', scenarios_src))
+    check("effective-aspect expectation is orientation-aware (portrait→9:16, landscape→16:9)", aware_ok)
 
     # "No distorting stretch" is a SwiftUI layout property, not runtime data — verify the
     # GoPro preview panel uses aspectRatio(contentMode: .fit), which by definition letterboxes
