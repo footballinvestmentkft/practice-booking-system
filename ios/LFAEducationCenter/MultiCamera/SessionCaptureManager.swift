@@ -47,6 +47,12 @@ final class SessionCaptureManager: NSObject, ObservableObject {
     private var sessionUUID: String = ""
     private var deviceId: Int = 0
     private var isTornDown = false
+    /// Whether the interruption began while a recording was in flight — decides
+    /// whether interruption-end resumes to `.ready` or finalizes via stopCapture().
+    private var wasCapturingWhenInterrupted = false
+    /// Preview side-tap output currently attached to the shared session (see
+    /// attachPreviewOutput). At most one at a time.
+    private var attachedPreviewOutput: AVCaptureVideoDataOutput?
 
     var isCapturing: Bool { state == .capturing }
     var previewSession: AVCaptureSession { captureSession }
@@ -115,7 +121,7 @@ final class SessionCaptureManager: NSObject, ObservableObject {
 
         captureQueue.async { [weak self] in
             guard let self else { return }
-            let log = { (msg: String) in print("[SessionCapture] \(msg)") }
+            let log = { (msg: String) in MC1Log.notice("[SessionCapture] \(msg)") }
             log("prepare: captureQueue entered (thread: \(Thread.current))")
             assert(!Thread.isMainThread, "Capture configure must not run on main thread")
 
@@ -251,7 +257,7 @@ final class SessionCaptureManager: NSObject, ObservableObject {
             guard let self, !didComplete, !self.isTornDown else { return }
             if self.state == .configuring {
                 self.state = .failed("Kamera inicializálási timeout (\(Int(Self.prepareTimeoutSeconds))s)")
-                print("[SessionCapture] prepare: TIMEOUT after \(Self.prepareTimeoutSeconds)s")
+                MC1Log.notice("[SessionCapture] prepare: TIMEOUT after \(Self.prepareTimeoutSeconds)s")
             }
         }
     }
@@ -286,6 +292,66 @@ final class SessionCaptureManager: NSObject, ObservableObject {
         }
     }
 
+    // MARK: — Preview side-tap (single-session camera ownership)
+    //
+    // The recording session is the ONLY AVCaptureSession that may own the
+    // camera on a capture device. The 2026-07-04 tricamera physical run failed
+    // because CameraFramePublisher ran a SECOND AVCaptureSession on the same
+    // back camera: iOS gave the camera to one session, silently interrupted the
+    // other, and the player never reached confirmed_start. The preview frame
+    // stream now taps THIS session via an added AVCaptureVideoDataOutput —
+    // recording stays authoritative, preview is a side branch of the same
+    // camera pipeline.
+
+    /// Adds a preview AVCaptureVideoDataOutput to the shared session. The caller
+    /// configures the output (settings + delegate) before attaching. Runs on the
+    /// capture queue; completion is delivered on the main queue with whether the
+    /// output was actually added.
+    func attachPreviewOutput(_ output: AVCaptureVideoDataOutput,
+                             completion: @escaping @MainActor (Bool) -> Void) {
+        guard !isTornDown else {
+            Task { @MainActor in completion(false) }
+            return
+        }
+        guard attachedPreviewOutput == nil else {
+            let alreadyAttached = attachedPreviewOutput === output
+            MC1Log.notice("[SessionCapture] attachPreviewOutput: \(alreadyAttached ? "already attached" : "another preview output is attached") — skipping")
+            Task { @MainActor in completion(alreadyAttached) }
+            return
+        }
+        captureQueue.async { [weak self] in
+            guard let self else { return }
+            self.captureSession.beginConfiguration()
+            let canAdd = self.captureSession.canAddOutput(output)
+            if canAdd {
+                self.captureSession.addOutput(output)
+                OrientationMapper.applyCurrentOrientation(to: output.connection(with: .video))
+            }
+            self.captureSession.commitConfiguration()
+            DispatchQueue.main.async {
+                if canAdd { self.attachedPreviewOutput = output }
+                MC1Log.notice("[SessionCapture] attachPreviewOutput: \(canAdd ? "attached" : "canAddOutput=false")")
+                completion(canAdd)
+            }
+        }
+    }
+
+    /// Removes a previously attached preview output from the shared session.
+    /// Safe to call when nothing is attached.
+    func detachPreviewOutput() {
+        guard let output = attachedPreviewOutput else { return }
+        attachedPreviewOutput = nil
+        captureQueue.async { [weak self] in
+            guard let self else { return }
+            self.captureSession.beginConfiguration()
+            self.captureSession.removeOutput(output)
+            self.captureSession.commitConfiguration()
+            DispatchQueue.main.async {
+                MC1Log.notice("[SessionCapture] detachPreviewOutput: removed")
+            }
+        }
+    }
+
     // MARK: — Re-arm for next cycle (multi-cycle support)
 
     func rearmForNextCycle() {
@@ -315,6 +381,10 @@ final class SessionCaptureManager: NSObject, ObservableObject {
         outputFileURL = nil
         lastValidation = nil
         isTornDown = false
+        // The loop above removed every output, including an attached preview
+        // side-tap — forget it so the next attachPreviewOutput doesn't skip.
+        attachedPreviewOutput = nil
+        wasCapturingWhenInterrupted = false
         state = .idle
     }
 
@@ -382,14 +452,49 @@ final class SessionCaptureManager: NSObject, ObservableObject {
         OrientationMapper.applyCurrentOrientation(to: conn)
     }
 
-    private func handleInterruption() {
-        guard state == .capturing else { return }
-        state = .interrupted
+    // Internal (not private) — the interruption path is exercised directly by
+    // SessionCaptureManagerTests; a real AVCaptureSessionWasInterrupted cannot
+    // be triggered on the simulator (same seam as the fileOutput delegate calls).
+    func handleInterruption() {
+        switch state {
+        case .capturing:
+            wasCapturingWhenInterrupted = true
+            state = .interrupted
+        case .ready:
+            // Camera lost while armed — e.g. another AVCaptureSession claimed the
+            // device. Before this case existed, `.ready` silently survived the
+            // interruption and the next startCapture() ran against a session with
+            // no camera: movieOutput never reached didStartRecording, the player
+            // never confirmed start, and the cycle hung with zero evidence
+            // (2026-07-04 tricamera physical run RCA).
+            wasCapturingWhenInterrupted = false
+            state = .interrupted
+            MC1Log.notice("[SessionCapture] INTERRUPTED while ready — camera lost (another session claimed the device?)")
+        default:
+            break
+        }
     }
 
-    private func handleInterruptionEnded() {
-        if state == .interrupted { stopCapture() }
+    func handleInterruptionEnded() {
+        guard state == .interrupted else { return }
+        if wasCapturingWhenInterrupted {
+            stopCapture()
+        } else {
+            // Interrupted while merely armed — nothing was recording, so there is
+            // nothing to finalize; the session is running again, re-arm.
+            state = .ready
+            MC1Log.notice("[SessionCapture] interruption ended — re-armed to ready")
+        }
     }
+
+    #if DEBUG
+    /// Test-only: force a state that normally requires physical camera hardware
+    /// to reach (`.ready`, `.capturing`). Interruption-path unit tests use this
+    /// because prepare() cannot complete on the simulator.
+    func forceStateForTesting(_ forced: CaptureState) {
+        state = forced
+    }
+    #endif
 }
 
 // MARK: — CaptureController
@@ -447,10 +552,10 @@ extension SessionCaptureManager: AVCaptureFileOutputRecordingDelegate {
 
 // MARK: — Capture metadata diagnostics (Capture Quality + Metadata block)
 //
-// Structured, file-based evidence — idevicesyslog print() capture has
-// repeatedly proven unreliable on physical devices this session (see
+// Structured, file-based evidence — console capture (formerly print(), now
+// MC1Log/os_log) has repeatedly proven unreliable on physical devices (see
 // gopro_diag.json / gopro_stream_diag.json history). capture-info now
-// writes the same fields it prints, to Documents/capture_metadata_diag.json,
+// writes the same fields it logs, to Documents/capture_metadata_diag.json,
 // pulled by the regression script via the established devicectl
 // appDataContainer copy pattern.
 enum CaptureMetadataDiagWriter {
@@ -527,6 +632,6 @@ enum CaptureMetadataDiagWriter {
               JSONSerialization.isValidJSONObject(diag),
               let data = try? JSONSerialization.data(withJSONObject: diag, options: [.prettyPrinted]) else { return }
         try? data.write(to: docs.appendingPathComponent(fileName), options: .atomic)
-        print("[CAPTURE-METADATA] wrote \(fileName): \(diag)")
+        MC1Log.notice("[CAPTURE-METADATA] wrote \(fileName): \(diag)")
     }
 }

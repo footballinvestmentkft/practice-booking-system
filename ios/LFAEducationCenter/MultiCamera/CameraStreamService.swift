@@ -59,14 +59,14 @@ final class CameraStreamService: NSObject, ObservableObject {
             adv.delegate = self
             adv.startAdvertisingPeer()
             self.advertiser = adv
-            print("[StreamService] player advertising: \(myPeerID.displayName)")
+            MC1Log.notice("[StreamService] player advertising: \(myPeerID.displayName)")
 
         case .instructor:
             let brw = MCNearbyServiceBrowser(peer: myPeerID, serviceType: Self.serviceType)
             brw.delegate = self
             brw.startBrowsingForPeers()
             self.browser = brw
-            print("[StreamService] instructor browsing for players")
+            MC1Log.notice("[StreamService] instructor browsing for players")
         }
 
         fpsTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -115,14 +115,14 @@ extension CameraStreamService: MCSessionDelegate {
             case .connected:
                 connectedPeer = peerID
                 peerState = .connected(peerName: peerID.displayName)
-                print("[StreamService] connected to \(peerID.displayName)")
+                MC1Log.notice("[StreamService] connected to \(peerID.displayName)")
             case .connecting:
                 peerState = .connecting
-                print("[StreamService] connecting to \(peerID.displayName)")
+                MC1Log.notice("[StreamService] connecting to \(peerID.displayName)")
             case .notConnected:
                 if connectedPeer == peerID { connectedPeer = nil }
                 peerState = .disconnected
-                print("[StreamService] disconnected from \(peerID.displayName)")
+                MC1Log.notice("[StreamService] disconnected from \(peerID.displayName)")
                 if role == .instructor {
                     browser?.startBrowsingForPeers()
                 }
@@ -151,13 +151,13 @@ extension CameraStreamService: MCSessionDelegate {
 extension CameraStreamService: MCNearbyServiceAdvertiserDelegate {
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         Task { @MainActor in
-            print("[StreamService] received invitation from \(peerID.displayName)")
+            MC1Log.notice("[StreamService] received invitation from \(peerID.displayName)")
             invitationHandler(true, session)
         }
     }
 
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
-        print("[StreamService] advertising failed: \(error)")
+        MC1Log.notice("[StreamService] advertising failed: \(error)")
     }
 }
 
@@ -166,17 +166,17 @@ extension CameraStreamService: MCNearbyServiceAdvertiserDelegate {
 extension CameraStreamService: MCNearbyServiceBrowserDelegate {
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
         Task { @MainActor in
-            print("[StreamService] found peer: \(peerID.displayName) info=\(info ?? [:])")
+            MC1Log.notice("[StreamService] found peer: \(peerID.displayName) info=\(info ?? [:])")
             guard let session else { return }
             browser.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
         }
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
-        print("[StreamService] lost peer: \(peerID.displayName)")
+        MC1Log.notice("[StreamService] lost peer: \(peerID.displayName)")
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
-        print("[StreamService] browsing failed: \(error)")
+        MC1Log.notice("[StreamService] browsing failed: \(error)")
     }
 }
