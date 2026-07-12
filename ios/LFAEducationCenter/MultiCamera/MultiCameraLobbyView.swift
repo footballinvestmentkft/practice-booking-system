@@ -50,7 +50,7 @@ struct MultiCameraLobbyView: View {
         ))
     }
 
-    private static let buildFingerprint = "mc1-debug-v12-2026-07-04"
+    private static let buildFingerprint = "mc1-debug-v13-2026-07-12"
 
     var body: some View {
         NavigationView {
