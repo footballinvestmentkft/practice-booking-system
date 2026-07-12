@@ -56,6 +56,7 @@ private final class MockCCOClientForGateTest: CycleAPIClient {
     func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO {
         makeGateTestCycle(id: cycleId, revision: revision + 1, status: .stopping)
     }
+    func listCycles(token: String, uuid: String) async throws -> [CaptureCycleDTO] { [] }
     func confirmDeviceStart(token: String, uuid: String, cycleId: Int, sessionDeviceId: Int,
                              startedAt: String, cycleDeviceRevision: Int) async throws -> CaptureCycleDTO {
         confirmStartCallCount += 1
@@ -78,6 +79,7 @@ private final class MockPCOClientForGateTest: CycleAPIClient {
     func createCycle(token: String, uuid: String, idempotencyKey: String) async throws -> CaptureCycleDTO { fatalError("not used") }
     func scheduleCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO { fatalError("not used") }
     func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO { fatalError("not used") }
+    func listCycles(token: String, uuid: String) async throws -> [CaptureCycleDTO] { fatalError("not used") }
     func confirmDeviceStart(token: String, uuid: String, cycleId: Int, sessionDeviceId: Int,
                              startedAt: String, cycleDeviceRevision: Int) async throws -> CaptureCycleDTO {
         confirmStartCallCount += 1

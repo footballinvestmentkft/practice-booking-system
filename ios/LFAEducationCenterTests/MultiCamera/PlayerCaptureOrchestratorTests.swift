@@ -37,6 +37,9 @@ private final class MockCycleAPIClientForPCO: CycleAPIClient {
     func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO {
         fatalError("not used in PCO tests")
     }
+    func listCycles(token: String, uuid: String) async throws -> [CaptureCycleDTO] {
+        fatalError("not used in PCO tests")
+    }
     func confirmDeviceStart(
         token: String, uuid: String, cycleId: Int, sessionDeviceId: Int,
         startedAt: String, cycleDeviceRevision: Int

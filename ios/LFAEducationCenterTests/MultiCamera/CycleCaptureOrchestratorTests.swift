@@ -19,9 +19,14 @@ private final class MockCycleAPIClient: CycleAPIClient {
     var createResult:        Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 1))
     var scheduleResult:      Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 2, scheduledStartAt: futureISO(offsetSeconds: 10), status: .recordingPending))
     var stopResult:          Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 3, status: .stopping))
+    var stopRetryResult:     Result<CaptureCycleDTO, Error>? = nil
+    var listCyclesResult:    Result<[CaptureCycleDTO], Error> = .success([])
     var confirmStartResult:  Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 4, status: .recording))
     var confirmStopResult:   Result<CaptureCycleDTO, Error> = .success(makeTestCycle(id: 1, revision: 5, status: .completed))
 
+    private(set) var stopCallCount                = 0
+    private(set) var listCyclesCallCount          = 0
+    private(set) var lastStopRevision: Int?       = nil
     private(set) var activateCallCount            = 0
     private(set) var getSessionCallCount          = 0
     private(set) var createCallCount              = 0
@@ -60,7 +65,17 @@ private final class MockCycleAPIClient: CycleAPIClient {
     }
 
     func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO {
+        stopCallCount += 1
+        lastStopRevision = revision
+        if stopCallCount > 1, let retryResult = stopRetryResult {
+            return try retryResult.get()
+        }
         return try stopResult.get()
+    }
+
+    func listCycles(token: String, uuid: String) async throws -> [CaptureCycleDTO] {
+        listCyclesCallCount += 1
+        return try listCyclesResult.get()
     }
 
     func confirmDeviceStart(token: String, uuid: String, cycleId: Int, sessionDeviceId: Int, startedAt: String, cycleDeviceRevision: Int) async throws -> CaptureCycleDTO {
@@ -1545,5 +1560,131 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         }
         XCTAssertEqual(captureController.stopCallCount, 0)
         XCTAssertEqual(apiClient.confirmStopCallCount, 0)
+    }
+
+    // CYC-RC-05: non-recording coordinator stop with stale cached revision —
+    // first stop 409s (a player's confirm_start advanced the cycle revision
+    // invisibly), one refetch + one retry with the fresh revision succeeds.
+    // This is the exact failure of physical run 20260712T155629Z_smoke.
+    func test_CYC_RC_05_stop409_staleRevision_refetchAndRetry_success() async throws {
+        let apiClient = MockCycleAPIClient()
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
+        apiClient.stopResult = .failure(APIError.httpError(
+            statusCode: 409, detail: "cycle: revision conflict (expected 2, actual 3)"))
+        apiClient.listCyclesResult = .success([makeTestCycle(id: 1, revision: 3, status: .recording)])
+        apiClient.stopRetryResult = .success(makeTestCycle(id: 1, revision: 4, status: .stopping))
+        let (orchestrator, captureController) = await makeNonRecordingFixture(apiClient: apiClient)
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+        await waitForOrchestratorState(orchestrator) {
+            if case .capturing = $0 { return true }
+            return false
+        }
+
+        await orchestrator.stopCycle()
+
+        if case .completed(let cycleId) = orchestrator.state {
+            XCTAssertEqual(cycleId, 1)
+        } else {
+            XCTFail("CYC-RC-05: expected .completed(1), got \(orchestrator.state)")
+        }
+        XCTAssertTrue(orchestrator.revisionConflictRetried,
+                      "CYC-RC-05: the retry must be flagged for diagnostics")
+        XCTAssertEqual(apiClient.stopCallCount, 2,
+                       "CYC-RC-05: exactly one retry after the 409")
+        XCTAssertEqual(apiClient.listCyclesCallCount, 1,
+                       "CYC-RC-05: exactly one refetch")
+        XCTAssertEqual(apiClient.lastStopRevision, 3,
+                       "CYC-RC-05: retry must use the refetched revision")
+        XCTAssertEqual(captureController.stopCallCount, 0)
+        XCTAssertEqual(apiClient.confirmStopCallCount, 0,
+                       "CYC-RC-05: still no fabricated confirm on the retry path")
+    }
+
+    // CYC-RC-06: second 409 on the stop retry → terminal .revisionConflict,
+    // no infinite retry loop
+    func test_CYC_RC_06_stop409_retryAlso409_failsTerminal() async throws {
+        let apiClient = MockCycleAPIClient()
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
+        apiClient.stopResult = .failure(APIError.httpError(statusCode: 409, detail: "conflict 1"))
+        apiClient.listCyclesResult = .success([makeTestCycle(id: 1, revision: 3, status: .recording)])
+        apiClient.stopRetryResult = .failure(APIError.httpError(statusCode: 409, detail: "conflict 2"))
+        let (orchestrator, _) = await makeNonRecordingFixture(apiClient: apiClient)
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+        await waitForOrchestratorState(orchestrator) {
+            if case .capturing = $0 { return true }
+            return false
+        }
+
+        await orchestrator.stopCycle()
+
+        if case .failed(.revisionConflict) = orchestrator.state {
+            // expected
+        } else {
+            XCTFail("CYC-RC-06: expected .failed(.revisionConflict), got \(orchestrator.state)")
+        }
+        XCTAssertEqual(apiClient.stopCallCount, 2,
+                       "CYC-RC-06: max one retry — a second 409 must be terminal")
+        XCTAssertEqual(apiClient.listCyclesCallCount, 1)
+    }
+
+    // CYC-RC-07: refetch itself fails after the 409 → terminal .revisionConflict
+    func test_CYC_RC_07_stop409_refetchFails_failsTerminal() async throws {
+        let apiClient = MockCycleAPIClient()
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
+        apiClient.stopResult = .failure(APIError.httpError(statusCode: 409, detail: "conflict"))
+        apiClient.listCyclesResult = .failure(APIError.httpError(statusCode: 503, detail: "unavailable"))
+        let (orchestrator, _) = await makeNonRecordingFixture(apiClient: apiClient)
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+        await waitForOrchestratorState(orchestrator) {
+            if case .capturing = $0 { return true }
+            return false
+        }
+
+        await orchestrator.stopCycle()
+
+        if case .failed(.revisionConflict) = orchestrator.state {
+            // expected
+        } else {
+            XCTFail("CYC-RC-07: expected .failed(.revisionConflict), got \(orchestrator.state)")
+        }
+        XCTAssertEqual(apiClient.stopCallCount, 1,
+                       "CYC-RC-07: no blind retry when the refetch failed")
+    }
+
+    // CYC-RC-08: refetch succeeds but the cycle is missing from the list →
+    // terminal .revisionConflict, no blind retry
+    func test_CYC_RC_08_stop409_cycleMissingFromRefetch_failsTerminal() async throws {
+        let apiClient = MockCycleAPIClient()
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
+        apiClient.stopResult = .failure(APIError.httpError(statusCode: 409, detail: "conflict"))
+        apiClient.listCyclesResult = .success([makeTestCycle(id: 99, revision: 1, status: .preparing)])
+        let (orchestrator, _) = await makeNonRecordingFixture(apiClient: apiClient)
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+        await waitForOrchestratorState(orchestrator) {
+            if case .capturing = $0 { return true }
+            return false
+        }
+
+        await orchestrator.stopCycle()
+
+        if case .failed(.revisionConflict) = orchestrator.state {
+            // expected
+        } else {
+            XCTFail("CYC-RC-08: expected .failed(.revisionConflict), got \(orchestrator.state)")
+        }
+        XCTAssertEqual(apiClient.stopCallCount, 1,
+                       "CYC-RC-08: no retry without a fresh revision")
     }
 }

@@ -46,6 +46,7 @@ protocol CycleAPIClient {
     func createCycle(token: String, uuid: String, idempotencyKey: String) async throws -> CaptureCycleDTO
     func scheduleCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO
     func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO
+    func listCycles(token: String, uuid: String) async throws -> [CaptureCycleDTO]
     func confirmDeviceStart(token: String, uuid: String, cycleId: Int, sessionDeviceId: Int, startedAt: String, cycleDeviceRevision: Int) async throws -> CaptureCycleDTO
     func confirmDeviceStop(token: String, uuid: String, cycleId: Int, sessionDeviceId: Int, stoppedAt: String, cycleDeviceRevision: Int) async throws -> CaptureCycleDTO
 }
@@ -71,6 +72,10 @@ struct LiveCycleAPIClient: CycleAPIClient {
 
     func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO {
         try await MultiCameraAPIClient.stopCycle(token: token, uuid: uuid, cycleId: cycleId, revision: revision)
+    }
+
+    func listCycles(token: String, uuid: String) async throws -> [CaptureCycleDTO] {
+        try await MultiCameraAPIClient.listCycles(token: token, uuid: uuid)
     }
 
     func confirmDeviceStart(token: String, uuid: String, cycleId: Int, sessionDeviceId: Int, startedAt: String, cycleDeviceRevision: Int) async throws -> CaptureCycleDTO {
@@ -192,16 +197,43 @@ final class CycleCaptureOrchestrator: ObservableObject {
                 cycleId: cycleId,
                 revision: cycle.revision
             )
-            if recordsLocally {
-                captureController.stopCapture()
-            } else {
-                // Non-recording coordinator: nothing to stop locally and no
-                // capture-completed event will arrive — terminal state now.
-                MC1Log.notice("[CCO] non-recording coordinator: stop requested for cycle \(cycleId), no local capture")
-                state = .completed(cycleId: cycleId)
-            }
         } catch {
-            state = .failed(Self.mapToFailure(error))
+            guard let apiErr = error as? APIError,
+                  case .httpError(let code, _) = apiErr, code == 409 else {
+                state = .failed(Self.mapToFailure(error))
+                return
+            }
+            // 409: the cached revision is stale — on a non-recording coordinator
+            // the players' confirm_start advances the cycle revision without any
+            // response passing through this device. Refetch once, retry once;
+            // a second 409 is a real conflict and stays terminal.
+            do {
+                let cycles = try await cycleAPIClient.listCycles(
+                    token: token, uuid: currentCycleSessionUuid ?? ""
+                )
+                guard let fresh = cycles.first(where: { $0.id == cycleId }) else {
+                    state = .failed(.revisionConflict(detail: "stop retry: cycle \(cycleId) missing from refetch"))
+                    return
+                }
+                revisionConflictRetried = true
+                _ = try await cycleAPIClient.stopCycle(
+                    token: token,
+                    uuid: currentCycleSessionUuid ?? "",
+                    cycleId: cycleId,
+                    revision: fresh.revision
+                )
+            } catch {
+                state = .failed(.revisionConflict(detail: "stop retry: \(Self.mapToFailure(error))"))
+                return
+            }
+        }
+        if recordsLocally {
+            captureController.stopCapture()
+        } else {
+            // Non-recording coordinator: nothing to stop locally and no
+            // capture-completed event will arrive — terminal state now.
+            MC1Log.notice("[CCO] non-recording coordinator: stop requested for cycle \(cycleId), no local capture")
+            state = .completed(cycleId: cycleId)
         }
     }
 
