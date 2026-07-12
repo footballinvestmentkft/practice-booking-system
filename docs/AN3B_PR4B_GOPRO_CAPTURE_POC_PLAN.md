@@ -8,6 +8,13 @@
 > dashboard live preview követelményét (GoPro élőkép megjelenítése a többi kamera mellett);
 > arra lásd [GOPRO_LIVE_PREVIEW_POC_PLAN.md](GOPRO_LIVE_PREVIEW_POC_PLAN.md).
 
+> **2026-07-12 frissítés — végleges fizikai topológia**: a célrendszer 2× iPhone 12 Pro/Max
+> (két külön player kamera) + 1× GoPro (3. nézet) + 1× iPad (instruktori vezérlő/megjelenítő,
+> kamerája NEM vesz részt). A **PR-4B1 (GoPro connection) scope változatlan, visszamenőleg
+> nem bővül**. A PR-4B2 SUPERSEDED (MC1 ORCH-sorozat), a PR-4B3 rescope (audio sync 3 forrásra
+> → MC3-B), a PR-4B4-et az RC checklist + regression harness váltotta ki. A gap analysist és
+> a frissített fázissort lásd: [MC1_FINAL_TOPOLOGY_GAP_ANALYSIS.md](MC1_FINAL_TOPOLOGY_GAP_ANALYSIS.md).
+
 ---
 
 ## I. Jelenlegi iOS állapot

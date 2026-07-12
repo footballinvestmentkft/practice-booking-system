@@ -12,6 +12,25 @@
 > connected kamera élőképe egy képernyőn, GoPro HERO13-mal együtt). A live preview külön,
 > e mellett futó útvonal — lásd [GOPRO_LIVE_PREVIEW_POC_PLAN.md](GOPRO_LIVE_PREVIEW_POC_PLAN.md).
 
+> **2026-07-12 frissítés — végleges fizikai topológia**: a Phase 2–4 fázisbontást felülírja
+> az [MC1_FINAL_TOPOLOGY_GAP_ANALYSIS.md](MC1_FINAL_TOPOLOGY_GAP_ANALYSIS.md) MC2/MC3/MC4
+> fázissora. Végleges összeállítás: 2× iPhone 12 Pro/Max = két player kamera
+> (`player_primary`/`player_secondary`), 1× GoPro = `auxiliary_camera`, 1× iPad =
+> nem-felvevő instruktori koordinátor. Az e dokumentumban leírt technikai tartalom
+> (kalibráció, sync, trianguláció) érvényes referencia marad, de a "iPhone + GoPro"
+> 2-kamerás párra írt részek 3 nézetre általánosítandók (tri-view contract: MC3-C).
+>
+> **2026-07-12 architektúra-döntés (v1.1)**: az MPC/peer-to-peer réteg **teljes
+> kivezetése** — backend-orchestrált session, lokális rögzítés minden kamerán,
+> post-cycle upload, iPad státusz/thumbnail dashboard (élő stream nélkül; a fenti
+> 2026-06-29 live-preview követelmény ezzel VISSZAVONVA), GoPro manager = SIM-es
+> Player A iPhone. Az időszinkron-cél szigorítva: a lenti "< 33 ms (1 frame @ 30fps)"
+> hibacél csak lassú mozgásra elég — gyors mozgásanalízishez (rúgás, sprint)
+> **sub-frame, ≤ 5–10 ms** a cél, audio-alapú fine sync-kel és drift-korrekcióval
+> (a szinkronhiba térbeli hibává alakul: ~v×Δt, azaz 33 ms @ 10–15 m/s ≈ 30–50 cm
+> triangulációs hiba). A backend-óra (NTP-jellegű, 10–50 ms) csak koarse igazításra
+> szolgál.
+
 ---
 
 ## Phase 1 — Single-player 3D skeleton foundation
