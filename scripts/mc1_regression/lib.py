@@ -23,6 +23,40 @@ from urllib.parse import urlencode
 POLL_INTERVAL_SECONDS = 1.5
 SNAPSHOT_RE = re.compile(r"\[MC1-SNAPSHOT-BEGIN\](.*?)\[MC1-SNAPSHOT-END\]", re.DOTALL)
 
+# Scenarios where console capture from BOTH devices is a HARD precondition.
+# The 2026-07-04 tricamera run failed on the PLAYER (iPad) side while the
+# WARN-only console path had silently skipped the iPad capture — the exact
+# evidence the failure needed did not exist. Tricamera scenarios exercise the
+# player-side capture chain, so running them without the iPad console is
+# running blind.
+DUAL_CONSOLE_REQUIRED_SCENARIOS = frozenset({
+    "tricamera-capture-skeleton-proof",
+    "gopro-tricamera-smoke",
+})
+
+
+def check_dual_console_precondition(scenario_names: list[str],
+                                    console_dir: Path | str) -> list[str]:
+    """Returns human-readable errors when a requested scenario requires both
+    device console captures and one is missing; empty list = precondition holds.
+    Console log files are created by run_mc1_regression.sh BEFORE the runner
+    starts, so a missing file here means capture never started for that device
+    (not USB-connected / not visible to idevicesyslog)."""
+    required_by = [n for n in scenario_names if n in DUAL_CONSOLE_REQUIRED_SCENARIOS]
+    if not required_by:
+        return []
+    errors: list[str] = []
+    for filename, label in (("iphone_console.log", "iPhone"),
+                            ("ipad_console.log", "iPad")):
+        if not (Path(console_dir) / filename).exists():
+            errors.append(
+                f"{label} console capture missing ({filename} not found) — "
+                f"hard precondition for: {', '.join(required_by)}. "
+                f"Both devices must be USB-connected, trusted, and visible to "
+                f"idevicesyslog (idevice_id -l)."
+            )
+    return errors
+
 
 class ValidationError(RuntimeError):
     pass

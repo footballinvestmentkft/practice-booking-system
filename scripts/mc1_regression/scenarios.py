@@ -75,6 +75,49 @@ def _aspect_ratio_matches(aspect_str, expected_w=16, expected_h=9, tolerance=0.0
     except ValueError:
         return False
 
+
+def _expected_effective_aspect(file_orientation_coarse):
+    """Orientation-aware expected EFFECTIVE (post-rotation display) aspect.
+
+    2026-07-04 physical-run proof (ffprobe on the pulled .mov files): the app
+    always encodes the sensor's landscape 1280x720 buffer and bakes rotation
+    into preferredTransform, so a portrait-mounted device's effective display
+    aspect is BY DEFINITION 9:16. The old unconditional 16:9 expectation could
+    never pass under the RC-checklist J-section portrait mandate (issue #357)
+    even though the recording itself was correct. Returns None for unknown
+    orientation — no expectation can be derived there, and "unknown" is itself
+    an evidence failure (the orientation-consistent gate catches it too).
+    """
+    return {"portrait": (9, 16), "landscape": (16, 9)}.get(file_orientation_coarse)
+
+
+def _effective_aspect_gate(meta):
+    """(ok, expected_label) for the orientation-aware effective-aspect gate."""
+    expected = _expected_effective_aspect((meta or {}).get("fileOrientationCoarse"))
+    if expected is None:
+        return False, None
+    w, h = expected
+    return _aspect_ratio_matches(meta.get("effectiveAspectRatio"), w, h), f"{w}:{h}"
+
+
+def _encoded_aspect_is_16_9(meta):
+    """16:9 check on the ENCODED buffer (actualResolution "WxH") — orientation-
+    independent, because the sensor buffer is landscape 16:9 regardless of how
+    the device is mounted. Returns None when actualResolution is absent or
+    unparseable: there is no metadata to check, so the caller skips the step
+    instead of asserting on a guess."""
+    raw = (meta or {}).get("actualResolution")
+    if not raw or "x" not in str(raw):
+        return None
+    try:
+        w_str, h_str = str(raw).lower().split("x", 1)
+        w, h = float(w_str), float(h_str)
+    except ValueError:
+        return None
+    if h == 0:
+        return None
+    return abs((w / h) - (16 / 9)) <= 0.02
+
 # After the script PATCHes session to DEVICES_READY the iOS VM needs one 3s poll
 # cycle to see the updated status + fresh revision before begin-cycle is sent.
 # CCO already retries activateSession on 409, so 4s is a safe conservative buffer.
@@ -137,6 +180,35 @@ def _dump_session_state(ctx: ScenarioContext, session_uuid: str, label: str) -> 
                       f"recording={cd.get('recording_status')}")
     except ValidationError as e:
         print(f"  [{label}] diagnostic dump failed: {e}")
+
+
+def _pull_pco_failure_diag(ctx: ScenarioContext, report: ScenarioReport,
+                           scenario_started_at) -> None:
+    """Pull the player-side PCO failure evidence (Documents/pco_failure_diag.json,
+    written by PCOFailureDiagWriter on every PlayerCaptureOrchestrator .failed
+    transition — 2026-07-04 RCA). Best-effort: turns a bare
+    "Timeout waiting for: instructor+player confirmed_start" into a concrete
+    player-side reason (e.g. captureStartTimeout with the last capture state).
+    Never raises; reported as evidence, never gates PASS."""
+    local = str(ctx.artifact.dir / "pco_failure_diag.json")
+    try:
+        if not copy_app_container_file(ctx.ipad_udid, "Documents/pco_failure_diag.json", local):
+            report.step("player pco failure diag", False,
+                        error="pco_failure_diag.json not found on iPad — player PCO "
+                              "never transitioned to .failed during this run "
+                              "(cycle never seen, or hang predates the watchdog build)")
+            return
+        diag, stale_reason = load_fresh_diag(local, scenario_started_at)
+        if diag is None:
+            report.step("player pco failure diag", False, error=stale_reason)
+            return
+        report.step("player pco failure diag", True,
+                    reason=diag.get("reason"),
+                    cycleId=diag.get("cycleId"),
+                    lastObservedCaptureState=diag.get("lastObservedCaptureState"),
+                    diagTimestamp=diag.get("timestamp"))
+    except Exception as e:  # noqa: BLE001 — evidence pull must never mask the scenario error
+        report.step("player pco failure diag", False, error=f"pull failed: {e}")
 
 
 def _mark_devices_ready(ctx: ScenarioContext, report: ScenarioReport, session_uuid: str) -> None:
@@ -747,6 +819,7 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
             (ctx.iphone_udid, "Documents/skeleton_output.json"),
             (ctx.iphone_udid, "Documents/gopro_diag.json"),
             (ctx.ipad_udid, "Documents/capture_metadata_diag.json"),
+            (ctx.ipad_udid, "Documents/pco_failure_diag.json"),
         ])
 
         # 1. Join both devices
@@ -957,25 +1030,32 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
             if meta is None:
                 report.step("iphone capture metadata", False, error=stale_reason)
                 report.step("iphone orientation consistent", False, error=stale_reason)
-                report.step("iphone effective aspect ratio is 16:9", False, error=stale_reason)
+                report.step("iphone effective aspect ratio matches orientation", False, error=stale_reason)
             else:
                 file_size = meta.get("fileSizeBytes", 0) or 0
                 report.step("iphone capture metadata", file_size > 0,
                             fileSizeBytes=file_size, outputFilePath=meta.get("outputFilePath"),
                             durationSeconds=meta.get("actualDurationSeconds"),
                             codec=meta.get("actualCodec"))
-                # Orientation/aspect automatic assertions (2026-07-01 flow audit) — not just
-                # recorded in the JSON, actually checked: does the FILE's baked-in rotation
-                # match the device's own interface orientation at recording start, and is the
-                # effective (post-rotation) aspect ratio the expected 16:9?
+                # Orientation/aspect automatic assertions (2026-07-01 flow audit, made
+                # orientation-aware 2026-07-04): does the FILE's baked-in rotation match the
+                # device's own interface orientation at recording start, does the effective
+                # (post-rotation) aspect match what that orientation implies (portrait→9:16,
+                # landscape→16:9), and is the encoded sensor buffer the expected 16:9?
                 report.step("iphone orientation consistent", meta.get("orientationConsistent") is True,
                             deviceOrientationAtRecordingStart=meta.get("deviceOrientationAtRecordingStart"),
                             fileOrientationCoarse=meta.get("fileOrientationCoarse"))
-                report.step("iphone effective aspect ratio is 16:9",
-                            _aspect_ratio_matches(meta.get("effectiveAspectRatio")),
+                eff_ok, eff_expected = _effective_aspect_gate(meta)
+                report.step("iphone effective aspect ratio matches orientation", eff_ok,
+                            expectedEffectiveAspect=eff_expected,
+                            fileOrientationCoarse=meta.get("fileOrientationCoarse"),
                             effectiveAspectRatio=meta.get("effectiveAspectRatio"),
                             effectiveDisplayWidth=meta.get("effectiveDisplayWidth"),
                             effectiveDisplayHeight=meta.get("effectiveDisplayHeight"))
+                encoded_ok = _encoded_aspect_is_16_9(meta)
+                if encoded_ok is not None:
+                    report.step("iphone encoded aspect ratio is 16:9", encoded_ok,
+                                actualResolution=meta.get("actualResolution"))
         else:
             report.step("iphone capture metadata", False, error="copy_app_container_file failed")
 
@@ -987,7 +1067,7 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
             if meta is None:
                 report.step("ipad capture metadata", False, error=stale_reason)
                 report.step("ipad orientation consistent", False, error=stale_reason)
-                report.step("ipad effective aspect ratio is 16:9", False, error=stale_reason)
+                report.step("ipad effective aspect ratio matches orientation", False, error=stale_reason)
             else:
                 file_size = meta.get("fileSizeBytes", 0) or 0
                 report.step("ipad capture metadata", file_size > 0,
@@ -997,11 +1077,17 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
                 report.step("ipad orientation consistent", meta.get("orientationConsistent") is True,
                             deviceOrientationAtRecordingStart=meta.get("deviceOrientationAtRecordingStart"),
                             fileOrientationCoarse=meta.get("fileOrientationCoarse"))
-                report.step("ipad effective aspect ratio is 16:9",
-                            _aspect_ratio_matches(meta.get("effectiveAspectRatio")),
+                eff_ok, eff_expected = _effective_aspect_gate(meta)
+                report.step("ipad effective aspect ratio matches orientation", eff_ok,
+                            expectedEffectiveAspect=eff_expected,
+                            fileOrientationCoarse=meta.get("fileOrientationCoarse"),
                             effectiveAspectRatio=meta.get("effectiveAspectRatio"),
                             effectiveDisplayWidth=meta.get("effectiveDisplayWidth"),
                             effectiveDisplayHeight=meta.get("effectiveDisplayHeight"))
+                encoded_ok = _encoded_aspect_is_16_9(meta)
+                if encoded_ok is not None:
+                    report.step("ipad encoded aspect ratio is 16:9", encoded_ok,
+                                actualResolution=meta.get("actualResolution"))
         else:
             report.step("ipad capture metadata", False, error="copy_app_container_file failed")
 
@@ -1131,8 +1217,10 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
                 "all 3 confirmed_stop", "timestamp sync report",
                 "gopro preview stream quality", "gopro preview aspect ratio is 16:9",
                 "instructor panel frame traffic", "player panel frame traffic", "gopro panel frame traffic",
-                "iphone orientation consistent", "iphone effective aspect ratio is 16:9",
-                "ipad orientation consistent", "ipad effective aspect ratio is 16:9",
+                "iphone orientation consistent", "iphone effective aspect ratio matches orientation",
+                "iphone encoded aspect ratio is 16:9",
+                "ipad orientation consistent", "ipad effective aspect ratio matches orientation",
+                "ipad encoded aspect ratio is 16:9",
             )
         )
         report.passed = critical_ok
@@ -1141,6 +1229,11 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
     except ValidationError as e:
         report.error = str(e)
         report.passed = False
+        # 2026-07-04 RCA: a bare confirmed_start timeout carried zero player-side
+        # evidence. Pull the PCO failure diag from the iPad and dump backend
+        # state so the report explains the failure, not just names it.
+        _pull_pco_failure_diag(ctx, report, scenario_started_at)
+        _dump_session_state(ctx, session_uuid, "tricamera-fail")
     return report
 
 

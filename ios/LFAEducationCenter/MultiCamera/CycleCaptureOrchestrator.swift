@@ -104,9 +104,9 @@ final class CycleCaptureOrchestrator: ObservableObject {
     @Published private(set) var state: OrchestratorState = .idle {
         didSet {
             switch state {
-            case .capturing(let cycleId): print("[CCO] confirmed start: cycleId=\(cycleId)")
-            case .completed(let cycleId): print("[CCO] confirmed stop: cycleId=\(cycleId)")
-            case .failed(let failure): print("[CCO] FAILURE: \(failure)")
+            case .capturing(let cycleId): MC1Log.notice("[CCO] confirmed start: cycleId=\(cycleId)")
+            case .completed(let cycleId): MC1Log.notice("[CCO] confirmed stop: cycleId=\(cycleId)")
+            case .failed(let failure): MC1Log.notice("[CCO] FAILURE: \(failure)")
             default: break
             }
         }

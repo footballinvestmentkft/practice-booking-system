@@ -21,6 +21,15 @@ final class PlayerCaptureOrchestrator: ObservableObject {
 
     // MARK: — Constants
     private static let scheduledStartToleranceMs: Double = 2_000
+    /// How long startCapture() may take to reach `.capturing` before the
+    /// orchestrator declares failure instead of hanging silently. A healthy
+    /// AVCaptureMovieFileOutput.startRecording fires didStartRecording well
+    /// under 1s; 5s is >10x that margin while still finishing INSIDE the
+    /// harness's confirmed_start poll window, so the failure is visible as a
+    /// concrete `.failed` state + diag artifact rather than a bare scenario
+    /// timeout (2026-07-04 tricamera physical run RCA: the player hung in
+    /// .waitingForStart forever with zero evidence).
+    static let captureStartWatchdogSeconds: Double = 5
 
     // MARK: — Published state
     // didSet logs key transitions for MC1-AUTO-1 console-based physical validation —
@@ -28,9 +37,15 @@ final class PlayerCaptureOrchestrator: ObservableObject {
     @Published private(set) var state: PlayerOrchestratorState = .idle {
         didSet {
             switch state {
-            case .confirmed(let cycleId): print("[PCO] confirmed start: cycleId=\(cycleId)")
-            case .confirmedStop(let cycleId): print("[PCO] confirmed stop: cycleId=\(cycleId)")
-            case .failed(let message): print("[PCO] FAILURE: \(message)")
+            case .confirmed(let cycleId): MC1Log.notice("[PCO] confirmed start: cycleId=\(cycleId)")
+            case .confirmedStop(let cycleId): MC1Log.notice("[PCO] confirmed stop: cycleId=\(cycleId)")
+            case .failed(let message):
+                MC1Log.notice("[PCO] FAILURE: \(message)")
+                PCOFailureDiagWriter.write(
+                    reason: message,
+                    cycleId: activeCycle?.id,
+                    captureState: lastObservedCaptureState.map { "\($0)" }
+                )
             default: break
             }
         }
@@ -42,6 +57,14 @@ final class PlayerCaptureOrchestrator: ObservableObject {
     private let captureController: CaptureController
     private let cycleAPIClient: CycleAPIClient
     private let sleepProvider: (UInt64) async throws -> Void
+    /// Separate from `sleepProvider` (which tests stub to return instantly for
+    /// scheduled-start waits): the watchdog must NOT fire before the capture
+    /// state's async main-queue hop delivers `.capturing` in those same tests.
+    private let watchdogSleepProvider: (UInt64) async throws -> Void
+    /// Last capture state seen via subscribeToCaptureState — included in the
+    /// watchdog failure evidence so the diag says WHY start never committed
+    /// (e.g. "interrupted" = camera lost, "ready" = movieOutput never fired).
+    private var lastObservedCaptureState: CaptureState?
 
     // MARK: — Session context (set at attach time)
     private var sessionUuid: String?
@@ -67,6 +90,9 @@ final class PlayerCaptureOrchestrator: ObservableObject {
         cycleAPIClient: CycleAPIClient = LiveCycleAPIClient(),
         sleepProvider: @escaping (UInt64) async throws -> Void = { ns in
             try await Task.sleep(nanoseconds: ns)
+        },
+        watchdogSleepProvider: @escaping (UInt64) async throws -> Void = { ns in
+            try await Task.sleep(nanoseconds: ns)
         }
     ) {
         self.authManager = authManager
@@ -74,6 +100,7 @@ final class PlayerCaptureOrchestrator: ObservableObject {
         self.captureController = captureController
         self.cycleAPIClient = cycleAPIClient
         self.sleepProvider = sleepProvider
+        self.watchdogSleepProvider = watchdogSleepProvider
     }
 
     // MARK: — Public API
@@ -111,6 +138,7 @@ final class PlayerCaptureOrchestrator: ObservableObject {
         activeCycle = nil
         sessionUuid = nil
         playerSessionDeviceId = nil
+        lastObservedCaptureState = nil
         state = .idle
     }
 
@@ -234,6 +262,26 @@ final class PlayerCaptureOrchestrator: ObservableObject {
         captureController.rearmForNextCycle()
         subscribeToCaptureState()
         captureController.startCapture()
+        await watchCaptureStart(cycleId: cycle.id)
+    }
+
+    // MARK: — Capture-start watchdog
+    //
+    // startCapture() has silent no-op paths (SessionCaptureManager refuses when
+    // its session lost the camera) and AVFoundation paths where didStartRecording
+    // simply never fires. Without a deadline the orchestrator sat in
+    // .waitingForStart forever and the only symptom was the harness's generic
+    // confirmed_start timeout (2026-07-04 physical run).
+    private func watchCaptureStart(cycleId: Int) async {
+        do {
+            try await watchdogSleepProvider(UInt64(Self.captureStartWatchdogSeconds * 1_000_000_000))
+        } catch {
+            return  // cancelled (detach/reset or stop-detected) — no verdict
+        }
+        guard !Task.isCancelled else { return }
+        guard case .waitingForStart(let id) = state, id == cycleId else { return }
+        let captureStateLabel = lastObservedCaptureState.map { "\($0)" } ?? "never-observed"
+        state = .failed("captureStartTimeout(\(Self.captureStartWatchdogSeconds)s): capture state never reached .capturing (last=\(captureStateLabel))")
     }
 
     // MARK: — Scheduled start wait (mirrors CycleCaptureOrchestrator)
@@ -361,6 +409,7 @@ final class PlayerCaptureOrchestrator: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] captureState in
                 guard let self else { return }
+                self.lastObservedCaptureState = captureState
                 if case .capturing = captureState {
                     Task { @MainActor [weak self] in
                         await self?.handleCaptureStarted()
@@ -458,5 +507,32 @@ private enum PlayerOrchestratorFailure: Error {
         case .cycleExpired(let ms):         return "cycleExpired(lagMs: \(ms))"
         case .timerError(let msg):          return "timerError: \(msg)"
         }
+    }
+}
+
+// MARK: — PCO failure diagnostics
+//
+// Structured, file-based evidence for player-side orchestration failures —
+// same rationale and pull pattern as CaptureMetadataDiagWriter (console print
+// capture is unreliable on physical devices; the regression harness copies
+// Documents/pco_failure_diag.json via devicectl on scenario failure). Written
+// on EVERY transition to .failed so the harness can distinguish "player never
+// saw the cycle" (no file) from "player saw it and failed for <reason>".
+enum PCOFailureDiagWriter {
+    static let fileName = "pco_failure_diag.json"
+
+    @MainActor
+    static func write(reason: String, cycleId: Int?, captureState: String?) {
+        let diag: [String: Any] = [
+            "timestamp": ISO8601DateFormatter().string(from: Date()),
+            "reason": reason,
+            "cycleId": cycleId ?? NSNull(),
+            "lastObservedCaptureState": captureState ?? NSNull(),
+        ]
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+              JSONSerialization.isValidJSONObject(diag),
+              let data = try? JSONSerialization.data(withJSONObject: diag, options: [.prettyPrinted]) else { return }
+        try? data.write(to: docs.appendingPathComponent(fileName), options: .atomic)
+        MC1Log.notice("[PCO] wrote \(fileName): reason=\(reason)")
     }
 }

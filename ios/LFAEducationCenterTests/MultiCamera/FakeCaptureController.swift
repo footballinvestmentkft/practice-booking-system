@@ -9,7 +9,14 @@ final class FakeCaptureController: CaptureController {
     private(set) var startCallCount = 0
     private(set) var stopCallCount  = 0
     private(set) var rearmCallCount = 0
-    func startCapture() { startCallCount += 1; subject.send(.capturing) }
+    /// When false, startCapture() is a silent no-op that never reaches
+    /// `.capturing` — reproduces the 2026-07-04 physical failure mode
+    /// (camera lost while `.ready`) for the PCO watchdog tests.
+    var startAdvancesToCapturing = true
+    func startCapture() {
+        startCallCount += 1
+        if startAdvancesToCapturing { subject.send(.capturing) }
+    }
     func stopCapture()  {
         stopCallCount += 1
         subject.send(.stopping)

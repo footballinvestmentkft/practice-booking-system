@@ -210,7 +210,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
             let sd = try await MultiCameraAPIClient.registerDevice(token: token, uuid: sessionUuid, request: request)
             sessionDeviceId = sd.id
             deviceRegisterError = nil
-            print("[LobbyVM] autoRegisterDevice: OK sdId=\(sd.id)")
+            MC1Log.notice("[LobbyVM] autoRegisterDevice: OK sdId=\(sd.id)")
             // Attach PCO immediately after registration — must not be gated on updateDeviceStatus.
             // If updateDeviceStatus throws (revision conflict, network), PCO would never subscribe
             // to PCL state changes and the player would stay "pending" forever.
@@ -236,13 +236,13 @@ final class MultiCameraSessionViewModel: ObservableObject {
                     sessionDeviceId: sd.id, targetStatus: .ready,
                     deviceRevision: sd.revision
                 )
-                print("[LobbyVM] autoRegisterDevice: device \(sd.id) → ready")
+                MC1Log.notice("[LobbyVM] autoRegisterDevice: device \(sd.id) → ready")
             } catch {
-                print("[LobbyVM] autoRegisterDevice: updateDeviceStatus FAILED (non-fatal) error=\(error)")
+                MC1Log.notice("[LobbyVM] autoRegisterDevice: updateDeviceStatus FAILED (non-fatal) error=\(error)")
             }
         } catch {
             deviceRegisterError = "\(error)"
-            print("[LobbyVM] autoRegisterDevice: FAILED error=\(error)")
+            MC1Log.notice("[LobbyVM] autoRegisterDevice: FAILED error=\(error)")
         }
     }
 

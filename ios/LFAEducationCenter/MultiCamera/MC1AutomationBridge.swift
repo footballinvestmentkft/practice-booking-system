@@ -119,107 +119,107 @@ final class MC1AutomationBridge: ObservableObject {
         case "join":
             guard let uuid = value("session_uuid"), !uuid.isEmpty else { return false }
             let role: ParticipantRole = value("role") == "instructor" ? .instructor : .player
-            print("[MC1-AUTO] received action=join uuid=\(uuid) role=\(role)")
+            MC1Log.notice("[MC1-AUTO] received action=join uuid=\(uuid) role=\(role)")
             presentSessionLab = true
             post(.joinSession(uuid: uuid, role: role))
             return true
         case "mark-ready":
-            print("[MC1-AUTO] received action=mark-ready")
+            MC1Log.notice("[MC1-AUTO] received action=mark-ready")
             post(.markDevicesReady)
             return true
         case "begin-cycle":
-            print("[MC1-AUTO] received action=begin-cycle")
+            MC1Log.notice("[MC1-AUTO] received action=begin-cycle")
             post(.beginCycle)
             return true
         case "end-cycle":
-            print("[MC1-AUTO] received action=end-cycle")
+            MC1Log.notice("[MC1-AUTO] received action=end-cycle")
             post(.endCycle)
             return true
         case "dump-snapshot":
-            print("[MC1-AUTO] received action=dump-snapshot")
+            MC1Log.notice("[MC1-AUTO] received action=dump-snapshot")
             post(.dumpSnapshot)
             return true
         case "reset-session":
-            print("[MC1-AUTO] received action=reset-session")
+            MC1Log.notice("[MC1-AUTO] received action=reset-session")
             post(.resetSession)
             return true
         case "gopro-connect":
             let did = value("gopro_device_id").flatMap(Int.init)
-            print("[MC1-AUTO] received action=gopro-connect gopro_device_id=\(did ?? -1)")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-connect gopro_device_id=\(did ?? -1)")
             post(.goProConnect(goProDeviceId: did))
             return true
         case "gopro-start":
             guard let did = value("gopro_device_id").flatMap(Int.init) else { return false }
-            print("[MC1-AUTO] received action=gopro-start gopro_device_id=\(did)")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-start gopro_device_id=\(did)")
             post(.goProStartRecording(goProDeviceId: did))
             return true
         case "gopro-stop":
             guard let did = value("gopro_device_id").flatMap(Int.init) else { return false }
-            print("[MC1-AUTO] received action=gopro-stop gopro_device_id=\(did)")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-stop gopro_device_id=\(did)")
             post(.goProStopRecording(goProDeviceId: did))
             return true
         case "gopro-status":
-            print("[MC1-AUTO] received action=gopro-status")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-status")
             post(.goProStatus)
             return true
         case "gopro-media-list":
-            print("[MC1-AUTO] received action=gopro-media-list")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-media-list")
             post(.goProMediaList)
             return true
         case "gopro-http-diag":
-            print("[MC1-AUTO] received action=gopro-http-diag")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-http-diag")
             post(.goProHttpDiag)
             return true
         case "gopro-download-latest":
-            print("[MC1-AUTO] received action=gopro-download-latest")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-download-latest")
             post(.goProDownloadLatest)
             return true
         case "skeleton-process":
-            print("[MC1-AUTO] received action=skeleton-process")
+            MC1Log.notice("[MC1-AUTO] received action=skeleton-process")
             post(.skeletonProcess)
             return true
         case "capture-info":
-            print("[MC1-AUTO] received action=capture-info")
+            MC1Log.notice("[MC1-AUTO] received action=capture-info")
             post(.captureInfo)
             return true
         case "network-routing-diag":
             let label = value("label") ?? "unlabeled"
-            print("[MC1-AUTO] received action=network-routing-diag label=\(label)")
+            MC1Log.notice("[MC1-AUTO] received action=network-routing-diag label=\(label)")
             post(.networkRoutingDiag(label: label))
             return true
         case "gopro-preview-poc":
             let duration = value("duration_s").flatMap(Double.init) ?? 25
-            print("[MC1-AUTO] received action=gopro-preview-poc duration_s=\(duration)")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-preview-poc duration_s=\(duration)")
             post(.goProPreviewPOC(durationSeconds: duration))
             return true
         case "gopro-combined-cycle-proof":
             let duration = value("duration_s").flatMap(Double.init) ?? 15
-            print("[MC1-AUTO] received action=gopro-combined-cycle-proof duration_s=\(duration)")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-combined-cycle-proof duration_s=\(duration)")
             post(.goProCombinedCycleProof(durationSeconds: duration))
             return true
         case "gopro-camera-state-probe":
-            print("[MC1-AUTO] received action=gopro-camera-state-probe")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-camera-state-probe")
             post(.goProCameraStateProbe)
             return true
         case "gopro-preview-aspect-probe":
             let duration = value("duration_s").flatMap(Double.init) ?? 20
-            print("[MC1-AUTO] received action=gopro-preview-aspect-probe duration_s=\(duration)")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-preview-aspect-probe duration_s=\(duration)")
             post(.goProPreviewAspectProbe(durationSeconds: duration))
             return true
         case "gopro-preset-write-validation":
-            print("[MC1-AUTO] received action=gopro-preset-write-validation")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-preset-write-validation")
             post(.goProPresetWriteValidation)
             return true
         case "gopro-stream-start":
-            print("[MC1-AUTO] received action=gopro-stream-start")
+            MC1Log.notice("[MC1-AUTO] received action=gopro-stream-start")
             post(.goProStreamStart)
             return true
         case "pose-overlay-diag":
-            print("[MC1-AUTO] received action=pose-overlay-diag")
+            MC1Log.notice("[MC1-AUTO] received action=pose-overlay-diag")
             post(.poseOverlayDiag)
             return true
         default:
-            print("[MC1-AUTO] received unknown action=\(action)")
+            MC1Log.notice("[MC1-AUTO] received unknown action=\(action)")
             return false
         }
     }

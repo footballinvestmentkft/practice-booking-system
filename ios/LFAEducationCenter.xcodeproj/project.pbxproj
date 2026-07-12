@@ -21,6 +21,7 @@
 		LP500004000000000000001 /* LivePoseOverlayProcessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = LP500003000000000000001 /* LivePoseOverlayProcessorTests.swift */; };
 		EE17B48457527F7794F443C8 /* CaptureFormatSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF129189081C742189A7992 /* CaptureFormatSelector.swift */; };
 		454C32E7DA3BE12D732D0262 /* OrientationMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */; };
+		A1C2E3F4B5D6079811223344 /* MC1Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C2E3F4B5D6079855667788 /* MC1Log.swift */; };
 		686220A0F4100D89AC13A181 /* RecordingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D54BAB82A7CBBC4E3EC9A67 /* RecordingOverlay.swift */; };
 		7FC19EF38DE99E82AE19FBE0 /* JugglingVideoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */; };
 		87BED4D6C4B4C29E7F7DA470 /* CapturePreviewLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65C2BB6FD929990D04B3B473 /* CapturePreviewLayer.swift */; };
@@ -303,6 +304,7 @@
 		LP500003000000000000001 /* LivePoseOverlayProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivePoseOverlayProcessorTests.swift; sourceTree = "<group>"; };
 		CEF129189081C742189A7992 /* CaptureFormatSelector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CaptureFormatSelector.swift; sourceTree = "<group>"; };
 		B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrientationMapper.swift; sourceTree = "<group>"; };
+		A1C2E3F4B5D6079855667788 /* MC1Log.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MC1Log.swift; sourceTree = "<group>"; };
 		65C2BB6FD929990D04B3B473 /* CapturePreviewLayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CapturePreviewLayer.swift; sourceTree = "<group>"; };
 		78224C0D4526FCB6A5998DE2 /* CameraFramePublisher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CameraFramePublisher.swift; sourceTree = "<group>"; };
 		7923EAF385B2497998AA5258 /* MultiCameraSessionViewModelClockSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraSessionViewModelClockSyncTests.swift; sourceTree = "<group>"; };
@@ -1067,6 +1069,7 @@
 				LP500001000000000000001 /* LivePoseOverlayProcessor.swift */,
 				CEF129189081C742189A7992 /* CaptureFormatSelector.swift */,
 				B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */,
+				A1C2E3F4B5D6079855667788 /* MC1Log.swift */,
 			);
 			path = MultiCamera;
 			sourceTree = "<group>";
@@ -1424,6 +1427,7 @@
 				LP500002000000000000001 /* LivePoseOverlayProcessor.swift in Sources */,
 				EE17B48457527F7794F443C8 /* CaptureFormatSelector.swift in Sources */,
 				454C32E7DA3BE12D732D0262 /* OrientationMapper.swift in Sources */,
+				A1C2E3F4B5D6079811223344 /* MC1Log.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

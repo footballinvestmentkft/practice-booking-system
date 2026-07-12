@@ -50,7 +50,7 @@ struct MultiCameraLobbyView: View {
         ))
     }
 
-    private static let buildFingerprint = "mc1-debug-v11-2026-06-28"
+    private static let buildFingerprint = "mc1-debug-v13-2026-07-12"
 
     var body: some View {
         NavigationView {
@@ -110,64 +110,64 @@ struct MultiCameraLobbyView: View {
             let action = envelope.action
             switch action {
             case .joinSession(let uuid, let role):
-                print("[MC1-AUTO] dispatching action=join uuid=\(uuid) role=\(role) state=\(vm.state)")
+                MC1Log.notice("[MC1-AUTO] dispatching action=join uuid=\(uuid) role=\(role) state=\(vm.state)")
                 vm.joinSession(uuid: uuid, role: role)
             case .markDevicesReady:
-                print("[MC1-AUTO] dispatching action=mark-ready state=\(vm.state)")
+                MC1Log.notice("[MC1-AUTO] dispatching action=mark-ready state=\(vm.state)")
                 vm.transitionToDevicesReady()
             case .beginCycle:
-                print("[MC1-AUTO] dispatching action=begin-cycle state=\(vm.state) canStartCapture=\(vm.canStartCapture) isClockSynced=\(vm.isClockSynced)")
+                MC1Log.notice("[MC1-AUTO] dispatching action=begin-cycle state=\(vm.state) canStartCapture=\(vm.canStartCapture) isClockSynced=\(vm.isClockSynced)")
                 vm.beginCycle()
             case .endCycle:
-                print("[MC1-AUTO] dispatching action=end-cycle state=\(vm.state)")
+                MC1Log.notice("[MC1-AUTO] dispatching action=end-cycle state=\(vm.state)")
                 vm.endCycle()
             case .dumpSnapshot:
-                print("[MC1-AUTO] dispatching action=dump-snapshot")
+                MC1Log.notice("[MC1-AUTO] dispatching action=dump-snapshot")
                 dumpSnapshotToConsole()
             case .resetSession:
-                print("[MC1-AUTO] dispatching action=reset-session state=\(vm.state) capture=\(captureManager.state)")
+                MC1Log.notice("[MC1-AUTO] dispatching action=reset-session state=\(vm.state) capture=\(captureManager.state)")
                 vm.reset()
                 captureManager.resetForReuse()
             case .goProConnect(let goProDeviceId):
                 let gp = GoProConnectionManager.shared
-                print("[GOPRO-AUTO] dispatching gopro-connect connection=\(gp.state) goProDeviceId=\(goProDeviceId ?? -1)")
+                MC1Log.notice("[GOPRO-AUTO] dispatching gopro-connect connection=\(gp.state) goProDeviceId=\(goProDeviceId ?? -1)")
                 if case .ready = gp.state {
-                    print("[GOPRO-AUTO] already connected+ready")
+                    MC1Log.notice("[GOPRO-AUTO] already connected+ready")
                     Task { await self.signalGoProReady(goProDeviceId: goProDeviceId) }
                 } else if case .awaitingManualWiFiJoin = gp.state {
-                    print("[GOPRO-AUTO] attempting confirmManualWiFiJoined...")
+                    MC1Log.notice("[GOPRO-AUTO] attempting confirmManualWiFiJoined...")
                     gp.confirmManualWiFiJoined()
                     Task { await self.waitAndSignalGoProReady(goProDeviceId: goProDeviceId) }
                 } else if case .failed(let err) = gp.state, err.isRecoverable {
-                    print("[GOPRO-AUTO] retrying from failed state...")
+                    MC1Log.notice("[GOPRO-AUTO] retrying from failed state...")
                     gp.retry()
                     Task { await self.waitAndSignalGoProReady(goProDeviceId: goProDeviceId) }
                 } else if gp.state == .idle {
-                    print("[GOPRO-AUTO] starting fresh connection...")
+                    MC1Log.notice("[GOPRO-AUTO] starting fresh connection...")
                     gp.startConnection()
                     Task { await self.waitAndSignalGoProReady(goProDeviceId: goProDeviceId) }
                 } else {
-                    print("[GOPRO-AUTO] cannot connect from state=\(gp.state)")
+                    MC1Log.notice("[GOPRO-AUTO] cannot connect from state=\(gp.state)")
                 }
             case .goProStartRecording(let goProDeviceId):
                 let gp = GoProConnectionManager.shared
-                print("[GOPRO-AUTO] dispatching gopro-start connection=\(gp.state) recording=\(gp.recordingState) goProDeviceId=\(goProDeviceId)")
+                MC1Log.notice("[GOPRO-AUTO] dispatching gopro-start connection=\(gp.state) recording=\(gp.recordingState) goProDeviceId=\(goProDeviceId)")
                 Task {
                     do {
                         try await gp.startRecording()
-                        print("[GOPRO-AUTO] shutter start OK, confirming to backend...")
+                        MC1Log.notice("[GOPRO-AUTO] shutter start OK, confirming to backend...")
                         guard let token = vm.authManager.accessToken,
                               let sessionUuid = vm.sessionUuid else {
-                            print("[GOPRO-AUTO] confirm skipped: no auth/session")
+                            MC1Log.notice("[GOPRO-AUTO] confirm skipped: no auth/session")
                             return
                         }
                         let cycles = try await MultiCameraAPIClient.listCycles(token: token, uuid: sessionUuid)
                         guard let cycle = cycles.max(by: { $0.cycleIndex < $1.cycleIndex }) else {
-                            print("[GOPRO-AUTO] confirm skipped: no cycle found")
+                            MC1Log.notice("[GOPRO-AUTO] confirm skipped: no cycle found")
                             return
                         }
                         guard let cd = cycle.cycleDevices.first(where: { $0.sessionDeviceId == goProDeviceId }) else {
-                            print("[GOPRO-AUTO] confirm skipped: no cycle_device for GoPro")
+                            MC1Log.notice("[GOPRO-AUTO] confirm skipped: no cycle_device for GoPro")
                             return
                         }
                         let ts = Self.isoNow()
@@ -176,30 +176,30 @@ struct MultiCameraLobbyView: View {
                             sessionDeviceId: goProDeviceId, startedAt: ts,
                             cycleDeviceRevision: cd.revision
                         )
-                        print("[GOPRO-AUTO] confirmDeviceStart OK cycleId=\(cycle.id)")
+                        MC1Log.notice("[GOPRO-AUTO] confirmDeviceStart OK cycleId=\(cycle.id)")
                     } catch {
-                        print("[GOPRO-AUTO] start FAILED: \(error)")
+                        MC1Log.notice("[GOPRO-AUTO] start FAILED: \(error)")
                     }
                 }
             case .goProStopRecording(let goProDeviceId):
                 let gp = GoProConnectionManager.shared
-                print("[GOPRO-AUTO] dispatching gopro-stop connection=\(gp.state) recording=\(gp.recordingState) goProDeviceId=\(goProDeviceId)")
+                MC1Log.notice("[GOPRO-AUTO] dispatching gopro-stop connection=\(gp.state) recording=\(gp.recordingState) goProDeviceId=\(goProDeviceId)")
                 Task {
                     do {
                         try await gp.stopRecording()
-                        print("[GOPRO-AUTO] shutter stop OK, confirming to backend...")
+                        MC1Log.notice("[GOPRO-AUTO] shutter stop OK, confirming to backend...")
                         guard let token = vm.authManager.accessToken,
                               let sessionUuid = vm.sessionUuid else {
-                            print("[GOPRO-AUTO] confirm skipped: no auth/session")
+                            MC1Log.notice("[GOPRO-AUTO] confirm skipped: no auth/session")
                             return
                         }
                         let cycles = try await MultiCameraAPIClient.listCycles(token: token, uuid: sessionUuid)
                         guard let cycle = cycles.max(by: { $0.cycleIndex < $1.cycleIndex }) else {
-                            print("[GOPRO-AUTO] confirm skipped: no cycle found")
+                            MC1Log.notice("[GOPRO-AUTO] confirm skipped: no cycle found")
                             return
                         }
                         guard let cd = cycle.cycleDevices.first(where: { $0.sessionDeviceId == goProDeviceId }) else {
-                            print("[GOPRO-AUTO] confirm skipped: no cycle_device for GoPro")
+                            MC1Log.notice("[GOPRO-AUTO] confirm skipped: no cycle_device for GoPro")
                             return
                         }
                         let ts = Self.isoNow()
@@ -208,81 +208,81 @@ struct MultiCameraLobbyView: View {
                             sessionDeviceId: goProDeviceId, stoppedAt: ts,
                             cycleDeviceRevision: cd.revision
                         )
-                        print("[GOPRO-AUTO] confirmDeviceStop OK cycleId=\(cycle.id)")
+                        MC1Log.notice("[GOPRO-AUTO] confirmDeviceStop OK cycleId=\(cycle.id)")
                     } catch {
-                        print("[GOPRO-AUTO] stop FAILED: \(error)")
+                        MC1Log.notice("[GOPRO-AUTO] stop FAILED: \(error)")
                     }
                 }
             case .goProHttpDiag:
-                print("[GOPRO-DIAG] === GoPro HERO13 HTTP Diagnostics ===")
+                MC1Log.notice("[GOPRO-DIAG] === GoPro HERO13 HTTP Diagnostics ===")
                 let gp = GoProConnectionManager.shared
-                print("[GOPRO-DIAG] connection_state=\(gp.state)")
-                print("[GOPRO-DIAG] recording_state=\(gp.recordingState)")
-                print("[GOPRO-DIAG] camera_status=\(String(describing: gp.cameraStatus))")
+                MC1Log.notice("[GOPRO-DIAG] connection_state=\(gp.state)")
+                MC1Log.notice("[GOPRO-DIAG] recording_state=\(gp.recordingState)")
+                MC1Log.notice("[GOPRO-DIAG] camera_status=\(String(describing: gp.cameraStatus))")
                 Task {
                     let transport = GoProHTTPClientTransport()
 
                     // 1. HTTP reachability
                     let reachable = await transport.isReachable(timeout: 5)
-                    print("[GOPRO-DIAG] http_reachable=\(reachable)")
+                    MC1Log.notice("[GOPRO-DIAG] http_reachable=\(reachable)")
 
                     // 2. Camera state (firmware version, battery, recording)
                     do {
                         let data = try await transport.get(path: GoProSpec.cameraStatePath, timeout: 5)
                         let text = String(data: data, encoding: .utf8) ?? "(binary \(data.count)B)"
-                        print("[GOPRO-DIAG] camera_state_response=\(text.prefix(800))")
+                        MC1Log.notice("[GOPRO-DIAG] camera_state_response=\(text.prefix(800))")
                     } catch {
-                        print("[GOPRO-DIAG] camera_state_error=\(error)")
+                        MC1Log.notice("[GOPRO-DIAG] camera_state_error=\(error)")
                     }
 
                     // 3. Preview stream start endpoint (HERO13 validation)
-                    print("[GOPRO-DIAG] testing preview stream: GET \(GoProSpec.streamStartPath)...")
+                    MC1Log.notice("[GOPRO-DIAG] testing preview stream: GET \(GoProSpec.streamStartPath)...")
                     do {
                         let data = try await transport.get(path: GoProSpec.streamStartPath, timeout: 5)
                         let text = String(data: data, encoding: .utf8) ?? "(binary \(data.count)B)"
-                        print("[GOPRO-DIAG] stream_start_response=\(text.prefix(500))")
-                        print("[GOPRO-DIAG] stream_start=SUCCESS — preview should be available on UDP:\(GoProSpec.previewStreamPort)")
+                        MC1Log.notice("[GOPRO-DIAG] stream_start_response=\(text.prefix(500))")
+                        MC1Log.notice("[GOPRO-DIAG] stream_start=SUCCESS — preview should be available on UDP:\(GoProSpec.previewStreamPort)")
                     } catch {
-                        print("[GOPRO-DIAG] stream_start_error=\(error)")
+                        MC1Log.notice("[GOPRO-DIAG] stream_start_error=\(error)")
                     }
 
                     // 4. Preview stream stop (cleanup)
                     do {
                         _ = try await transport.get(path: GoProSpec.streamStopPath, timeout: 5)
-                        print("[GOPRO-DIAG] stream_stop=OK")
+                        MC1Log.notice("[GOPRO-DIAG] stream_stop=OK")
                     } catch {
-                        print("[GOPRO-DIAG] stream_stop_error=\(error)")
+                        MC1Log.notice("[GOPRO-DIAG] stream_stop_error=\(error)")
                     }
 
                     // 5. Backend reachable (cellular alongside GoPro WiFi)
                     if let token = vm.authManager.accessToken {
                         do {
                             let session = try await MultiCameraAPIClient.getSession(token: token, uuid: vm.sessionUuid ?? "none")
-                            print("[GOPRO-DIAG] backend_reachable=true session_status=\(session.status.rawValue)")
+                            MC1Log.notice("[GOPRO-DIAG] backend_reachable=true session_status=\(session.status.rawValue)")
                         } catch {
-                            print("[GOPRO-DIAG] backend_reachable=false error=\(error)")
+                            MC1Log.notice("[GOPRO-DIAG] backend_reachable=false error=\(error)")
                         }
                     } else {
-                        print("[GOPRO-DIAG] backend_reachable=unknown (no token)")
+                        MC1Log.notice("[GOPRO-DIAG] backend_reachable=unknown (no token)")
                     }
-                    print("[GOPRO-DIAG] === end ===")
+                    MC1Log.notice("[GOPRO-DIAG] === end ===")
                 }
             case .goProStatus:
                 let gp = GoProConnectionManager.shared
-                print("[GOPRO-AUTO] status connection=\(gp.state) recording=\(gp.recordingState) battery=\(gp.cameraStatus?.batteryLevel ?? -1)")
+                MC1Log.notice("[GOPRO-AUTO] status connection=\(gp.state) recording=\(gp.recordingState) battery=\(gp.cameraStatus?.batteryLevel ?? -1)")
             case .goProMediaList:
                 let gp = GoProConnectionManager.shared
-                print("[GOPRO-AUTO] fetching media list...")
+                MC1Log.notice("[GOPRO-AUTO] fetching media list...")
                 Task {
                     if let data = await gp.fetchMediaList(),
                        let text = String(data: data, encoding: .utf8) {
-                        print("[GOPRO-MEDIA-BEGIN]\n\(text)\n[GOPRO-MEDIA-END]")
+                        MC1Log.notice("[GOPRO-MEDIA-BEGIN]\n\(text)\n[GOPRO-MEDIA-END]")
                     } else {
-                        print("[GOPRO-AUTO] media list: unavailable")
+                        MC1Log.notice("[GOPRO-AUTO] media list: unavailable")
                     }
                 }
             case .goProDownloadLatest:
-                print("[GOPRO-AUTO] downloading latest GoPro media...")
+                MC1Log.notice("[GOPRO-AUTO] downloading latest GoPro media...")
                 Task {
                     let gp = GoProConnectionManager.shared
                     guard let listData = await gp.fetchMediaList(),
@@ -293,11 +293,11 @@ struct MultiCameraLobbyView: View {
                           let lastFile = files.last,
                           let filename = lastFile["n"] as? String,
                           let dirName = lastDir["d"] as? String else {
-                        print("[GOPRO-AUTO] download: no media found")
+                        MC1Log.notice("[GOPRO-AUTO] download: no media found")
                         return
                     }
                     let path = "\(GoProSpec.mediaDownloadBase)/\(dirName)/\(filename)"
-                    print("[GOPRO-AUTO] downloading: \(path)...")
+                    MC1Log.notice("[GOPRO-AUTO] downloading: \(path)...")
                     let transport = GoProHTTPClientTransport()
                     do {
                         let data = try await transport.get(path: path, timeout: 60)
@@ -305,24 +305,24 @@ struct MultiCameraLobbyView: View {
                         try? FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)
                         let outputFile = outputDir.appendingPathComponent(filename)
                         try data.write(to: outputFile)
-                        print("[GOPRO-DOWNLOAD] saved: \(outputFile.path) size=\(data.count)")
+                        MC1Log.notice("[GOPRO-DOWNLOAD] saved: \(outputFile.path) size=\(data.count)")
                     } catch {
-                        print("[GOPRO-AUTO] download failed: \(error)")
+                        MC1Log.notice("[GOPRO-AUTO] download failed: \(error)")
                     }
                 }
             case .skeletonProcess:
-                print("[SKELETON] starting skeleton processing on local video...")
+                MC1Log.notice("[SKELETON] starting skeleton processing on local video...")
                 Task {
                     let processor = SkeletonProcessor()
                     guard let videoURL = captureManager.outputFileURL else {
-                        print("[SKELETON] no local video file to process")
+                        MC1Log.notice("[SKELETON] no local video file to process")
                         return
                     }
                     let sessionUuid = vm.sessionUuid ?? "unknown"
                     let deviceId = vm.sessionDeviceId.map { "\($0)" } ?? "unknown"
                     await processor.process(videoURL: videoURL, sessionUuid: sessionUuid, deviceId: deviceId)
                     if case .failed(let msg) = processor.state {
-                        print("[SKELETON-RESULT] FAILED: \(msg)")
+                        MC1Log.notice("[SKELETON-RESULT] FAILED: \(msg)")
                     }
                 }
             case .captureInfo:
@@ -331,7 +331,7 @@ struct MultiCameraLobbyView: View {
                     guard let url = fileURL else { return 0 }
                     return (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? 0
                 }()
-                print("[CAPTURE-INFO] state=\(captureManager.state) outputFile=\(fileURL?.path ?? "nil") size=\(fileSize)")
+                MC1Log.notice("[CAPTURE-INFO] state=\(captureManager.state) outputFile=\(fileURL?.path ?? "nil") size=\(fileSize)")
                 CaptureMetadataDiagWriter.write(from: captureManager)
             case .networkRoutingDiag(let label):
                 Task { await BackendNetworkDiagnostics.probe(label: label) }
@@ -352,14 +352,14 @@ struct MultiCameraLobbyView: View {
                 }
             case .goProPreviewAspectProbe(let durationSeconds):
                 Task {
-                    print("[GOPRO-PREVIEW-ASPECT] starting live preview (camera/state probe has NO preview — this one does)...")
+                    MC1Log.notice("[GOPRO-PREVIEW-ASPECT] starting live preview (camera/state probe has NO preview — this one does)...")
                     let diag = await GoProStreamProbe.shared.run(durationSeconds: durationSeconds)
                     GoProStreamDiagWriter.write(diag)
                     GoProPreviewAspectDiagWriter.write(from: diag)
                 }
             case .goProPresetWriteValidation:
                 Task {
-                    print("[GOPRO-PRESET-POC] starting 8:7 preset read/write/verify/recording/preview chain...")
+                    MC1Log.notice("[GOPRO-PRESET-POC] starting 8:7 preset read/write/verify/recording/preview chain...")
                     _ = await GoProRecordingPresetProbe.run()
                 }
             case .goProStreamStart:
@@ -374,7 +374,7 @@ struct MultiCameraLobbyView: View {
                 // so a silently-failed GoPro preview was invisible to anything but a
                 // human eyeballing the dashboard screenshot (2026-07-01 flow audit).
                 Task {
-                    print("[MC1-AUTO] gopro-stream-start → GoProStreamProbe.shared.run(60s)")
+                    MC1Log.notice("[MC1-AUTO] gopro-stream-start → GoProStreamProbe.shared.run(60s)")
                     let diag = await GoProStreamProbe.shared.run(durationSeconds: 60)
                     GoProStreamDiagWriter.write(diag)
                 }
@@ -414,9 +414,11 @@ struct MultiCameraLobbyView: View {
                     playerOrchestrator: playerOrchestrator
                 )
                 .onAppear {
-                    framePublisher.configure()
                     playerStreamService.start()
-                    framePublisher.startCapture(streamService: playerStreamService)
+                    // Single-session camera ownership (2026-07-04 RCA): the publisher
+                    // taps captureManager's session instead of opening a second
+                    // AVCaptureSession on the same camera.
+                    framePublisher.startCapture(sharing: captureManager, streamService: playerStreamService)
                 }
                 .onDisappear {
                     framePublisher.stopCapture()
@@ -697,7 +699,7 @@ struct MultiCameraLobbyView: View {
         guard let did = goProDeviceId,
               let token = vm.authManager.accessToken,
               let sessionUuid = vm.sessionUuid else {
-            print("[GOPRO-AUTO] signalReady skipped: no deviceId/auth/session")
+            MC1Log.notice("[GOPRO-AUTO] signalReady skipped: no deviceId/auth/session")
             GoProDiagRecorder.write(
                 goProDeviceId: goProDeviceId, localState: "\(GoProConnectionManager.shared.state)",
                 outcome: "skipped_no_context", httpStatus: nil, detail: nil
@@ -706,7 +708,7 @@ struct MultiCameraLobbyView: View {
         }
         // Log gopro connection state at call time — if we're on GoPro WiFi here,
         // the APIClient.backendSession (waitsForConnectivity=true) handles routing.
-        print("[GOPRO-AUTO] signalReady: deviceId=\(did) gopro_state=\(GoProConnectionManager.shared.state)")
+        MC1Log.notice("[GOPRO-AUTO] signalReady: deviceId=\(did) gopro_state=\(GoProConnectionManager.shared.state)")
         // session_device.revision server_default is 1, not 0 (see
         // app/models/multicamera_session.py) — a freshly-registered device is
         // already at revision=1. Fetch the current revision instead of
@@ -718,7 +720,7 @@ struct MultiCameraLobbyView: View {
         }
         do {
             let sd = try await updateGoProStatus(token: token, sessionUuid: sessionUuid, did: did, revision: revision)
-            print("[GOPRO-AUTO] signalReady OK: GoPro device \(did) → ready (rev=\(sd.revision))")
+            MC1Log.notice("[GOPRO-AUTO] signalReady OK: GoPro device \(did) → ready (rev=\(sd.revision))")
             GoProDiagRecorder.write(
                 goProDeviceId: did, localState: "\(GoProConnectionManager.shared.state)",
                 outcome: "signalReady_ok", httpStatus: nil, detail: "revision=\(sd.revision)"
@@ -735,7 +737,7 @@ struct MultiCameraLobbyView: View {
                let device = session.devices.first(where: { $0.id == did }) {
                 do {
                     let sd = try await updateGoProStatus(token: token, sessionUuid: sessionUuid, did: did, revision: device.revision)
-                    print("[GOPRO-AUTO] signalReady OK after 409 retry: GoPro device \(did) → ready (rev=\(sd.revision))")
+                    MC1Log.notice("[GOPRO-AUTO] signalReady OK after 409 retry: GoPro device \(did) → ready (rev=\(sd.revision))")
                     GoProDiagRecorder.write(
                         goProDeviceId: did, localState: "\(GoProConnectionManager.shared.state)",
                         outcome: "signalReady_ok_after_409_retry", httpStatus: nil, detail: "revision=\(sd.revision)"
@@ -745,7 +747,7 @@ struct MultiCameraLobbyView: View {
                     let retryHttpErr = (error as? APIError).flatMap {
                         if case .httpError(let code, let detail) = $0 { return (code, detail) } else { return nil }
                     }
-                    print("[GOPRO-AUTO] signalReady FAILED after 409 retry: \(error)")
+                    MC1Log.notice("[GOPRO-AUTO] signalReady FAILED after 409 retry: \(error)")
                     GoProDiagRecorder.write(
                         goProDeviceId: did, localState: "\(GoProConnectionManager.shared.state)",
                         outcome: "signalReady_failed_after_409_retry",
@@ -758,7 +760,7 @@ struct MultiCameraLobbyView: View {
                 if case .networkError(let e) = $0 { return e as? URLError } else { return nil }
             }
             let errDetail = urlErr.map { "URLError(\($0.code.rawValue))" } ?? "\(error)"
-            print("[GOPRO-AUTO] signalReady FAILED: \(errDetail)")
+            MC1Log.notice("[GOPRO-AUTO] signalReady FAILED: \(errDetail)")
             GoProDiagRecorder.write(
                 goProDeviceId: did, localState: "\(GoProConnectionManager.shared.state)",
                 outcome: "signalReady_failed", httpStatus: httpErr?.0, detail: httpErr?.1 ?? errDetail
@@ -779,12 +781,12 @@ struct MultiCameraLobbyView: View {
         while Date() < deadline {
             try? await Task.sleep(nanoseconds: 1_000_000_000)
             if case .ready = gp.state {
-                print("[GOPRO-AUTO] GoPro reached .ready state")
+                MC1Log.notice("[GOPRO-AUTO] GoPro reached .ready state")
                 await signalGoProReady(goProDeviceId: goProDeviceId)
                 return
             }
             if case .failed(let err) = gp.state {
-                print("[GOPRO-AUTO] GoPro connect failed: \(err)")
+                MC1Log.notice("[GOPRO-AUTO] GoPro connect failed: \(err)")
                 GoProDiagRecorder.write(
                     goProDeviceId: goProDeviceId, localState: "\(gp.state)",
                     outcome: "connect_failed", httpStatus: nil, detail: "\(err)"
@@ -792,7 +794,7 @@ struct MultiCameraLobbyView: View {
                 return
             }
         }
-        print("[GOPRO-AUTO] GoPro connect timeout (45s), state=\(gp.state)")
+        MC1Log.notice("[GOPRO-AUTO] GoPro connect timeout (45s), state=\(gp.state)")
         GoProDiagRecorder.write(
             goProDeviceId: goProDeviceId, localState: "\(gp.state)",
             outcome: "wait_timeout_45s", httpStatus: nil, detail: nil
@@ -819,7 +821,7 @@ struct MultiCameraLobbyView: View {
         } else {
             text = "=== MC1 Session Lab Debug Snapshot ===\nstate: \(vm.state)\n======================================"
         }
-        print("[MC1-SNAPSHOT-BEGIN]\n\(text)\n[MC1-SNAPSHOT-END]")
+        MC1Log.notice("[MC1-SNAPSHOT-BEGIN]\n\(text)\n[MC1-SNAPSHOT-END]")
     }
 
     // MARK: — Error
@@ -922,8 +924,9 @@ private struct LabeledRow: View {
 
 // MARK: — GoPro ready-signal diagnostics (Block 1)
 //
-// idevicesyslog does not reliably capture Swift print() output on physical
-// devices (privacy redaction varies by attach timing/lock state), so the
+// idevicesyslog never captures Swift print() output on physical devices
+// (stdout is invisible to the syslog relay — proven by the 2026-07-04 run's
+// zero app-tagged lines; console lines now go through MC1Log/os_log), so the
 // outcome of every signalGoProReady attempt is also persisted to a fixed
 // path in the app's Documents directory. The regression script pulls this
 // file directly via `devicectl device copy from --domain-type

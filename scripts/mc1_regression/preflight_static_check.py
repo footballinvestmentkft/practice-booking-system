@@ -342,19 +342,29 @@ def check_orientation_aspect_wiring() -> None:
     critical_block_match = re.search(r"critical_ok = all\(.*?\n        \)", body, re.S)
     critical_block = critical_block_match.group(0) if critical_block_match else ""
     orientation_gate_steps = [
-        "iphone orientation consistent", "iphone effective aspect ratio is 16:9",
-        "ipad orientation consistent", "ipad effective aspect ratio is 16:9",
+        "iphone orientation consistent", "iphone effective aspect ratio matches orientation",
+        "iphone encoded aspect ratio is 16:9",
+        "ipad orientation consistent", "ipad effective aspect ratio matches orientation",
+        "ipad encoded aspect ratio is 16:9",
         "gopro preview aspect ratio is 16:9",
     ]
     scenario_asserts_ok = all(f'"{step}"' in body for step in orientation_gate_steps)
     missing_steps = [s for s in orientation_gate_steps if f'"{s}"' not in body]
-    check("scenario asserts orientation-consistency + 16:9 aspect for iPhone/iPad/GoPro",
+    check("scenario asserts orientation-consistency + orientation-aware aspect for iPhone/iPad/GoPro",
           scenario_asserts_ok,
           f"missing report.step(...) for: {missing_steps}" if not scenario_asserts_ok else "")
     # Scoped to the tricamera critical_ok block (2026-07-04 hardening) — the
     # previous whole-file regex could match a different scenario's gate.
     gated_ok = all(f'"{step}"' in critical_block for step in orientation_gate_steps)
     check("orientation/aspect assertions gate PASS (critical_ok)", gated_ok)
+
+    # The effective-aspect EXPECTATION must be orientation-aware (2026-07-04
+    # physical-run proof): a portrait-mandated run (RC checklist J / #357)
+    # records a correct 9:16 effective aspect, so an unconditional 16:9
+    # expectation is unsatisfiable there. Pin the mapping itself.
+    aware_ok = bool(re.search(r'"portrait":\s*\(9,\s*16\)', scenarios_src)) \
+        and bool(re.search(r'"landscape":\s*\(16,\s*9\)', scenarios_src))
+    check("effective-aspect expectation is orientation-aware (portrait→9:16, landscape→16:9)", aware_ok)
 
     # "No distorting stretch" is a SwiftUI layout property, not runtime data — verify the
     # GoPro preview panel uses aspectRatio(contentMode: .fit), which by definition letterboxes
@@ -389,6 +399,20 @@ def check_log_capture_config() -> None:
         bool(re.search(r"sed -n '2p'", src))
     check("order-based legacy-UDID guessing (head -1 / sed -n 2p) is gone",
           not order_heuristic)
+
+    # 2026-07-04 RCA: tricamera ran with the iPad console capture silently
+    # SKIPPED (WARN only) — the player-side failure left zero console evidence.
+    # Both the shell wrapper and the runner must hard-fail tricamera scenarios
+    # when either device console capture is unavailable.
+    check("run_mc1_regression.sh hard-fails tricamera scenarios without dual console capture",
+          "Dual-console hard precondition" in src and "exit 1" in src)
+    runner_src = read(REPO_ROOT / "scripts" / "mc1_regression" / "runner.py")
+    lib_src = read(REPO_ROOT / "scripts" / "mc1_regression" / "lib.py")
+    check("runner.py enforces check_dual_console_precondition before scenarios",
+          "check_dual_console_precondition" in runner_src)
+    check("lib.DUAL_CONSOLE_REQUIRED_SCENARIOS covers the tricamera proof",
+          '"tricamera-capture-skeleton-proof"' in lib_src
+          and "DUAL_CONSOLE_REQUIRED_SCENARIOS" in lib_src)
 
 
 # ── CHECK 11: pose overlay diag writer↔reader key contract ──────────────────
