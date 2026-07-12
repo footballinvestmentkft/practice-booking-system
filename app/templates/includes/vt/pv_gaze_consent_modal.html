@@ -1,0 +1,60 @@
+{# Peripheral Vision — Gaze Validation Consent Modal
+   Phase 1: consent + privacy notice.
+   All processing is client-side only; no video or biometric data is sent to the server.
+#}
+<div id="pv-gaze-consent-modal"
+     hidden
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="pvGazeModalTitle"
+     style="position:fixed;inset:0;z-index:1000;
+            background:rgba(15,14,38,0.55);
+            display:flex;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:#fff;border-radius:16px;
+              padding:1.75rem 1.5rem 1.5rem;
+              max-width:420px;width:100%;
+              box-shadow:0 8px 32px rgba(0,0,0,0.22);">
+
+    <h2 id="pvGazeModalTitle"
+        style="font-size:1.05rem;font-weight:700;color:#1e1b4b;margin:0 0 0.7rem;">
+      👁 Optional: Gaze Validation
+    </h2>
+
+    <p style="font-size:0.875rem;color:#4b5563;line-height:1.6;margin:0 0 0.5rem;">
+      This game can optionally use your front camera to verify that you keep
+      your eyes on the central fixation cross during play.
+      All analysis runs <strong>entirely on your device</strong>.
+    </p>
+
+    <ul style="font-size:0.82rem;color:#6b7280;line-height:1.75;
+               padding-left:1.15rem;margin:0 0 0.9rem;">
+      <li>No video frames or images are sent to the server</li>
+      <li>No iris coordinates or face data leave your browser</li>
+      <li>Only a summary (e.g. "kept gaze 87% of the time") is saved</li>
+    </ul>
+
+    <p style="font-size:0.78rem;color:#9ca3af;margin:0 0 1.25rem;">
+      Skipping the camera is fine — your attempt will still be counted normally.
+    </p>
+
+    <div style="display:flex;gap:0.65rem;flex-wrap:wrap;">
+      <button id="pv-gaze-enable-btn"
+              style="flex:1;min-width:130px;
+                     padding:0.65rem 1rem;
+                     background:#4f46e5;color:#fff;
+                     border:none;border-radius:8px;
+                     font-size:0.88rem;font-weight:600;cursor:pointer;">
+        Enable camera
+      </button>
+      <button id="pv-gaze-skip-btn"
+              style="flex:1;min-width:130px;
+                     padding:0.65rem 1rem;
+                     background:#f3f4f6;color:#374151;
+                     border:none;border-radius:8px;
+                     font-size:0.88rem;font-weight:600;cursor:pointer;">
+        Play without camera
+      </button>
+    </div>
+
+  </div>
+</div>
