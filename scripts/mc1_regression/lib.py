@@ -182,6 +182,18 @@ def device_recording_status(cycle: dict, session_device_id: int) -> str | None:
     return None
 
 
+def device_required(cycle: dict, session_device_id: int) -> bool | None:
+    """The cycle_device's backend `required` flag (None if device not in cycle).
+
+    MC2-PR1 gate: only player roles may be required recorders — the instructor
+    cycle_device must carry required == False.
+    """
+    for cd in cycle.get("cycle_devices", []):
+        if cd.get("session_device_id") == session_device_id:
+            return cd.get("required")
+    return None
+
+
 def latest_cycle(cycles: list[dict]) -> dict | None:
     if not cycles:
         return None
@@ -507,8 +519,10 @@ class ScenarioContext:
     artifact: ArtifactRun
     offsets: ConsoleOffsetTracker
     cycles: int = 3
-    ipad_role: str = "player"
-    iphone_role: str = "instructor"
+    # Final topology (MC2-PR1, 2026-07-12): iPad = non-recording instructor /
+    # coordinator, iPhone = player (recorder + GoPro bridge over its WiFi).
+    ipad_role: str = "instructor"
+    iphone_role: str = "player"
 
 
 @dataclass

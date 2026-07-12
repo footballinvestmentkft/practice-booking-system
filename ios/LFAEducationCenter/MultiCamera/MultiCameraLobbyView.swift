@@ -519,7 +519,11 @@ struct MultiCameraLobbyView: View {
                     Text("Várakozás az instructor-ra…")
                         .font(.caption).foregroundColor(.secondary)
                 }
-                if captureManager.state == .idle || captureManager.state == .requestingPermissions {
+                // MC2-PR1: a non-recording coordinator must never open a local
+                // capture session — hide Prepare Capture and drop the local
+                // capture-readiness requirement from the Begin Cycle gate.
+                if vm.localCaptureExpected,
+                   captureManager.state == .idle || captureManager.state == .requestingPermissions {
                     Button("Prepare Capture") {
                         Task {
                             await captureManager.requestPermissions()
@@ -530,7 +534,8 @@ struct MultiCameraLobbyView: View {
                     }
                     .disabled(captureManager.state == .requestingPermissions)
                 }
-                if vm.isController && vm.canStartCapture && captureManager.state == .ready {
+                if vm.isController && vm.canStartCapture
+                    && (!vm.localCaptureExpected || captureManager.state == .ready) {
                     Button("Begin Cycle") { vm.beginCycle() }
                         .font(.body.weight(.semibold))
                         .foregroundColor(.blue)

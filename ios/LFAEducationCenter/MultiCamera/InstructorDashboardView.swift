@@ -28,10 +28,17 @@ struct InstructorDashboardView: View {
         }
         .statusBarHidden(true)
         .onAppear {
-            localPoseOverlay.attach(to: captureManager.previewSession)
+            // MC2-PR1: the non-recording coordinator has no local camera feed —
+            // never touch the capture session (TOPO-G7: no capture
+            // AVCaptureSession may run on the instructor iPad).
+            if vm.localCaptureExpected {
+                localPoseOverlay.attach(to: captureManager.previewSession)
+            }
         }
         .onDisappear {
-            localPoseOverlay.detach(from: captureManager.previewSession)
+            if vm.localCaptureExpected {
+                localPoseOverlay.detach(from: captureManager.previewSession)
+            }
         }
         // Feed remote (iPad) frames to the remote overlay processor.
         .onReceive(streamService.objectWillChange) { [self] in
@@ -69,7 +76,9 @@ struct InstructorDashboardView: View {
         return session.devices.filter { $0.removedAt == nil }
     }
 
-    // Ordering: instructor first, then players (by id), then auxiliary cameras (GoPro)
+    // Ordering: instructor first, then players (by id), then auxiliary cameras (GoPro).
+    // MC2-PR1: when this device is a non-recording coordinator, its own panel is
+    // dropped — there is no local feed to show, only the players + GoPro.
     private var orderedPanels: [SessionDeviceDTO] {
         let rank: (MCDeviceRole) -> Int = {
             switch $0 {
@@ -79,10 +88,12 @@ struct InstructorDashboardView: View {
             case .auxiliaryCamera:   return 3
             }
         }
-        return sessionDevices.sorted {
-            let ra = rank($0.deviceRole), rb = rank($1.deviceRole)
-            return ra != rb ? ra < rb : $0.id < $1.id
-        }
+        return sessionDevices
+            .filter { vm.localCaptureExpected || $0.id != vm.sessionDeviceId }
+            .sorted {
+                let ra = rank($0.deviceRole), rb = rank($1.deviceRole)
+                return ra != rb ? ra < rb : $0.id < $1.id
+            }
     }
 
     // MARK: - Top bar

@@ -174,6 +174,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
               canStartCapture,
               case .inLobby(let session) = state,
               let sdId = sessionDeviceId else { return }
+        cycleOrchestrator?.recordsLocally = localCaptureExpected
         cycleOrchestrator?.startCycle(
             sessionUuid: session.sessionUuid,
             sessionDeviceId: sdId,
@@ -355,11 +356,23 @@ final class MultiCameraSessionViewModel: ObservableObject {
 
     static func shouldAutoPrepare(deviceRole: MCDeviceRole) -> Bool {
         switch deviceRole {
-        case .instructorPrimary, .playerPrimary, .playerSecondary:
+        case .playerPrimary, .playerSecondary:
             return true
-        case .auxiliaryCamera:
+        case .instructorPrimary, .auxiliaryCamera:
+            // MC2-PR1 final topology: the instructor (iPad) is a non-recording
+            // coordinator — it must never open a capture session or produce a
+            // capture file. Auxiliary (GoPro) capture is driven over HTTP.
             return false
         }
+    }
+
+    /// True when this device is expected to produce a local capture file
+    /// during a cycle. Single source of truth = shouldAutoPrepare: a device
+    /// that never prepares a capture session must not be treated as a
+    /// recorder anywhere else (begin-cycle gate, CCO, dashboard panel).
+    var localCaptureExpected: Bool {
+        guard let role = myDeviceRole else { return true }
+        return Self.shouldAutoPrepare(deviceRole: role)
     }
 
     /// Explicit POSITIVE allow-list — only these device roles may attach a

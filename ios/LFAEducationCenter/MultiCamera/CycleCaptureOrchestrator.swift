@@ -145,6 +145,13 @@ final class CycleCaptureOrchestrator: ObservableObject {
     private var startTask: Task<Void, Never>?
     private var captureSubscription: AnyCancellable?
 
+    /// MC2-PR1 non-recording coordinator: when false, this device drives the
+    /// cycle lifecycle (create/schedule/stop) but contributes NO local capture
+    /// and NO confirm_start/confirm_stop — the players' confirms complete the
+    /// cycle on the backend. Set by the ViewModel from the device role before
+    /// each startCycle; defaults to true (recording controller).
+    var recordsLocally: Bool = true
+
     // MARK: — Init
 
     init(
@@ -185,7 +192,14 @@ final class CycleCaptureOrchestrator: ObservableObject {
                 cycleId: cycleId,
                 revision: cycle.revision
             )
-            captureController.stopCapture()
+            if recordsLocally {
+                captureController.stopCapture()
+            } else {
+                // Non-recording coordinator: nothing to stop locally and no
+                // capture-completed event will arrive — terminal state now.
+                MC1Log.notice("[CCO] non-recording coordinator: stop requested for cycle \(cycleId), no local capture")
+                state = .completed(cycleId: cycleId)
+            }
         } catch {
             state = .failed(Self.mapToFailure(error))
         }
@@ -319,6 +333,16 @@ final class CycleCaptureOrchestrator: ObservableObject {
         }
 
         if Task.isCancelled { return }
+
+        // 5. Non-recording coordinator (MC2-PR1): no local capture, no
+        // self-confirm — the players' confirms drive the cycle on the backend.
+        // Deliberately NO confirm call here: a confirm without a capture file
+        // would be fabricated evidence.
+        guard recordsLocally else {
+            MC1Log.notice("[CCO] non-recording coordinator: cycle \(scheduledCycle.id) started without local capture")
+            state = .capturing(cycleId: scheduledCycle.id)
+            return
+        }
 
         // 5. Re-arm capture from previous cycle's .completed state
         captureController.rearmForNextCycle()

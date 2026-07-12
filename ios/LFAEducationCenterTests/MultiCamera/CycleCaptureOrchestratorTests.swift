@@ -1404,4 +1404,146 @@ final class CycleCaptureOrchestratorTests: XCTestCase {
         captureController.rearmForNextCycle()
         XCTAssertEqual(captureController.rearmCallCount, 1)
     }
+
+    // MARK: — CYC-NR-01..04: non-recording coordinator (MC2-PR1)
+    //
+    // Final topology: the instructor iPad drives the cycle lifecycle but is NOT
+    // a recorder. recordsLocally == false must skip startCapture/stopCapture AND
+    // every confirm call — a confirm without a capture file would be fabricated
+    // evidence on the backend (silent fake confirmation, explicitly banned by
+    // the MC2-PR1 gates).
+
+    private func makeNonRecordingFixture(
+        apiClient: MockCycleAPIClient
+    ) async -> (CycleCaptureOrchestrator, FakeCaptureController) {
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: FakeAccessTokenProvider(),
+            clockSyncService: clockService,
+            captureController: captureController,
+            cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+        orchestrator.recordsLocally = false
+        return (orchestrator, captureController)
+    }
+
+    // CYC-NR-01: start flow reaches .capturing with ZERO capture-controller and
+    // ZERO confirm_start traffic
+    func test_CYC_NR_01_nonRecording_startReachesCapturing_noCaptureNoConfirm() async throws {
+        let apiClient = MockCycleAPIClient()
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
+        let (orchestrator, captureController) = await makeNonRecordingFixture(apiClient: apiClient)
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+
+        await waitForOrchestratorState(orchestrator) {
+            if case .capturing = $0 { return true }
+            return false
+        }
+
+        if case .capturing(let cycleId) = orchestrator.state {
+            XCTAssertEqual(cycleId, 1)
+        } else {
+            XCTFail("CYC-NR-01: expected .capturing(1), got \(orchestrator.state)")
+        }
+        XCTAssertEqual(captureController.startCallCount, 0,
+                       "CYC-NR-01: non-recording coordinator must never call startCapture")
+        XCTAssertEqual(captureController.rearmCallCount, 0,
+                       "CYC-NR-01: non-recording coordinator must never touch the capture pipeline")
+        XCTAssertEqual(apiClient.confirmStartCallCount, 0,
+                       "CYC-NR-01: confirm_start without a capture file is fabricated evidence")
+    }
+
+    // CYC-NR-02: stopCycle → .completed with ZERO stopCapture and ZERO confirm_stop
+    func test_CYC_NR_02_nonRecording_stopCompletes_noStopCaptureNoConfirm() async throws {
+        let apiClient = MockCycleAPIClient()
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
+        let (orchestrator, captureController) = await makeNonRecordingFixture(apiClient: apiClient)
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+        await waitForOrchestratorState(orchestrator) {
+            if case .capturing = $0 { return true }
+            return false
+        }
+
+        await orchestrator.stopCycle()
+
+        if case .completed(let cycleId) = orchestrator.state {
+            XCTAssertEqual(cycleId, 1)
+        } else {
+            XCTFail("CYC-NR-02: expected .completed(1), got \(orchestrator.state)")
+        }
+        XCTAssertEqual(captureController.stopCallCount, 0,
+                       "CYC-NR-02: nothing to stop locally on a non-recording coordinator")
+        XCTAssertEqual(apiClient.confirmStopCallCount, 0,
+                       "CYC-NR-02: confirm_stop without a capture file is fabricated evidence")
+    }
+
+    // CYC-NR-03: recordsLocally defaults to TRUE and the recording path still
+    // captures + confirms (regression guard for players/legacy controllers)
+    func test_CYC_NR_03_recordsLocallyDefaultsTrue_recordingPathUnchanged() async throws {
+        let apiClient = MockCycleAPIClient()
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
+        let clockService = await makeSyncedClockService()
+        let captureController = FakeCaptureController()
+        let orchestrator = CycleCaptureOrchestrator(
+            authManager: FakeAccessTokenProvider(),
+            clockSyncService: clockService,
+            captureController: captureController,
+            cycleAPIClient: apiClient,
+            sleepProvider: { _ in }
+        )
+        XCTAssertTrue(orchestrator.recordsLocally,
+                      "CYC-NR-03: recordsLocally must default to true (recording controller)")
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+        await waitForOrchestratorState(orchestrator) {
+            if case .capturing = $0 { return true }
+            return false
+        }
+
+        XCTAssertEqual(captureController.startCallCount, 1,
+                       "CYC-NR-03: recording path must still start local capture")
+        XCTAssertEqual(apiClient.confirmStartCallCount, 1,
+                       "CYC-NR-03: recording path must still send confirm_start")
+    }
+
+    // CYC-NR-04: stopCycle API error on the non-recording path → .failed, NOT a
+    // fake .completed
+    func test_CYC_NR_04_nonRecording_stopAPIError_failsNotCompleted() async throws {
+        let apiClient = MockCycleAPIClient()
+        apiClient.scheduleResult = .success(makeTestCycle(
+            id: 1, revision: 2,
+            scheduledStartAt: futureISO(offsetSeconds: 0.001), status: .recordingPending))
+        apiClient.stopResult = .failure(APIError.httpError(statusCode: 503, detail: "unavailable"))
+        let (orchestrator, captureController) = await makeNonRecordingFixture(apiClient: apiClient)
+
+        orchestrator.startCycle(sessionUuid: "test-uuid", sessionDeviceId: 1, sessionRevision: 1)
+        await waitForOrchestratorState(orchestrator) {
+            if case .capturing = $0 { return true }
+            return false
+        }
+
+        await orchestrator.stopCycle()
+
+        if case .failed(let failure) = orchestrator.state {
+            if case .apiError(let code, _) = failure {
+                XCTAssertEqual(code, 503)
+            } else {
+                XCTFail("CYC-NR-04: expected .apiError(503), got \(failure)")
+            }
+        } else {
+            XCTFail("CYC-NR-04: expected .failed, got \(orchestrator.state)")
+        }
+        XCTAssertEqual(captureController.stopCallCount, 0)
+        XCTAssertEqual(apiClient.confirmStopCallCount, 0)
+    }
 }

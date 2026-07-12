@@ -123,12 +123,16 @@ final class CaptureAuthorityTests: XCTestCase {
         )
     }
 
-    // MARK: — AP-01: instructorPrimary must auto-prepare
+    // MARK: — AP-01: instructorPrimary must NOT auto-prepare (MC2-PR1)
+    //
+    // Final topology (2026-07-12): the instructor iPad is a non-recording
+    // coordinator — it must never open a capture session or produce a capture
+    // file. Flipped from `true` when MC2-PR1 landed.
 
-    func test_AP_01_shouldAutoPrepare_instructorPrimary() {
-        XCTAssertTrue(
+    func test_AP_01_shouldAutoPrepare_instructorPrimary_false() {
+        XCTAssertFalse(
             MultiCameraSessionViewModel.shouldAutoPrepare(deviceRole: .instructorPrimary),
-            "AP-01: instructorPrimary must auto-prepare capture pipeline"
+            "AP-01: instructorPrimary is a non-recording coordinator — must NOT auto-prepare"
         )
     }
 
