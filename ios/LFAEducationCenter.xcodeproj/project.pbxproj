@@ -17,17 +17,16 @@
 		794C134BE77C45D7A6CAE38E /* BackendNetworkDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC63267DAB6A44C9916FC7D6 /* BackendNetworkDiagnostics.swift */; };
 		97F321C32E30697A29A7BD4E /* GoProStreamProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84746E41ADCE17E02CA8A9BA /* GoProStreamProbe.swift */; };
 		8DB0F2D2C1774ABF0AB3C7E8 /* GoProRecordingPresetProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4021078EF983D5389C9A3A30 /* GoProRecordingPresetProbe.swift */; };
-		LP500002000000000000001 /* LivePoseOverlayProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = LP500001000000000000001 /* LivePoseOverlayProcessor.swift */; };
-		LP500004000000000000001 /* LivePoseOverlayProcessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = LP500003000000000000001 /* LivePoseOverlayProcessorTests.swift */; };
 		EE17B48457527F7794F443C8 /* CaptureFormatSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF129189081C742189A7992 /* CaptureFormatSelector.swift */; };
 		454C32E7DA3BE12D732D0262 /* OrientationMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */; };
 		A1C2E3F4B5D6079811223344 /* MC1Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C2E3F4B5D6079855667788 /* MC1Log.swift */; };
+		DP500002000000000000001 /* DevicePanelState.swift in Sources */ = {isa = PBXBuildFile; fileRef = DP500001000000000000001 /* DevicePanelState.swift */; };
+		DP500004000000000000001 /* DevicePanelStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DP500003000000000000001 /* DevicePanelStateTests.swift */; };
 		686220A0F4100D89AC13A181 /* RecordingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D54BAB82A7CBBC4E3EC9A67 /* RecordingOverlay.swift */; };
 		7FC19EF38DE99E82AE19FBE0 /* JugglingVideoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */; };
 		87BED4D6C4B4C29E7F7DA470 /* CapturePreviewLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65C2BB6FD929990D04B3B473 /* CapturePreviewLayer.swift */; };
 		888E1C3A10647BB0B654ABB3 /* JugglingPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */; };
 		8BAC98331A874C979CC6DFBD /* SkeletonFrameMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 214786DCFDD0213619E37F5D /* SkeletonFrameMetadata.swift */; };
-		8DB4044C9E7BA3AD86BB5BDD /* CameraFramePublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78224C0D4526FCB6A5998DE2 /* CameraFramePublisher.swift */; };
 		942FE944E7544114B645BB37 /* MultiCameraSessionViewModelClockSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7923EAF385B2497998AA5258 /* MultiCameraSessionViewModelClockSyncTests.swift */; };
 		AA100004000000000000001 /* ContactTaxonomy.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000001 /* ContactTaxonomy.swift */; };
 		AA100004000000000000002 /* ContactTaxonomyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003000000000000002 /* ContactTaxonomyStore.swift */; };
@@ -217,8 +216,6 @@
 		CS000004000000000000001 /* ClockSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS000003000000000000001 /* ClockSyncService.swift */; };
 		CS500004000000000000001 /* ClockSyncServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CS500003000000000000001 /* ClockSyncServiceTests.swift */; };
 		CYC00004000000000000001 /* cycle_full.json in Resources */ = {isa = PBXBuildFile; fileRef = CYC00003000000000000001 /* cycle_full.json */; };
-		D430E0ADD2524F69C4758F46 /* CameraStreamService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E799437FFE32453CCBC08297 /* CameraStreamService.swift */; };
-		D74821A1463FEADE60C25491 /* RemoteCameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE37F92823BA63C90D0B1513 /* RemoteCameraView.swift */; };
 		DI000004000000000000001 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = DI000003000000000000001 /* DeviceIdentity.swift */; };
 		DI500004000000000000001 /* DeviceIdentityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DI500003000000000000001 /* DeviceIdentityTests.swift */; };
 		EE100004000000000000001 /* DensePoseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE100003000000000000001 /* DensePoseDTO.swift */; };
@@ -300,13 +297,12 @@
 		EC63267DAB6A44C9916FC7D6 /* BackendNetworkDiagnostics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackendNetworkDiagnostics.swift; sourceTree = "<group>"; };
 		84746E41ADCE17E02CA8A9BA /* GoProStreamProbe.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GoProStreamProbe.swift; sourceTree = "<group>"; };
 		4021078EF983D5389C9A3A30 /* GoProRecordingPresetProbe.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GoProRecordingPresetProbe.swift; sourceTree = "<group>"; };
-		LP500001000000000000001 /* LivePoseOverlayProcessor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LivePoseOverlayProcessor.swift; sourceTree = "<group>"; };
-		LP500003000000000000001 /* LivePoseOverlayProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivePoseOverlayProcessorTests.swift; sourceTree = "<group>"; };
 		CEF129189081C742189A7992 /* CaptureFormatSelector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CaptureFormatSelector.swift; sourceTree = "<group>"; };
 		B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrientationMapper.swift; sourceTree = "<group>"; };
 		A1C2E3F4B5D6079855667788 /* MC1Log.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MC1Log.swift; sourceTree = "<group>"; };
+		DP500001000000000000001 /* DevicePanelState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DevicePanelState.swift; sourceTree = "<group>"; };
+		DP500003000000000000001 /* DevicePanelStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePanelStateTests.swift; sourceTree = "<group>"; };
 		65C2BB6FD929990D04B3B473 /* CapturePreviewLayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CapturePreviewLayer.swift; sourceTree = "<group>"; };
-		78224C0D4526FCB6A5998DE2 /* CameraFramePublisher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CameraFramePublisher.swift; sourceTree = "<group>"; };
 		7923EAF385B2497998AA5258 /* MultiCameraSessionViewModelClockSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiCameraSessionViewModelClockSyncTests.swift; sourceTree = "<group>"; };
 		89E393EC38D4612DE04DD285 /* JugglingVideoListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingVideoListView.swift; sourceTree = "<group>"; };
 		931BA6E1E0534E3297578BC3 /* PlayerCaptureView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PlayerCaptureView.swift; sourceTree = "<group>"; };
@@ -500,7 +496,6 @@
 		CC300003000000000000038 /* BallOverlayViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallOverlayViewTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000039 /* BallDetectionTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallDetectionTimelineTests.swift; sourceTree = "<group>"; };
 		CC300003000000000000040 /* SkeletonOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonOverlayTests.swift; sourceTree = "<group>"; };
-		CE37F92823BA63C90D0B1513 /* RemoteCameraView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RemoteCameraView.swift; sourceTree = "<group>"; };
 		CS000003000000000000001 /* ClockSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockSyncService.swift; sourceTree = "<group>"; };
 		CS500003000000000000001 /* ClockSyncServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockSyncServiceTests.swift; sourceTree = "<group>"; };
 		CYC00003000000000000001 /* cycle_full.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = cycle_full.json; path = ../tests/fixtures/multicamera/cycle_full.json; sourceTree = SOURCE_ROOT; };
@@ -509,7 +504,6 @@
 		DI000003000000000000001 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		DI500003000000000000001 /* DeviceIdentityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentityTests.swift; sourceTree = "<group>"; };
 		E075CE337E219F48D39CBDFA /* JugglingPlayerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JugglingPlayerView.swift; sourceTree = "<group>"; };
-		E799437FFE32453CCBC08297 /* CameraStreamService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CameraStreamService.swift; sourceTree = "<group>"; };
 		E9BCF17EF39B7CB95D35BC45 /* InstructorCaptureView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InstructorCaptureView.swift; sourceTree = "<group>"; };
 		EE100003000000000000001 /* DensePoseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseDTO.swift; sourceTree = "<group>"; };
 		EE100003000000000000002 /* DensePoseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DensePoseCache.swift; sourceTree = "<group>"; };
@@ -1057,19 +1051,16 @@
 				0D54BAB82A7CBBC4E3EC9A67 /* RecordingOverlay.swift */,
 				931BA6E1E0534E3297578BC3 /* PlayerCaptureView.swift */,
 				E9BCF17EF39B7CB95D35BC45 /* InstructorCaptureView.swift */,
-				E799437FFE32453CCBC08297 /* CameraStreamService.swift */,
-				78224C0D4526FCB6A5998DE2 /* CameraFramePublisher.swift */,
-				CE37F92823BA63C90D0B1513 /* RemoteCameraView.swift */,
 				A832045BC84523759F27C8AF /* InstructorDashboardView.swift */,
 				214786DCFDD0213619E37F5D /* SkeletonFrameMetadata.swift */,
 				61D4B8AF7A77B55FB95FCA4B /* SkeletonProcessor.swift */,
 				EC63267DAB6A44C9916FC7D6 /* BackendNetworkDiagnostics.swift */,
 				84746E41ADCE17E02CA8A9BA /* GoProStreamProbe.swift */,
 				4021078EF983D5389C9A3A30 /* GoProRecordingPresetProbe.swift */,
-				LP500001000000000000001 /* LivePoseOverlayProcessor.swift */,
 				CEF129189081C742189A7992 /* CaptureFormatSelector.swift */,
 				B2B15830F87FDBEAAF430EA8 /* OrientationMapper.swift */,
 				A1C2E3F4B5D6079855667788 /* MC1Log.swift */,
+				DP500001000000000000001 /* DevicePanelState.swift */,
 			);
 			path = MultiCamera;
 			sourceTree = "<group>";
@@ -1095,7 +1086,7 @@
 				PC500003000000000000002 /* PlayerCaptureOrchestratorTests.swift */,
 				QR500003000000000000001 /* SessionQRPayloadTests.swift */,
 				AB500003000000000000001 /* MC1AutomationBridgeTests.swift */,
-				LP500003000000000000001 /* LivePoseOverlayProcessorTests.swift */,
+				DP500003000000000000001 /* DevicePanelStateTests.swift */,
 				MC500003000000000000002 /* session_full.json */,
 				CYC00003000000000000001 /* cycle_full.json */,
 			);
@@ -1415,19 +1406,16 @@
 				686220A0F4100D89AC13A181 /* RecordingOverlay.swift in Sources */,
 				4FA8012F5B547476781B6B69 /* PlayerCaptureView.swift in Sources */,
 				32E0F1CED2FB0C5D04FE4AB6 /* InstructorCaptureView.swift in Sources */,
-				D430E0ADD2524F69C4758F46 /* CameraStreamService.swift in Sources */,
-				8DB4044C9E7BA3AD86BB5BDD /* CameraFramePublisher.swift in Sources */,
-				D74821A1463FEADE60C25491 /* RemoteCameraView.swift in Sources */,
 				0B4F0096C23E0EEEFF6729E2 /* InstructorDashboardView.swift in Sources */,
 				8BAC98331A874C979CC6DFBD /* SkeletonFrameMetadata.swift in Sources */,
 				6416AA6D49E0959286DD9D4F /* SkeletonProcessor.swift in Sources */,
 				794C134BE77C45D7A6CAE38E /* BackendNetworkDiagnostics.swift in Sources */,
 				97F321C32E30697A29A7BD4E /* GoProStreamProbe.swift in Sources */,
 				8DB0F2D2C1774ABF0AB3C7E8 /* GoProRecordingPresetProbe.swift in Sources */,
-				LP500002000000000000001 /* LivePoseOverlayProcessor.swift in Sources */,
 				EE17B48457527F7794F443C8 /* CaptureFormatSelector.swift in Sources */,
 				454C32E7DA3BE12D732D0262 /* OrientationMapper.swift in Sources */,
 				A1C2E3F4B5D6079811223344 /* MC1Log.swift in Sources */,
+				DP500002000000000000001 /* DevicePanelState.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1494,7 +1482,7 @@
 				CA500004000000000000001 /* CaptureAuthorityTests.swift in Sources */,
 				PG500004000000000000001 /* PCOInstructorRoleGateTests.swift in Sources */,
 				AB500004000000000000001 /* MC1AutomationBridgeTests.swift in Sources */,
-				LP500004000000000000001 /* LivePoseOverlayProcessorTests.swift in Sources */,
+				DP500004000000000000001 /* DevicePanelStateTests.swift in Sources */,
 				OR500004000000000000001 /* FakeCaptureController.swift in Sources */,
 				OR500004000000000000002 /* CycleIdempotencyKeyTests.swift in Sources */,
 				OR500004000000000000003 /* CycleCaptureOrchestratorTests.swift in Sources */,

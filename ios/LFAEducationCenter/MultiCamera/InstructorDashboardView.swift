@@ -1,72 +1,38 @@
 import SwiftUI
 
 #if DEBUG
+/// MC2-PR3 status dashboard — backend-polling only.
+///
+/// The previous live-video dashboard drove three on-device pose processors
+/// plus a single-peer MPC stream on the main actor; with two players sending
+/// simultaneously the main thread saturated and the iPad UI froze (2026-07-12
+/// dual-player run RCA). This view renders NOTHING but polled backend state:
+/// no capture session, no MPC, no frame decoding, no inference. Every panel is
+/// keyed by session_device_id, so two players can never be cross-attributed.
 struct InstructorDashboardView: View {
 
-    @ObservedObject var captureManager: SessionCaptureManager
-    @ObservedObject var streamService: CameraStreamService
     @ObservedObject var orchestrator: CycleCaptureOrchestrator
     @ObservedObject var vm: MultiCameraSessionViewModel
-    @ObservedObject private var goProStreamProbe = GoProStreamProbe.shared
-
-    // Live skeleton overlay — one processor per panel source.
-    @StateObject private var localPoseOverlay  = LivePoseOverlayProcessor()
-    @StateObject private var remotePoseOverlay = LivePoseOverlayProcessor()
-    @StateObject private var goProPoseOverlay  = LivePoseOverlayProcessor()
 
     @Environment(\.presentationMode) private var presentationMode
+
+    /// Re-render tick so heartbeat ages advance between 3 s polls.
+    @State private var now = Date()
+    private let clock = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             VStack(spacing: 0) {
                 topBar
-                cameraGrid
-                statusBar
+                statusGrid
+                Spacer(minLength: 0)
+                cycleSummaryBar
                 controlBar
             }
         }
         .statusBarHidden(true)
-        .onAppear {
-            // MC2-PR1: the non-recording coordinator has no local camera feed —
-            // never touch the capture session (TOPO-G7: no capture
-            // AVCaptureSession may run on the instructor iPad).
-            if vm.localCaptureExpected {
-                localPoseOverlay.attach(to: captureManager.previewSession)
-            }
-        }
-        .onDisappear {
-            if vm.localCaptureExpected {
-                localPoseOverlay.detach(from: captureManager.previewSession)
-            }
-        }
-        // Feed remote (iPad) frames to the remote overlay processor.
-        .onReceive(streamService.objectWillChange) { [self] in
-            if let data = streamService.lastReceivedFrame, let img = UIImage(data: data) {
-                remotePoseOverlay.feed(img)
-            }
-        }
-        // Feed GoPro frames to the GoPro overlay processor.
-        .onReceive(goProStreamProbe.objectWillChange) { [self] in
-            if let img = goProStreamProbe.lastFrame {
-                goProPoseOverlay.feed(img)
-            }
-        }
-        // pose-overlay-diag deep link → export per-panel frame diagnostics. Handled here
-        // (not MultiCameraLobbyView) because the 3 processor instances are owned by this view.
-        //
-        // consume() gate (P0 hardening): without it, a re-presented dashboard would
-        // replay a stale .poseOverlayDiag and clobber pose_overlay_diag.json with
-        // freshly-zeroed counters before the regression script copies it.
-        .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { [self] envelope in
-            guard case .poseOverlayDiag = envelope.action,
-                  MC1AutomationBridge.shared.consume(envelope) else { return }
-            PoseOverlayDiagWriter.write(
-                instructor: localPoseOverlay,
-                player: remotePoseOverlay, playerSourceFramesSeen: streamService.totalFramesReceived,
-                gopro: goProPoseOverlay, goProSourceFramesSeen: goProStreamProbe.decodeSuccesses
-            )
-        }
+        .onReceive(clock) { now = $0 }
     }
 
     // MARK: - Session device list (source of truth for panels)
@@ -76,9 +42,7 @@ struct InstructorDashboardView: View {
         return session.devices.filter { $0.removedAt == nil }
     }
 
-    // Ordering: instructor first, then players (by id), then auxiliary cameras (GoPro).
-    // MC2-PR1: when this device is a non-recording coordinator, its own panel is
-    // dropped — there is no local feed to show, only the players + GoPro.
+    /// Deterministic panel order: instructor, players (by id), auxiliary cameras.
     private var orderedPanels: [SessionDeviceDTO] {
         let rank: (MCDeviceRole) -> Int = {
             switch $0 {
@@ -88,12 +52,25 @@ struct InstructorDashboardView: View {
             case .auxiliaryCamera:   return 3
             }
         }
-        return sessionDevices
-            .filter { vm.localCaptureExpected || $0.id != vm.sessionDeviceId }
-            .sorted {
-                let ra = rank($0.deviceRole), rb = rank($1.deviceRole)
-                return ra != rb ? ra < rb : $0.id < $1.id
-            }
+        return sessionDevices.sorted {
+            let ra = rank($0.deviceRole), rb = rank($1.deviceRole)
+            return ra != rb ? ra < rb : $0.id < $1.id
+        }
+    }
+
+    private var latestCycle: CaptureCycleDTO? { vm.latestCycle }
+
+    private func cycleDevice(for device: SessionDeviceDTO) -> CaptureCycleDeviceDTO? {
+        latestCycle?.cycleDevices.first { $0.sessionDeviceId == device.id }
+    }
+
+    private func panelState(for device: SessionDeviceDTO) -> DevicePanelState {
+        DevicePanelStateResolver.resolve(
+            device: device,
+            cycleDevice: cycleDevice(for: device),
+            cycle: latestCycle,
+            now: now
+        )
     }
 
     // MARK: - Top bar
@@ -132,202 +109,88 @@ struct InstructorDashboardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 
-    // MARK: - Camera grid (dynamic — driven by session device list)
+    // MARK: - Status grid
 
-    private var cameraGrid: some View {
-        HStack(spacing: 2) {
+    private var statusGrid: some View {
+        VStack(spacing: 8) {
             if orderedPanels.isEmpty {
-                // Session not yet joined or devices not registered
-                Color(white: 0.08)
-                    .overlay(
-                        Text("Waiting for devices…")
-                            .font(.system(size: 12, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.4))
-                    )
-                    .aspectRatio(3.0/4.0, contentMode: .fit)
+                Text("Waiting for devices…")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.4))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 40)
             } else {
                 ForEach(orderedPanels, id: \.id) { device in
-                    VStack(spacing: 0) {
-                        deviceLabel(device)
-                        devicePreview(device)
-                            .aspectRatio(3.0/4.0, contentMode: .fit)
-                            .clipped()
-                        metadataRow(device)
-                    }
-                    .background(Color(white: 0.08))
+                    statusTile(device)
                 }
             }
         }
+        .padding(.horizontal, 12)
+        .padding(.top, 10)
     }
 
-    private func deviceLabel(_ device: SessionDeviceDTO) -> some View {
-        let label = panelLabel(for: device)
-        let color = panelStatusColor(for: device)
-        return HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 6, height: 6)
-            Text(label)
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                .foregroundColor(.white)
+    private func statusTile(_ device: SessionDeviceDTO) -> some View {
+        let state = panelState(for: device)
+        let cd = cycleDevice(for: device)
+        return HStack(spacing: 10) {
+            Circle().fill(stateColor(state)).frame(width: 12, height: 12)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(panelLabel(for: device))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("sd \(device.id)")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.4))
+                }
+                Text(detailLine(device: device, cycleDevice: cd))
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.6))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            Spacer()
+            Text(state.label)
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .foregroundColor(stateColor(state))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(stateColor(state).opacity(0.15))
+                .clipShape(Capsule())
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .background(Color(white: 0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
-    @ViewBuilder
-    private func devicePreview(_ device: SessionDeviceDTO) -> some View {
-        ZStack {
-            if device.id == vm.sessionDeviceId {
-                CapturePreviewLayer(session: captureManager.previewSession)
-            } else if device.deviceRole == .auxiliaryCamera {
-                goProPreviewPanel
-            } else {
-                RemoteCameraView(streamService: streamService)
-            }
+    private func detailLine(device: SessionDeviceDTO, cycleDevice cd: CaptureCycleDeviceDTO?) -> String {
+        var parts: [String] = []
+        if device.deviceRole == .instructorPrimary {
+            parts.append("coordinator — not recording")
+        } else if device.deviceRole == .auxiliaryCamera, let mgr = device.managedByDeviceId {
+            parts.append("managed by sd \(mgr)")
+        }
+        if device.deviceRole != .auxiliaryCamera,
+           let age = DevicePanelStateResolver.heartbeatAge(device: device, now: now) {
+            parts.append("hb \(Int(age))s ago")
+        }
+        if let cd = cd {
+            parts.append("cycle: \(cd.recordingStatus.rawValue)\(cd.required ? "" : " (not required)")")
+        }
+        return parts.isEmpty ? "status: \(device.status.rawValue)" : parts.joined(separator: " · ")
+    }
 
-            // Skeleton overlay — same visual as annotation screen (ContinuousSkeletonOverlayView).
-            // showSyntheticFeet=false: synthetic foot estimation needs the ankle→knee vector
-            // from post-processed video; live Vision results provide real ankle points directly.
-            if let f = poseProcessor(for: device).frame {
-                ContinuousSkeletonOverlayView(frame: f, showSyntheticFeet: false)
-            }
+    private func stateColor(_ state: DevicePanelState) -> Color {
+        switch state {
+        case .connected:    return .green
+        case .stale:        return .yellow
+        case .disconnected: return .red
+        case .recording:    return .red
+        case .completed:    return .green
+        case .failed:       return .orange
         }
     }
-
-    private func poseProcessor(for device: SessionDeviceDTO) -> LivePoseOverlayProcessor {
-        if device.id == vm.sessionDeviceId { return localPoseOverlay }
-        if device.deviceRole == .auxiliaryCamera { return goProPoseOverlay }
-        return remotePoseOverlay
-    }
-
-    // MARK: - Metadata row (Capture Quality + Metadata block)
-    //
-    // No source should ever record without a visible answer to "what
-    // resolution/fps/codec, where did the file go, did it upload" — see
-    // docs/MEDIA_PIPELINE_PLAN.md. Upload/media-ID are explicit
-    // "not_implemented" placeholders, not silently absent fields.
-
-    @ViewBuilder
-    private func metadataRow(_ device: SessionDeviceDTO) -> some View {
-        if device.id == vm.sessionDeviceId {
-            localMetadataRow
-        } else if device.deviceRole == .auxiliaryCamera {
-            goProMetadataRow
-        } else {
-            metadataLine("remote — no metadata channel yet", color: .secondary)
-        }
-    }
-
-    private var localMetadataRow: some View {
-        VStack(spacing: 0) {
-            if case .valid(_, let res, let orient, _, _, let fps, let codec) = captureManager.lastValidation {
-                metadataLine("\(Int(res.width))×\(Int(res.height)) @ \(Int(fps))fps · \(codec) · \(orient)")
-            } else if let profile = captureManager.activeCaptureProfile {
-                metadataLine("target: \(profile.label)@\(Int(profile.targetFPS))fps — recording in progress")
-            } else {
-                metadataLine("no metadata yet")
-            }
-            fileStatusLine
-        }
-    }
-
-    private var fileStatusLine: some View {
-        Group {
-            if let url = captureManager.outputFileURL {
-                let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? 0
-                metadataLine("file: \(url.lastPathComponent) (\((size ?? 0) / 1024)KB) · upload: not_implemented")
-            } else {
-                metadataLine("no local file yet")
-            }
-        }
-    }
-
-    private var goProMetadataRow: some View {
-        // GoProCameraStatus does not yet reliably decode resolution/fps from
-        // camera/state (firmware has shown "unknown" on every physical run —
-        // see GoProCameraStateProbe). Showing battery/recording only, which
-        // ARE confirmed-decoding fields, rather than guessing at others.
-        let gp = GoProConnectionManager.shared
-        let battery = gp.cameraStatus?.batteryLevel.map { "\($0)%" } ?? "—"
-        return metadataLine("battery: \(battery) · resolution/fps: see camera_state_diag · upload: not_implemented")
-    }
-
-    private func metadataLine(_ text: String, color: Color = .white.opacity(0.6)) -> some View {
-        Text(text)
-            .font(.system(size: 8, design: .monospaced))
-            .foregroundColor(color)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 2)
-            .background(Color(white: 0.05))
-    }
-
-    // GoPro preview: live decoded frame from GoProStreamProbe POC (see
-    // docs/GOPRO_LIVE_PREVIEW_POC_PLAN.md) when available, else fall back to
-    // the GoProConnectionManager connection-state placeholder — same fallback
-    // pattern as RemoteCameraView's "Waiting for player..." when no frame yet.
-    private var goProPreviewPanel: some View {
-        ZStack {
-            Color.black
-            if let frame = goProStreamProbe.lastFrame {
-                Image(uiImage: frame)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else {
-                VStack(spacing: 6) {
-                    Image(systemName: goProIcon)
-                        .font(.system(size: 24))
-                        .foregroundColor(goProRealtimeColor)
-                    Text(goProRealtimeLabel)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundColor(goProRealtimeColor)
-                        .multilineTextAlignment(.center)
-                    if let bat = GoProConnectionManager.shared.cameraStatus?.batteryLevel {
-                        Text("\(bat)%")
-                            .font(.system(size: 10, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.5))
-                    }
-                    if goProStreamProbe.isRunning {
-                        Text("preview poc running…")
-                            .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(.yellow)
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Status bar (dynamic)
-
-    private var statusBar: some View {
-        HStack(spacing: 1) {
-            if orderedPanels.isEmpty {
-                statusCell("—", "waiting", .gray)
-            } else {
-                ForEach(orderedPanels, id: \.id) { device in
-                    statusCell(
-                        panelLabel(for: device),
-                        panelStatusText(for: device),
-                        panelStatusColor(for: device)
-                    )
-                }
-            }
-        }
-        .background(Color(white: 0.1))
-    }
-
-    private func statusCell(_ label: String, _ status: String, _ color: Color) -> some View {
-        VStack(spacing: 2) {
-            Text(label).font(.system(size: 10, weight: .semibold)).foregroundColor(.white)
-            Text(status).font(.system(size: 9, design: .monospaced)).foregroundColor(color)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
-        .background(Color(white: 0.12))
-    }
-
-    // MARK: - Panel label helpers
 
     private func panelLabel(for device: SessionDeviceDTO) -> String {
         switch device.deviceRole {
@@ -348,92 +211,41 @@ struct InstructorDashboardView: View {
         }
     }
 
-    private func panelStatusColor(for device: SessionDeviceDTO) -> Color {
-        if device.deviceRole == .auxiliaryCamera {
-            return goProRealtimeColor
+    // MARK: - Cycle summary bar
+
+    private var cycleSummaryBar: some View {
+        HStack(spacing: 8) {
+            if let cycle = latestCycle {
+                Text("cycle #\(cycle.cycleIndex)")
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundColor(.white)
+                Text(cycle.status.rawValue)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(cycleStatusColor(cycle.status))
+                if let result = cycle.result {
+                    Text(result.rawValue)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(result == .success ? .green : .orange)
+                }
+            } else {
+                Text("no cycle yet")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.4))
+            }
+            Spacer()
         }
-        if device.id == vm.sessionDeviceId {
-            return localCaptureColor
-        }
-        return backendStatusColor(device.status)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 6)
+        .background(Color(white: 0.08))
     }
 
-    private func panelStatusText(for device: SessionDeviceDTO) -> String {
-        if device.deviceRole == .auxiliaryCamera {
-            return goProRealtimeLabel
-        }
-        if device.id == vm.sessionDeviceId {
-            return localCaptureStatus
-        }
-        return device.status.rawValue
-    }
-
-    // MARK: - Local device status (this iPhone)
-
-    private var localCaptureColor: Color {
-        switch captureManager.state {
-        case .ready:     return .green
-        case .capturing: return .red
-        case .failed:    return .orange
-        default:         return .gray
-        }
-    }
-
-    private var localCaptureStatus: String {
-        switch orchestrator.state {
-        case .idle:             return captureManager.state == .ready ? "ready" : "preparing"
-        case .creating:         return "creating cycle"
-        case .scheduling:       return "scheduling"
-        case .waitingForStart:  return "starting"
-        case .stopping:         return "stopping"
-        case .completed:        return "done"
-        case .failed:           return "error"
-        case .capturing:        return "recording"
-        }
-    }
-
-    // MARK: - Backend status color (remote devices polled from API)
-
-    private func backendStatusColor(_ status: MCDeviceStatus) -> Color {
+    private func cycleStatusColor(_ status: CycleStatus) -> Color {
         switch status {
-        case .ready:        return .green
-        case .recording:    return .red
-        case .registered:   return .gray
-        case .stopped:      return .green
-        case .disconnected: return .red
-        case .error:        return .orange
+        case .recording:                        return .red
+        case .completed:                        return .green
+        case .failed, .aborted:                 return .orange
+        case .preparing, .recordingPending, .stopping: return .yellow
         }
-    }
-
-    // MARK: - GoPro real-time state (GoProConnectionManager singleton)
-
-    private var goProRealtimeColor: Color {
-        let gp = GoProConnectionManager.shared
-        if gp.recordingState == .recording     { return .red }
-        if case .ready = gp.state             { return .green }
-        if case .failed = gp.recordingState   { return .orange }
-        return .gray
-    }
-
-    private var goProRealtimeLabel: String {
-        let gp = GoProConnectionManager.shared
-        switch gp.recordingState {
-        case .recording:        return "REC"
-        case .starting:         return "starting…"
-        case .stopping:         return "stopping…"
-        case .stopped:          return "stopped"
-        case .failed(let m):    return "err:\(m.prefix(15))"
-        case .idle:
-            if case .ready = gp.state { return "ready" }
-            return "offline"
-        }
-    }
-
-    private var goProIcon: String {
-        let gp = GoProConnectionManager.shared
-        if gp.recordingState == .recording { return "record.circle.fill" }
-        if case .ready = gp.state          { return "camera.fill" }
-        return "camera"
     }
 
     // MARK: - Control bar
@@ -485,7 +297,7 @@ struct InstructorDashboardView: View {
 
     private var orchestratorLabel: String {
         switch orchestrator.state {
-        case .idle:             return captureManager.state == .ready ? "Ready" : "Preparing…"
+        case .idle:             return "Ready"
         case .creating:         return "Creating cycle…"
         case .scheduling:       return "Scheduling…"
         case .waitingForStart:  return "Starting…"

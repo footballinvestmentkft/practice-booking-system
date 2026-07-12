@@ -3,10 +3,9 @@ import UIKit
 
 // MARK: — Orientation/Aspect handling
 //
-// Replaces the hardcoded `.portrait` connection.videoOrientation that
-// existed in CapturePreviewLayer, SessionCaptureManager, and
-// CameraFramePublisher (all three set it once, unconditionally, regardless
-// of actual device orientation). Capture/preview connections now read the
+// Replaces the hardcoded `.portrait` connection.videoOrientation that the
+// capture/preview layers used to set once, unconditionally, regardless of
+// actual device orientation. Capture/preview connections now read the
 // CURRENT interface orientation each time they're (re)configured.
 //
 // NOTE: AVCaptureVideoOrientation.landscapeLeft/Right are defined opposite

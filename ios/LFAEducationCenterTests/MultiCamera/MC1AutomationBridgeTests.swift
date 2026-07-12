@@ -194,8 +194,8 @@ final class MC1AutomationBridgeTests: XCTestCase {
     //
     // @Published lastAction replays its current value to every new subscriber.
     // consume() must return true exactly once per posted action so a view
-    // rebuild / re-subscription cannot re-dispatch a stale gopro-start,
-    // reset-session, or pose-overlay-diag.
+    // rebuild / re-subscription cannot re-dispatch a stale gopro-start or
+    // reset-session.
 
     func test_AB_17_consume_returnsTrueExactlyOnce() {
         let bridge = makeBridge()
