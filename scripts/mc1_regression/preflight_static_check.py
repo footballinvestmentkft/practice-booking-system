@@ -213,15 +213,16 @@ def check_skeleton_feed_wiring() -> None:
         check(name, ok)
 
 
-# ── CHECK 5: device routing (iPhone=instructor, iPad=player, GoPro managed_by) ──
+# ── CHECK 5: device routing (MC2-PR1 final topology: iPad=non-recording ──────
+#    instructor, iPhone=player + GoPro bridge, GoPro managed_by the player)
 
 def check_device_routing() -> None:
     lib_src = read(LIB_PY)
     ctx_match = re.search(r"class ScenarioContext:.*?(?=\n\n@dataclass|\Z)", lib_src, re.S)
-    ok_ipad = bool(ctx_match and re.search(r'ipad_role:\s*str\s*=\s*"player"', ctx_match.group(0)))
-    ok_iphone = bool(ctx_match and re.search(r'iphone_role:\s*str\s*=\s*"instructor"', ctx_match.group(0)))
-    check("ScenarioContext default: iPad role = player", ok_ipad)
-    check("ScenarioContext default: iPhone role = instructor", ok_iphone)
+    ok_ipad = bool(ctx_match and re.search(r'ipad_role:\s*str\s*=\s*"instructor"', ctx_match.group(0)))
+    ok_iphone = bool(ctx_match and re.search(r'iphone_role:\s*str\s*=\s*"player"', ctx_match.group(0)))
+    check("ScenarioContext default: iPad role = instructor (non-recording)", ok_ipad)
+    check("ScenarioContext default: iPhone role = player", ok_iphone)
 
     scenarios_src = read(SCENARIOS_PY)
     fn_match = re.search(
@@ -229,8 +230,8 @@ def check_device_routing() -> None:
         scenarios_src, re.S,
     )
     gopro_ok = bool(fn_match and re.search(
-        r'device_role="auxiliary_camera".*?managed_by_device_id=instructor_id', fn_match.group(0), re.S))
-    check("GoPro registered as auxiliary_camera managed_by instructor_id", gopro_ok)
+        r'device_role="auxiliary_camera".*?managed_by_device_id=player_id', fn_match.group(0), re.S))
+    check("GoPro registered as auxiliary_camera managed_by player_id", gopro_ok)
 
 
 # ── CHECK 6: artifact collector completeness ────────────────────────────────
@@ -274,13 +275,17 @@ def check_artifact_collectors() -> None:
         '"gopro preview stream quality"' in critical_block
     check("gopro preview stream quality gates PASS (critical_ok)", gate_ok)
 
-    # Per-panel (instructor/player/gopro) pose overlay frame-traffic collection must also
-    # be present AND gate critical_ok — same reasoning as the GoPro preview quality check.
+    # Per-panel (instructor/player/gopro) pose overlay frame-traffic collection must
+    # stay present (writer↔reader key contract pinned until MC2-PR3 removes both
+    # sides together), but per the 2026-07-12 no-MPC architecture decision the
+    # live-panel gates must NOT gate PASS — the dashboard moves to backend-polled
+    # status/thumbnail panels and this scenario is superseded by
+    # final-topology-proof in MC2-PR4.
     panel_names = ("instructor", "player", "gopro")
     pose_collected = "pose_overlay_diag" in body
-    pose_gated = all(f'"{p} panel frame traffic"' in critical_block for p in panel_names)
+    pose_not_gated = all(f'"{p} panel frame traffic"' not in critical_block for p in panel_names)
     check("pose_overlay_diag.json collected (per-panel frame traffic)", pose_collected)
-    check("per-panel frame traffic gates PASS (critical_ok) for instructor+player+gopro", pose_gated)
+    check("per-panel frame traffic is corroborating-only, NOT in critical_ok (no-MPC decision)", pose_not_gated)
 
 
 # ── CHECK 8: per-panel pose overlay diagnostics wiring (counters + export + deep link) ──
@@ -341,16 +346,19 @@ def check_orientation_aspect_wiring() -> None:
     body = fn_match.group(0) if fn_match else ""
     critical_block_match = re.search(r"critical_ok = all\(.*?\n        \)", body, re.S)
     critical_block = critical_block_match.group(0) if critical_block_match else ""
+    # MC2-PR1 final topology: the iPad is a NON-RECORDING instructor — its old
+    # orientation/aspect gates are replaced by the negative-evidence gate
+    # ("instructor no capture output"). Only the player iPhone still records
+    # on the iOS side, so orientation/aspect stays pinned for it + the GoPro.
     orientation_gate_steps = [
         "iphone orientation consistent", "iphone effective aspect ratio matches orientation",
         "iphone encoded aspect ratio is 16:9",
-        "ipad orientation consistent", "ipad effective aspect ratio matches orientation",
-        "ipad encoded aspect ratio is 16:9",
+        "instructor no capture output",
         "gopro preview aspect ratio is 16:9",
     ]
     scenario_asserts_ok = all(f'"{step}"' in body for step in orientation_gate_steps)
     missing_steps = [s for s in orientation_gate_steps if f'"{s}"' not in body]
-    check("scenario asserts orientation-consistency + orientation-aware aspect for iPhone/iPad/GoPro",
+    check("scenario asserts player orientation/aspect + instructor no-capture (MC2-PR1)",
           scenario_asserts_ok,
           f"missing report.step(...) for: {missing_steps}" if not scenario_asserts_ok else "")
     # Scoped to the tricamera critical_ok block (2026-07-04 hardening) — the
