@@ -128,10 +128,10 @@ final class GoProConnectionManager: ObservableObject {
         do {
             _ = try await httpTransport.get(path: GoProSpec.shutterStartPath, timeout: GoProSpec.commandTimeout)
             recordingState = .recording
-            print("[GOPRO] shutter start OK")
+            MC1Log.notice("[GOPRO] shutter start OK")
         } catch {
             recordingState = .failed("\(error)")
-            print("[GOPRO] shutter start FAILED: \(error)")
+            MC1Log.notice("[GOPRO] shutter start FAILED: \(error)")
             throw GoProRecordingError.shutterFailed("\(error)")
         }
     }
@@ -142,10 +142,10 @@ final class GoProConnectionManager: ObservableObject {
         do {
             _ = try await httpTransport.get(path: GoProSpec.shutterStopPath, timeout: GoProSpec.commandTimeout)
             recordingState = .stopped
-            print("[GOPRO] shutter stop OK")
+            MC1Log.notice("[GOPRO] shutter stop OK")
         } catch {
             recordingState = .failed("\(error)")
-            print("[GOPRO] shutter stop FAILED: \(error)")
+            MC1Log.notice("[GOPRO] shutter stop FAILED: \(error)")
             throw GoProRecordingError.shutterFailed("\(error)")
         }
     }
@@ -154,7 +154,7 @@ final class GoProConnectionManager: ObservableObject {
         do {
             return try await httpTransport.get(path: GoProSpec.mediaListPath, timeout: GoProSpec.commandTimeout)
         } catch {
-            print("[GOPRO] media list failed: \(error)")
+            MC1Log.notice("[GOPRO] media list failed: \(error)")
             return nil
         }
     }
@@ -269,18 +269,18 @@ final class GoProConnectionManager: ObservableObject {
         do {
             try await wifiTransport.joinAccessPoint(ssid: ssid, password: password)
             cancelTimeout()
-            print("[GoPro] WiFi joined via NEHotspotConfiguration: \(ssid)")
+            MC1Log.notice("[GoPro] WiFi joined via NEHotspotConfiguration: \(ssid)")
             startHTTPVerify(trigger: "wifi_joined_auto")
         } catch GoProWiFiError.alreadyAssociated {
             cancelTimeout()
-            print("[GoPro] WiFi already associated: \(ssid)")
+            MC1Log.notice("[GoPro] WiFi already associated: \(ssid)")
             startHTTPVerify(trigger: "wifi_already_associated")
         } catch GoProWiFiError.userDenied {
             cancelTimeout()
             transition(to: .failed(.wifiUserDenied), trigger: "wifi_user_denied")
         } catch {
             cancelTimeout()
-            print("[GoPro] WiFi auto-join failed: \(error), falling back to manual")
+            MC1Log.notice("[GoPro] WiFi auto-join failed: \(error), falling back to manual")
             transition(to: .awaitingManualWiFiJoin(ssid: ssid), trigger: "wifi_auto_failed_fallback")
         }
     }

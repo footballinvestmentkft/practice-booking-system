@@ -26,12 +26,13 @@ from mc1_regression.lib import (  # noqa: E402
     ConsoleOffsetTracker,
     ScenarioContext,
     ValidationError,
+    check_dual_console_precondition,
     login,
     preflight_url_scheme,
     send_deep_link,
     utc_now_iso,
 )
-from mc1_regression.scenarios import SCENARIOS  # noqa: E402
+from mc1_regression.scenarios import INTERACTIVE_SCENARIOS, SCENARIOS  # noqa: E402
 
 _DEFAULT_INSTRUCTOR_EMAIL = "staging-instructor@lfa-staging.io"
 _DEFAULT_PLAYER_EMAIL = "staging-player1@lfa-staging.io"
@@ -56,6 +57,18 @@ def run(args: argparse.Namespace) -> int:
     artifact = ArtifactRun(out_dir)
     offsets = ConsoleOffsetTracker(artifact)
 
+    # Dual-console hard precondition (2026-07-04 RCA): tricamera scenarios
+    # exercise the PLAYER capture chain — running them without the iPad
+    # console capture already cost one physical test day's evidence. The
+    # shell wrapper enforces this too; this is defense-in-depth for direct
+    # runner.py invocations.
+    console_errors = check_dual_console_precondition([args.scenario], artifact.console_dir)
+    if console_errors:
+        for err in console_errors:
+            print(f"ERROR: {err}")
+        print("Aborting before any scenario runs — fix USB/console capture and retry.")
+        return 2
+
     instructor_email, instructor_password, player_email, player_password = _prompt_credentials()
 
     print(f"=== MC1 regression run: {args.scenario} ===")
@@ -72,7 +85,21 @@ def run(args: argparse.Namespace) -> int:
     preflight_url_scheme(args.iphone_udid, "iPhone")
 
     if args.scenario == "all":
-        scenario_names = [k for k in SCENARIOS.keys() if not k.startswith("gopro-")]
+        # `all` must stay unattended: exclude gopro-* (physical GoPro required)
+        # AND any scenario that blocks on operator input() (INTERACTIVE_SCENARIOS).
+        # Before this filter, tricamera-capture-skeleton-proof slipped into `all`
+        # and hung the whole run on an input() prompt (P0 hardening, 2026-07-04).
+        scenario_names = [
+            k for k in SCENARIOS.keys()
+            if not k.startswith("gopro-") and k not in INTERACTIVE_SCENARIOS
+        ]
+        excluded_interactive = [
+            k for k in SCENARIOS.keys()
+            if not k.startswith("gopro-") and k in INTERACTIVE_SCENARIOS
+        ]
+        for name in excluded_interactive:
+            print(f"NOTE: '{name}' is interactive (operator input required) — excluded "
+                  f"from 'all'. Run it explicitly: --scenario {name}")
     else:
         scenario_names = [args.scenario]
     overall_pass = True

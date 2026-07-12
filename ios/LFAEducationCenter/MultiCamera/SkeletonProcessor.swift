@@ -112,6 +112,10 @@ final class SkeletonProcessor: ObservableObject {
         }
 
         let result: [String: Any] = [
+            // Freshness marker (P0 hardening): every runtime diag artifact carries a
+            // write-time timestamp so the regression gate can reject stale files
+            // left in Documents/ by a previous run.
+            "generated_at": ISO8601DateFormatter().string(from: Date()),
             "session_uuid": sessionUuid,
             "device_id": deviceId,
             "video_file": videoURL.lastPathComponent,

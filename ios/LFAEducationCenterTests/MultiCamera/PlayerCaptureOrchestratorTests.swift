@@ -37,6 +37,9 @@ private final class MockCycleAPIClientForPCO: CycleAPIClient {
     func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO {
         fatalError("not used in PCO tests")
     }
+    func listCycles(token: String, uuid: String) async throws -> [CaptureCycleDTO] {
+        fatalError("not used in PCO tests")
+    }
     func confirmDeviceStart(
         token: String, uuid: String, cycleId: Int, sessionDeviceId: Int,
         startedAt: String, cycleDeviceRevision: Int
@@ -152,14 +155,21 @@ final class PlayerCaptureOrchestratorTests: XCTestCase {
 
     private func makeOrchestrator(
         clockService: ClockSyncService? = nil,
-        sleepProvider: @escaping (UInt64) async throws -> Void = { _ in }
+        sleepProvider: @escaping (UInt64) async throws -> Void = { _ in },
+        // Default: real sleep — the 5s watchdog never fires within a fast test,
+        // so pre-watchdog tests keep their exact semantics. Watchdog tests
+        // inject a fast provider explicitly.
+        watchdogSleepProvider: @escaping (UInt64) async throws -> Void = { ns in
+            try await Task.sleep(nanoseconds: ns)
+        }
     ) -> PlayerCaptureOrchestrator {
         PlayerCaptureOrchestrator(
             authManager: fakeToken,
             clockSyncService: clockService ?? makePCOUnsyncedClock(),
             captureController: fakeCapture,
             cycleAPIClient: mockAPI,
-            sleepProvider: sleepProvider
+            sleepProvider: sleepProvider,
+            watchdogSleepProvider: watchdogSleepProvider
         )
     }
 
@@ -167,9 +177,13 @@ final class PlayerCaptureOrchestratorTests: XCTestCase {
     /// Returns both so ARC keeps the listener alive (orchestrator holds a weak ref).
     private func makeAttachedOrchestrator(
         clockService: ClockSyncService? = nil,
-        sleepProvider: @escaping (UInt64) async throws -> Void = { _ in }
+        sleepProvider: @escaping (UInt64) async throws -> Void = { _ in },
+        watchdogSleepProvider: @escaping (UInt64) async throws -> Void = { ns in
+            try await Task.sleep(nanoseconds: ns)
+        }
     ) -> (PlayerCaptureOrchestrator, PlayerCycleListener) {
-        let orch = makeOrchestrator(clockService: clockService, sleepProvider: sleepProvider)
+        let orch = makeOrchestrator(clockService: clockService, sleepProvider: sleepProvider,
+                                    watchdogSleepProvider: watchdogSleepProvider)
         let listener = PlayerCycleListener(
             authManager: fakeToken,
             cycleListClient: StubCycleListClient(),
@@ -386,6 +400,78 @@ final class PlayerCaptureOrchestratorTests: XCTestCase {
         XCTAssertEqual(mockAPI.confirmStartCallCount, 0,
                        "confirmDeviceStart must NOT be called when device is already confirmedStart")
         XCTAssertEqual(orch.state, .confirmed(cycleId: cycle.id))
+    }
+
+    // MARK: — Capture-start watchdog (2026-07-04 tricamera physical run RCA)
+
+    /// Yields long enough for any pending main-queue capture-state delivery to
+    /// land before the watchdog checks state — keeps the no-false-positive test
+    /// deterministic without real sleeping.
+    private static func yieldingWatchdog(_ cycles: Int = 30) -> (UInt64) async throws -> Void {
+        { _ in for _ in 0..<cycles { await Task.yield() } }
+    }
+
+    // PCO-22: capture never reaches .capturing → watchdog fails with explicit evidence.
+    func test_pco_22_watchdog_fails_when_capture_never_starts() async {
+        let clock = await makePCOSyncedClock()
+        fakeCapture.startAdvancesToCapturing = false  // silent no-op start (camera lost)
+        let (orch, _listener) = makeAttachedOrchestrator(
+            clockService: clock,
+            watchdogSleepProvider: Self.yieldingWatchdog()
+        )
+        let cycle = makePCOCycle(scheduledStartAt: nil, status: .recording)
+        orch.handleListenerState(.recordingDetected(cycleId: cycle.id), currentCycle: cycle)
+
+        for _ in 0..<60 { await Task.yield() }
+
+        XCTAssertEqual(fakeCapture.startCallCount, 1, "startCapture must have been attempted")
+        XCTAssertEqual(mockAPI.confirmStartCallCount, 0, "confirmDeviceStart must NOT be called")
+        guard case .failed(let message) = orch.state else {
+            return XCTFail("Expected .failed(captureStartTimeout), got \(orch.state)")
+        }
+        XCTAssertTrue(message.contains("captureStartTimeout"), "unexpected failure message: \(message)")
+    }
+
+    // PCO-23: healthy start — watchdog must NOT fire even with an instant-ish provider.
+    func test_pco_23_watchdog_no_false_positive_on_healthy_start() async {
+        let clock = await makePCOSyncedClock()
+        let (orch, _listener) = makeAttachedOrchestrator(
+            clockService: clock,
+            watchdogSleepProvider: Self.yieldingWatchdog()
+        )
+        let cycle = makePCOCycle(scheduledStartAt: nil, status: .recording)
+        orch.handleListenerState(.recordingDetected(cycleId: cycle.id), currentCycle: cycle)
+
+        for _ in 0..<60 { await Task.yield() }
+
+        XCTAssertEqual(orch.state, .confirmed(cycleId: cycle.id),
+                       "watchdog must not override a healthy confirm flow")
+    }
+
+    // PCO-24: watchdog failure writes the pco_failure_diag.json evidence artifact.
+    func test_pco_24_watchdog_failure_writes_diag_artifact() async throws {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let diagURL = docs.appendingPathComponent(PCOFailureDiagWriter.fileName)
+        try? FileManager.default.removeItem(at: diagURL)
+
+        let clock = await makePCOSyncedClock()
+        fakeCapture.startAdvancesToCapturing = false
+        let (orch, _listener) = makeAttachedOrchestrator(
+            clockService: clock,
+            watchdogSleepProvider: Self.yieldingWatchdog()
+        )
+        let cycle = makePCOCycle(scheduledStartAt: nil, status: .recording)
+        orch.handleListenerState(.recordingDetected(cycleId: cycle.id), currentCycle: cycle)
+        for _ in 0..<60 { await Task.yield() }
+
+        guard case .failed = orch.state else {
+            return XCTFail("Expected .failed, got \(orch.state)")
+        }
+        let data = try Data(contentsOf: diagURL)
+        let diag = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        XCTAssertNotNil(diag?["timestamp"], "diag must carry a freshness timestamp")
+        XCTAssertTrue((diag?["reason"] as? String ?? "").contains("captureStartTimeout"))
+        XCTAssertEqual(diag?["cycleId"] as? Int, cycle.id)
     }
 }
 

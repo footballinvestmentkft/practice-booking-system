@@ -146,19 +146,56 @@ if [[ -z "${_IDEVICESYSLOG}" ]]; then
 elif [[ -z "${_IDEVICEID}" ]]; then
   echo "WARNING: idevice_id not found. Console capture disabled."
 else
-  # Get all legacy UDIDs visible to libimobiledevice (USB-connected only).
-  # Optional override: set IPHONE_LEGACY_UDID / IPAD_LEGACY_UDID env vars to
-  # skip auto-detection (get them via: idevice_id -l).
-  _LEGACY_UDIDS="$("${_IDEVICEID}" -l 2>/dev/null || true)"
-  if [[ -z "${IPHONE_LEGACY_UDID:-}" ]]; then
-    _IPHONE_LEGACY_UDID="$(echo "${_LEGACY_UDIDS}" | head -1)"
-  else
+  # Map each CoreDevice UUID (IPHONE_UDID/IPAD_UDID) to its libimobiledevice
+  # legacy UDID via `devicectl list devices --json-output`, whose
+  # hardwareProperties.udid IS the legacy identifier. The previous approach
+  # (idevice_id -l | head -1 / sed -n 2p) assigned logs by ENUMERATION ORDER —
+  # if the list came back iPad-first, iphone_console.log silently contained the
+  # iPad's log and every console-log-grounded check read the wrong device
+  # (P0 hardening, 2026-07-04 review). Manual override env vars still win.
+  _map_legacy_udid() {  # $1 = CoreDevice UUID → prints legacy UDID or nothing
+    local coredevice_udid="$1"
+    local json_out
+    json_out="$(mktemp)"
+    if ! xcrun devicectl list devices --json-output "${json_out}" >/dev/null 2>&1; then
+      rm -f "${json_out}"
+      return 1
+    fi
+    python3 - "${json_out}" "${coredevice_udid}" <<'PYEOF'
+import json, sys
+data = json.load(open(sys.argv[1]))
+wanted = sys.argv[2].lower()
+for dev in data.get("result", {}).get("devices", []):
+    if str(dev.get("identifier", "")).lower() == wanted:
+        legacy = (dev.get("hardwareProperties", {}) or {}).get("udid", "")
+        if legacy:
+            print(legacy)
+        break
+PYEOF
+    rm -f "${json_out}"
+  }
+
+  if [[ -n "${IPHONE_LEGACY_UDID:-}" ]]; then
     _IPHONE_LEGACY_UDID="${IPHONE_LEGACY_UDID}"
-  fi
-  if [[ -z "${IPAD_LEGACY_UDID:-}" ]]; then
-    _IPAD_LEGACY_UDID="$(echo "${_LEGACY_UDIDS}" | sed -n '2p')"
   else
+    _IPHONE_LEGACY_UDID="$(_map_legacy_udid "${IPHONE_UDID}" || true)"
+  fi
+  if [[ -n "${IPAD_LEGACY_UDID:-}" ]]; then
     _IPAD_LEGACY_UDID="${IPAD_LEGACY_UDID}"
+  else
+    _IPAD_LEGACY_UDID="$(_map_legacy_udid "${IPAD_UDID}" || true)"
+  fi
+
+  # A mapped legacy UDID must actually be visible to libimobiledevice —
+  # otherwise idevicesyslog would just sit there producing an empty log.
+  _LEGACY_UDIDS="$("${_IDEVICEID}" -l 2>/dev/null || true)"
+  if [[ -n "${_IPHONE_LEGACY_UDID}" ]] && ! grep -qi "^${_IPHONE_LEGACY_UDID}$" <<<"${_LEGACY_UDIDS}"; then
+    echo "WARNING: mapped iPhone legacy UDID ${_IPHONE_LEGACY_UDID} not visible to idevice_id -l."
+    _IPHONE_LEGACY_UDID=""
+  fi
+  if [[ -n "${_IPAD_LEGACY_UDID}" ]] && ! grep -qi "^${_IPAD_LEGACY_UDID}$" <<<"${_LEGACY_UDIDS}"; then
+    echo "WARNING: mapped iPad legacy UDID ${_IPAD_LEGACY_UDID} not visible to idevice_id -l."
+    _IPAD_LEGACY_UDID=""
   fi
 
   if [[ -z "${_IPHONE_LEGACY_UDID}" ]]; then
@@ -185,6 +222,29 @@ else
     "${_IDEVICESYSLOG}" --udid "${_IPAD_LEGACY_UDID}" --process LFAEducationCenter \
       > "${OUT_DIR}/console/ipad_console.log" 2>&1 &
     IPAD_CONSOLE_PID=$!
+  fi
+fi
+
+# ── Dual-console hard precondition (tricamera scenarios) ──────────────────
+# The 2026-07-04 tricamera run failed on the PLAYER (iPad) side while the
+# WARN-only path above had silently skipped the iPad console capture — the
+# exact evidence the failure needed was never collected. Tricamera scenarios
+# exercise the player-side capture chain, so BOTH device consoles are a hard
+# precondition: both devices must be USB-connected, trusted, and visible to
+# idevicesyslog. (runner.py re-checks this — defense in depth.)
+if [[ "${SCENARIO}" == *tricamera* ]]; then
+  if [[ -z "${IPHONE_CONSOLE_PID}" || -z "${IPAD_CONSOLE_PID}" ]]; then
+    echo
+    echo "ERROR: scenario '${SCENARIO}' requires console capture from BOTH devices."
+    echo "  iPhone console capture: $([[ -n "${IPHONE_CONSOLE_PID}" ]] && echo running || echo MISSING)"
+    echo "  iPad   console capture: $([[ -n "${IPAD_CONSOLE_PID}" ]] && echo running || echo MISSING)"
+    echo
+    echo "  Connect BOTH devices via USB, trust this Mac on each, then verify:"
+    echo "    idevice_id -l   # must list both legacy UDIDs"
+    echo "  Manual overrides: IPHONE_LEGACY_UDID / IPAD_LEGACY_UDID env vars."
+    [[ -n "${IPHONE_CONSOLE_PID}" ]] && kill "${IPHONE_CONSOLE_PID}" 2>/dev/null || true
+    [[ -n "${IPAD_CONSOLE_PID}" ]]   && kill "${IPAD_CONSOLE_PID}"   2>/dev/null || true
+    exit 1
   fi
 fi
 

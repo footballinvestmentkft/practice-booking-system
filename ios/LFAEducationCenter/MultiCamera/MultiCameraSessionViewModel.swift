@@ -174,6 +174,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
               canStartCapture,
               case .inLobby(let session) = state,
               let sdId = sessionDeviceId else { return }
+        cycleOrchestrator?.recordsLocally = localCaptureExpected
         cycleOrchestrator?.startCycle(
             sessionUuid: session.sessionUuid,
             sessionDeviceId: sdId,
@@ -210,7 +211,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
             let sd = try await MultiCameraAPIClient.registerDevice(token: token, uuid: sessionUuid, request: request)
             sessionDeviceId = sd.id
             deviceRegisterError = nil
-            print("[LobbyVM] autoRegisterDevice: OK sdId=\(sd.id)")
+            MC1Log.notice("[LobbyVM] autoRegisterDevice: OK sdId=\(sd.id)")
             // Attach PCO immediately after registration — must not be gated on updateDeviceStatus.
             // If updateDeviceStatus throws (revision conflict, network), PCO would never subscribe
             // to PCL state changes and the player would stay "pending" forever.
@@ -236,13 +237,13 @@ final class MultiCameraSessionViewModel: ObservableObject {
                     sessionDeviceId: sd.id, targetStatus: .ready,
                     deviceRevision: sd.revision
                 )
-                print("[LobbyVM] autoRegisterDevice: device \(sd.id) → ready")
+                MC1Log.notice("[LobbyVM] autoRegisterDevice: device \(sd.id) → ready")
             } catch {
-                print("[LobbyVM] autoRegisterDevice: updateDeviceStatus FAILED (non-fatal) error=\(error)")
+                MC1Log.notice("[LobbyVM] autoRegisterDevice: updateDeviceStatus FAILED (non-fatal) error=\(error)")
             }
         } catch {
             deviceRegisterError = "\(error)"
-            print("[LobbyVM] autoRegisterDevice: FAILED error=\(error)")
+            MC1Log.notice("[LobbyVM] autoRegisterDevice: FAILED error=\(error)")
         }
     }
 
@@ -355,11 +356,23 @@ final class MultiCameraSessionViewModel: ObservableObject {
 
     static func shouldAutoPrepare(deviceRole: MCDeviceRole) -> Bool {
         switch deviceRole {
-        case .instructorPrimary, .playerPrimary, .playerSecondary:
+        case .playerPrimary, .playerSecondary:
             return true
-        case .auxiliaryCamera:
+        case .instructorPrimary, .auxiliaryCamera:
+            // MC2-PR1 final topology: the instructor (iPad) is a non-recording
+            // coordinator — it must never open a capture session or produce a
+            // capture file. Auxiliary (GoPro) capture is driven over HTTP.
             return false
         }
+    }
+
+    /// True when this device is expected to produce a local capture file
+    /// during a cycle. Single source of truth = shouldAutoPrepare: a device
+    /// that never prepares a capture session must not be treated as a
+    /// recorder anywhere else (begin-cycle gate, CCO, dashboard panel).
+    var localCaptureExpected: Bool {
+        guard let role = myDeviceRole else { return true }
+        return Self.shouldAutoPrepare(deviceRole: role)
     }
 
     /// Explicit POSITIVE allow-list — only these device roles may attach a

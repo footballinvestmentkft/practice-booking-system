@@ -55,7 +55,9 @@ def check_deep_link_parity() -> None:
                                  re.M))
     enum_cases = {a or b for a, b in enum_cases if (a or b)}
 
-    handled_actions = set(re.findall(r'lastAction = \.(\w+)', bridge))
+    # Actions are posted via post(.case) since the sequenced-envelope refactor
+    # (P0 hardening, 2026-07-04 — replay protection).
+    handled_actions = set(re.findall(r'post\(\.(\w+)', bridge))
     dispatch_cases = set(re.findall(r'case \.(\w+)\(', lobby)) | set(re.findall(r'case \.(\w+):', lobby))
 
     missing_dispatch = handled_actions - dispatch_cases
@@ -211,15 +213,16 @@ def check_skeleton_feed_wiring() -> None:
         check(name, ok)
 
 
-# ── CHECK 5: device routing (iPhone=instructor, iPad=player, GoPro managed_by) ──
+# ── CHECK 5: device routing (MC2-PR1 final topology: iPad=non-recording ──────
+#    instructor, iPhone=player + GoPro bridge, GoPro managed_by the player)
 
 def check_device_routing() -> None:
     lib_src = read(LIB_PY)
     ctx_match = re.search(r"class ScenarioContext:.*?(?=\n\n@dataclass|\Z)", lib_src, re.S)
-    ok_ipad = bool(ctx_match and re.search(r'ipad_role:\s*str\s*=\s*"player"', ctx_match.group(0)))
-    ok_iphone = bool(ctx_match and re.search(r'iphone_role:\s*str\s*=\s*"instructor"', ctx_match.group(0)))
-    check("ScenarioContext default: iPad role = player", ok_ipad)
-    check("ScenarioContext default: iPhone role = instructor", ok_iphone)
+    ok_ipad = bool(ctx_match and re.search(r'ipad_role:\s*str\s*=\s*"instructor"', ctx_match.group(0)))
+    ok_iphone = bool(ctx_match and re.search(r'iphone_role:\s*str\s*=\s*"player"', ctx_match.group(0)))
+    check("ScenarioContext default: iPad role = instructor (non-recording)", ok_ipad)
+    check("ScenarioContext default: iPhone role = player", ok_iphone)
 
     scenarios_src = read(SCENARIOS_PY)
     fn_match = re.search(
@@ -227,8 +230,8 @@ def check_device_routing() -> None:
         scenarios_src, re.S,
     )
     gopro_ok = bool(fn_match and re.search(
-        r'device_role="auxiliary_camera".*?managed_by_device_id=instructor_id', fn_match.group(0), re.S))
-    check("GoPro registered as auxiliary_camera managed_by instructor_id", gopro_ok)
+        r'device_role="auxiliary_camera".*?managed_by_device_id=player_id', fn_match.group(0), re.S))
+    check("GoPro registered as auxiliary_camera managed_by player_id", gopro_ok)
 
 
 # ── CHECK 6: artifact collector completeness ────────────────────────────────
@@ -260,21 +263,29 @@ def check_artifact_collectors() -> None:
     # corroborating evidence — a scenario that only writes the file but never checks
     # udpPacketsReceived/videoPIDFound/decodeSuccesses would let a silently-dead GoPro
     # preview report PASS.
-    gate_ok = '"gopro preview stream quality"' in body and bool(re.search(
-        r'critical_ok = all\(.*?"gopro preview stream quality".*?\)', scenarios_src, re.S,
-    ))
+    #
+    # Scoped to the tricamera scenario BODY (2026-07-04 hardening) — the previous
+    # whole-file regex matched any `critical_ok = all(` anywhere before the step
+    # string anywhere, i.e. it never actually verified THIS scenario's gate.
+    critical_block_match = re.search(r"critical_ok = all\(.*?\n        \)", body, re.S)
+    critical_block = critical_block_match.group(0) if critical_block_match else ""
+    check("tricamera scenario has a critical_ok gate block", bool(critical_block))
+
+    gate_ok = '"gopro preview stream quality"' in body and \
+        '"gopro preview stream quality"' in critical_block
     check("gopro preview stream quality gates PASS (critical_ok)", gate_ok)
 
-    # Per-panel (instructor/player/gopro) pose overlay frame-traffic collection must also
-    # be present AND gate critical_ok — same reasoning as the GoPro preview quality check.
+    # Per-panel (instructor/player/gopro) pose overlay frame-traffic collection must
+    # stay present (writer↔reader key contract pinned until MC2-PR3 removes both
+    # sides together), but per the 2026-07-12 no-MPC architecture decision the
+    # live-panel gates must NOT gate PASS — the dashboard moves to backend-polled
+    # status/thumbnail panels and this scenario is superseded by
+    # final-topology-proof in MC2-PR4.
     panel_names = ("instructor", "player", "gopro")
     pose_collected = "pose_overlay_diag" in body
-    pose_gated = all(
-        bool(re.search(rf'critical_ok = all\(.*?"{p} panel frame traffic".*?\)', scenarios_src, re.S))
-        for p in panel_names
-    )
+    pose_not_gated = all(f'"{p} panel frame traffic"' not in critical_block for p in panel_names)
     check("pose_overlay_diag.json collected (per-panel frame traffic)", pose_collected)
-    check("per-panel frame traffic gates PASS (critical_ok) for instructor+player+gopro", pose_gated)
+    check("per-panel frame traffic is corroborating-only, NOT in critical_ok (no-MPC decision)", pose_not_gated)
 
 
 # ── CHECK 8: per-panel pose overlay diagnostics wiring (counters + export + deep link) ──
@@ -298,7 +309,8 @@ def check_pose_overlay_diagnostics_wiring() -> None:
 
     dashboard_src = read(IOS_MC / "InstructorDashboardView.swift")
     export_ok = bool(re.search(
-        r"case \.poseOverlayDiag = action.*?PoseOverlayDiagWriter\.write\(", dashboard_src, re.S,
+        r"case \.poseOverlayDiag = envelope\.action.*?PoseOverlayDiagWriter\.write\(",
+        dashboard_src, re.S,
     ))
     check("InstructorDashboardView exports pose overlay diag on pose-overlay-diag action", export_ok)
 
@@ -327,21 +339,40 @@ def check_orientation_aspect_wiring() -> None:
           f"missing: {[f for f in consistency_fields if f not in capture_mgr_src]}" if not consistency_ok else "")
 
     scenarios_src = read(SCENARIOS_PY)
+    fn_match = re.search(
+        r"def scenario_tricamera_capture_skeleton_proof.*?(?=\ndef scenario_gopro_network_routing_diag)",
+        scenarios_src, re.S,
+    )
+    body = fn_match.group(0) if fn_match else ""
+    critical_block_match = re.search(r"critical_ok = all\(.*?\n        \)", body, re.S)
+    critical_block = critical_block_match.group(0) if critical_block_match else ""
+    # MC2-PR1 final topology: the iPad is a NON-RECORDING instructor — its old
+    # orientation/aspect gates are replaced by the negative-evidence gate
+    # ("instructor no capture output"). Only the player iPhone still records
+    # on the iOS side, so orientation/aspect stays pinned for it + the GoPro.
     orientation_gate_steps = [
-        "iphone orientation consistent", "iphone effective aspect ratio is 16:9",
-        "ipad orientation consistent", "ipad effective aspect ratio is 16:9",
+        "iphone orientation consistent", "iphone effective aspect ratio matches orientation",
+        "iphone encoded aspect ratio is 16:9",
+        "instructor no capture output",
         "gopro preview aspect ratio is 16:9",
     ]
-    scenario_asserts_ok = all(f'"{step}"' in scenarios_src for step in orientation_gate_steps)
-    missing_steps = [s for s in orientation_gate_steps if f'"{s}"' not in scenarios_src]
-    check("scenario asserts orientation-consistency + 16:9 aspect for iPhone/iPad/GoPro",
+    scenario_asserts_ok = all(f'"{step}"' in body for step in orientation_gate_steps)
+    missing_steps = [s for s in orientation_gate_steps if f'"{s}"' not in body]
+    check("scenario asserts player orientation/aspect + instructor no-capture (MC2-PR1)",
           scenario_asserts_ok,
           f"missing report.step(...) for: {missing_steps}" if not scenario_asserts_ok else "")
-    gated_ok = all(
-        bool(re.search(rf'critical_ok = all\(.*?"{re.escape(step)}".*?\)', scenarios_src, re.S))
-        for step in orientation_gate_steps
-    )
+    # Scoped to the tricamera critical_ok block (2026-07-04 hardening) — the
+    # previous whole-file regex could match a different scenario's gate.
+    gated_ok = all(f'"{step}"' in critical_block for step in orientation_gate_steps)
     check("orientation/aspect assertions gate PASS (critical_ok)", gated_ok)
+
+    # The effective-aspect EXPECTATION must be orientation-aware (2026-07-04
+    # physical-run proof): a portrait-mandated run (RC checklist J / #357)
+    # records a correct 9:16 effective aspect, so an unconditional 16:9
+    # expectation is unsatisfiable there. Pin the mapping itself.
+    aware_ok = bool(re.search(r'"portrait":\s*\(9,\s*16\)', scenarios_src)) \
+        and bool(re.search(r'"landscape":\s*\(16,\s*9\)', scenarios_src))
+    check("effective-aspect expectation is orientation-aware (portrait→9:16, landscape→16:9)", aware_ok)
 
     # "No distorting stretch" is a SwiftUI layout property, not runtime data — verify the
     # GoPro preview panel uses aspectRatio(contentMode: .fit), which by definition letterboxes
@@ -364,6 +395,161 @@ def check_log_capture_config() -> None:
     check("run_mc1_regression.sh guards against iPad/iPhone UDID collision (duplicate log)", ok)
     ok_override = "IPHONE_LEGACY_UDID" in src and "IPAD_LEGACY_UDID" in src
     check("run_mc1_regression.sh supports manual UDID override env vars", ok_override)
+
+    # P0 hardening (2026-07-04): legacy UDIDs must come from a real CoreDevice→legacy
+    # mapping (devicectl list devices --json-output → hardwareProperties.udid), NOT
+    # from `idevice_id -l` enumeration order — order-based assignment silently swapped
+    # the iPhone/iPad console logs and misattributed every console-grounded check.
+    mapping_ok = "_map_legacy_udid" in src and "hardwareProperties" in src
+    check("console log capture maps legacy UDIDs via devicectl identity (not list order)",
+          mapping_ok)
+    order_heuristic = bool(re.search(r'_LEGACY_UDIDS.*\|\s*head -1', src)) or \
+        bool(re.search(r"sed -n '2p'", src))
+    check("order-based legacy-UDID guessing (head -1 / sed -n 2p) is gone",
+          not order_heuristic)
+
+    # 2026-07-04 RCA: tricamera ran with the iPad console capture silently
+    # SKIPPED (WARN only) — the player-side failure left zero console evidence.
+    # Both the shell wrapper and the runner must hard-fail tricamera scenarios
+    # when either device console capture is unavailable.
+    check("run_mc1_regression.sh hard-fails tricamera scenarios without dual console capture",
+          "Dual-console hard precondition" in src and "exit 1" in src)
+    runner_src = read(REPO_ROOT / "scripts" / "mc1_regression" / "runner.py")
+    lib_src = read(REPO_ROOT / "scripts" / "mc1_regression" / "lib.py")
+    check("runner.py enforces check_dual_console_precondition before scenarios",
+          "check_dual_console_precondition" in runner_src)
+    check("lib.DUAL_CONSOLE_REQUIRED_SCENARIOS covers the tricamera proof",
+          '"tricamera-capture-skeleton-proof"' in lib_src
+          and "DUAL_CONSOLE_REQUIRED_SCENARIOS" in lib_src)
+
+
+# ── CHECK 11: pose overlay diag writer↔reader key contract ──────────────────
+#
+# P0 hardening (2026-07-04 review): the tricamera panel gate read a per-panel
+# key the Swift writer never emits, so every panel gate was a guaranteed false
+# FAIL. This check re-derives both sides of the contract from source; the same
+# contract is also pinned at test time by tests/test_diag_contract.py.
+
+def check_pose_diag_key_contract() -> None:
+    processor_src = read(IOS_MC / "LivePoseOverlayProcessor.swift")
+    snap = re.search(r"var diagnosticSnapshot: \[String: Any\] \{\s*\[(.*?)\]\s*\}",
+                     processor_src, re.S)
+    writer_keys = set(re.findall(r'"(\w+)":', snap.group(1))) if snap else set()
+    if re.search(r'd\["sourceFramesSeen"\]\s*=', processor_src):
+        writer_keys.add("sourceFramesSeen")
+    check("diagnosticSnapshot writer keys extractable", bool(writer_keys))
+
+    scenarios_src = read(SCENARIOS_PY)
+    reader_keys = set(re.findall(r'panel\.get\("(\w+)"', scenarios_src))
+    check("scenario reads at least one per-panel pose key", bool(reader_keys))
+
+    unknown = reader_keys - writer_keys
+    check(
+        "every per-panel key scenarios.py reads is emitted by PoseOverlayDiagWriter",
+        not unknown,
+        f"scenarios.py reads {sorted(unknown)} but the writer only emits "
+        f"{sorted(writer_keys)}" if unknown else "",
+    )
+    check("panel frame-traffic gate reads the writer's framesReceived counter",
+          "framesReceived" in reader_keys)
+
+
+# ── CHECK 12: stale-artifact invalidation + freshness gating ─────────────────
+
+def check_stale_artifact_protection() -> None:
+    lib_src = read(LIB_PY)
+    helpers_ok = ("def invalidate_app_container_file(" in lib_src
+                  and "def load_fresh_diag(" in lib_src
+                  and "STALE_DIAG_SENTINEL_KEY" in lib_src)
+    check("lib.py provides invalidate_app_container_file + load_fresh_diag + sentinel key",
+          helpers_ok)
+
+    scenarios_src = read(SCENARIOS_PY)
+    fn_match = re.search(
+        r"def scenario_tricamera_capture_skeleton_proof.*?(?=\ndef scenario_gopro_network_routing_diag)",
+        scenarios_src, re.S,
+    )
+    body = fn_match.group(0) if fn_match else ""
+
+    # Invalidation must run BEFORE the first device interaction (join), and its
+    # step must gate critical_ok — a failed invalidation means stale evidence
+    # cannot be ruled out.
+    inv_pos = body.find("_invalidate_stale_diags(")
+    join_pos = body.find("_join_both_devices(")
+    check("tricamera invalidates stale diag artifacts before joining devices",
+          inv_pos != -1 and join_pos != -1 and inv_pos < join_pos,
+          f"inv_pos={inv_pos} join_pos={join_pos}")
+    critical_block_match = re.search(r"critical_ok = all\(.*?\n        \)", body, re.S)
+    critical_block = critical_block_match.group(0) if critical_block_match else ""
+    check("stale-diag invalidation step gates PASS (critical_ok)",
+          '"stale diag artifacts invalidated"' in critical_block)
+
+    # Every gating diag read in the tricamera scenario must go through the
+    # freshness loader instead of raw json.loads.
+    fresh_reads = body.count("load_fresh_diag(")
+    check("tricamera gating diag reads use load_fresh_diag (>=5 call sites)",
+          fresh_reads >= 5, f"found {fresh_reads} load_fresh_diag call(s)")
+
+
+# ── CHECK 13: deep-link action replay protection (consume mechanism) ─────────
+
+def check_action_consume_mechanism() -> None:
+    bridge_src = read(IOS_MC / "MC1AutomationBridge.swift")
+    envelope_ok = ("struct MC1SequencedAction" in bridge_src
+                   and re.search(r"let seq: Int", bridge_src) is not None)
+    check("MC1AutomationBridge posts sequenced action envelopes", envelope_ok)
+    consume_ok = bool(re.search(
+        r"func consume\(_ envelope: MC1SequencedAction\) -> Bool", bridge_src))
+    check("MC1AutomationBridge.consume() exists (once-only claim per action)", consume_ok)
+
+    # Both subscribers must claim via consume() before dispatching — otherwise a
+    # @Published replay on view rebuild re-runs the last action (double GoPro
+    # shutter / spurious reset-session / clobbered pose_overlay_diag.json).
+    lobby_src = read(IOS_MC / "MultiCameraLobbyView.swift")
+    lobby_recv = re.search(r"onReceive\(MC1AutomationBridge\.shared\.\$lastAction.*?switch",
+                           lobby_src, re.S)
+    lobby_gated = bool(lobby_recv and "consume(" in lobby_recv.group(0))
+    check("MultiCameraLobbyView dispatch is gated by consume()", lobby_gated)
+
+    dash_src = read(IOS_MC / "InstructorDashboardView.swift")
+    dash_recv = re.search(
+        r"onReceive\(MC1AutomationBridge\.shared\.\$lastAction.*?PoseOverlayDiagWriter",
+        dash_src, re.S)
+    dash_gated = bool(dash_recv and "consume(" in dash_recv.group(0))
+    check("InstructorDashboardView poseOverlayDiag export is gated by consume()", dash_gated)
+
+
+# ── CHECK 14: interactive scenarios excluded from unattended `all` ───────────
+
+def check_interactive_scenarios_excluded_from_all() -> None:
+    scenarios_src = read(SCENARIOS_PY)
+    set_match = re.search(r"INTERACTIVE_SCENARIOS = \{(.*?)\}", scenarios_src, re.S)
+    declared = set(re.findall(r'"([\w-]+)"', set_match.group(1))) if set_match else set()
+    check("INTERACTIVE_SCENARIOS declared in scenarios.py", bool(declared))
+
+    # Every scenario function that calls input() must be in the interactive set.
+    # Map input() call positions back to their enclosing scenario name.
+    fn_spans: list[tuple[int, str]] = [
+        (m.start(), m.group(1)) for m in
+        re.finditer(r'    report = ScenarioReport\(name="([\w-]+)"', scenarios_src)
+    ]
+    undeclared = set()
+    for m in re.finditer(r"\binput\(", scenarios_src):
+        owner = None
+        for start, name in fn_spans:
+            if start < m.start():
+                owner = name
+        if owner and owner not in declared:
+            undeclared.add(owner)
+    check("every input()-blocking scenario is declared interactive",
+          not undeclared,
+          f"scenario(s) with input() missing from INTERACTIVE_SCENARIOS: {sorted(undeclared)}"
+          if undeclared else "")
+
+    runner_src = read(REPO_ROOT / "scripts" / "mc1_regression" / "runner.py")
+    filter_ok = "INTERACTIVE_SCENARIOS" in runner_src and bool(re.search(
+        r'k not in INTERACTIVE_SCENARIOS', runner_src))
+    check("runner.py excludes INTERACTIVE_SCENARIOS from --scenario all", filter_ok)
 
 
 # ── CHECK 10: SKIP_STATIC_PREFLIGHT can never produce a valid PASS ─────────
@@ -403,6 +589,10 @@ def main() -> int:
     check_orientation_aspect_wiring()
     check_log_capture_config()
     check_skip_preflight_cannot_pass()
+    check_pose_diag_key_contract()
+    check_stale_artifact_protection()
+    check_action_consume_mechanism()
+    check_interactive_scenarios_excluded_from_all()
 
     print("=== MC1 static preflight check ===\n")
     for line in PASSES:

@@ -79,7 +79,10 @@ class CycleService:
     ) -> CaptureCycle:
         """
         Snapshot all non-removed session devices → CaptureCycleDevice rows.
-        required = True for all roles except auxiliary_camera.
+        required = True only for player roles (player_primary/player_secondary).
+        The instructor device is a non-recording coordinator (MC2-PR1, final
+        topology: iPad instructor without camera); auxiliary_camera (GoPro)
+        completion is enforced at the regression-gate level, not here.
 
         Session must be ACTIVE.  Only one non-terminal cycle may exist per
         session at a time.  The session row is locked (SELECT FOR UPDATE)
@@ -123,7 +126,10 @@ class CycleService:
             idempotency_key=idempotency_key,
         )
         for sd in devices:
-            required = DeviceRole(sd.device_role) != DeviceRole.AUXILIARY_CAMERA
+            required = DeviceRole(sd.device_role) in (
+                DeviceRole.PLAYER_PRIMARY,
+                DeviceRole.PLAYER_SECONDARY,
+            )
             self.repo.add_cycle_device(
                 capture_cycle_id=cycle.id,
                 session_device_id=sd.id,
@@ -225,17 +231,22 @@ class CycleService:
         cycle_device_revision: int,
     ) -> CaptureCycle:
         cycle = self._require_cycle(cycle_id)
+
+        # Idempotent duplicate MUST be checked before the cycle-status guard:
+        # with players-only required sets (MC2-PR1) the first confirm_stop of
+        # the last required device completes the cycle, so a duplicate confirm
+        # arrives at a COMPLETED cycle — the documented contract is that a
+        # duplicate confirm_stop is always a safe 200, never a 422 race.
+        ccd = self._require_cycle_device(cycle_id, session_device_id)
+        if CycleDeviceRecordingStatus(ccd.recording_status) == CycleDeviceRecordingStatus.CONFIRMED_STOP:
+            self.db.refresh(cycle)
+            return cycle
+
         current_status = CycleStatus(cycle.status)
         if current_status not in (CycleStatus.RECORDING, CycleStatus.STOPPING):
             raise InvalidTransitionError(
                 "cycle", cycle.status, "confirm_device_stop requires recording or stopping"
             )
-
-        ccd = self._require_cycle_device(cycle_id, session_device_id)
-        # Idempotent: already confirmed stop — return current cycle state
-        if CycleDeviceRecordingStatus(ccd.recording_status) == CycleDeviceRecordingStatus.CONFIRMED_STOP:
-            self.db.refresh(cycle)
-            return cycle
         if ccd.revision != cycle_device_revision:
             raise RevisionConflictError("cycle_device", cycle_device_revision, ccd.revision)
         if CycleDeviceRecordingStatus(ccd.recording_status) != CycleDeviceRecordingStatus.CONFIRMED_START:

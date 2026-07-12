@@ -36,6 +36,25 @@ PLAYER_PASSWORD=<player-password> \
 `--scenario` accepts `smoke`, `multicycle`, `retry`, `finalization`, or `all`
 (default `all`). `--cycles N` (default 3) only affects `multicycle`.
 
+`all` is strictly UNATTENDED: it excludes both `gopro-*` scenarios (physical
+GoPro required) and every scenario listed in `INTERACTIVE_SCENARIOS`
+(`scenarios.py`) that blocks on operator `input()` — including
+`tricamera-capture-skeleton-proof`. Interactive scenarios must be run
+explicitly by name (P0 hardening, 2026-07-04).
+
+Stale-artifact protection (P0 hardening, 2026-07-04): diag-file-gated
+scenarios begin by overwriting every on-device diag file they later read
+(`gopro_stream_diag.json`, `pose_overlay_diag.json`,
+`capture_metadata_diag.json`, `skeleton_output.json`, ...) with a
+`mc1_invalidated` sentinel, and gates load artifacts through
+`lib.load_fresh_diag`, which rejects the sentinel and any diag whose own
+timestamp predates the scenario start. A leftover diag from a previous run
+can therefore never be read back as this run's evidence; in
+`tricamera-capture-skeleton-proof` the `stale diag artifacts invalidated`
+step itself gates PASS. Console logs are attributed to devices via a
+`devicectl list devices --json-output` CoreDevice-to-legacy UDID mapping,
+never via `idevice_id -l` enumeration order.
+
 ## Supported scenarios
 
 | Scenario | Status | What it checks |

@@ -27,17 +27,34 @@ from .lib import (
     copy_from_device,
     create_session,
     device_recording_status,
+    device_required,
     extract_capture_path_from_log,
     extract_skeleton_path_from_log,
     get_server_time_iso,
     get_session,
+    invalidate_app_container_file,
     latest_cycle,
     list_cycles,
+    load_fresh_diag,
     poll_until,
     register_device,
     send_deep_link,
     transition_session,
+    utc_now_iso,
 )
+
+# Scenarios that block on operator input() (manual GoPro WiFi join, visual
+# checks). runner.py MUST exclude these from an unattended `--scenario all`
+# run — they only run when named explicitly (P0 hardening, 2026-07-04 review).
+INTERACTIVE_SCENARIOS = {
+    "tricamera-capture-skeleton-proof",
+    "gopro-network-routing-diag",
+    "gopro-preview-poc",
+    "gopro-combined-cycle-proof",
+    "gopro-camera-state-probe",
+    "gopro-preview-aspect-probe",
+    "gopro-preset-write-validation",
+}
 
 DEVICE_REGISTER_TIMEOUT_SECONDS = 120
 CYCLE_CONFIRM_TIMEOUT_SECONDS = 30
@@ -58,6 +75,49 @@ def _aspect_ratio_matches(aspect_str, expected_w=16, expected_h=9, tolerance=0.0
         return abs((w / h) - (expected_w / expected_h)) <= tolerance
     except ValueError:
         return False
+
+
+def _expected_effective_aspect(file_orientation_coarse):
+    """Orientation-aware expected EFFECTIVE (post-rotation display) aspect.
+
+    2026-07-04 physical-run proof (ffprobe on the pulled .mov files): the app
+    always encodes the sensor's landscape 1280x720 buffer and bakes rotation
+    into preferredTransform, so a portrait-mounted device's effective display
+    aspect is BY DEFINITION 9:16. The old unconditional 16:9 expectation could
+    never pass under the RC-checklist J-section portrait mandate (issue #357)
+    even though the recording itself was correct. Returns None for unknown
+    orientation — no expectation can be derived there, and "unknown" is itself
+    an evidence failure (the orientation-consistent gate catches it too).
+    """
+    return {"portrait": (9, 16), "landscape": (16, 9)}.get(file_orientation_coarse)
+
+
+def _effective_aspect_gate(meta):
+    """(ok, expected_label) for the orientation-aware effective-aspect gate."""
+    expected = _expected_effective_aspect((meta or {}).get("fileOrientationCoarse"))
+    if expected is None:
+        return False, None
+    w, h = expected
+    return _aspect_ratio_matches(meta.get("effectiveAspectRatio"), w, h), f"{w}:{h}"
+
+
+def _encoded_aspect_is_16_9(meta):
+    """16:9 check on the ENCODED buffer (actualResolution "WxH") — orientation-
+    independent, because the sensor buffer is landscape 16:9 regardless of how
+    the device is mounted. Returns None when actualResolution is absent or
+    unparseable: there is no metadata to check, so the caller skips the step
+    instead of asserting on a guess."""
+    raw = (meta or {}).get("actualResolution")
+    if not raw or "x" not in str(raw):
+        return None
+    try:
+        w_str, h_str = str(raw).lower().split("x", 1)
+        w, h = float(w_str), float(h_str)
+    except ValueError:
+        return None
+    if h == 0:
+        return None
+    return abs((w / h) - (16 / 9)) <= 0.02
 
 # After the script PATCHes session to DEVICES_READY the iOS VM needs one 3s poll
 # cycle to see the updated status + fresh revision before begin-cycle is sent.
@@ -123,6 +183,39 @@ def _dump_session_state(ctx: ScenarioContext, session_uuid: str, label: str) -> 
         print(f"  [{label}] diagnostic dump failed: {e}")
 
 
+def _pull_pco_failure_diag(ctx: ScenarioContext, report: ScenarioReport,
+                           scenario_started_at) -> None:
+    """Pull the player-side PCO failure evidence (Documents/pco_failure_diag.json,
+    written by PCOFailureDiagWriter on every PlayerCaptureOrchestrator .failed
+    transition — 2026-07-04 RCA). Best-effort: turns a bare
+    "Timeout waiting for: player confirmed_start" into a concrete
+    player-side reason (e.g. captureStartTimeout with the last capture state).
+    Never raises; reported as evidence, never gates PASS.
+
+    MC2-PR1: the player device is resolved from the role config (final
+    topology: iPhone = player) instead of the old hardcoded iPad."""
+    player_udid = ctx.iphone_udid if ctx.iphone_role == "player" else ctx.ipad_udid
+    local = str(ctx.artifact.dir / "pco_failure_diag.json")
+    try:
+        if not copy_app_container_file(player_udid, "Documents/pco_failure_diag.json", local):
+            report.step("player pco failure diag", False,
+                        error="pco_failure_diag.json not found on the player device — "
+                              "player PCO never transitioned to .failed during this run "
+                              "(cycle never seen, or hang predates the watchdog build)")
+            return
+        diag, stale_reason = load_fresh_diag(local, scenario_started_at)
+        if diag is None:
+            report.step("player pco failure diag", False, error=stale_reason)
+            return
+        report.step("player pco failure diag", True,
+                    reason=diag.get("reason"),
+                    cycleId=diag.get("cycleId"),
+                    lastObservedCaptureState=diag.get("lastObservedCaptureState"),
+                    diagTimestamp=diag.get("timestamp"))
+    except Exception as e:  # noqa: BLE001 — evidence pull must never mask the scenario error
+        report.step("player pco failure diag", False, error=f"pull failed: {e}")
+
+
 def _mark_devices_ready(ctx: ScenarioContext, report: ScenarioReport, session_uuid: str) -> None:
     import time as _time
     # Script-driven backend transition: GET fresh revision + PATCH devices_ready.
@@ -144,6 +237,28 @@ def _mark_devices_ready(ctx: ScenarioContext, report: ScenarioReport, session_uu
     _time.sleep(POST_DEVICES_READY_SETTLE_SECONDS)
 
 
+def _invalidate_stale_diags(ctx: ScenarioContext, report: ScenarioReport,
+                            targets: list[tuple[str, str]], run_id: str,
+                            step_name: str = "stale diag artifacts invalidated") -> bool:
+    """Overwrite every on-device diag file this scenario will gate on with a
+    stale-marker sentinel (P0 hardening — see lib.invalidate_app_container_file).
+
+    `targets` is a list of (udid, container-relative path). Records one report
+    step; returns True only if EVERY target was invalidated. A failed
+    invalidation means this run cannot distinguish fresh evidence from a
+    previous run's leftovers, so callers must treat False as gate-critical.
+    """
+    results = {}
+    all_ok = True
+    scratch = ctx.artifact.dir / "diag_sentinels"
+    for udid, relative_path in targets:
+        ok = invalidate_app_container_file(udid, relative_path, run_id, scratch)
+        results[f"{udid[:8]}:{relative_path}"] = ok
+        all_ok = all_ok and ok
+    report.step(step_name, all_ok, run_id=run_id, **results)
+    return all_ok
+
+
 def _run_one_cycle(
     ctx: ScenarioContext, report: ScenarioReport, session_uuid: str,
     instructor_device_id: int, player_device_id: int, cycle_index: int, record_seconds: int = RECORD_SECONDS,
@@ -152,20 +267,40 @@ def _run_one_cycle(
     print(f"Sending begin-cycle deep link to instructor (cycle {cycle_index})...")
     send_deep_link(instructor_udid, "begin-cycle")
 
+    # MC2-PR1 final topology: the instructor is a NON-RECORDING coordinator.
+    # It must never confirm — a confirm without a capture file would be
+    # fabricated evidence, so any instructor status other than "pending"
+    # fails the cycle immediately (no silent fake confirmation). The backend
+    # must also have snapshotted it with required == False (players-only
+    # required set) — both halves of the PR1 gate are asserted on every poll.
+    def _instructor_pending_guard(cyc) -> None:
+        s_inst = device_recording_status(cyc, instructor_device_id)
+        if s_inst != "pending":
+            raise ValidationError(
+                f"instructor device {instructor_device_id} has recording_status="
+                f"{s_inst!r} — a non-recording coordinator must stay 'pending'"
+            )
+        req_inst = device_required(cyc, instructor_device_id)
+        if req_inst is not False:
+            raise ValidationError(
+                f"instructor cycle_device required={req_inst!r} — the required "
+                f"set must be players-only (instructor required == False)"
+            )
+
     def confirmed_start():
         cycles = list_cycles(ctx.api_base, ctx.instructor_token, session_uuid)
         cyc = latest_cycle(cycles)
         if not cyc or cyc["cycle_index"] != cycle_index:
             return None
-        s1 = device_recording_status(cyc, instructor_device_id)
-        s2 = device_recording_status(cyc, player_device_id)
-        if s1 == "confirmed_start" and s2 == "confirmed_start":
-            return {"instructor": s1, "player": s2}
+        _instructor_pending_guard(cyc)
+        s_play = device_recording_status(cyc, player_device_id)
+        if s_play == "confirmed_start":
+            return {"player": s_play, "instructor": "pending"}
         return None
 
     try:
         confirmed = poll_until(
-            f"cycle {cycle_index} confirmed_start on both devices",
+            f"cycle {cycle_index} player confirmed_start (instructor pending)",
             CYCLE_CONFIRM_TIMEOUT_SECONDS, confirmed_start,
         )
         report.step(f"cycle {cycle_index} confirmed_start", True, **confirmed)
@@ -186,15 +321,15 @@ def _run_one_cycle(
         cyc = latest_cycle(cycles)
         if not cyc or cyc["cycle_index"] != cycle_index:
             return None
-        s1 = device_recording_status(cyc, instructor_device_id)
-        s2 = device_recording_status(cyc, player_device_id)
-        if cyc["status"] == "completed" and s1 == "confirmed_stop" and s2 == "confirmed_stop":
-            return {"instructor": s1, "player": s2}
+        _instructor_pending_guard(cyc)
+        s_play = device_recording_status(cyc, player_device_id)
+        if cyc["status"] == "completed" and s_play == "confirmed_stop":
+            return {"player": s_play, "instructor": "pending"}
         return None
 
     try:
         confirmed = poll_until(
-            f"cycle {cycle_index} confirmed_stop on both devices",
+            f"cycle {cycle_index} player confirmed_stop + completed (instructor pending)",
             CYCLE_CONFIRM_TIMEOUT_SECONDS, confirmed_stop,
         )
         report.step(f"cycle {cycle_index} confirmed_stop", True, **confirmed)
@@ -256,82 +391,127 @@ def scenario_multicycle(ctx: ScenarioContext) -> ScenarioReport:
 
 
 def scenario_capture_quality_proof(ctx: ScenarioContext) -> ScenarioReport:
-    """Capture Quality + Metadata block: runs one ordinary smoke cycle (both
-    iPad + iPhone recording locally, the proven 2-device flow), then pulls
-    capture_metadata_diag.json from BOTH devices and validates the explicit
-    720p/30fps-or-360p/30fps-fallback profile actually took effect — not the
-    old device-default `.high` preset.
+    """Capture Quality + Metadata block (MC2-PR1 final topology).
 
-    PASS criteria (per device, capture_metadata_diag.json-grounded):
+    Runs one ordinary smoke cycle — iPad = NON-RECORDING instructor, iPhone =
+    player (the only local recorder) — then:
+
+    PLAYER PASS criteria (capture_metadata_diag.json-grounded, fresh-only):
       1. actualResolution in {"1280x720", "640x360"}
       2. actualFPS within [28, 32] (nominal frame rate tolerance around 30)
       3. actualCodec is a non-empty, known value ("h264")
       4. actualOrientation is portrait/landscape, not "unknown(...)"
+
+    INSTRUCTOR PASS criterion (negative evidence, TOPO-G7 direction):
+      the instructor produced NO capture output — its capture_metadata_diag
+      is either never written this run (sentinel/stale) or fresh but with no
+      output file (outputFilePath null, no fileSizeBytes > 0). A fresh diag
+      showing a capture file on the instructor is a hard FAIL.
     """
     import json
-    from pathlib import Path
+    from datetime import datetime as _dt, timezone as _tz
 
     report = ScenarioReport(name="capture-quality-proof", passed=False)
+    scenario_started_at = _dt.now(_tz.utc)
+    run_id = f"capture-quality-proof-{scenario_started_at.strftime('%Y%m%dT%H%M%SZ')}"
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
     print(f"[capture-quality] session created: {session_uuid}")
 
+    player_udid = ctx.iphone_udid if ctx.iphone_role == "player" else ctx.ipad_udid
+    instructor_udid = ctx.ipad_udid if player_udid == ctx.iphone_udid else ctx.iphone_udid
+
     try:
+        # Stale-artifact protection: both devices' capture diag gets a sentinel
+        # so a leftover file from an earlier (pre-MC2) run can never be read
+        # back as this run's evidence — critical for the instructor negative gate.
+        sentinel_ok = _invalidate_stale_diags(ctx, report, run_id=run_id, targets=[
+            (player_udid, "Documents/capture_metadata_diag.json"),
+            (instructor_udid, "Documents/capture_metadata_diag.json"),
+        ])
+        if not sentinel_ok:
+            raise ValidationError("stale-diag invalidation failed — evidence freshness cannot be proven")
+
         instructor_id, player_id = _join_both_devices(ctx, report, session_uuid)
         _mark_devices_ready(ctx, report, session_uuid)
         ok = _run_one_cycle(ctx, report, session_uuid, instructor_id, player_id, cycle_index=0)
         if not ok:
             raise ValidationError("base smoke cycle did not complete — capture quality cannot be assessed")
 
-        send_deep_link(ctx.ipad_udid, "capture-info")
-        send_deep_link(ctx.iphone_udid, "capture-info")
+        # capture-info to BOTH: the player must show a valid capture; the
+        # instructor must show the absence of one.
+        send_deep_link(player_udid, "capture-info")
+        send_deep_link(instructor_udid, "capture-info")
         import time as _time
         _time.sleep(3)
 
-        def _check_device(udid: str, label: str) -> dict:
-            local_diag = str(ctx.artifact.dir / f"capture_metadata_diag_{label}.json")
-            if not copy_app_container_file(udid, "Documents/capture_metadata_diag.json", local_diag):
-                report.step(f"[{label}] capture_metadata_diag.json collected", False, error="copy failed")
-                raise ValidationError(f"capture_metadata_diag.json not collectable from {label}")
-            try:
-                diag = json.loads(Path(local_diag).read_text())
-            except (OSError, json.JSONDecodeError) as e:
-                report.step(f"[{label}] capture_metadata_diag.json collected", False, error=f"unparseable: {e}")
-                raise ValidationError(f"capture_metadata_diag.json from {label} unparseable: {e}")
-            report.step(f"[{label}] capture_metadata_diag.json collected", True, **diag)
-            print(f"[capture-quality] {label} diag: {json.dumps(diag, indent=2)}")
-            return diag
+        # --- Player: full quality gates (fresh diag required) ---
+        local_player_diag = str(ctx.artifact.dir / "capture_metadata_diag_player.json")
+        if not copy_app_container_file(player_udid, "Documents/capture_metadata_diag.json", local_player_diag):
+            report.step("[player] capture_metadata_diag.json collected", False, error="copy failed")
+            raise ValidationError("capture_metadata_diag.json not collectable from player")
+        diag, stale_reason = load_fresh_diag(local_player_diag, scenario_started_at)
+        if diag is None:
+            report.step("[player] capture_metadata_diag.json collected", False, error=stale_reason)
+            raise ValidationError(f"player capture diag not fresh: {stale_reason}")
+        report.step("[player] capture_metadata_diag.json collected", True, **diag)
+        print(f"[capture-quality] player diag: {json.dumps(diag, indent=2)}")
 
-        for udid, label in ((ctx.ipad_udid, "ipad"), (ctx.iphone_udid, "iphone")):
-            diag = _check_device(udid, label)
-            resolution = diag.get("actualResolution")
-            fps = diag.get("actualFPS")
-            codec = diag.get("actualCodec")
-            orientation = diag.get("actualOrientation")
+        resolution = diag.get("actualResolution")
+        fps = diag.get("actualFPS")
+        codec = diag.get("actualCodec")
+        orientation = diag.get("actualOrientation")
 
-            res_ok = resolution in ("1280x720", "640x360")
-            fps_ok = isinstance(fps, (int, float)) and 28 <= fps <= 32
-            codec_ok = codec in ("h264",)
-            orient_ok = orientation in ("portrait", "landscapeLeft", "landscapeRight", "portraitUpsideDown")
+        res_ok = resolution in ("1280x720", "640x360")
+        fps_ok = isinstance(fps, (int, float)) and 28 <= fps <= 32
+        codec_ok = codec in ("h264",)
+        orient_ok = orientation in ("portrait", "landscapeLeft", "landscapeRight", "portraitUpsideDown")
 
-            report.step(f"[{label}] resolution in {{720p,360p}}", res_ok, value=resolution)
-            report.step(f"[{label}] fps ~30", fps_ok, value=fps)
-            report.step(f"[{label}] codec explicit", codec_ok, value=codec)
-            report.step(f"[{label}] orientation known", orient_ok, value=orientation)
+        report.step("[player] resolution in {720p,360p}", res_ok, value=resolution)
+        report.step("[player] fps ~30", fps_ok, value=fps)
+        report.step("[player] codec explicit", codec_ok, value=codec)
+        report.step("[player] orientation known", orient_ok, value=orientation)
 
-            print(f"[capture-quality] {label}: resolution={'OK' if res_ok else 'FAIL'}({resolution}) "
-                  f"fps={'OK' if fps_ok else 'FAIL'}({fps}) codec={'OK' if codec_ok else 'FAIL'}({codec}) "
-                  f"orientation={'OK' if orient_ok else 'FAIL'}({orientation})")
+        print(f"[capture-quality] player: resolution={'OK' if res_ok else 'FAIL'}({resolution}) "
+              f"fps={'OK' if fps_ok else 'FAIL'}({fps}) codec={'OK' if codec_ok else 'FAIL'}({codec}) "
+              f"orientation={'OK' if orient_ok else 'FAIL'}({orientation})")
 
-            if not (res_ok and fps_ok and codec_ok and orient_ok):
-                raise ValidationError(
-                    f"{label} capture quality check failed: resolution={resolution} fps={fps} "
-                    f"codec={codec} orientation={orientation}"
-                )
+        if not (res_ok and fps_ok and codec_ok and orient_ok):
+            raise ValidationError(
+                f"player capture quality check failed: resolution={resolution} fps={fps} "
+                f"codec={codec} orientation={orientation}"
+            )
+
+        # --- Instructor: negative evidence (no capture output) ---
+        local_inst_diag = str(ctx.artifact.dir / "capture_metadata_diag_instructor.json")
+        inst_copy_ok = copy_app_container_file(
+            instructor_udid, "Documents/capture_metadata_diag.json", local_inst_diag)
+        if not inst_copy_ok:
+            # No diag at all also proves no capture — acceptable, but note it.
+            report.step("[instructor] no capture output", True,
+                        note="capture_metadata_diag.json not present on instructor")
+        else:
+            inst_diag, inst_stale = load_fresh_diag(local_inst_diag, scenario_started_at)
+            if inst_diag is None:
+                # Sentinel still in place / stale → the app never wrote capture
+                # evidence during this run → no capture happened.
+                report.step("[instructor] no capture output", True, note=inst_stale)
+            else:
+                file_size = inst_diag.get("fileSizeBytes", 0) or 0
+                output_path = inst_diag.get("outputFilePath")
+                recorded = bool(output_path) or file_size > 0
+                report.step("[instructor] no capture output", not recorded,
+                            outputFilePath=output_path, fileSizeBytes=file_size,
+                            state=inst_diag.get("state"))
+                if recorded:
+                    raise ValidationError(
+                        f"instructor produced capture output (outputFilePath={output_path!r}, "
+                        f"fileSizeBytes={file_size}) — a non-recording coordinator must not record"
+                    )
 
         report.passed = True
-        print("[capture-quality] === PASS: both devices recorded at the explicit profile ===")
+        print("[capture-quality] === PASS: player recorded at the explicit profile; instructor produced no capture ===")
 
     except ValidationError as e:
         report.error = str(e)
@@ -449,12 +629,12 @@ GOPRO_RECORD_SECONDS = 8
 
 
 def scenario_gopro_tricamera_smoke(ctx: ScenarioContext) -> ScenarioReport:
-    """3-camera smoke: iPhone (instructor+GoPro controller) + iPad (player) + GoPro, 1 cycle.
+    """3-camera smoke: iPad (non-recording instructor) + iPhone (player + GoPro bridge) + GoPro, 1 cycle.
 
-    Role model:
-      iPhone = instructor/controller + GoPro bridge (cellular keeps backend reachable)
-      iPad   = player/student camera (WiFi/wired, no SIM needed)
-      GoPro  = auxiliary camera, managed by iPhone
+    Role model (final topology, MC2-PR1):
+      iPad   = instructor / master coordinator — NO camera, NO capture file, NO confirm
+      iPhone = player camera + GoPro bridge (cellular keeps backend reachable on GoPro WiFi)
+      GoPro  = auxiliary camera, managed by the PLAYER iPhone
 
     Preconditions (physical only):
       - GoPro HERO12 powered on and in pairing/connectable state
@@ -468,28 +648,32 @@ def scenario_gopro_tricamera_smoke(ctx: ScenarioContext) -> ScenarioReport:
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
     print(f"[gopro-tricam] session created: {session_uuid}")
-    print(f"[gopro-tricam] role model: iPhone=instructor+GoPro, iPad=player")
+    print(f"[gopro-tricam] role model: iPad=instructor (non-recording), iPhone=player+GoPro")
 
     try:
-        # 1. Join both — iPhone as instructor, iPad as player
+        # 1. Join both — iPad as instructor, iPhone as player
         instructor_id, player_id = _join_both_devices(ctx, report, session_uuid)
+        instructor_udid = ctx.iphone_udid if ctx.iphone_role == "instructor" else ctx.ipad_udid
 
-        # 2. Register GoPro as auxiliary_camera, managed by instructor (iPhone)
-        print(f"[gopro-register] Registering GoPro managed_by instructor device_id={instructor_id}...")
+        # 2. Register GoPro as auxiliary_camera, managed by the PLAYER iPhone
+        #    (the iPhone joins the GoPro WiFi, so it must own the manager role;
+        #    registered with the player token — backend ownership check requires
+        #    the manager device's participant user to equal the caller).
+        print(f"[gopro-register] Registering GoPro managed_by player device_id={player_id}...")
         gopro_sd = register_device(
-            ctx.api_base, ctx.instructor_token, session_uuid,
+            ctx.api_base, ctx.player_token, session_uuid,
             device_role="auxiliary_camera",
             device_type="gopro",
-            device_name="GoPro HERO13 (automation)",
-            managed_by_device_id=instructor_id,
+            device_name="GoPro HERO12 (automation)",
+            managed_by_device_id=player_id,
         )
         gopro_device_id = gopro_sd["id"]
         managed_by = gopro_sd.get("managed_by_device_id")
         print(f"[gopro-register]   GoPro session_device_id={gopro_device_id} managed_by={managed_by}")
-        if managed_by != instructor_id:
-            report.step("gopro managed_by instructor", False, expected=instructor_id, actual=managed_by)
-            raise ValidationError(f"GoPro managed_by={managed_by} but expected instructor id={instructor_id}")
-        report.step("gopro registered (managed by instructor)", True, gopro_device_id=gopro_device_id, managed_by=managed_by)
+        if managed_by != player_id:
+            report.step("gopro managed_by player", False, expected=player_id, actual=managed_by)
+            raise ValidationError(f"GoPro managed_by={managed_by} but expected player id={player_id}")
+        report.step("gopro registered (managed by player)", True, gopro_device_id=gopro_device_id, managed_by=managed_by)
 
         # 3. GoPro connect on iPhone (BLE → WiFi → HTTP, in-app flow)
         #    Passes gopro_device_id so iPhone can signal ready via backend updateDeviceStatus
@@ -526,24 +710,33 @@ def scenario_gopro_tricamera_smoke(ctx: ScenarioContext) -> ScenarioReport:
         # 6. Mark devices ready
         _mark_devices_ready(ctx, report, session_uuid)
 
-        # 6. Begin cycle — instructor is iPhone
-        print("Sending begin-cycle deep link to iPhone/instructor (cycle 0)...")
-        send_deep_link(ctx.iphone_udid, "begin-cycle")
+        # 6. Begin cycle — instructor is the iPad (non-recording coordinator)
+        print("Sending begin-cycle deep link to instructor (cycle 0)...")
+        send_deep_link(instructor_udid, "begin-cycle")
 
-        # 7. Wait for iPad + iPhone confirmed_start
-        def ipad_iphone_confirmed_start():
+        # 7. Wait for PLAYER confirmed_start; the non-recording instructor must
+        #    stay "pending" — any instructor confirm is fabricated evidence.
+        def player_confirmed_start():
             cycles = list_cycles(ctx.api_base, ctx.instructor_token, session_uuid)
             cyc = latest_cycle(cycles)
             if not cyc or cyc["cycle_index"] != 0:
                 return None
-            s1 = device_recording_status(cyc, instructor_id)
-            s2 = device_recording_status(cyc, player_id)
-            if s1 == "confirmed_start" and s2 == "confirmed_start":
+            s_inst = device_recording_status(cyc, instructor_id)
+            if s_inst != "pending":
+                raise ValidationError(
+                    f"instructor recording_status={s_inst!r} — non-recording coordinator must stay 'pending'"
+                )
+            if device_required(cyc, instructor_id) is not False:
+                raise ValidationError(
+                    "instructor cycle_device is in the required set — must be players-only (MC2-PR1)"
+                )
+            s_play = device_recording_status(cyc, player_id)
+            if s_play == "confirmed_start":
                 return cyc
             return None
 
-        cycle = poll_until("iPad+iPhone confirmed_start", CYCLE_CONFIRM_TIMEOUT_SECONDS, ipad_iphone_confirmed_start)
-        report.step("ipad+iphone confirmed_start", True)
+        cycle = poll_until("player confirmed_start (instructor pending)", CYCLE_CONFIRM_TIMEOUT_SECONDS, player_confirmed_start)
+        report.step("player confirmed_start (instructor pending)", True)
 
         # 8. Verify GoPro cycle_device exists
         cycle_id = cycle["id"]
@@ -613,28 +806,37 @@ def scenario_gopro_tricamera_smoke(ctx: ScenarioContext) -> ScenarioReport:
             print("[gopro-stop] FAIL — GoPro may have disconnected during recording")
             raise
 
-        # 14. End cycle — instructor is iPhone
-        print("[end-cycle] Sending end-cycle deep link to iPhone/instructor (after GoPro stop)...")
-        send_deep_link(ctx.iphone_udid, "end-cycle")
+        # 14. End cycle — instructor iPad (after GoPro stop)
+        print("[end-cycle] Sending end-cycle deep link to instructor (after GoPro stop)...")
+        send_deep_link(instructor_udid, "end-cycle")
 
-        # 15. Wait for iPad + iPhone confirmed_stop (GoPro already confirmed)
-        def all_three_confirmed_stop():
+        # 15. Wait for both RECORDERS (player + GoPro) confirmed_stop and the
+        #     cycle completed; the non-recording instructor must stay "pending".
+        def recorders_confirmed_stop():
             cycles = list_cycles(ctx.api_base, ctx.instructor_token, session_uuid)
             cyc = latest_cycle(cycles)
             if not cyc:
                 return None
             s_inst = device_recording_status(cyc, instructor_id)
+            if s_inst != "pending":
+                raise ValidationError(
+                    f"instructor recording_status={s_inst!r} — non-recording coordinator must stay 'pending'"
+                )
+            if device_required(cyc, instructor_id) is not False:
+                raise ValidationError(
+                    "instructor cycle_device is in the required set — must be players-only (MC2-PR1)"
+                )
             s_play = device_recording_status(cyc, player_id)
             s_gp = device_recording_status(cyc, gopro_device_id)
-            if s_inst == "confirmed_stop" and s_play == "confirmed_stop" and s_gp == "confirmed_stop":
-                return {"instructor": s_inst, "player": s_play, "gopro": s_gp}
+            if cyc["status"] == "completed" and s_play == "confirmed_stop" and s_gp == "confirmed_stop":
+                return {"player": s_play, "gopro": s_gp, "instructor": "pending", "cycle_status": cyc["status"]}
             return None
 
         try:
-            result = poll_until("all 3 devices confirmed_stop", CYCLE_CONFIRM_TIMEOUT_SECONDS, all_three_confirmed_stop)
-            report.step("all 3 confirmed_stop", True, **result)
+            result = poll_until("recorders confirmed_stop + cycle completed", CYCLE_CONFIRM_TIMEOUT_SECONDS, recorders_confirmed_stop)
+            report.step("recorders confirmed_stop (instructor pending)", True, **result)
         except ValidationError as e:
-            report.step("all 3 confirmed_stop", False, error=str(e))
+            report.step("recorders confirmed_stop (instructor pending)", False, error=str(e))
             _dump_session_state(ctx, session_uuid, "tricam-stop-timeout")
             raise
 
@@ -661,53 +863,85 @@ ARTIFACT_COLLECT_SECONDS = 5
 
 
 def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioReport:
-    """End-to-end proof: 3-camera capture + live skeleton overlay.
+    """End-to-end proof: 3-camera-topology capture cycle (MC2-PR1 role model).
 
-    iPhone=instructor+GoPro controller, iPad=player, GoPro=auxiliary.
+    Role model (final topology, 2026-07-12):
+      iPad   = instructor / non-recording coordinator — NO capture, NO confirm
+      iPhone = player (the only iOS recorder) + GoPro bridge (cellular backend)
+      GoPro  = auxiliary camera, managed by the PLAYER iPhone
 
     AUTOMATED PASS criteria (backend-grounded):
-      - instructor+player confirmed_start  (cycle_devices recording_status)
-      - gopro confirmed_start              (cycle_devices recording_status)
-      - all 3 confirmed_stop               (cycle_devices recording_status)
+      - player confirmed_start; instructor stays pending + required==False
+      - gopro confirmed_start
+      - player+gopro confirmed_stop, cycle completed, instructor still pending
       - timestamp sync report saved        (proof_cycle_timing.json written)
+      - player capture metadata fresh, orientation/aspect gates
+      - instructor produced NO capture output (negative evidence, TOPO-G7)
+      - gopro preview stream quality + 16:9 (probe runs on the player iPhone,
+        which owns the GoPro AP connection)
 
-    MANUAL VISUAL PASS criteria (human operator, cannot be automated):
-      - iPhone panel: cyan skeleton overlay visible during preview
-      - iPad panel:   cyan skeleton overlay visible during preview
-      - GoPro panel:  cyan skeleton overlay visible during preview
-        (GoPro frames are pushed via GoProStreamProbe.lastFrame → feed())
-      → Operator must screenshot the dashboard showing all 3 skeleton overlays
-        and save as: artifacts/visual_skeleton_overlay.png
+    SUPERSEDED (2026-07-12 no-MPC architektúra-döntés): the live dashboard
+    panel gates (pose_overlay_diag panel frame traffic) no longer gate PASS —
+    the dashboard moves to backend-polled status/thumbnail panels (MC2-PR3)
+    and this scenario is replaced by `final-topology-proof` in MC2-PR4. The
+    pose-overlay collection below is kept as best-effort corroborating output
+    only, so the diag writer↔reader key contract stays pinned until PR3
+    removes both sides together.
 
     CORROBORATING evidence (reported, does NOT gate PASS):
-      - iphone_capture_metadata.json  (fileSizeBytes > 0)
-      - ipad_capture_metadata.json    (fileSizeBytes > 0)
       - skeleton_output.json          (post-capture SkeletonProcessor run)
       - gopro media evidence          ([GOPRO-MEDIA-BEGIN] in iPhone log)
+      - pose_overlay_diag.json        (legacy live-panel counters, best-effort)
     """
     import time as _time
+    from datetime import datetime as _dt, timezone as _tz
 
     report = ScenarioReport(name="tricamera-capture-skeleton-proof", passed=False)
+    scenario_started_at = _dt.now(_tz.utc)
+    run_id = f"tricamera-capture-skeleton-proof-{scenario_started_at.strftime('%Y%m%dT%H%M%SZ')}"
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
     print(f"[proof] session created: {session_uuid}")
-    print(f"[proof] iPhone=instructor+GoPro, iPad=player")
+    print(f"[proof] role model: iPad=instructor (non-recording), iPhone=player+GoPro bridge")
+
+    instructor_udid = ctx.iphone_udid if ctx.iphone_role == "instructor" else ctx.ipad_udid
+    player_udid = ctx.iphone_udid if instructor_udid == ctx.ipad_udid else ctx.ipad_udid
 
     try:
+        # 0. Stale-artifact protection (P0 hardening): overwrite every diag file
+        #    this scenario later gates on with a sentinel, so a leftover file from
+        #    a previous run can never be read back as this run's evidence. This
+        #    step is gate-critical — if it fails, no PASS is possible.
+        #    MC2-PR1: the iPad's capture diag sentinel is what makes the
+        #    "instructor produced no capture" negative gate trustworthy; the
+        #    pco_failure_diag now lives on the player iPhone.
+        _invalidate_stale_diags(ctx, report, run_id=run_id, targets=[
+            (ctx.iphone_udid, "Documents/capture_metadata_diag.json"),
+            (ctx.iphone_udid, "Documents/gopro_stream_diag.json"),
+            (ctx.iphone_udid, "Documents/pose_overlay_diag.json"),
+            (ctx.iphone_udid, "Documents/skeleton_output.json"),
+            (ctx.iphone_udid, "Documents/gopro_diag.json"),
+            (ctx.iphone_udid, "Documents/pco_failure_diag.json"),
+            (ctx.ipad_udid, "Documents/capture_metadata_diag.json"),
+        ])
+
         # 1. Join both devices
         instructor_id, player_id = _join_both_devices(ctx, report, session_uuid)
 
-        # 2. Register GoPro managed by instructor (iPhone)
-        print(f"[proof] Registering GoPro managed_by instructor device_id={instructor_id}...")
+        # 2. Register GoPro managed by the PLAYER iPhone (final topology: the
+        #    iPhone owns the GoPro AP connection; registered with the player
+        #    token because the backend ownership-check requires the manager
+        #    device's participant user to equal the caller).
+        print(f"[proof] Registering GoPro managed_by player device_id={player_id}...")
         gopro_sd = register_device(
-            ctx.api_base, ctx.instructor_token, session_uuid,
+            ctx.api_base, ctx.player_token, session_uuid,
             device_role="auxiliary_camera", device_type="gopro",
-            device_name="GoPro HERO13 (proof)",
-            managed_by_device_id=instructor_id,
+            device_name="GoPro HERO12 (proof)",
+            managed_by_device_id=player_id,
         )
         gopro_device_id = gopro_sd["id"]
-        report.step("gopro registered", True, gopro_device_id=gopro_device_id, managed_by=instructor_id)
+        report.step("gopro registered (managed by player)", True, gopro_device_id=gopro_device_id, managed_by=player_id)
 
         # 3. GoPro connect on iPhone — BLE scan + manual WiFi join required.
         #    Same pattern as gopro-network-routing-diag: send gopro-connect to
@@ -758,22 +992,32 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         _time.sleep(3)  # give stream/start HTTP request time to reach GoPro
         report.step("gopro-stream-start sent", True)
 
-        # 5. Begin cycle (instructor = iPhone)
-        print("[proof] begin-cycle → iPhone/instructor...")
-        send_deep_link(ctx.iphone_udid, "begin-cycle")
+        # 5. Begin cycle (instructor = iPad, non-recording coordinator)
+        print("[proof] begin-cycle → instructor (iPad)...")
+        send_deep_link(instructor_udid, "begin-cycle")
 
-        # 6. Wait for iPhone + iPad confirmed_start
-        def two_devices_started():
+        # 6. Wait for PLAYER confirmed_start; the instructor must stay pending
+        #    with required==False (MC2-PR1 gate — a confirm without a capture
+        #    file would be fabricated evidence).
+        def player_started_instructor_pending():
             cycles = list_cycles(ctx.api_base, ctx.instructor_token, session_uuid)
             cyc = latest_cycle(cycles)
             if not cyc or cyc["cycle_index"] != 0:
                 return None
-            s1 = device_recording_status(cyc, instructor_id)
-            s2 = device_recording_status(cyc, player_id)
-            return cyc if s1 == "confirmed_start" and s2 == "confirmed_start" else None
+            s_inst = device_recording_status(cyc, instructor_id)
+            if s_inst != "pending":
+                raise ValidationError(
+                    f"instructor recording_status={s_inst!r} — non-recording coordinator must stay 'pending'"
+                )
+            if device_required(cyc, instructor_id) is not False:
+                raise ValidationError(
+                    "instructor cycle_device is in the required set — must be players-only (MC2-PR1)"
+                )
+            s_play = device_recording_status(cyc, player_id)
+            return cyc if s_play == "confirmed_start" else None
 
-        cycle = poll_until("instructor+player confirmed_start", CYCLE_CONFIRM_TIMEOUT_SECONDS, two_devices_started)
-        report.step("instructor+player confirmed_start", True)
+        cycle = poll_until("player confirmed_start (instructor pending)", CYCLE_CONFIRM_TIMEOUT_SECONDS, player_started_instructor_pending)
+        report.step("player confirmed_start (instructor pending)", True)
         cycle_id = cycle["id"]
 
         # 7. GoPro start (iPhone)
@@ -813,25 +1057,30 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
             report.step("gopro confirmed_stop", False, error=str(e))
             raise
 
-        # 10. End cycle (instructor = iPhone)
-        print("[proof] end-cycle → iPhone/instructor...")
-        send_deep_link(ctx.iphone_udid, "end-cycle")
+        # 10. End cycle (instructor = iPad)
+        print("[proof] end-cycle → instructor (iPad)...")
+        send_deep_link(instructor_udid, "end-cycle")
 
-        # 11. All 3 confirmed_stop
-        def all_stopped():
+        # 11. Both RECORDERS (player + GoPro) confirmed_stop + cycle completed;
+        #     the non-recording instructor must still be pending.
+        def recorders_stopped():
             cycles = list_cycles(ctx.api_base, ctx.instructor_token, session_uuid)
             cyc = latest_cycle(cycles)
             if not cyc:
                 return None
-            s = {
-                "instructor": device_recording_status(cyc, instructor_id),
-                "player": device_recording_status(cyc, player_id),
-                "gopro": device_recording_status(cyc, gopro_device_id),
-            }
-            return s if all(v == "confirmed_stop" for v in s.values()) else None
+            s_inst = device_recording_status(cyc, instructor_id)
+            if s_inst != "pending":
+                raise ValidationError(
+                    f"instructor recording_status={s_inst!r} — non-recording coordinator must stay 'pending'"
+                )
+            s_play = device_recording_status(cyc, player_id)
+            s_gp = device_recording_status(cyc, gopro_device_id)
+            if cyc["status"] == "completed" and s_play == "confirmed_stop" and s_gp == "confirmed_stop":
+                return {"player": s_play, "gopro": s_gp, "instructor": "pending", "cycle_status": cyc["status"]}
+            return None
 
-        result = poll_until("all 3 confirmed_stop", CYCLE_CONFIRM_TIMEOUT_SECONDS, all_stopped)
-        report.step("all 3 confirmed_stop", True, **result)
+        result = poll_until("recorders confirmed_stop + cycle completed", CYCLE_CONFIRM_TIMEOUT_SECONDS, recorders_stopped)
+        report.step("recorders confirmed_stop (instructor pending)", True, **result)
 
         # 12. Timestamp sync check
         cycles_final = list_cycles(ctx.api_base, ctx.instructor_token, session_uuid)
@@ -891,8 +1140,6 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         #     the capture-info deep link fires (step 13 above).
         #     skeleton_output.json is written by SkeletonProcessor to Documents/ (fixed name).
         print("[proof] === ARTIFACT COLLECTION ===")
-        import json as _json
-        import os
 
         artifacts_dir = ctx.artifact.dir / "video_artifacts"
         artifacts_dir.mkdir(parents=True, exist_ok=True)
@@ -901,53 +1148,60 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         local_iphone_meta = str(artifacts_dir / "iphone_capture_metadata.json")
         iphone_meta_ok = copy_app_container_file(ctx.iphone_udid, "Documents/capture_metadata_diag.json", local_iphone_meta)
         if iphone_meta_ok:
-            try:
-                meta = _json.loads(open(local_iphone_meta).read())
+            meta, stale_reason = load_fresh_diag(local_iphone_meta, scenario_started_at)
+            if meta is None:
+                report.step("iphone capture metadata", False, error=stale_reason)
+                report.step("iphone orientation consistent", False, error=stale_reason)
+                report.step("iphone effective aspect ratio matches orientation", False, error=stale_reason)
+            else:
                 file_size = meta.get("fileSizeBytes", 0) or 0
                 report.step("iphone capture metadata", file_size > 0,
                             fileSizeBytes=file_size, outputFilePath=meta.get("outputFilePath"),
                             durationSeconds=meta.get("actualDurationSeconds"),
                             codec=meta.get("actualCodec"))
-                # Orientation/aspect automatic assertions (2026-07-01 flow audit) — not just
-                # recorded in the JSON, actually checked: does the FILE's baked-in rotation
-                # match the device's own interface orientation at recording start, and is the
-                # effective (post-rotation) aspect ratio the expected 16:9?
+                # Orientation/aspect automatic assertions (2026-07-01 flow audit, made
+                # orientation-aware 2026-07-04): does the FILE's baked-in rotation match the
+                # device's own interface orientation at recording start, does the effective
+                # (post-rotation) aspect match what that orientation implies (portrait→9:16,
+                # landscape→16:9), and is the encoded sensor buffer the expected 16:9?
                 report.step("iphone orientation consistent", meta.get("orientationConsistent") is True,
                             deviceOrientationAtRecordingStart=meta.get("deviceOrientationAtRecordingStart"),
                             fileOrientationCoarse=meta.get("fileOrientationCoarse"))
-                report.step("iphone effective aspect ratio is 16:9",
-                            _aspect_ratio_matches(meta.get("effectiveAspectRatio")),
+                eff_ok, eff_expected = _effective_aspect_gate(meta)
+                report.step("iphone effective aspect ratio matches orientation", eff_ok,
+                            expectedEffectiveAspect=eff_expected,
+                            fileOrientationCoarse=meta.get("fileOrientationCoarse"),
                             effectiveAspectRatio=meta.get("effectiveAspectRatio"),
                             effectiveDisplayWidth=meta.get("effectiveDisplayWidth"),
                             effectiveDisplayHeight=meta.get("effectiveDisplayHeight"))
-            except Exception as e:
-                report.step("iphone capture metadata", False, error=f"parse error: {e}")
+                encoded_ok = _encoded_aspect_is_16_9(meta)
+                if encoded_ok is not None:
+                    report.step("iphone encoded aspect ratio is 16:9", encoded_ok,
+                                actualResolution=meta.get("actualResolution"))
         else:
             report.step("iphone capture metadata", False, error="copy_app_container_file failed")
 
-        # 17b. iPad capture metadata
+        # 17b. Instructor (iPad) NEGATIVE evidence — MC2-PR1 / TOPO-G7: the
+        #      non-recording coordinator must have produced NO capture output.
+        #      Sentinel-still-in-place or missing file both prove "never wrote
+        #      capture evidence this run"; a fresh diag (steps 13/16 already sent
+        #      capture-info to the iPad) must show no output file.
         local_ipad_meta = str(artifacts_dir / "ipad_capture_metadata.json")
         ipad_meta_ok = copy_app_container_file(ctx.ipad_udid, "Documents/capture_metadata_diag.json", local_ipad_meta)
-        if ipad_meta_ok:
-            try:
-                meta = _json.loads(open(local_ipad_meta).read())
-                file_size = meta.get("fileSizeBytes", 0) or 0
-                report.step("ipad capture metadata", file_size > 0,
-                            fileSizeBytes=file_size, outputFilePath=meta.get("outputFilePath"),
-                            durationSeconds=meta.get("actualDurationSeconds"),
-                            codec=meta.get("actualCodec"))
-                report.step("ipad orientation consistent", meta.get("orientationConsistent") is True,
-                            deviceOrientationAtRecordingStart=meta.get("deviceOrientationAtRecordingStart"),
-                            fileOrientationCoarse=meta.get("fileOrientationCoarse"))
-                report.step("ipad effective aspect ratio is 16:9",
-                            _aspect_ratio_matches(meta.get("effectiveAspectRatio")),
-                            effectiveAspectRatio=meta.get("effectiveAspectRatio"),
-                            effectiveDisplayWidth=meta.get("effectiveDisplayWidth"),
-                            effectiveDisplayHeight=meta.get("effectiveDisplayHeight"))
-            except Exception as e:
-                report.step("ipad capture metadata", False, error=f"parse error: {e}")
+        if not ipad_meta_ok:
+            report.step("instructor no capture output", True,
+                        note="capture_metadata_diag.json not present on the iPad")
         else:
-            report.step("ipad capture metadata", False, error="copy_app_container_file failed")
+            meta, stale_reason = load_fresh_diag(local_ipad_meta, scenario_started_at)
+            if meta is None:
+                report.step("instructor no capture output", True, note=stale_reason)
+            else:
+                file_size = meta.get("fileSizeBytes", 0) or 0
+                output_path = meta.get("outputFilePath")
+                recorded = bool(output_path) or file_size > 0
+                report.step("instructor no capture output", not recorded,
+                            outputFilePath=output_path, fileSizeBytes=file_size,
+                            state=meta.get("state"))
 
         # 17c. GoPro recording evidence: media list in iPhone console log
         iphone_log_path = ctx.artifact.iphone_console_log
@@ -969,8 +1223,11 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         gopro_stream_diag_ok = copy_app_container_file(
             ctx.iphone_udid, "Documents/gopro_stream_diag.json", local_gopro_stream_diag)
         if gopro_stream_diag_ok:
-            try:
-                stream_diag = _json.loads(open(local_gopro_stream_diag).read())
+            stream_diag, stale_reason = load_fresh_diag(local_gopro_stream_diag, scenario_started_at)
+            if stream_diag is None:
+                report.step("gopro preview stream quality", False, error=stale_reason)
+                report.step("gopro preview aspect ratio is 16:9", False, error=stale_reason)
+            else:
                 packets = stream_diag.get("udpPacketsReceived", 0) or 0
                 video_pid_found = bool(stream_diag.get("videoPIDFound", False))
                 decodes = stream_diag.get("decodeSuccesses", 0) or 0
@@ -994,9 +1251,6 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
                     previewAspectRatio=stream_diag.get("previewAspectRatio"),
                     previewWidth=stream_diag.get("previewWidth"), previewHeight=stream_diag.get("previewHeight"),
                 )
-            except Exception as e:
-                report.step("gopro preview stream quality", False, error=f"parse error: {e}")
-                report.step("gopro preview aspect ratio is 16:9", False, error=f"parse error: {e}")
         else:
             report.step("gopro preview stream quality", False,
                         error="gopro_stream_diag.json not found — GoProStreamProbe.run() "
@@ -1017,23 +1271,28 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         local_pose_diag = str(artifacts_dir / "pose_overlay_diag.json")
         pose_diag_ok = copy_app_container_file(ctx.iphone_udid, "Documents/pose_overlay_diag.json", local_pose_diag)
         if pose_diag_ok:
-            try:
-                pose_diag = _json.loads(open(local_pose_diag).read())
+            pose_diag, stale_reason = load_fresh_diag(local_pose_diag, scenario_started_at)
+            if pose_diag is None:
+                for panel_name in ("instructor", "player", "gopro"):
+                    report.step(f"{panel_name} panel frame traffic", False, error=stale_reason)
+            else:
                 for panel_name in ("instructor", "player", "gopro"):
                     panel = pose_diag.get(panel_name, {}) or {}
-                    frames_received = panel.get("framesReceivedByProcessor", 0) or 0
+                    # Key contract with PoseOverlayDiagWriter (LivePoseOverlayProcessor.swift):
+                    # the writer emits "framesReceived" — pinned by
+                    # tests/test_diag_contract.py and the static preflight, after the
+                    # 2026-07-04 review found this gate reading a key the writer never
+                    # emits (guaranteed false FAIL on every physical run).
+                    frames_received = panel.get("framesReceived", 0) or 0
                     report.step(
                         f"{panel_name} panel frame traffic", frames_received >= MIN_PANEL_FRAMES,
-                        framesReceivedByProcessor=frames_received,
+                        framesReceived=frames_received,
                         sourceFramesSeen=panel.get("sourceFramesSeen"),
                         framesProcessed=panel.get("framesProcessed"),
                         visionDetectionSuccesses=panel.get("visionDetectionSuccesses"),
                         framesWithSkeletonPoints=panel.get("framesWithSkeletonPoints"),
                         lastFrameReceivedAt=panel.get("lastFrameReceivedAt"),
                     )
-            except Exception as e:
-                for panel_name in ("instructor", "player", "gopro"):
-                    report.step(f"{panel_name} panel frame traffic", False, error=f"parse error: {e}")
         else:
             for panel_name in ("instructor", "player", "gopro"):
                 report.step(f"{panel_name} panel frame traffic", False,
@@ -1044,31 +1303,38 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         local_skeleton = str(artifacts_dir / "skeleton_output.json")
         skeleton_ok = copy_app_container_file(ctx.iphone_udid, "Documents/skeleton_output.json", local_skeleton)
         if skeleton_ok:
-            try:
-                skel = _json.loads(open(local_skeleton).read())
+            skel, stale_reason = load_fresh_diag(local_skeleton, scenario_started_at)
+            if skel is None:
+                report.step("skeleton json collected", False, error=stale_reason)
+            else:
                 frames = skel.get("sampled_frames", 0) or 0
                 joints = skel.get("total_joints_detected", 0) or 0
                 report.step("skeleton json collected", frames > 0,
                             sampled_frames=frames, total_joints_detected=joints,
                             video_duration_s=skel.get("video_duration_s"))
-            except Exception as e:
-                report.step("skeleton json collected", False, error=f"parse error: {e}")
         else:
             report.step("skeleton json collected", False, error="copy_app_container_file failed — SkeletonProcessor may not have completed")
 
         # 18. Final PASS: all critical backend-grounded steps must be OK.
-        #     Artifact steps (capture metadata, skeleton) are corroborating evidence
-        #     and are reported but do NOT gate the PASS — backend confirmed_stop is
-        #     the authoritative proof that all 3 cameras recorded.
+        #     Artifact steps (skeleton, gopro media, legacy pose-overlay panels)
+        #     are corroborating evidence and do NOT gate the PASS.
+        #     MC2-PR1 changes: instructor confirm gates → player-only + pending
+        #     guard; iPad capture gates → "instructor no capture output"
+        #     negative gate; the live-panel frame-traffic gates are removed per
+        #     the 2026-07-12 no-MPC decision (superseded by final-topology-proof
+        #     status/thumbnail gates in MC2-PR4).
         critical_ok = all(
             s.get("ok") for s in report.steps
             if s["description"] in (
-                "instructor+player confirmed_start", "gopro confirmed_start",
-                "all 3 confirmed_stop", "timestamp sync report",
+                # If sentinel invalidation failed, this run cannot distinguish fresh
+                # evidence from a previous run's leftovers — no PASS is possible.
+                "stale diag artifacts invalidated",
+                "player confirmed_start (instructor pending)", "gopro confirmed_start",
+                "recorders confirmed_stop (instructor pending)", "timestamp sync report",
                 "gopro preview stream quality", "gopro preview aspect ratio is 16:9",
-                "instructor panel frame traffic", "player panel frame traffic", "gopro panel frame traffic",
-                "iphone orientation consistent", "iphone effective aspect ratio is 16:9",
-                "ipad orientation consistent", "ipad effective aspect ratio is 16:9",
+                "iphone orientation consistent", "iphone effective aspect ratio matches orientation",
+                "iphone encoded aspect ratio is 16:9",
+                "instructor no capture output",
             )
         )
         report.passed = critical_ok
@@ -1077,6 +1343,11 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
     except ValidationError as e:
         report.error = str(e)
         report.passed = False
+        # 2026-07-04 RCA: a bare confirmed_start timeout carried zero player-side
+        # evidence. Pull the PCO failure diag from the iPad and dump backend
+        # state so the report explains the failure, not just names it.
+        _pull_pco_failure_diag(ctx, report, scenario_started_at)
+        _dump_session_state(ctx, session_uuid, "tricamera-fail")
     return report
 
 
@@ -1125,6 +1396,12 @@ def scenario_gopro_network_routing_diag(ctx: ScenarioContext) -> ScenarioReport:
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-network-routing-diag", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-network-routing-diag-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -1347,6 +1624,12 @@ def scenario_gopro_preview_poc(ctx: ScenarioContext) -> ScenarioReport:
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-preview-poc", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-preview-poc-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_stream_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -1590,6 +1873,13 @@ def scenario_gopro_combined_cycle_proof(ctx: ScenarioContext) -> ScenarioReport:
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-combined-cycle-proof", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-combined-cycle-proof-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_recording_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_stream_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -1792,6 +2082,12 @@ def scenario_gopro_camera_state_probe(ctx: ScenarioContext) -> ScenarioReport:
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-camera-state-probe", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-camera-state-probe-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_camera_state_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -1934,6 +2230,13 @@ def scenario_gopro_preview_aspect_probe(ctx: ScenarioContext) -> ScenarioReport:
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-preview-aspect-probe", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-preview-aspect-probe-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_preview_aspect_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_stream_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid
@@ -2102,6 +2405,17 @@ def scenario_gopro_preset_write_validation(ctx: ScenarioContext) -> ScenarioRepo
     from pathlib import Path
 
     report = ScenarioReport(name="gopro-preset-write-validation", passed=False)
+    # Stale-artifact protection (P0 hardening): sentinel-overwrite every diag
+    # file this scenario reads back, so leftovers from a previous run can
+    # never be presented as this run's evidence.
+    _invalidate_stale_diags(ctx, report, run_id=f"gopro-preset-write-validation-{utc_now_iso()}", targets=[
+        (ctx.iphone_udid, "Documents/gopro_preset_before_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_preset_write_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_preset_after_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_recording_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_preview_aspect_diag.json"),
+        (ctx.iphone_udid, "Documents/gopro_preset_final_diag.json"),
+    ])
     session = create_session(ctx.api_base, ctx.instructor_token)
     session_uuid = session["session_uuid"]
     report.session_uuid = session_uuid

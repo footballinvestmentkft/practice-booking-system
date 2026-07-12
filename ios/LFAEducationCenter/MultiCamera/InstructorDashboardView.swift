@@ -28,10 +28,17 @@ struct InstructorDashboardView: View {
         }
         .statusBarHidden(true)
         .onAppear {
-            localPoseOverlay.attach(to: captureManager.previewSession)
+            // MC2-PR1: the non-recording coordinator has no local camera feed —
+            // never touch the capture session (TOPO-G7: no capture
+            // AVCaptureSession may run on the instructor iPad).
+            if vm.localCaptureExpected {
+                localPoseOverlay.attach(to: captureManager.previewSession)
+            }
         }
         .onDisappear {
-            localPoseOverlay.detach(from: captureManager.previewSession)
+            if vm.localCaptureExpected {
+                localPoseOverlay.detach(from: captureManager.previewSession)
+            }
         }
         // Feed remote (iPad) frames to the remote overlay processor.
         .onReceive(streamService.objectWillChange) { [self] in
@@ -47,8 +54,13 @@ struct InstructorDashboardView: View {
         }
         // pose-overlay-diag deep link → export per-panel frame diagnostics. Handled here
         // (not MultiCameraLobbyView) because the 3 processor instances are owned by this view.
-        .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { [self] action in
-            guard case .poseOverlayDiag = action else { return }
+        //
+        // consume() gate (P0 hardening): without it, a re-presented dashboard would
+        // replay a stale .poseOverlayDiag and clobber pose_overlay_diag.json with
+        // freshly-zeroed counters before the regression script copies it.
+        .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { [self] envelope in
+            guard case .poseOverlayDiag = envelope.action,
+                  MC1AutomationBridge.shared.consume(envelope) else { return }
             PoseOverlayDiagWriter.write(
                 instructor: localPoseOverlay,
                 player: remotePoseOverlay, playerSourceFramesSeen: streamService.totalFramesReceived,
@@ -64,7 +76,9 @@ struct InstructorDashboardView: View {
         return session.devices.filter { $0.removedAt == nil }
     }
 
-    // Ordering: instructor first, then players (by id), then auxiliary cameras (GoPro)
+    // Ordering: instructor first, then players (by id), then auxiliary cameras (GoPro).
+    // MC2-PR1: when this device is a non-recording coordinator, its own panel is
+    // dropped — there is no local feed to show, only the players + GoPro.
     private var orderedPanels: [SessionDeviceDTO] {
         let rank: (MCDeviceRole) -> Int = {
             switch $0 {
@@ -74,10 +88,12 @@ struct InstructorDashboardView: View {
             case .auxiliaryCamera:   return 3
             }
         }
-        return sessionDevices.sorted {
-            let ra = rank($0.deviceRole), rb = rank($1.deviceRole)
-            return ra != rb ? ra < rb : $0.id < $1.id
-        }
+        return sessionDevices
+            .filter { vm.localCaptureExpected || $0.id != vm.sessionDeviceId }
+            .sorted {
+                let ra = rank($0.deviceRole), rb = rank($1.deviceRole)
+                return ra != rb ? ra < rb : $0.id < $1.id
+            }
     }
 
     // MARK: - Top bar

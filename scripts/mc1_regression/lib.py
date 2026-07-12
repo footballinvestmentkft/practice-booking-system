@@ -23,6 +23,40 @@ from urllib.parse import urlencode
 POLL_INTERVAL_SECONDS = 1.5
 SNAPSHOT_RE = re.compile(r"\[MC1-SNAPSHOT-BEGIN\](.*?)\[MC1-SNAPSHOT-END\]", re.DOTALL)
 
+# Scenarios where console capture from BOTH devices is a HARD precondition.
+# The 2026-07-04 tricamera run failed on the PLAYER (iPad) side while the
+# WARN-only console path had silently skipped the iPad capture — the exact
+# evidence the failure needed did not exist. Tricamera scenarios exercise the
+# player-side capture chain, so running them without the iPad console is
+# running blind.
+DUAL_CONSOLE_REQUIRED_SCENARIOS = frozenset({
+    "tricamera-capture-skeleton-proof",
+    "gopro-tricamera-smoke",
+})
+
+
+def check_dual_console_precondition(scenario_names: list[str],
+                                    console_dir: Path | str) -> list[str]:
+    """Returns human-readable errors when a requested scenario requires both
+    device console captures and one is missing; empty list = precondition holds.
+    Console log files are created by run_mc1_regression.sh BEFORE the runner
+    starts, so a missing file here means capture never started for that device
+    (not USB-connected / not visible to idevicesyslog)."""
+    required_by = [n for n in scenario_names if n in DUAL_CONSOLE_REQUIRED_SCENARIOS]
+    if not required_by:
+        return []
+    errors: list[str] = []
+    for filename, label in (("iphone_console.log", "iPhone"),
+                            ("ipad_console.log", "iPad")):
+        if not (Path(console_dir) / filename).exists():
+            errors.append(
+                f"{label} console capture missing ({filename} not found) — "
+                f"hard precondition for: {', '.join(required_by)}. "
+                f"Both devices must be USB-connected, trusted, and visible to "
+                f"idevicesyslog (idevice_id -l)."
+            )
+    return errors
+
 
 class ValidationError(RuntimeError):
     pass
@@ -148,6 +182,18 @@ def device_recording_status(cycle: dict, session_device_id: int) -> str | None:
     return None
 
 
+def device_required(cycle: dict, session_device_id: int) -> bool | None:
+    """The cycle_device's backend `required` flag (None if device not in cycle).
+
+    MC2-PR1 gate: only player roles may be required recorders — the instructor
+    cycle_device must carry required == False.
+    """
+    for cd in cycle.get("cycle_devices", []):
+        if cd.get("session_device_id") == session_device_id:
+            return cd.get("required")
+    return None
+
+
 def latest_cycle(cycles: list[dict]) -> dict | None:
     if not cycles:
         return None
@@ -203,6 +249,95 @@ def copy_app_container_file(udid: str, relative_path: str, local_path: str,
         return True
     print(f"  -> app container copy failed: {result.stderr.strip()[:300]}")
     return False
+
+
+# ── Stale-artifact protection (P0 hardening, 2026-07-04 review) ─────────────
+#
+# Diag files persist in the app's Documents/ directory across runs, and
+# devicectl has no delete verb for the appDataContainer domain — so a scenario
+# whose on-device probe silently never ran could previously copy back a STALE
+# file from an earlier run and PASS on old evidence. Two-layer defence:
+#
+#   1. invalidate_app_container_file(): at scenario start, every diag file the
+#      scenario will later gate on is OVERWRITTEN with a sentinel JSON
+#      ({"mc1_invalidated": true, ...}). Only the app writing a fresh diag
+#      during THIS run replaces the sentinel.
+#   2. load_fresh_diag(): when the gate reads the copied-back file, it rejects
+#      (a) the sentinel and (b) any diag whose own timestamp predates the
+#      scenario start (belt-and-braces for clock-skewed devices).
+
+STALE_DIAG_SENTINEL_KEY = "mc1_invalidated"
+# Device wall clock vs. script wall clock can disagree; the sentinel is the
+# primary defence, the timestamp check only needs to catch grossly old files.
+DIAG_FRESHNESS_SKEW_TOLERANCE_S = 120.0
+
+
+def push_app_container_file(udid: str, local_path: str, relative_path: str,
+                            bundle_id: str = LFA_BUNDLE_ID) -> bool:
+    """Copy a local file INTO the app's data container (inverse of
+    copy_app_container_file)."""
+    result = subprocess.run(
+        ["xcrun", "devicectl", "device", "copy", "to", "--device", udid,
+         "--domain-type", "appDataContainer", "--domain-identifier", bundle_id,
+         "--source", local_path, "--destination", relative_path],
+        capture_output=True, text=True, timeout=60,
+    )
+    if result.returncode == 0:
+        print(f"  -> pushed app container file: {local_path} → {relative_path}")
+        return True
+    print(f"  -> app container push failed ({relative_path}): {result.stderr.strip()[:300]}")
+    return False
+
+
+def invalidate_app_container_file(udid: str, relative_path: str, run_id: str,
+                                  scratch_dir: Path,
+                                  bundle_id: str = LFA_BUNDLE_ID) -> bool:
+    """Overwrite one on-device diag file with a stale-marker sentinel."""
+    sentinel = {
+        STALE_DIAG_SENTINEL_KEY: True,
+        "invalidated_at": utc_now_iso(),
+        "run_id": run_id,
+        "note": "overwritten at scenario start; a gate reading this sentinel "
+                "means the app never wrote a fresh diag during this run",
+    }
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+    local = scratch_dir / f"sentinel_{Path(relative_path).name}"
+    local.write_text(json.dumps(sentinel, indent=2))
+    return push_app_container_file(udid, str(local), relative_path, bundle_id=bundle_id)
+
+
+def load_fresh_diag(local_path: str, scenario_started_at: datetime,
+                    timestamp_keys: tuple[str, ...] = ("timestamp", "generated_at"),
+                    ) -> tuple[dict | None, str | None]:
+    """Load a copied-back diag JSON, rejecting stale evidence.
+
+    Returns (diag_dict, None) when the file is fresh, or (None, reason) when it
+    must not be trusted: sentinel still in place, unparseable, missing its
+    timestamp, or timestamped before scenario start (minus skew tolerance).
+    """
+    try:
+        diag = json.loads(Path(local_path).read_text())
+    except (OSError, json.JSONDecodeError) as e:
+        return None, f"unreadable diag file: {e}"
+    if not isinstance(diag, dict):
+        return None, "diag file is not a JSON object"
+    if diag.get(STALE_DIAG_SENTINEL_KEY) is True:
+        return None, ("stale sentinel still in place — the app never wrote this "
+                      "diag during the current run")
+    ts_raw = next((diag[k] for k in timestamp_keys if diag.get(k)), None)
+    if not ts_raw:
+        return None, f"diag has no freshness timestamp (looked for {timestamp_keys})"
+    try:
+        ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None, f"diag timestamp unparseable: {ts_raw!r}"
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    threshold = scenario_started_at.timestamp() - DIAG_FRESHNESS_SKEW_TOLERANCE_S
+    if ts.timestamp() < threshold:
+        return None, (f"diag timestamp {ts_raw} predates scenario start "
+                      f"{scenario_started_at.isoformat()} — stale artifact from an earlier run")
+    return diag, None
 
 
 def extract_capture_path_from_log(console_log: str, tag: str = "[CAPTURE-INFO]") -> str | None:
@@ -384,8 +519,10 @@ class ScenarioContext:
     artifact: ArtifactRun
     offsets: ConsoleOffsetTracker
     cycles: int = 3
-    ipad_role: str = "player"
-    iphone_role: str = "instructor"
+    # Final topology (MC2-PR1, 2026-07-12): iPad = non-recording instructor /
+    # coordinator, iPhone = player (recorder + GoPro bridge over its WiFi).
+    ipad_role: str = "instructor"
+    iphone_role: str = "player"
 
 
 @dataclass

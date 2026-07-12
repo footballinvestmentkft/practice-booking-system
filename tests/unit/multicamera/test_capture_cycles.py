@@ -102,9 +102,12 @@ def active_session(db, users):
     db.add_all([md1, md2])
     db.flush()
 
+    # Both devices are player roles so the cycle has TWO required recorders —
+    # instructor_primary is a non-recording coordinator since MC2-PR1 and would
+    # not be part of the required set (role semantics covered by CC-02).
     sd1 = SessionDevice(
         session_id=s.id, device_id=md1.id, participant_id=p_inst.id,
-        device_role="instructor_primary", status="ready",
+        device_role="player_secondary", status="ready",
     )
     sd2 = SessionDevice(
         session_id=s.id, device_id=md2.id, participant_id=p_inst.id,
@@ -142,27 +145,38 @@ class TestCreateCycle:
         assert len(cycle.cycle_devices) == 2
 
     def test_cc_02_device_snapshot_required_flags(self, db, active_session):
-        """CC-02: auxiliary_camera device gets required=False, others True."""
+        """CC-02: only player roles are required recorders (MC2-PR1).
+
+        instructor_primary is a non-recording coordinator (final topology:
+        iPad instructor without camera); auxiliary_camera completion is
+        enforced at the regression-gate level. Both get required=False.
+        """
         s, p_inst, sd1, sd2 = active_session
         tag = _uuid.uuid4().hex[:8]
         md3 = ManagedDevice(owner_user_id=p_inst.user_id, device_type="gopro", device_name=f"GoPro-{tag}")
-        db.add(md3)
+        md4 = ManagedDevice(owner_user_id=p_inst.user_id, device_type="ipad", device_name=f"iPad-inst-{tag}")
+        db.add_all([md3, md4])
         db.flush()
         sd3 = SessionDevice(
             session_id=s.id, device_id=md3.id,
             managed_by_device_id=sd1.id,
             device_role="auxiliary_camera", status="ready",
         )
-        db.add(sd3)
+        sd4 = SessionDevice(
+            session_id=s.id, device_id=md4.id, participant_id=p_inst.id,
+            device_role="instructor_primary", status="ready",
+        )
+        db.add_all([sd3, sd4])
         db.flush()
 
         svc = CycleService(db)
         cycle = svc.create_cycle(s.session_uuid, "key-cc02", p_inst.id)
 
         required_map = {ccd.session_device_id: ccd.required for ccd in cycle.cycle_devices}
-        assert required_map[sd1.id] is True
-        assert required_map[sd2.id] is True
-        assert required_map[sd3.id] is False
+        assert required_map[sd1.id] is True   # player_secondary: required recorder
+        assert required_map[sd2.id] is True   # player_primary: required recorder
+        assert required_map[sd3.id] is False  # auxiliary (GoPro): gate-enforced
+        assert required_map[sd4.id] is False  # instructor: non-recording coordinator
 
     def test_cc_03_idempotent_duplicate_key_returns_existing(self, db, active_session):
         """CC-03: duplicate idempotency_key returns existing cycle, no new row."""
