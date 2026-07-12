@@ -102,9 +102,12 @@ def active_session(db, users):
     db.add_all([md1, md2])
     db.flush()
 
+    # Both devices are player roles so the cycle has TWO required recorders —
+    # instructor_primary is a non-recording coordinator since MC2-PR1 and would
+    # not be part of the required set (role semantics covered by CC-02).
     sd1 = SessionDevice(
         session_id=s.id, device_id=md1.id, participant_id=p_inst.id,
-        device_role="instructor_primary", status="ready",
+        device_role="player_secondary", status="ready",
     )
     sd2 = SessionDevice(
         session_id=s.id, device_id=md2.id, participant_id=p_inst.id,
@@ -142,27 +145,38 @@ class TestCreateCycle:
         assert len(cycle.cycle_devices) == 2
 
     def test_cc_02_device_snapshot_required_flags(self, db, active_session):
-        """CC-02: auxiliary_camera device gets required=False, others True."""
+        """CC-02: only player roles are required recorders (MC2-PR1).
+
+        instructor_primary is a non-recording coordinator (final topology:
+        iPad instructor without camera); auxiliary_camera completion is
+        enforced at the regression-gate level. Both get required=False.
+        """
         s, p_inst, sd1, sd2 = active_session
         tag = _uuid.uuid4().hex[:8]
         md3 = ManagedDevice(owner_user_id=p_inst.user_id, device_type="gopro", device_name=f"GoPro-{tag}")
-        db.add(md3)
+        md4 = ManagedDevice(owner_user_id=p_inst.user_id, device_type="ipad", device_name=f"iPad-inst-{tag}")
+        db.add_all([md3, md4])
         db.flush()
         sd3 = SessionDevice(
             session_id=s.id, device_id=md3.id,
             managed_by_device_id=sd1.id,
             device_role="auxiliary_camera", status="ready",
         )
-        db.add(sd3)
+        sd4 = SessionDevice(
+            session_id=s.id, device_id=md4.id, participant_id=p_inst.id,
+            device_role="instructor_primary", status="ready",
+        )
+        db.add_all([sd3, sd4])
         db.flush()
 
         svc = CycleService(db)
         cycle = svc.create_cycle(s.session_uuid, "key-cc02", p_inst.id)
 
         required_map = {ccd.session_device_id: ccd.required for ccd in cycle.cycle_devices}
-        assert required_map[sd1.id] is True
-        assert required_map[sd2.id] is True
-        assert required_map[sd3.id] is False
+        assert required_map[sd1.id] is True   # player_secondary: required recorder
+        assert required_map[sd2.id] is True   # player_primary: required recorder
+        assert required_map[sd3.id] is False  # auxiliary (GoPro): gate-enforced
+        assert required_map[sd4.id] is False  # instructor: non-recording coordinator
 
     def test_cc_03_idempotent_duplicate_key_returns_existing(self, db, active_session):
         """CC-03: duplicate idempotency_key returns existing cycle, no new row."""
@@ -307,15 +321,15 @@ class TestConfirmDeviceStart:
     def _schedule(self, svc, cycle):
         return svc.schedule_cycle(cycle.id, cycle.revision)
 
-    def test_cs_01_first_device_start_stays_recording_pending(self, db, cycle_with_two_devices):
-        """CS-01: First device confirms start; cycle stays RECORDING_PENDING."""
+    def test_cs_01_first_device_start_transitions_to_recording(self, db, cycle_with_two_devices):
+        """CS-01: First device confirms start; cycle immediately transitions to RECORDING."""
         cycle, sd1, sd2, p_inst, s = cycle_with_two_devices
         svc = CycleService(db)
         cycle = self._schedule(svc, cycle)
         ccd1 = next(d for d in cycle.cycle_devices if d.session_device_id == sd1.id)
         now = datetime.now(timezone.utc)
         result = svc.confirm_device_start(cycle.id, sd1.id, now, ccd1.revision)
-        assert CycleStatus(result.status) == CycleStatus.RECORDING_PENDING
+        assert CycleStatus(result.status) == CycleStatus.RECORDING
 
     def test_cs_02_all_devices_start_transitions_to_recording(self, db, cycle_with_two_devices):
         """CS-02: Both required devices confirm start → RECORDING, recording_started_at set."""
@@ -767,12 +781,14 @@ class TestTransitionGuards:
         result = svc.activate_session(s.session_uuid, s.revision)
         assert SessionStatus(result.status) == SessionStatus.ACTIVE
 
-    def test_tr_02_activate_from_active_raises(self, db, active_session):
-        """TR-02: already ACTIVE session → InvalidTransitionError on second activate."""
+    def test_tr_02_activate_from_active_is_idempotent(self, db, active_session):
+        """TR-02: already ACTIVE session → idempotent success (same revision, no DB write)."""
         s, p_inst, sd1, sd2 = active_session
+        revision_before = s.revision
         svc = CycleService(db)
-        with pytest.raises(InvalidTransitionError):
-            svc.activate_session(s.session_uuid, s.revision)
+        result = svc.activate_session(s.session_uuid, s.revision)
+        assert SessionStatus(result.status) == SessionStatus.ACTIVE
+        assert result.revision == revision_before
 
     def test_tr_03_activate_from_completed_raises(self, db, users):
         """TR-03: COMPLETED session → InvalidTransitionError."""
@@ -783,6 +799,103 @@ class TestTransitionGuards:
         svc = CycleService(db)
         with pytest.raises(InvalidTransitionError):
             svc.activate_session(s.session_uuid, s.revision)
+
+    def test_tr_04_activate_twice_from_lobby_second_call_idempotent(self, db, users):
+        """TR-04: LOBBY → ACTIVE (first call), ACTIVE → ACTIVE (second call) — regression for
+        physical-test blocker where Begin Cycle retried on an already-active session.
+
+        Invariants:
+        - Both calls succeed (no exception).
+        - Revision increments exactly once (only the LOBBY → ACTIVE transition writes).
+        - Status remains ACTIVE after both calls.
+        """
+        instructor, _ = users
+        s = MultiCameraSession(
+            created_by_user_id=instructor.id,
+            status=SessionStatus.LOBBY.value,
+        )
+        db.add(s)
+        db.flush()
+        revision_initial = s.revision
+
+        svc = CycleService(db)
+
+        # First call: LOBBY → ACTIVE, revision must increment.
+        r1 = svc.activate_session(s.session_uuid, revision_initial)
+        assert SessionStatus(r1.status) == SessionStatus.ACTIVE
+        assert r1.revision == revision_initial + 1
+
+        # Second call: session already ACTIVE, same revision — must not raise, must not write.
+        r2 = svc.activate_session(s.session_uuid, r1.revision)
+        assert SessionStatus(r2.status) == SessionStatus.ACTIVE
+        assert r2.revision == r1.revision  # revision unchanged
+
+    def test_tr_05_repeated_activate_never_increments_revision(self, db, active_session):
+        """TR-05: N repeated activateSession() calls on an already-ACTIVE session —
+        revision stays constant throughout; status stays ACTIVE.
+
+        Covers the full retry loop an orchestrator might execute before giving up.
+        """
+        s, p_inst, sd1, sd2 = active_session
+        revision_before = s.revision
+        svc = CycleService(db)
+
+        for _ in range(5):
+            result = svc.activate_session(s.session_uuid, revision_before)
+            assert SessionStatus(result.status) == SessionStatus.ACTIVE
+            assert result.revision == revision_before
+
+    def test_tr_06_activate_cancelled_session_raises(self, db, users):
+        """TR-06: CANCELLED session → InvalidTransitionError (not silently treated as active)."""
+        instructor, _ = users
+        s = MultiCameraSession(created_by_user_id=instructor.id, status=SessionStatus.CANCELLED.value)
+        db.add(s)
+        db.flush()
+        svc = CycleService(db)
+        with pytest.raises(InvalidTransitionError):
+            svc.activate_session(s.session_uuid, s.revision)
+
+    def test_tr_07_activate_already_active_stale_revision_succeeds(self, db, users):
+        """TR-07: ACTIVE session + stale revision → still succeeds (idempotency before revision check).
+
+        Physical-test scenario: iPad activates session (revision N→N+1). iOS poll lags
+        and ViewModel still holds revision N. User presses Begin Cycle again → iOS sends
+        revision N (stale).  The session is already ACTIVE so the call must succeed
+        without 409 or 422.
+        """
+        instructor, _ = users
+        s = MultiCameraSession(
+            created_by_user_id=instructor.id,
+            status=SessionStatus.ACTIVE.value,
+            revision=5,
+        )
+        db.add(s)
+        db.flush()
+        svc = CycleService(db)
+
+        stale_revision = 3  # deliberately wrong
+        result = svc.activate_session(s.session_uuid, stale_revision)
+        assert SessionStatus(result.status) == SessionStatus.ACTIVE
+        assert result.revision == 5  # unchanged
+
+    def test_tr_08_activate_devices_ready_stale_revision_raises(self, db, users):
+        """TR-08: DEVICES_READY session + stale revision → RevisionConflictError (409).
+
+        Revision check still applies when the session is NOT yet ACTIVE, ensuring
+        that a real concurrent modification is caught before the transition.
+        """
+        instructor, _ = users
+        s = MultiCameraSession(
+            created_by_user_id=instructor.id,
+            status=SessionStatus.DEVICES_READY.value,
+            revision=5,
+        )
+        db.add(s)
+        db.flush()
+        svc = CycleService(db)
+
+        with pytest.raises(RevisionConflictError):
+            svc.activate_session(s.session_uuid, 3)  # stale
 
 
 # ── Concurrent idempotency ────────────────────────────────────────────────────

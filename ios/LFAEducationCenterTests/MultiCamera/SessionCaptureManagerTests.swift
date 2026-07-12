@@ -27,9 +27,10 @@ final class MockCaptureFileStore: CaptureFileStore {
     var availableStorage: UInt64 = 500_000_000
     var files: [URL: UInt64] = [:]
     var validationResult: CaptureFileValidation = .valid(
-        duration: 10.0, resolution: CGSize(width: 1920, height: 1080),
+        duration: 10.0, resolution: CGSize(width: 1280, height: 720),
         displayOrientation: "portrait", hasAudio: true,
-        transform: "a=0.0 b=1.0 c=-1.0 d=0.0 tx=1080.0 ty=0.0"
+        transform: "a=0.0 b=1.0 c=-1.0 d=0.0 tx=1080.0 ty=0.0",
+        fps: 30.0, codec: "hevc"
     )
     var removedURLs: [URL] = []
     private var dirCreated = false
@@ -147,9 +148,10 @@ final class SessionCaptureManagerTests: XCTestCase {
     func test_SC_08_delegate_finish_valid() async {
         let (mgr, _, fs) = makeManager()
         fs.validationResult = .valid(
-            duration: 10.0, resolution: CGSize(width: 1920, height: 1080),
+            duration: 10.0, resolution: CGSize(width: 1280, height: 720),
             displayOrientation: "portrait", hasAudio: true,
-            transform: "a=0.0 b=1.0 c=-1.0 d=0.0 tx=1080.0 ty=0.0"
+            transform: "a=0.0 b=1.0 c=-1.0 d=0.0 tx=1080.0 ty=0.0",
+            fps: 30.0, codec: "hevc"
         )
         let testURL = fs.outputURL(sessionUUID: "test", deviceId: 0)
         // Simulate delegate callback directly
@@ -164,11 +166,13 @@ final class SessionCaptureManagerTests: XCTestCase {
         if case .completed(let url) = mgr.state {
             XCTAssertEqual(url, testURL)
             XCTAssertNotNil(mgr.lastValidation)
-            if case .valid(let dur, let res, let orient, let audio, _) = mgr.lastValidation {
+            if case .valid(let dur, let res, let orient, let audio, _, let fps, let codec) = mgr.lastValidation {
                 XCTAssertEqual(dur, 10.0)
-                XCTAssertEqual(res, CGSize(width: 1920, height: 1080))
+                XCTAssertEqual(res, CGSize(width: 1280, height: 720))
                 XCTAssertEqual(orient, "portrait")
                 XCTAssertTrue(audio)
+                XCTAssertEqual(fps, 30.0)
+                XCTAssertEqual(codec, "hevc")
             }
         } else {
             XCTFail("Expected .completed, got \(mgr.state)")
@@ -222,17 +226,54 @@ final class SessionCaptureManagerTests: XCTestCase {
         XCTAssertEqual(mgr.state, .idle)
     }
 
-    // SC-14: Interruption → interrupted (tested via notification)
-    func test_SC_14_interruption_state() {
-        // Can't trigger real interruption in simulator — test state enum
-        let state: CaptureState = .interrupted
-        XCTAssertEqual(state, .interrupted)
+    // SC-14: Interruption while CAPTURING → .interrupted, and interruption-end
+    // finalizes the recording (stopCapture → .stopping). Exercised directly via
+    // the internal handlers — a real AVCaptureSessionWasInterrupted cannot be
+    // posted meaningfully on the simulator (same seam as the fileOutput
+    // delegate tests above).
+    func test_SC_14_interruption_while_capturing_then_ended_stops() {
+        let (mgr, _, _) = makeManager()
+        mgr.forceStateForTesting(.capturing)
+        mgr.handleInterruption()
+        XCTAssertEqual(mgr.state, .interrupted)
+        mgr.handleInterruptionEnded()
+        XCTAssertEqual(mgr.state, .stopping,
+            "interruption during recording must finalize via stopCapture")
     }
 
-    // SC-15: Interruption ended → auto stop
-    func test_SC_15_interruption_ended() {
-        // Verified by observer registration in code review
-        // Real test requires physical device capture
+    // SC-15: Interruption while READY (camera claimed by another session) must
+    // NOT be silently ignored — before the 2026-07-04 RCA fix the state stayed
+    // a lying .ready and the next startCapture() no-oped with zero evidence.
+    func test_SC_15_interruption_while_ready_degrades_state() {
+        let (mgr, _, _) = makeManager()
+        mgr.forceStateForTesting(.ready)
+        mgr.handleInterruption()
+        XCTAssertEqual(mgr.state, .interrupted,
+            "ready-state interruption must degrade the state, not preserve .ready")
+    }
+
+    // SC-15b: Interruption-end after a ready-state interruption re-arms to
+    // .ready (nothing was recording — there is nothing to finalize).
+    func test_SC_15b_ready_interruption_ended_rearms() {
+        let (mgr, _, _) = makeManager()
+        mgr.forceStateForTesting(.ready)
+        mgr.handleInterruption()
+        XCTAssertEqual(mgr.state, .interrupted)
+        mgr.handleInterruptionEnded()
+        XCTAssertEqual(mgr.state, .ready,
+            "ready-interruption end must re-arm, not call stopCapture")
+    }
+
+    // SC-15c: startCapture() while interrupted refuses instead of recording
+    // on a session that lost the camera — the PCO watchdog turns this refusal
+    // into an explicit failure with evidence.
+    func test_SC_15c_start_capture_refused_while_interrupted() {
+        let (mgr, _, _) = makeManager()
+        mgr.forceStateForTesting(.ready)
+        mgr.handleInterruption()
+        mgr.startCapture()
+        XCTAssertEqual(mgr.state, .interrupted,
+            "startCapture must not proceed while the session is interrupted")
     }
 
     // SC-16: Runtime error → failed

@@ -1,4 +1,5 @@
 name: Test Baseline Check
+# Repo transferred 2026-06-26: football-investment → footballinvestmentkft
 
 on:
   pull_request:

@@ -79,8 +79,10 @@ def _make_active_session(db):
     db.add_all([md1, md2])
     db.flush()
 
+    # Two player roles → two REQUIRED recorders (instructor_primary is a
+    # non-recording coordinator since MC2-PR1 and is not in the required set).
     sd1 = SessionDevice(session_id=s.id, device_id=md1.id, participant_id=p.id,
-                        device_role="instructor_primary", status="ready")
+                        device_role="player_secondary", status="ready")
     sd2 = SessionDevice(session_id=s.id, device_id=md2.id, participant_id=p.id,
                         device_role="player_primary", status="ready")
     db.add_all([sd1, sd2])
@@ -274,8 +276,9 @@ class TestConcurrentTimeout:
             setup_db.add(md)
             setup_db.flush()
 
+            # player role → the single REQUIRED recorder this timeout test drives
             sd = SessionDevice(session_id=s.id, device_id=md.id, participant_id=p.id,
-                               device_role="instructor_primary", status="ready")
+                               device_role="player_primary", status="ready")
             setup_db.add(sd)
             setup_db.flush()
 

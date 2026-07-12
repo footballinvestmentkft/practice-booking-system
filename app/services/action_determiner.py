@@ -269,6 +269,49 @@ class JugglingActionHandler:
         return f"{method}_{path}"
 
 
+class MultiCameraActionHandler:
+    """
+    Handles multicamera session/cycle audit actions.
+
+    Paths: /multicamera/*
+    All action constants are ≤ 30 chars — safe for VARCHAR(100) even after downgrade.
+    """
+
+    def can_handle(self, path: str) -> bool:
+        return "/multicamera/" in path
+
+    def determine_action(self, method: str, path: str, status_code: int) -> str:
+        if "/confirm-start" in path:
+            return AuditAction.MC_CYCLE_CONFIRM_START
+        if "/confirm-stop" in path:
+            return AuditAction.MC_CYCLE_CONFIRM_STOP
+        if "/heartbeat" in path:
+            return AuditAction.MC_DEVICE_HEARTBEAT
+        if "/activate" in path:
+            return AuditAction.MC_SESSION_ACTIVATED
+        if "/schedule" in path:
+            return AuditAction.MC_CYCLE_SCHEDULED
+        if "/stop" in path:
+            return AuditAction.MC_CYCLE_STOPPED
+        if "/join" in path:
+            return AuditAction.MC_SESSION_JOINED
+        if "/cycles" in path:
+            if method == "GET":
+                return AuditAction.MC_CYCLE_QUERIED
+            return AuditAction.MC_CYCLE_CREATED
+        if "/devices" in path:
+            if method in ("PUT", "PATCH"):
+                return AuditAction.MC_DEVICE_STATUS_UPDATED
+            return AuditAction.MC_DEVICE_REGISTERED
+        if "/system/time" in path:
+            return AuditAction.MC_SYSTEM_TIME_QUERIED
+        if "/sessions" in path:
+            if method == "GET":
+                return AuditAction.MC_SESSION_QUERIED
+            return AuditAction.MC_SESSION_CREATED
+        return f"{method}_{path}"
+
+
 class DefaultActionHandler:
     """
     Fallback handler for unrecognized paths.
@@ -309,6 +352,7 @@ class ActionDeterminer:
             CertificateActionHandler(),
             TournamentActionHandler(),
             JugglingActionHandler(),
+            MultiCameraActionHandler(),
             DefaultActionHandler(),  # Always last (fallback)
         ]
 

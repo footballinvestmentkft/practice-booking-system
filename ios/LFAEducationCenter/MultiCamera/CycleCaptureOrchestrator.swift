@@ -41,6 +41,8 @@ extension AuthManager: AccessTokenProvider {}
 // MARK: — CycleAPIClient
 
 protocol CycleAPIClient {
+    func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO
+    func activateSession(token: String, uuid: String, revision: Int) async throws -> MultiCameraSessionDTO
     func createCycle(token: String, uuid: String, idempotencyKey: String) async throws -> CaptureCycleDTO
     func scheduleCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO
     func stopCycle(token: String, uuid: String, cycleId: Int, revision: Int) async throws -> CaptureCycleDTO
@@ -51,6 +53,14 @@ protocol CycleAPIClient {
 // MARK: — LiveCycleAPIClient
 
 struct LiveCycleAPIClient: CycleAPIClient {
+    func getSession(token: String, uuid: String) async throws -> MultiCameraSessionDTO {
+        try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
+    }
+
+    func activateSession(token: String, uuid: String, revision: Int) async throws -> MultiCameraSessionDTO {
+        try await MultiCameraAPIClient.activateSession(token: token, uuid: uuid, revision: revision)
+    }
+
     func createCycle(token: String, uuid: String, idempotencyKey: String) async throws -> CaptureCycleDTO {
         try await MultiCameraAPIClient.createCycle(token: token, uuid: uuid, idempotencyKey: idempotencyKey)
     }
@@ -89,7 +99,38 @@ final class CycleCaptureOrchestrator: ObservableObject {
     private static let scheduledStartToleranceMs: Double = 2_000
 
     // MARK: — Published state
-    @Published private(set) var state: OrchestratorState = .idle
+    // didSet logs key transitions for MC1-AUTO-1 console-based physical validation —
+    // PASS/FAIL is still decided from backend ground truth, this is corroborating evidence.
+    @Published private(set) var state: OrchestratorState = .idle {
+        didSet {
+            switch state {
+            case .capturing(let cycleId): MC1Log.notice("[CCO] confirmed start: cycleId=\(cycleId)")
+            case .completed(let cycleId): MC1Log.notice("[CCO] confirmed stop: cycleId=\(cycleId)")
+            case .failed(let failure): MC1Log.notice("[CCO] FAILURE: \(failure)")
+            default: break
+            }
+        }
+    }
+    @Published private(set) var revisionConflictRetried: Bool = false
+    @Published private(set) var sessionAlreadyActiveSkipped: Bool = false
+
+    private static func mapToFailure(_ error: Error) -> OrchestratorFailure {
+        if let apiErr = error as? APIError {
+            switch apiErr {
+            case .httpError(let code, let detail):
+                return .apiError(statusCode: code, detail: "HTTP \(code): \(detail ?? "no detail")")
+            case .invalidURL:
+                return .apiError(statusCode: 0, detail: "invalidURL")
+            case .decodingError:
+                return .apiError(statusCode: 0, detail: "decode error (response mismatch)")
+            case .networkError(let e):
+                return .apiError(statusCode: 0, detail: "network: \(e.localizedDescription)")
+            case .unauthorized:
+                return .noAuth
+            }
+        }
+        return .apiError(statusCode: 0, detail: "\(error)")
+    }
 
     // MARK: — Dependencies
     private let authManager: any AccessTokenProvider
@@ -100,8 +141,16 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
     // MARK: — Internal tracking
     private var currentCycle: CaptureCycleDTO?
+    private var nextCycleIndex: Int = 0
     private var startTask: Task<Void, Never>?
     private var captureSubscription: AnyCancellable?
+
+    /// MC2-PR1 non-recording coordinator: when false, this device drives the
+    /// cycle lifecycle (create/schedule/stop) but contributes NO local capture
+    /// and NO confirm_start/confirm_stop — the players' confirms complete the
+    /// cycle on the backend. Set by the ViewModel from the device role before
+    /// each startCycle; defaults to true (recording controller).
+    var recordsLocally: Bool = true
 
     // MARK: — Init
 
@@ -121,10 +170,10 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
     // MARK: — Public API
 
-    func startCycle(sessionUuid: String, sessionDeviceId: Int) {
+    func startCycle(sessionUuid: String, sessionDeviceId: Int, sessionRevision: Int) {
         startTask?.cancel()
         startTask = Task { [weak self] in
-            await self?.performStartCycle(sessionUuid: sessionUuid, sessionDeviceId: sessionDeviceId)
+            await self?.performStartCycle(sessionUuid: sessionUuid, sessionDeviceId: sessionDeviceId, sessionRevision: sessionRevision)
         }
     }
 
@@ -143,10 +192,16 @@ final class CycleCaptureOrchestrator: ObservableObject {
                 cycleId: cycleId,
                 revision: cycle.revision
             )
-            captureController.stopCapture()
+            if recordsLocally {
+                captureController.stopCapture()
+            } else {
+                // Non-recording coordinator: nothing to stop locally and no
+                // capture-completed event will arrive — terminal state now.
+                MC1Log.notice("[CCO] non-recording coordinator: stop requested for cycle \(cycleId), no local capture")
+                state = .completed(cycleId: cycleId)
+            }
         } catch {
-            let nsErr = error as NSError
-            state = .failed(.apiError(statusCode: nsErr.code, detail: nsErr.localizedDescription))
+            state = .failed(Self.mapToFailure(error))
         }
     }
 
@@ -158,6 +213,9 @@ final class CycleCaptureOrchestrator: ObservableObject {
         currentCycle = nil
         currentCycleSessionUuid = nil
         currentSessionDeviceId  = nil
+        revisionConflictRetried = false
+        sessionAlreadyActiveSkipped = false
+        nextCycleIndex = 0
         state = .idle
     }
 
@@ -167,7 +225,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
     // MARK: — Core orchestration
 
-    private func performStartCycle(sessionUuid: String, sessionDeviceId: Int) async {
+    private func performStartCycle(sessionUuid: String, sessionDeviceId: Int, sessionRevision: Int) async {
         // Store for later use
         currentCycleSessionUuid = sessionUuid
         currentSessionDeviceId  = sessionDeviceId
@@ -178,12 +236,53 @@ final class CycleCaptureOrchestrator: ObservableObject {
             return
         }
 
-        // 2. Create cycle
+        // 2. Activate session (idempotent — 200 if already active)
         state = .creating
+        do {
+            _ = try await cycleAPIClient.activateSession(
+                token: token, uuid: sessionUuid, revision: sessionRevision
+            )
+        } catch {
+            if Task.isCancelled { return }
+            guard let apiErr = error as? APIError,
+                  case .httpError(let code, let detail) = apiErr else {
+                state = .failed(Self.mapToFailure(error))
+                return
+            }
+            if code == 409 {
+                // 409: fetch fresh session to distinguish "already active" from "stale revision"
+                do {
+                    let fresh = try await cycleAPIClient.getSession(token: token, uuid: sessionUuid)
+                    if Task.isCancelled { return }
+                    if fresh.status != .active {
+                        // Session not yet active — retry with fresh revision (max 1x)
+                        revisionConflictRetried = true
+                        _ = try await cycleAPIClient.activateSession(
+                            token: token, uuid: sessionUuid, revision: fresh.revision
+                        )
+                        if Task.isCancelled { return }
+                    }
+                    // fresh.status == .active: concurrent activation succeeded — proceed
+                } catch {
+                    if Task.isCancelled { return }
+                    state = .failed(.revisionConflict(detail: "activate retry: \(Self.mapToFailure(error))"))
+                    return
+                }
+            } else if code == 422, detail?.contains("active → active") == true {
+                // Session already ACTIVE (backend idempotency guard race) — proceed to createCycle.
+                sessionAlreadyActiveSkipped = true
+            } else {
+                state = .failed(Self.mapToFailure(error))
+                return
+            }
+        }
+
+        if Task.isCancelled { return }
+
+        // 3. Create cycle — use nextCycleIndex so successive cycles get distinct idempotency keys
         let cycle: CaptureCycleDTO
         do {
-            let cycleIndex = 0 // first cycle in session
-            let idempotencyKey = CycleIdempotencyKey.make(sessionUuid: sessionUuid, cycleIndex: cycleIndex)
+            let idempotencyKey = CycleIdempotencyKey.make(sessionUuid: sessionUuid, cycleIndex: nextCycleIndex)
             cycle = try await cycleAPIClient.createCycle(
                 token: token,
                 uuid: sessionUuid,
@@ -191,14 +290,13 @@ final class CycleCaptureOrchestrator: ObservableObject {
             )
         } catch {
             if Task.isCancelled { return }
-            let nsErr = error as NSError
-            state = .failed(.apiError(statusCode: nsErr.code, detail: nsErr.localizedDescription))
+            state = .failed(Self.mapToFailure(error))
             return
         }
 
         if Task.isCancelled { return }
 
-        // 3. Schedule cycle
+        // 4. Schedule cycle
         state = .scheduling
         let scheduledCycle: CaptureCycleDTO
         do {
@@ -210,13 +308,15 @@ final class CycleCaptureOrchestrator: ObservableObject {
             )
         } catch {
             if Task.isCancelled { return }
-            let nsErr = error as NSError
-            state = .failed(.apiError(statusCode: nsErr.code, detail: nsErr.localizedDescription))
+            state = .failed(Self.mapToFailure(error))
             return
         }
 
         if Task.isCancelled { return }
         currentCycle = scheduledCycle
+        // Advance index after a fully committed schedule so the next Begin Cycle
+        // creates a genuinely new cycle (different idempotency key).
+        nextCycleIndex = scheduledCycle.cycleIndex + 1
 
         // 4. Wait for scheduled start
         state = .waitingForStart
@@ -234,7 +334,20 @@ final class CycleCaptureOrchestrator: ObservableObject {
 
         if Task.isCancelled { return }
 
-        // 5. Subscribe to capture state BEFORE starting capture
+        // 5. Non-recording coordinator (MC2-PR1): no local capture, no
+        // self-confirm — the players' confirms drive the cycle on the backend.
+        // Deliberately NO confirm call here: a confirm without a capture file
+        // would be fabricated evidence.
+        guard recordsLocally else {
+            MC1Log.notice("[CCO] non-recording coordinator: cycle \(scheduledCycle.id) started without local capture")
+            state = .capturing(cycleId: scheduledCycle.id)
+            return
+        }
+
+        // 5. Re-arm capture from previous cycle's .completed state
+        captureController.rearmForNextCycle()
+
+        // 6. Subscribe to capture state BEFORE starting capture
         subscribeToCaptureState(
             token: token,
             sessionUuid: sessionUuid,
@@ -242,7 +355,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
             sessionDeviceId: sessionDeviceId
         )
 
-        // 6. Start capture
+        // 7. Start capture
         captureController.startCapture()
     }
 
@@ -371,14 +484,20 @@ final class CycleCaptureOrchestrator: ObservableObject {
             )
             currentCycle = updated
         } catch {
-            let nsErr = error as NSError
-            if nsErr.code == 409 {
-                // 409 may be revision mismatch, not just already-confirmed — treat as conflict
-                state = .failed(.revisionConflict(detail: nsErr.localizedDescription))
-            } else if nsErr.code == 422 {
-                state = .failed(.confirmStartRejected(detail: nsErr.localizedDescription))
+            if let apiErr = error as? APIError, case .httpError(let code, let detail) = apiErr {
+                // Definitive API failure — cancel subscription and stop orphaned capture
+                captureSubscription?.cancel()
+                captureSubscription = nil
+                captureController.stopCapture()
+                if code == 409 {
+                    state = .failed(.revisionConflict(detail: detail ?? "409"))
+                } else if code == 422 {
+                    state = .failed(.confirmStartRejected(detail: detail ?? "422"))
+                } else {
+                    state = .failed(.apiError(statusCode: code, detail: "confirm-start HTTP \(code): \(detail ?? "")"))
+                }
             } else {
-                // retry once for transient network errors
+                // Non-API error — retry once
                 do {
                     let updated = try await cycleAPIClient.confirmDeviceStart(
                         token: token,
@@ -390,14 +509,10 @@ final class CycleCaptureOrchestrator: ObservableObject {
                     )
                     currentCycle = updated
                 } catch let retryError {
-                    let retryNsErr = retryError as NSError
-                    if retryNsErr.code == 409 {
-                        state = .failed(.revisionConflict(detail: retryNsErr.localizedDescription))
-                    } else if retryNsErr.code == 422 {
-                        state = .failed(.confirmStartRejected(detail: retryNsErr.localizedDescription))
-                    } else {
-                        state = .failed(.apiError(statusCode: retryNsErr.code, detail: retryNsErr.localizedDescription))
-                    }
+                    captureSubscription?.cancel()
+                    captureSubscription = nil
+                    captureController.stopCapture()
+                    state = .failed(Self.mapToFailure(retryError))
                 }
             }
         }
@@ -433,14 +548,15 @@ final class CycleCaptureOrchestrator: ObservableObject {
             currentCycle = updated
             state = .completed(cycleId: cycleId)
         } catch {
-            let nsErr = error as NSError
-            if nsErr.code == 409 {
-                // 409 may be revision mismatch — do not silently treat as success
-                state = .failed(.revisionConflict(detail: nsErr.localizedDescription))
-            } else if nsErr.code == 422 {
-                state = .failed(.confirmStopRejected(detail: nsErr.localizedDescription))
+            if let apiErr = error as? APIError, case .httpError(let code, let detail) = apiErr {
+                if code == 409 {
+                    state = .failed(.revisionConflict(detail: detail ?? "409"))
+                } else if code == 422 {
+                    state = .failed(.confirmStopRejected(detail: detail ?? "422"))
+                } else {
+                    state = .failed(.apiError(statusCode: code, detail: "confirm-stop HTTP \(code): \(detail ?? "")"))
+                }
             } else {
-                // retry once for transient network errors
                 do {
                     let updated = try await cycleAPIClient.confirmDeviceStop(
                         token: token,
@@ -453,14 +569,7 @@ final class CycleCaptureOrchestrator: ObservableObject {
                     currentCycle = updated
                     state = .completed(cycleId: cycleId)
                 } catch let retryError {
-                    let retryNsErr = retryError as NSError
-                    if retryNsErr.code == 409 {
-                        state = .failed(.revisionConflict(detail: retryNsErr.localizedDescription))
-                    } else if retryNsErr.code == 422 {
-                        state = .failed(.confirmStopRejected(detail: retryNsErr.localizedDescription))
-                    } else {
-                        state = .failed(.apiError(statusCode: retryNsErr.code, detail: retryNsErr.localizedDescription))
-                    }
+                    state = .failed(Self.mapToFailure(retryError))
                 }
             }
         }

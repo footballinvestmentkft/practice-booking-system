@@ -52,6 +52,15 @@ struct HeartbeatResponse: Codable, Equatable {
     }
 }
 
+struct DeviceStatusUpdateRequest: Codable {
+    let targetStatus: MCDeviceStatus
+    let deviceRevision: Int
+    enum CodingKeys: String, CodingKey {
+        case targetStatus = "target_status"
+        case deviceRevision = "device_revision"
+    }
+}
+
 // MARK: — API Client
 
 enum MultiCameraAPIClient {
@@ -89,6 +98,14 @@ enum MultiCameraAPIClient {
         try await APIClient.post(
             path: "\(base)/sessions/\(uuid)/devices",
             body: request,
+            token: token
+        )
+    }
+
+    static func updateDeviceStatus(token: String, uuid: String, sessionDeviceId: Int, targetStatus: MCDeviceStatus, deviceRevision: Int) async throws -> SessionDeviceDTO {
+        try await APIClient.patch(
+            path: "\(base)/sessions/\(uuid)/devices/\(sessionDeviceId)/status",
+            body: DeviceStatusUpdateRequest(targetStatus: targetStatus, deviceRevision: deviceRevision),
             token: token
         )
     }

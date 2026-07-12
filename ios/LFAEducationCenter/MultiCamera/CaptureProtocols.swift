@@ -27,7 +27,8 @@ struct PendingCapture {
 }
 
 enum CaptureFileValidation: Equatable {
-    case valid(duration: TimeInterval, resolution: CGSize, displayOrientation: String, hasAudio: Bool, transform: String)
+    case valid(duration: TimeInterval, resolution: CGSize, displayOrientation: String, hasAudio: Bool,
+               transform: String, fps: Double, codec: String)
     case invalid(reason: String)
 }
 
@@ -125,18 +126,26 @@ final class SystemCaptureFileStore: CaptureFileStore {
 
             let naturalSize: CGSize
             let transform: CGAffineTransform
+            let nominalFrameRate: Float
+            let formatDescriptions: [CMFormatDescription]
             if #available(iOS 16, *) {
                 naturalSize = try await videoTracks[0].load(.naturalSize)
                 transform = try await videoTracks[0].load(.preferredTransform)
+                nominalFrameRate = try await videoTracks[0].load(.nominalFrameRate)
+                formatDescriptions = try await videoTracks[0].load(.formatDescriptions)
             } else {
                 naturalSize = videoTracks[0].naturalSize
                 transform = videoTracks[0].preferredTransform
+                nominalFrameRate = videoTracks[0].nominalFrameRate
+                formatDescriptions = videoTracks[0].formatDescriptions as! [CMFormatDescription]
             }
 
             let orientation = Self.displayOrientation(from: transform)
             let transformStr = "a=\(transform.a) b=\(transform.b) c=\(transform.c) d=\(transform.d) tx=\(transform.tx) ty=\(transform.ty)"
+            let codec = Self.codecName(from: formatDescriptions)
 
-            return .valid(duration: duration, resolution: naturalSize, displayOrientation: orientation, hasAudio: true, transform: transformStr)
+            return .valid(duration: duration, resolution: naturalSize, displayOrientation: orientation,
+                          hasAudio: true, transform: transformStr, fps: Double(nominalFrameRate), codec: codec)
         } catch {
             return .invalid(reason: "Asset loading: \(error.localizedDescription)")
         }
@@ -150,6 +159,20 @@ final class SystemCaptureFileStore: CaptureFileStore {
         case _ where abs(angle - .pi) < 0.01 || abs(angle + .pi) < 0.01: return "landscapeLeft"
         case _ where abs(angle) < 0.01: return "landscapeRight"
         default: return "unknown(\(String(format: "%.2f", angle))rad)"
+        }
+    }
+
+    static func codecName(from formatDescriptions: [CMFormatDescription]) -> String {
+        guard let desc = formatDescriptions.first else { return "unknown" }
+        let mediaSubType = CMFormatDescriptionGetMediaSubType(desc)
+        switch mediaSubType {
+        case kCMVideoCodecType_HEVC: return "hevc"
+        case kCMVideoCodecType_H264: return "h264"
+        default:
+            let fourCC = String(format: "%c%c%c%c",
+                                 (mediaSubType >> 24) & 0xFF, (mediaSubType >> 16) & 0xFF,
+                                 (mediaSubType >> 8) & 0xFF, mediaSubType & 0xFF)
+            return fourCC
         }
     }
 }

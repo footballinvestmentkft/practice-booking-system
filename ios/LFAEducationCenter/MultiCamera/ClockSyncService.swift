@@ -39,12 +39,22 @@ struct LiveSystemTimeAPIClient: SystemTimeAPIClient {
         request.timeoutInterval = 5.0
 
         #if DEBUG
-        let session = APIClient._testURLSession ?? URLSession.shared
+        let activeSession = APIClient._testURLSession ?? URLSession.shared
         #else
-        let session = URLSession.shared
+        let activeSession = URLSession.shared
         #endif
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response): (Data, URLResponse) = try await withCheckedThrowingContinuation { continuation in
+            activeSession.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else if let data = data, let response = response {
+                    continuation.resume(returning: (data, response))
+                } else {
+                    continuation.resume(throwing: URLError(.unknown))
+                }
+            }.resume()
+        }
         guard let http = response as? HTTPURLResponse else {
             throw APIError.networkError(URLError(.badServerResponse))
         }

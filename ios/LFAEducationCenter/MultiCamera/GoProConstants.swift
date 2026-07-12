@@ -46,6 +46,12 @@ enum GoProSpec {
     static let mediaListPath = "/gopro/media/list"
     static let mediaDownloadBase = "/videos/DCIM"
 
+    // Preview stream (Open GoPro v2.0 — requires HERO13 validation)
+    static let streamStartPath = "/gopro/camera/stream/start"
+    static let streamStopPath = "/gopro/camera/stream/stop"
+    static let previewStreamURL = "udp://@:8554"
+    static let previewStreamPort: UInt16 = 8554
+
     // MARK: — BLE Commands (raw bytes per spec)
 
     static let apModeOnCommand: [UInt8] = [0x03, 0x17, 0x01, 0x01]

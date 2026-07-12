@@ -289,16 +289,39 @@ enum APIClient {
         return (data, http.statusCode)
     }
 
+    // Dedicated backend session — used for all production requests.
+    //
+    // allowsCellularAccess = true (already the default) is explicit here to
+    // document intent: requests MUST be able to use cellular.
+    //
+    // waitsForConnectivity = true: when the active WiFi interface has no internet
+    // route (e.g. iPhone connected to GoPro AP), URLSession waits for iOS to
+    // detect the situation and route through cellular instead of immediately
+    // throwing NSURLErrorNotConnectedToInternet. This is the fix for the
+    // GoPro-WiFi + backend-cellular coexistence problem (MC1 Block-1).
+    //
+    // timeoutIntervalForRequest = 15: shorter than the 60s default so failures
+    // surface faster in the physical regression loop.
+    // timeoutIntervalForResource = 60: still long enough for large responses.
+    private static let backendSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.allowsCellularAccess = true
+        config.waitsForConnectivity = true
+        config.timeoutIntervalForRequest = 15
+        config.timeoutIntervalForResource = 60
+        return URLSession(configuration: config)
+    }()
+
     // URLSession.data(for:) async is iOS 15+.
     // This continuation wrapper is iOS 13+ compatible.
     // Uses _testURLSession (DEBUG only) when set, so tests can intercept calls
-    // via MockURLProtocol without touching URLSession.shared.
+    // via MockURLProtocol without touching the production session.
     private static func perform(_ request: URLRequest) async throws -> (Data, URLResponse) {
         #if DEBUG
         print("[APIClient] ▶ \(request.httpMethod ?? "?") \(request.url?.absoluteString ?? "nil")")
-        let activeSession = _testURLSession ?? URLSession.shared
+        let activeSession = _testURLSession ?? backendSession
         #else
-        let activeSession = URLSession.shared
+        let activeSession = backendSession
         #endif
         return try await withCheckedThrowingContinuation { continuation in
             activeSession.dataTask(with: request) { data, response, error in
@@ -374,9 +397,9 @@ enum APIClient {
     ) async throws -> (Data, URLResponse) {
         #if DEBUG
         print("[APIClient] ⬆ uploadTask \(request.url?.absoluteString ?? "nil")")
-        let activeSession = _testURLSession ?? URLSession.shared
+        let activeSession = _testURLSession ?? backendSession
         #else
-        let activeSession = URLSession.shared
+        let activeSession = backendSession
         #endif
         return try await withCheckedThrowingContinuation { continuation in
             activeSession.uploadTask(with: request, fromFile: fileURL) { data, response, error in

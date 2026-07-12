@@ -152,19 +152,22 @@ struct MainHubView: View {
         }
         #if DEBUG
         .fullScreenCover(isPresented: $isShowingGoProDebug) {
-            GoProConnectionDebugView(
-                manager: GoProConnectionManager(
-                    bleTransport: CoreBluetoothBLETransport(),
-                    httpTransport: GoProHTTPClientTransport(),
-                    wifiTransport: SystemWiFiTransport()
-                )
-            )
+            GoProConnectionDebugView(manager: GoProConnectionManager.shared)
         }
         .fullScreenCover(isPresented: $isShowingSessionLab) {
             MultiCameraLobbyView(authManager: authManager)
         }
         .fullScreenCover(isPresented: $isShowingCaptureTest) {
             SessionCaptureDebugView()
+        }
+        // MC1-AUTO-1: lfa-mc1://automate?action=join opens the Session Lab
+        // the same way the "Session Lab" debug button does.
+        .onReceive(MC1AutomationBridge.shared.$presentSessionLab) { show in
+            if show {
+                isShowingGoProDebug = false
+                isShowingCaptureTest = false
+                isShowingSessionLab = true
+            }
         }
         #endif
         .fullScreenCover(isPresented: $isShowingOnboarding) {

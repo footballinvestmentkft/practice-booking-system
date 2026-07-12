@@ -70,7 +70,10 @@ final class MockGoProHTTPTransport: @preconcurrency GoProHTTPTransport {
 
 @MainActor
 final class MockGoProWiFiTransport: @preconcurrency GoProWiFiTransport {
-    var joinResult: Result<Void, Error> = .success(())
+    // Default: fail with a generic error → GoProConnectionManager falls back to
+    // awaitingManualWiFiJoin. Tests that exercise auto-join success must set
+    // joinResult = .success(()) explicitly before triggering WiFi credentials.
+    var joinResult: Result<Void, Error> = .failure(NSError(domain: "MockWiFiAutoJoin", code: -1))
     var isConnected = false
     var joinCallCount = 0
 

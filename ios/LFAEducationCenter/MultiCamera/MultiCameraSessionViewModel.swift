@@ -32,32 +32,42 @@ final class MultiCameraSessionViewModel: ObservableObject {
     @Published private(set) var state: LobbyState = .idle
     @Published private(set) var sessionDeviceId: Int?
     @Published private(set) var clockSyncState: ClockSyncState = .notSynced
+    @Published private(set) var deviceRegisterError: String?
 
     private var pollingTask: Task<Void, Never>?
     private var heartbeatTask: Task<Void, Never>?
     private var clockSyncTask: Task<Void, Never>?
     private var isCreateInProgress = false
 
-    private let authManager: AuthManager
+    let authManager: AuthManager
     private let clockSyncService: ClockSyncService
     private let pollingInterval: UInt64
     private let heartbeatInterval: UInt64
     private static let maxRetries = 3
 
     private let cycleOrchestrator: CycleCaptureOrchestrator?
+    private let playerCycleListener: PlayerCycleListener?
+    private let playerCaptureOrchestrator: PlayerCaptureOrchestrator?
+    private let capturePreparable: (any CapturePreparable)?
 
     init(
         authManager: AuthManager,
         clockSyncService: ClockSyncService = ClockSyncService(),
         pollingIntervalSeconds: Double = 3.0,
         heartbeatIntervalSeconds: Double = 5.0,
-        cycleOrchestrator: CycleCaptureOrchestrator? = nil
+        cycleOrchestrator: CycleCaptureOrchestrator? = nil,
+        playerCycleListener: PlayerCycleListener? = nil,
+        playerCaptureOrchestrator: PlayerCaptureOrchestrator? = nil,
+        capturePreparable: (any CapturePreparable)? = nil
     ) {
         self.authManager = authManager
         self.clockSyncService = clockSyncService
         self.pollingInterval = UInt64(pollingIntervalSeconds * 1_000_000_000)
         self.heartbeatInterval = UInt64(heartbeatIntervalSeconds * 1_000_000_000)
         self.cycleOrchestrator = cycleOrchestrator
+        self.playerCycleListener = playerCycleListener
+        self.playerCaptureOrchestrator = playerCaptureOrchestrator
+        self.capturePreparable = capturePreparable
     }
 
     deinit {
@@ -79,7 +89,8 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 guard let token = authManager.accessToken else { throw LobbyError.noAuth }
                 let session = try await MultiCameraAPIClient.createSession(token: token, maxP: maxP, maxD: maxD)
                 state = .inLobby(session: session)
-                await autoRegisterDevice(sessionUuid: session.sessionUuid)
+                let myParticipantId = session.participants.first { $0.userId == (Self.cachedUserId ?? 0) }?.id
+                await autoRegisterDevice(sessionUuid: session.sessionUuid, participantId: myParticipantId)
                 startPolling(uuid: session.sessionUuid)
                 startHeartbeat(uuid: session.sessionUuid)
                 startClockSync()
@@ -98,10 +109,12 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 _ = try await MultiCameraAPIClient.joinSession(token: token, uuid: uuid, role: role)
                 let session = try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
                 state = .inLobby(session: session)
-                await autoRegisterDevice(sessionUuid: session.sessionUuid)
+                let myParticipantId = session.participants.first { $0.userId == (Self.cachedUserId ?? 0) }?.id
+                await autoRegisterDevice(sessionUuid: session.sessionUuid, participantId: myParticipantId)
                 startPolling(uuid: session.sessionUuid)
                 startHeartbeat(uuid: session.sessionUuid)
                 startClockSync()
+                playerCycleListener?.start(sessionUuid: session.sessionUuid)
             } catch {
                 state = .error(mapError(error))
             }
@@ -151,43 +164,94 @@ final class MultiCameraSessionViewModel: ObservableObject {
         isCreateInProgress = false
         clockSyncState = .notSynced
         cycleOrchestrator?.reset()
+        playerCycleListener?.reset()
+        playerCaptureOrchestrator?.reset()
         state = .idle
     }
 
     func beginCycle() {
-        guard canStartCapture, let uuid = sessionUuid, let sdId = sessionDeviceId else { return }
-        cycleOrchestrator?.startCycle(sessionUuid: uuid, sessionDeviceId: sdId)
+        guard isController,
+              canStartCapture,
+              case .inLobby(let session) = state,
+              let sdId = sessionDeviceId else { return }
+        cycleOrchestrator?.recordsLocally = localCaptureExpected
+        cycleOrchestrator?.startCycle(
+            sessionUuid: session.sessionUuid,
+            sessionDeviceId: sdId,
+            sessionRevision: session.revision
+        )
     }
 
     func endCycle() {
-        guard sessionUuid != nil else { return }
+        guard isController, sessionUuid != nil else { return }
         Task { await cycleOrchestrator?.stopCycle() }
     }
 
     // MARK: — Auto device register
 
-    private func autoRegisterDevice(sessionUuid: String) async {
-        guard let token = authManager.accessToken else { return }
-        let stableUUID = DeviceIdentity.stableDeviceUUID()
-        let logId = DeviceIdentity.logSafeIdentifier()
+    private func autoRegisterDevice(sessionUuid: String, participantId: Int?) async {
+        guard let token = authManager.accessToken else {
+            deviceRegisterError = "No auth token"
+            return
+        }
         #if targetEnvironment(simulator)
         let deviceType: MCDeviceType = .iphone
         #else
         let deviceType: MCDeviceType = UIDevice.current.userInterfaceIdiom == .pad ? .ipad : .iphone
         #endif
+        let myRole = self.resolvedParticipantRole
+        let deviceRole: MCDeviceRole = myRole == .instructor ? .instructorPrimary : .playerPrimary
         let request = RegisterDeviceRequest(
-            deviceUuid: stableUUID, deviceType: deviceType,
+            deviceUuid: nil, deviceType: deviceType,
             deviceName: UIDevice.current.name, bleIdentifier: nil,
-            deviceRole: deviceType == .ipad ? .instructorPrimary : .playerPrimary,
-            participantId: nil, managedByDeviceId: nil
+            deviceRole: deviceRole,
+            participantId: participantId, managedByDeviceId: nil
         )
         do {
             let sd = try await MultiCameraAPIClient.registerDevice(token: token, uuid: sessionUuid, request: request)
             sessionDeviceId = sd.id
-            print("[LobbyVM] autoRegisterDevice: OK sdId=\(sd.id) deviceUUID=\(logId)")
+            deviceRegisterError = nil
+            MC1Log.notice("[LobbyVM] autoRegisterDevice: OK sdId=\(sd.id)")
+            // Attach PCO immediately after registration — must not be gated on updateDeviceStatus.
+            // If updateDeviceStatus throws (revision conflict, network), PCO would never subscribe
+            // to PCL state changes and the player would stay "pending" forever.
+            //
+            // Explicit POSITIVE role gate (2026-07-01 flow audit): only player-role devices may
+            // attach a PlayerCaptureOrchestrator. Before this gate, attach() ran unconditionally
+            // for EVERY device role including the instructor — so the instructor's own PCO
+            // independently reacted to the same cycle its CycleCaptureOrchestrator was already
+            // driving, racing it for confirmDeviceStart/Stop on the instructor's own device_id.
+            // Whichever orchestrator's confirm call landed second got a stale-revision 409, and
+            // CCO's error handler treats any confirm-start HTTP error as fatal — tearing down the
+            // instructor's OWN capture even though the backend already showed confirmed_start=true.
+            if Self.shouldAttachPlayerCaptureOrchestrator(deviceRole: sd.deviceRole),
+               let listener = playerCycleListener, let orch = playerCaptureOrchestrator {
+                orch.attach(listener: listener, sessionUuid: sessionUuid, playerSessionDeviceId: sd.id)
+            }
+            if Self.shouldAutoPrepare(deviceRole: sd.deviceRole) {
+                await capturePreparable?.autoPrepare(sessionUUID: sessionUuid, deviceId: sd.id)
+            }
+            do {
+                _ = try await MultiCameraAPIClient.updateDeviceStatus(
+                    token: token, uuid: sessionUuid,
+                    sessionDeviceId: sd.id, targetStatus: .ready,
+                    deviceRevision: sd.revision
+                )
+                MC1Log.notice("[LobbyVM] autoRegisterDevice: device \(sd.id) → ready")
+            } catch {
+                MC1Log.notice("[LobbyVM] autoRegisterDevice: updateDeviceStatus FAILED (non-fatal) error=\(error)")
+            }
         } catch {
-            print("[LobbyVM] autoRegisterDevice: FAILED deviceUUID=\(logId) error=\(error)")
+            deviceRegisterError = "\(error)"
+            MC1Log.notice("[LobbyVM] autoRegisterDevice: FAILED error=\(error)")
         }
+    }
+
+    func retryDeviceRegistration() {
+        guard case .inLobby(let session) = state else { return }
+        deviceRegisterError = nil
+        let myParticipantId = session.participants.first { $0.userId == (Self.cachedUserId ?? 0) }?.id
+        Task { await autoRegisterDevice(sessionUuid: session.sessionUuid, participantId: myParticipantId) }
     }
 
     // MARK: — Polling
@@ -201,6 +265,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
                 guard let token = self.authManager.accessToken else { continue }
                 do {
                     let session = try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
+                    guard !Task.isCancelled else { return }
                     self.state = .inLobby(session: session)
                 } catch {
                     // skip iteration, retry next cycle
@@ -270,11 +335,69 @@ final class MultiCameraSessionViewModel: ObservableObject {
         return true
     }
 
+    // MARK: — Capture authority
+
+    static func resolveDeviceRole(state: LobbyState, sessionDeviceId: Int?) -> MCDeviceRole? {
+        guard case .inLobby(let session) = state, let sdId = sessionDeviceId else { return nil }
+        return session.devices.first { $0.id == sdId && $0.removedAt == nil }?.deviceRole
+    }
+
+    static func resolveIsController(role: MCDeviceRole?) -> Bool {
+        role == .instructorPrimary
+    }
+
+    var myDeviceRole: MCDeviceRole? {
+        Self.resolveDeviceRole(state: state, sessionDeviceId: sessionDeviceId)
+    }
+
+    var isController: Bool {
+        Self.resolveIsController(role: myDeviceRole)
+    }
+
+    static func shouldAutoPrepare(deviceRole: MCDeviceRole) -> Bool {
+        switch deviceRole {
+        case .playerPrimary, .playerSecondary:
+            return true
+        case .instructorPrimary, .auxiliaryCamera:
+            // MC2-PR1 final topology: the instructor (iPad) is a non-recording
+            // coordinator — it must never open a capture session or produce a
+            // capture file. Auxiliary (GoPro) capture is driven over HTTP.
+            return false
+        }
+    }
+
+    /// True when this device is expected to produce a local capture file
+    /// during a cycle. Single source of truth = shouldAutoPrepare: a device
+    /// that never prepares a capture session must not be treated as a
+    /// recorder anywhere else (begin-cycle gate, CCO, dashboard panel).
+    var localCaptureExpected: Bool {
+        guard let role = myDeviceRole else { return true }
+        return Self.shouldAutoPrepare(deviceRole: role)
+    }
+
+    /// Explicit POSITIVE allow-list — only these device roles may attach a
+    /// PlayerCaptureOrchestrator to a PlayerCycleListener. Deliberately positive
+    /// (not `!= .instructorPrimary`) so a future new MCDeviceRole case defaults to
+    /// NOT attaching unless someone explicitly adds it here.
+    static func shouldAttachPlayerCaptureOrchestrator(deviceRole: MCDeviceRole) -> Bool {
+        switch deviceRole {
+        case .playerPrimary, .playerSecondary:
+            return true
+        case .instructorPrimary, .auxiliaryCamera:
+            return false
+        }
+    }
+
     // MARK: — Helpers
 
     var isInstructor: Bool {
-        guard case .inLobby(let session) = state else { return false }
-        return session.participants.contains { $0.role == .instructor && $0.userId == (Self.cachedUserId ?? 0) }
+        resolvedParticipantRole == .instructor
+    }
+
+    var resolvedParticipantRole: ParticipantRole {
+        guard case .inLobby(let session) = state else { return .player }
+        let isInst = session.participants.contains { $0.role == .instructor && $0.userId == (Self.cachedUserId ?? 0) }
+        return isInst ? .instructor : .player
     }
 
     private static var cachedUserId: Int? {
@@ -288,19 +411,22 @@ final class MultiCameraSessionViewModel: ObservableObject {
     }
 
     private func mapError(_ error: Error) -> String {
-        let nsError = error as NSError
-        if nsError.domain == "APIClient" {
-            switch nsError.code {
-            case 401: return "Nincs bejelentkezve"
-            case 403: return "Nincs jogosultság"
-            case 404: return "Session nem található"
-            case 409: return "Session megtelt vagy verzióütközés"
-            case 422: return "Érvénytelen művelet"
-            default: return "Szerverhiba (\(nsError.code))"
+        if error is LobbyError { return "Nincs bejelentkezve" }
+        if let apiErr = error as? APIError {
+            switch apiErr {
+            case .invalidURL:
+                return "Invalid URL"
+            case .httpError(let code, let detail):
+                return "HTTP \(code): \(detail ?? "no detail")"
+            case .decodingError:
+                return "Decode error (response mismatch)"
+            case .networkError(let underlying):
+                return "Network: \(underlying.localizedDescription)"
+            case .unauthorized:
+                return "Unauthorized (token expired?)"
             }
         }
-        if error is LobbyError { return "Nincs bejelentkezve" }
-        return "Hálózati hiba"
+        return "Error: \(error)"
     }
 }
 

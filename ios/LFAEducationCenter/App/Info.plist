@@ -24,6 +24,17 @@
 	<true/>
 	<key>APIBaseURL</key>
 	<string>$(API_BASE_URL)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>hu.lfa.educationcenter.mc1automation</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>lfa-mc1</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
@@ -34,7 +45,12 @@
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Bluetooth is used to connect and control the GoPro camera for multi-camera recording sessions.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Local network access is required to communicate with the GoPro camera over Wi-Fi for recording control and media transfer.</string>
+	<string>Local network access is required for live camera streaming between devices and GoPro camera control.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_lfa-mc1-cam._tcp</string>
+		<string>_lfa-mc1-cam._udp</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera is used for pose tracking in training sessions and for capturing mood expression photos on your player card.</string>
 	<key>NSMicrophoneUsageDescription</key>
