@@ -1,0 +1,130 @@
+{
+  "schema_version": "2.0",
+  "quiz_title": "AL — Athlete Nutrition - Foundations of Sports Nutrition v2.0 [EN]",
+  "category": "NUTRITION",
+  "difficulty": "EASY",
+  "language": "en",
+  "specializations": ["LFA_FOOTBALL_PLAYER"],
+  "questions": [
+    {
+      "text": "Which macronutrient serves as the primary fuel source during high-intensity football training and matches?",
+      "type": "MULTIPLE_CHOICE",
+      "explanation": "Carbohydrates are broken down into glucose and stored as glycogen in muscles and the liver. During high-intensity exercise, the body relies almost exclusively on glycogen as its fast energy source. Fat oxidation is too slow to sustain explosive efforts; protein provides only ~5% of energy even during prolonged exercise.",
+      "correct_variants": [
+        "Carbohydrates",
+        "Carbohydrates (glycogen)",
+        "Carbs / glycogen"
+      ],
+      "distractor_pool": [
+        "Fat",
+        "Protein",
+        "Vitamins",
+        "Minerals",
+        "Dietary fibre",
+        "Cholesterol"
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.3,
+        "average_time_seconds": 20.0,
+        "concept_tags": ["carbohydrates", "energy", "macronutrients", "high_intensity"]
+      }
+    },
+    {
+      "text": "How much fluid should a footballer drink in the 2–3 hours before a match to ensure optimal pre-match hydration?",
+      "type": "MULTIPLE_CHOICE",
+      "explanation": "Sports nutrition guidelines (ACSM / UEFA) recommend 400–600 ml of fluid in the 2–3 hours before exercise to achieve adequate hydration without gastric discomfort. Drinking too little leaves the athlete in a mild dehydration state; drinking too much risks bloating and hyponatraemia.",
+      "correct_variants": [
+        "400–600 ml",
+        "400 to 600 ml",
+        "Approximately 500 ml (400–600 ml range)"
+      ],
+      "distractor_pool": [
+        "100–200 ml",
+        "1.5–2.0 litres",
+        "As much as possible until full",
+        "No fluid — drink only during the match",
+        "Exactly 1 litre",
+        "250 ml (one cup)"
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.35,
+        "average_time_seconds": 25.0,
+        "concept_tags": ["hydration", "pre_match", "fluid_intake", "performance"]
+      }
+    },
+    {
+      "text": "When should a footballer consume their last substantial pre-match meal to allow adequate digestion before kick-off?",
+      "type": "MULTIPLE_CHOICE",
+      "explanation": "Consuming a high-carbohydrate, moderate-protein, low-fat meal 3–4 hours before kick-off gives the body enough time to digest, absorb nutrients, and restore liver glycogen without causing GI discomfort during play. A small carbohydrate snack (e.g. banana) can follow 30–60 minutes before kick-off.",
+      "correct_variants": [
+        "3–4 hours before kick-off",
+        "3 to 4 hours before the match",
+        "Around 3–4 hours prior to the game"
+      ],
+      "distractor_pool": [
+        "30 minutes before kick-off",
+        "Just before the warm-up",
+        "6–8 hours before the match",
+        "Immediately after the pre-match warm-up",
+        "1 hour before kick-off",
+        "The night before only — no meal on match day"
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.30,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 22.0,
+        "concept_tags": ["pre_match", "meal_timing", "nutrition", "digestion"]
+      }
+    },
+    {
+      "text": "Within what time window after a match should a footballer prioritise carbohydrate intake to maximise glycogen resynthesis?",
+      "type": "MULTIPLE_CHOICE",
+      "explanation": "Muscle glycogen synthase activity is highest in the 30–60 minutes immediately post-exercise ('glycogen window'). Consuming 1–1.2 g of carbohydrate per kg body weight in this window accelerates resynthesis significantly compared to delaying intake by 2+ hours. Adding protein also enhances the response.",
+      "correct_variants": [
+        "Within 30–60 minutes after the match",
+        "In the first 30–60 minutes post-match",
+        "Within the first hour after the final whistle"
+      ],
+      "distractor_pool": [
+        "2–3 hours post-match",
+        "Only the next morning",
+        "Timing does not matter — total daily carbs are all that counts",
+        "6 hours after the match",
+        "Immediately before sleeping",
+        "Only if the player feels hungry"
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.35,
+        "cognitive_load": 0.40,
+        "average_time_seconds": 28.0,
+        "concept_tags": ["post_match", "glycogen", "recovery", "carbohydrates"]
+      }
+    },
+    {
+      "text": "Which nutrient is primarily responsible for repairing and rebuilding muscle tissue after intense football training?",
+      "type": "MULTIPLE_CHOICE",
+      "explanation": "Dietary protein provides amino acids that act as building blocks for muscle protein synthesis (MPS). After resistance or high-intensity training, MPS is elevated and protein intake (20–40 g per serving) stimulates repair and adaptation. Carbohydrates refuel glycogen but do not directly drive MPS; fats and micronutrients play supporting roles.",
+      "correct_variants": [
+        "Protein",
+        "Dietary protein / amino acids",
+        "Protein (amino acids)"
+      ],
+      "distractor_pool": [
+        "Carbohydrates",
+        "Fat",
+        "Vitamin C",
+        "Sodium",
+        "Dietary fibre",
+        "Creatine (a supplement, not a macronutrient)"
+      ],
+      "metadata": {
+        "estimated_difficulty": 0.25,
+        "cognitive_load": 0.30,
+        "average_time_seconds": 20.0,
+        "concept_tags": ["protein", "muscle_repair", "recovery", "amino_acids"]
+      }
+    }
+  ]
+}
