@@ -1,5 +1,5 @@
 # Testing dependencies for CI/CD pipeline
-pytest==7.4.3
+pytest==9.0.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
 pytest-xdist==3.8.0  # Parallel testing support for Integration Critical Suite
