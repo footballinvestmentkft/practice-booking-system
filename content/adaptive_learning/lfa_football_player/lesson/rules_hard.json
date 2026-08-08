@@ -1,5 +1,6 @@
 {
   "schema_version": "1.0",
+  "language": "en",
   "specializations": ["LFA_FOOTBALL_PLAYER"],
   "category": "LESSON",
   "difficulty": "HARD",
