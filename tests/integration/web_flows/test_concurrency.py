@@ -273,7 +273,11 @@ class TestSpecializationUnlockIdempotency:
 
         cts = (
             test_db.query(CreditTransaction)
-            .filter(CreditTransaction.user_license_id == license_id)
+            .filter(
+                CreditTransaction.user_id == student_user.id,
+                CreditTransaction.transaction_type == "SPECIALIZATION_UNLOCK",
+                CreditTransaction.idempotency_key == f"license_unlock_{license_id}",
+            )
             .all()
         )
         assert len(cts) == 1, "Exactly 1 CreditTransaction after first unlock"
@@ -308,7 +312,11 @@ class TestSpecializationUnlockIdempotency:
         # No new CreditTransaction — no double-deduction
         cts_after = (
             test_db.query(CreditTransaction)
-            .filter(CreditTransaction.user_license_id == license_id)
+            .filter(
+                CreditTransaction.user_id == student_user.id,
+                CreditTransaction.transaction_type == "SPECIALIZATION_UNLOCK",
+                CreditTransaction.idempotency_key == f"license_unlock_{license_id}",
+            )
             .all()
         )
         assert len(cts_after) == 1, "No new CreditTransaction on duplicate attempt"

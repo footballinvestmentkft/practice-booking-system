@@ -1,5 +1,6 @@
 """P0 recovery regressions that do not require a live HTTP server."""
 
+import asyncio
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -14,6 +15,10 @@ from app.api.api_v1.endpoints.progression import (
     UpdateProgressRequest,
     get_user_progress,
     update_user_progress,
+)
+from app.api.web_routes.adaptive_learning import (
+    al_session_complete,
+    al_session_discard,
 )
 from app.models.attendance import AttendanceStatus
 from app.models.session import EventCategory
@@ -91,6 +96,36 @@ def test_f02_service_rejects_foreign_session_reads_and_answers():
         is_correct=True,
         time_spent_seconds=1,
     ) == {}
+    db.commit.assert_not_called()
+
+
+@pytest.mark.parametrize("handler", [al_session_complete, al_session_discard])
+def test_f02_web_session_mutations_use_canonical_ownership_policy(handler):
+    session = SimpleNamespace(id=7, user_id=42, ended_at=None, status="ACTIVE")
+    actor = SimpleNamespace(id=42, role=UserRole.STUDENT)
+    db = MagicMock()
+    db.query.return_value.filter.return_value.with_for_update.return_value.first.return_value = session
+
+    with (
+        patch(
+            "app.api.web_routes.adaptive_learning.require_student_onboarding",
+            return_value=None,
+        ),
+        patch(
+            "app.api.web_routes.adaptive_learning.AuthorizationPolicy.can_access_adaptive_session",
+            return_value=False,
+        ) as policy,
+        patch(
+            "app.api.web_routes.adaptive_learning.AdaptiveLearningService.end_session",
+            return_value={"questions_answered": 0, "correct_answers": 0, "xp_earned": 0},
+        ),
+    ):
+        response = asyncio.run(
+            handler(session_id=7, request=MagicMock(), db=db, user=actor)
+        )
+
+    policy.assert_called_once_with(actor, session)
+    assert response.status_code == 404
     db.commit.assert_not_called()
 
 

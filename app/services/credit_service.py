@@ -157,18 +157,28 @@ class CreditService:
         """
         Atomically deduct credits from a user's balance.
 
-        The caller owns the transaction and commit boundary.
+        Uses a SAVEPOINT while the caller owns the outer transaction and commit
+        boundary.
 
         Raises:
             InsufficientCreditsError: if user has fewer credits than amount
         """
-        transaction, _ = self.deduct_with_status(
-            user=user,
-            amount=amount,
-            transaction_type=transaction_type,
-            description=description,
-            idempotency_key=idempotency_key,
-        )
+        # Use a connection-level SAVEPOINT so the debit and ledger flush are
+        # atomic without completing or replacing the caller's ORM transaction.
+        savepoint = self.db.connection().begin_nested()
+        try:
+            transaction, _ = self.deduct_with_status(
+                user=user,
+                amount=amount,
+                transaction_type=transaction_type,
+                description=description,
+                idempotency_key=idempotency_key,
+            )
+            savepoint.commit()
+        except Exception:
+            if savepoint.is_active:
+                savepoint.rollback()
+            raise
         return transaction
 
     def deduct_with_status(

@@ -35,7 +35,7 @@ def _new_user(*, balance: int) -> tuple[int, str]:
     with SessionFactory.begin() as db:
         user = User(
             name="P0 PostgreSQL User",
-            email=f"p0-{marker}@example.invalid",
+            email=f"p0-{marker}@example.com",
             password_hash="not-used",
             role=UserRole.STUDENT,
             is_active=True,

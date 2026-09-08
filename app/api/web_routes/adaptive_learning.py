@@ -625,14 +625,11 @@ async def al_session_complete(
     # ended_at IS NOT NULL and returns 410 — award_xp is never reached twice.
     session = (
         db.query(AdaptiveLearningSession)
-        .filter(
-            AdaptiveLearningSession.id == session_id,
-            AdaptiveLearningSession.user_id == user.id,
-        )
+        .filter(AdaptiveLearningSession.id == session_id)
         .with_for_update()
         .first()
     )
-    if not session:
+    if not AuthorizationPolicy.can_access_adaptive_session(user, session):
         return JSONResponse({"error": "session not found"}, status_code=404)
     if session.ended_at is not None:
         return JSONResponse(
@@ -695,14 +692,11 @@ async def al_session_discard(
 
     session = (
         db.query(AdaptiveLearningSession)
-        .filter(
-            AdaptiveLearningSession.id == session_id,
-            AdaptiveLearningSession.user_id == user.id,
-        )
+        .filter(AdaptiveLearningSession.id == session_id)
         .with_for_update()
         .first()
     )
-    if not session:
+    if not AuthorizationPolicy.can_access_adaptive_session(user, session):
         return JSONResponse({"error": "session not found"}, status_code=404)
     if session.ended_at is not None:
         return JSONResponse(
