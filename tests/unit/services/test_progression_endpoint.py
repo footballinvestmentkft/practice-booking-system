@@ -226,15 +226,12 @@ class TestCalculateCompletedSemesters:
 
 class TestGetUserProgress:
 
-    def test_returns_user_progress_response(self):
-        """GUP-01: success path returns UserProgressResponse structure."""
+    def test_legacy_read_fails_closed(self):
         db = MagicMock()
-        result = get_user_progress(current_user=_user(), db=db)
-        assert result.internship_level == "junior"
-        assert result.coach_foundation_level == "pre_assistant"
-        assert result.gancuju_level == "bamboo"
-        assert isinstance(result.completed_semesters, dict)
-        assert "internship" in result.completed_semesters
+        with pytest.raises(HTTPException) as exc:
+            get_user_progress(current_user=_user(), db=db)
+        assert exc.value.status_code == 501
+        db.commit.assert_not_called()
 
 
 # ============================================================================
@@ -246,67 +243,25 @@ class TestUpdateUserProgress:
     def _req(self, track, level, specializations=None):
         return UpdateProgressRequest(track=track, level=level, specializations=specializations)
 
-    def test_internship_medior_no_prerequisite_met_returns_400(self):
-        """UUP-01: internship medior fails — current is junior (already junior, medior allowed)."""
-        # Actually junior → medior: prerequisite is junior, current is "junior" → met
-        # Let's pick senior: prerequisite is medior, current is junior → fails
-        req = self._req("internship", "senior")
+    @pytest.mark.parametrize(
+        ("track", "level"),
+        [
+            ("internship", "senior"),
+            ("internship", "medior"),
+            ("internship", "junior"),
+            ("coach", "goalkeeper"),
+            ("coach", "pre_lead"),
+            ("gancuju", "bamboo"),
+            ("gancuju", "reed"),
+        ],
+    )
+    def test_legacy_writes_fail_closed(self, track, level):
+        req = self._req(track, level)
         db = MagicMock()
         with pytest.raises(HTTPException) as exc:
             update_user_progress(request=req, current_user=_user(), db=db)
-        assert exc.value.status_code == 400
-
-    def test_internship_medior_prerequisite_met_returns_success(self):
-        """UUP-02: internship medior — prerequisite met (current=junior) → success."""
-        req = self._req("internship", "medior")
-        db = MagicMock()
-        result = update_user_progress(request=req, current_user=_user(), db=db)
-        assert result["message"] == "Progress updated successfully"
-        assert result["new_progress"]["internship_level"] == "medior"
-
-    def test_internship_junior_no_prerequisite_needed(self):
-        """UUP-03: internship junior has no prerequisite → always succeeds."""
-        req = self._req("internship", "junior")
-        db = MagicMock()
-        result = update_user_progress(request=req, current_user=_user(), db=db)
-        assert result["new_progress"]["internship_level"] == "junior"
-
-    def test_coach_specialization_adds_to_list(self):
-        """UUP-04: coach specialization (pre_lead in current) → added to specializations."""
-        req = self._req("coach", "goalkeeper")
-        db = MagicMock()
-        # current mock progress has pre_lead foundation → goalkeeper allowed
-        result = update_user_progress(request=req, current_user=_user(), db=db)
-        assert "goalkeeper" in result["new_progress"]["coach_specializations"]
-
-    def test_coach_foundation_level_update(self):
-        """UUP-05: coach foundation level (pre_lead) → coach_foundation_level updated."""
-        req = self._req("coach", "pre_lead")
-        db = MagicMock()
-        result = update_user_progress(request=req, current_user=_user(), db=db)
-        assert result["new_progress"]["coach_foundation_level"] == "pre_lead"
-
-    def test_gancuju_level_update(self):
-        """UUP-06: gancuju bamboo (no prerequisite) → gancuju_level updated."""
-        req = self._req("gancuju", "bamboo")
-        db = MagicMock()
-        result = update_user_progress(request=req, current_user=_user(), db=db)
-        assert result["new_progress"]["gancuju_level"] == "bamboo"
-
-    def test_gancuju_skip_levels_returns_400(self):
-        """UUP-07: gancuju skip level (bamboo → reed) → 400."""
-        req = self._req("gancuju", "reed")
-        db = MagicMock()
-        with pytest.raises(HTTPException) as exc:
-            update_user_progress(request=req, current_user=_user(), db=db)
-        assert exc.value.status_code == 400
-
-    def test_returns_completed_semesters_in_response(self):
-        """UUP-08: response includes completed_semesters."""
-        req = self._req("gancuju", "bamboo")
-        db = MagicMock()
-        result = update_user_progress(request=req, current_user=_user(), db=db)
-        assert "completed_semesters" in result
+        assert exc.value.status_code == 501
+        db.commit.assert_not_called()
 
 
 # ============================================================================

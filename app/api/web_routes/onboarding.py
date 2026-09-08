@@ -4,12 +4,12 @@ Onboarding routes for student specialization selection and questionnaires
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from pathlib import Path
 from datetime import datetime, timezone, date
 import traceback
-import uuid
 
 from ...database import get_db
 from ...dependencies import get_current_user_web, get_current_user
@@ -22,6 +22,7 @@ from ...utils.football_positions import normalize_position, normalize_positions,
 from ...skills_config import SKILL_CATEGORIES, get_all_skill_keys
 from ...services.skill_progression import SYSTEM_BASELINE
 from ...services.licence_package import DEFAULT_DURATION_MONTHS, cost_for_duration, calculate_expires_at
+from ...services.credit_service import CreditService
 import logging
 
 # Setup templates
@@ -83,6 +84,7 @@ async def specialization_select_submit(
 
         # Lock user row to prevent concurrent unlock race conditions
         user = db.query(User).with_for_update().filter(User.id == user.id).first()
+        db.refresh(user, with_for_update=True)
 
         # Check if user already has a license (AFTER acquiring the lock)
         user_license = db.query(UserLicense).filter(
@@ -105,9 +107,6 @@ async def specialization_select_submit(
             now        = datetime.now(timezone.utc)
             expires_at = calculate_expires_at(now, unlock_duration)
 
-            logger.info("onboarding_credits_deducted", extra={"user": user.email, "cost": unlock_cost, "new_balance": user.credit_balance - unlock_cost})
-            user.credit_balance -= unlock_cost
-
             user_license = UserLicense(
                 user_id=user.id,
                 specialization_type=spec_type.value,
@@ -122,19 +121,16 @@ async def specialization_select_submit(
             db.add(user_license)
             db.flush()
 
-            credit_transaction = CreditTransaction(
-                user_license_id=user_license.id,
-                amount=-unlock_cost,
+            CreditService(db).deduct(
+                user=user,
+                amount=unlock_cost,
                 transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
                 description=(
                     f"Unlocked specialization: {spec_type.value.replace('_', ' ')} "
                     f"({unlock_duration} month)"
                 ),
-                balance_after=user.credit_balance,
-                idempotency_key=str(uuid.uuid4()),
-                created_at=now,
+                idempotency_key=f"license_unlock_{user_license.id}",
             )
-            db.add(credit_transaction)
 
             logger.info("onboarding_spec_unlocked", extra={"user": user.email, "spec": spec_type.value, "cost": unlock_cost, "duration_months": unlock_duration, "expires_at": expires_at.isoformat()})
 
@@ -386,7 +382,7 @@ async def lfa_player_onboarding_web_submit(
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
-@router.get("/specialization/lfa-player/onboarding-cancel")
+@router.post("/specialization/lfa-player/onboarding-cancel")
 async def lfa_player_onboarding_cancel(
     request: Request,
     db: Session = Depends(get_db),
@@ -395,41 +391,62 @@ async def lfa_player_onboarding_cancel(
     """
     Cancel LFA Player onboarding and refund credits
     """
-    license = db.query(UserLicense).filter(
+    # Serialize against unlock and renewal before inspecting refundable state.
+    db.refresh(user, with_for_update=True)
+    license = db.query(UserLicense).with_for_update().filter(
         UserLicense.user_id == user.id,
         UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
-        UserLicense.onboarding_completed == False  # Only incomplete onboarding
+        UserLicense.onboarding_completed == False,
+        UserLicense.is_active == True,
     ).first()
+    if license:
+        db.refresh(license)
 
     if license:
-        REFUND_AMOUNT = 100
+        # Historical unlocks used a licence-scoped ledger row; corrected unlocks
+        # use a user-scoped row with a stable licence-derived key. Preserve both.
+        unlock_transactions = db.query(CreditTransaction).filter(
+            CreditTransaction.transaction_type == TransactionType.SPECIALIZATION_UNLOCK.value,
+            or_(
+                CreditTransaction.user_license_id == license.id,
+                CreditTransaction.idempotency_key == f"license_unlock_{license.id}",
+            ),
+        ).order_by(CreditTransaction.id.asc()).all()
 
-        # Refund the credits
-        user.credit_balance += REFUND_AMOUNT
+        if len(unlock_transactions) != 1 or unlock_transactions[0].amount >= 0:
+            db.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="Cannot determine the recorded unlock charge; cancellation was not applied",
+            )
 
-        # Log the refund transaction — must use user_id, NOT user_license_id,
-        # because db.delete(license) below triggers CASCADE on user_license_id FK.
-        refund_transaction = CreditTransaction(
-            user_id=user.id,
-            amount=REFUND_AMOUNT,
+        unlock_transaction = unlock_transactions[0]
+        refund_amount = -unlock_transaction.amount
+        CreditService(db).credit(
+            user=user,
+            amount=refund_amount,
             transaction_type=TransactionType.REFUND.value,
             description="Refund for cancelled LFA Football Player onboarding",
-            balance_after=user.credit_balance,
-            idempotency_key=str(uuid.uuid4()),
-            created_at=datetime.now()
+            idempotency_key=f"license_cancel_refund_{license.id}",
         )
-        db.add(refund_transaction)
 
-        # Delete the license
-        db.delete(license)
+        # Retain the licence and financial history; deactivate the cancelled grant.
+        license.is_active = False
 
         # Reset user's specialization
-        user.specialization = None
+        if user.specialization in {
+            "LFA_FOOTBALL_PLAYER",
+            SpecializationType.LFA_FOOTBALL_PLAYER,
+        }:
+            user.specialization = None
 
         db.commit()
 
-        logger.info("onboarding_cancelled_refund", extra={"user": user.email, "refund": REFUND_AMOUNT})
-        return RedirectResponse(url="/dashboard?success=Onboarding cancelled. 100 credits refunded.", status_code=303)
+        logger.info("onboarding_cancelled_refund", extra={"user": user.email, "refund": refund_amount})
+        return RedirectResponse(
+            url=f"/dashboard?success=Onboarding cancelled. {refund_amount} credits refunded.",
+            status_code=303,
+        )
     else:
         return RedirectResponse(url="/dashboard", status_code=303)
 

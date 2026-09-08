@@ -3,7 +3,7 @@
 =================================
 Admin endpoints for managing license renewals.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -75,6 +75,12 @@ class ExpiringLicensesSummary(BaseModel):
 @router.post("/renew", response_model=LicenseRenewalResponse, status_code=status.HTTP_200_OK)
 def renew_license(
     request: LicenseRenewalRequest,
+    idempotency_key: str = Header(
+        ...,
+        alias="Idempotency-Key",
+        min_length=16,
+        max_length=255,
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -104,6 +110,7 @@ def renew_license(
             renewal_months=request.renewal_months,
             admin_id=current_user.id,
             db=db,
+            idempotency_key=idempotency_key,
             payment_verified=request.payment_verified
         )
 

@@ -17,7 +17,10 @@ from sqlalchemy.orm import Session
 from app.models.license import UserLicense
 from app.models.user import User
 from app.models.audit_log import AuditLog
-from app.models.credit_transaction import CreditTransaction
+from app.services.credit_service import (
+    CreditService,
+    InsufficientCreditsError as CreditInsufficientCreditsError,
+)
 
 
 class InsufficientCreditsError(Exception):
@@ -73,7 +76,8 @@ class LicenseRenewalService:
         renewal_months: int,
         admin_id: int,
         db: Session,
-        payment_verified: bool = True
+        idempotency_key: str,
+        payment_verified: bool = True,
     ) -> Dict[str, any]:
         """
         Renew a license for specified months.
@@ -114,14 +118,13 @@ class LicenseRenewalService:
         if not user:
             raise LicenseNotFoundError(f"User {license.user_id} not found for license {license_id}")
 
+        # Serialize every credit mutation for this user, then refresh both objects.
+        # Renewal, unlock and cancellation all take this same row lock first.
+        db.refresh(user, with_for_update=True)
+        db.refresh(license)
+
         # Get renewal cost (from license or default)
         renewal_cost = license.renewal_cost or cls.DEFAULT_RENEWAL_COST
-
-        # Check if user has enough credits
-        if user.credit_balance < renewal_cost:
-            raise InsufficientCreditsError(
-                f"User {user.id} has {user.credit_balance} credits, needs {renewal_cost} for renewal"
-            )
 
         # Calculate new expiration date
         now = datetime.now(timezone.utc)
@@ -142,8 +145,39 @@ class LicenseRenewalService:
             # Never had expiration - start from now
             new_expiration = now + timedelta(days=renewal_months * 30)
 
-        # Deduct credits from user
-        user.credit_balance -= renewal_cost
+        previous_expiration = license.expires_at
+
+        try:
+            _, created = CreditService(db).deduct_with_status(
+                user=user,
+                amount=renewal_cost,
+                transaction_type="LICENSE_RENEWAL",
+                description=(
+                    f"License renewed for {renewal_months} months "
+                    f"({license.specialization_type} Level {license.current_level})"
+                ),
+                idempotency_key=idempotency_key,
+            )
+        except CreditInsufficientCreditsError as exc:
+            raise InsufficientCreditsError(
+                f"User {user.id} has {exc.available} credits, "
+                f"needs {exc.required} for renewal"
+            ) from exc
+
+        # An exact replay must not extend the licence or duplicate its audit row.
+        if not created:
+            db.commit()
+            return {
+                "success": True,
+                "license_id": license_id,
+                "specialization_type": license.specialization_type,
+                "current_level": license.current_level,
+                "new_expiration": license.expires_at,
+                "credits_charged": renewal_cost,
+                "remaining_credits": user.credit_balance,
+                "renewal_months": renewal_months,
+                "message": "License renewal already processed",
+            }
 
         # Update license
         license.expires_at = new_expiration
@@ -165,40 +199,29 @@ class LicenseRenewalService:
                 "renewal_months": renewal_months,
                 "credits_charged": renewal_cost,
                 "new_expiration": new_expiration.isoformat(),
-                "previous_expiration": license.expires_at.isoformat() if license.expires_at else None,
+                "previous_expiration": previous_expiration.isoformat() if previous_expiration else None,
                 "admin_id": admin_id,
                 "payment_verified": payment_verified
             }
         )
         db.add(audit_log)
 
-        # Create credit transaction record
-        credit_transaction = CreditTransaction(
-            user_license_id=license_id,
-            transaction_type="LICENSE_RENEWAL",
-            amount=-renewal_cost,  # Negative because credits are deducted
-            balance_after=user.credit_balance,  # Already updated above
-            description=f"License renewed for {renewal_months} months ({license.specialization_type} Level {license.current_level})",
-            semester_id=None,
-            enrollment_id=None
-        )
-        db.add(credit_transaction)
-
         # Commit transaction
         db.commit()
         db.refresh(license)
         db.refresh(user)
+        persisted_expiration = license.expires_at
 
         return {
             "success": True,
             "license_id": license_id,
             "specialization_type": license.specialization_type,
             "current_level": license.current_level,
-            "new_expiration": new_expiration,
+            "new_expiration": persisted_expiration,
             "credits_charged": renewal_cost,
             "remaining_credits": user.credit_balance,
             "renewal_months": renewal_months,
-            "message": f"License renewed for {renewal_months} months until {new_expiration.strftime('%Y-%m-%d')}"
+            "message": f"License renewed for {renewal_months} months until {persisted_expiration.strftime('%Y-%m-%d')}"
         }
 
     @classmethod

@@ -333,13 +333,15 @@ class TestGenerateCertificatePdf:
         with pytest.raises(ValueError, match="Certificate not found"):
             svc.generate_certificate_pdf("NONEXISTENT")
 
-    def test_returns_bytes_placeholder(self):
+    def test_returns_real_pdf_bytes(self):
         cert = _certificate()
         db = _db(first=cert)
         svc = CertificateService(db)
         result = svc.generate_certificate_pdf("CERT-001")
-        assert isinstance(result, bytes)
-        assert len(result) > 0
+        assert result.startswith(b"%PDF-1.4")
+        assert result.rstrip().endswith(b"%%EOF")
+        assert b"Certificate ID: CERT-001" in result
+        assert b"placeholder" not in result
 
 
 # ===========================================================================
