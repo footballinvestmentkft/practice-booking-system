@@ -71,7 +71,7 @@ class TestEndSession:
         service, db = _make_service()
         db.query.return_value.filter.return_value.first.return_value = None
 
-        result = service.end_session(session_id=42)
+        result = service.end_session(user_id=99, session_id=42)
 
         assert result == {}
 
@@ -80,7 +80,7 @@ class TestEndSession:
         session = _mock_session(questions_presented=5, questions_correct=4, xp_earned=100)
         db.query.return_value.filter.return_value.first.return_value = session
 
-        service.end_session(session_id=1)
+        service.end_session(user_id=99, session_id=1)
 
         assert session.ended_at is not None
         db.commit.assert_called_once()
@@ -91,7 +91,7 @@ class TestEndSession:
         session = _mock_session(questions_presented=5, questions_correct=4)
         db.query.return_value.filter.return_value.first.return_value = session
 
-        result = service.end_session(session_id=1)
+        result = service.end_session(user_id=99, session_id=1)
 
         assert result["questions_answered"] == 5
         assert result["correct_answers"] == 4
@@ -106,7 +106,7 @@ class TestEndSession:
         db.query.return_value.filter.return_value.first.return_value = session
 
         with patch("app.services.adaptive_learning.GamificationService", create=True) as mock_gam:
-            service.end_session(session_id=1)
+            service.end_session(user_id=99, session_id=1)
             mock_gam.assert_not_called()
 
     def test_zero_questions_success_rate_is_zero(self):
@@ -114,7 +114,7 @@ class TestEndSession:
         session = _mock_session(questions_presented=0, questions_correct=0)
         db.query.return_value.filter.return_value.first.return_value = session
 
-        result = service.end_session(session_id=1)
+        result = service.end_session(user_id=99, session_id=1)
 
         assert result["success_rate"] == 0
 

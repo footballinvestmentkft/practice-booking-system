@@ -15,7 +15,7 @@ from ...database import get_db
 from ...dependencies import get_current_user_web, get_current_user
 from ...models.user import User
 from ...models.license import UserLicense
-from ...models.credit_transaction import CreditTransaction, TransactionType
+from ...models.credit_transaction import TransactionType
 from ...models.specialization import SpecializationType
 from ...utils.age_requirements import validate_specialization_for_age
 from ...services.licence_package import (
@@ -24,6 +24,10 @@ from ...services.licence_package import (
     validate_duration_months,
     cost_for_duration,
     calculate_expires_at,
+)
+from ...services.credit_service import (
+    CreditService,
+    InsufficientCreditsError as CreditInsufficientCreditsError,
 )
 
 # Setup templates
@@ -62,15 +66,6 @@ async def specialization_unlock(
 
     cost = cost_for_duration(duration_months)
 
-    if current_user.credit_balance < cost:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                f"Insufficient credits. You have {current_user.credit_balance} CR "
-                f"but need {cost} CR for a {duration_months}-month licence."
-            ),
-        )
-
     # Map specialization enum
     spec_mapping = {
         "LFA_PLAYER": SpecializationType.LFA_FOOTBALL_PLAYER,
@@ -103,7 +98,19 @@ async def specialization_unlock(
         )
 
     # Lock user row to prevent concurrent unlock race conditions
-    current_user = db.query(User).with_for_update().filter(User.id == current_user.id).first()
+    current_user = db.query(User).with_for_update().filter(
+        User.id == current_user.id
+    ).first()
+    db.refresh(current_user, with_for_update=True)
+
+    if current_user.credit_balance < cost:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Insufficient credits. You have {current_user.credit_balance} CR "
+                f"but need {cost} CR for a {duration_months}-month licence."
+            ),
+        )
 
     # Re-check after acquiring the lock
     existing_license = db.query(UserLicense).filter(
@@ -120,8 +127,6 @@ async def specialization_unlock(
     now = datetime.now(timezone.utc)
     expires_at = calculate_expires_at(now, duration_months)
 
-    current_user.credit_balance -= cost
-
     new_license = UserLicense(
         user_id=current_user.id,
         specialization_type=spec_type.value,
@@ -137,25 +142,29 @@ async def specialization_unlock(
     db.add(new_license)
     db.flush()
 
-    import uuid as _uuid
-    credit_transaction = CreditTransaction(
-        user_license_id=new_license.id,
-        amount=-cost,
-        transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
-        description=(
-            f"Unlocked specialization: {spec_type.value} "
-            f"({duration_months} month{'s' if duration_months > 1 else ''})"
-        ),
-        balance_after=current_user.credit_balance,
-        idempotency_key=f"unlock_{current_user.id}_{spec_type.value}_{now.timestamp()}",
-        created_at=now,
-    )
-    db.add(credit_transaction)
-
     current_user.specialization = spec_type.value
 
     try:
+        CreditService(db).deduct(
+            user=current_user,
+            amount=cost,
+            transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
+            description=(
+                f"Unlocked specialization: {spec_type.value} "
+                f"({duration_months} month{'s' if duration_months > 1 else ''})"
+            ),
+            idempotency_key=f"license_unlock_{new_license.id}",
+        )
         db.commit()
+    except CreditInsufficientCreditsError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Insufficient credits. You have {exc.available} CR "
+                f"but need {exc.required} CR for a {duration_months}-month licence."
+            ),
+        )
     except IntegrityError:
         db.rollback()
         raise HTTPException(
@@ -377,4 +386,3 @@ async def specialization_switch(
         db.rollback()
         logger.error("specialization_switch_error", extra={"user": user.email}, exc_info=True)
         return RedirectResponse(url=redirect_url, status_code=303)
-

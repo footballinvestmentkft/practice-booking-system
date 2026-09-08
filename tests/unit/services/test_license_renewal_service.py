@@ -7,12 +7,34 @@ Covers: check_license_expiration, renew_license, get_expiring_licenses,
 """
 import pytest
 from datetime import datetime, timezone, timedelta
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch, call
 from app.services.license_renewal_service import (
     LicenseRenewalService,
     InsufficientCreditsError,
     LicenseNotFoundError,
 )
+from app.services.credit_service import InsufficientCreditsError as CreditInsufficientCreditsError
+
+
+@pytest.fixture(autouse=True)
+def _credit_service_double(monkeypatch):
+    """Keep these mock-only tests focused on renewal behavior."""
+    class FakeCreditService:
+        def __init__(self, db):
+            self.db = db
+
+        def deduct_with_status(
+            self, *, user, amount, transaction_type, description, idempotency_key
+        ):
+            if user.credit_balance < amount:
+                raise CreditInsufficientCreditsError(amount, user.credit_balance)
+            user.credit_balance -= amount
+            return SimpleNamespace(balance_after=user.credit_balance), True
+
+    monkeypatch.setattr(
+        "app.services.license_renewal_service.CreditService", FakeCreditService
+    )
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -111,14 +133,14 @@ class TestRenewLicenseValidation:
         db = MagicMock()
         with pytest.raises(ValueError, match="Renewal period"):
             LicenseRenewalService.renew_license(
-                license_id=1, renewal_months=6, admin_id=99, db=db
+                license_id=1, renewal_months=6, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
             )
 
     def test_renewal_period_0_raises(self):
         db = MagicMock()
         with pytest.raises(ValueError):
             LicenseRenewalService.renew_license(
-                license_id=1, renewal_months=0, admin_id=99, db=db
+                license_id=1, renewal_months=0, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
             )
 
     def test_license_not_found_raises(self):
@@ -126,7 +148,7 @@ class TestRenewLicenseValidation:
         db.query.return_value.filter.return_value.first.return_value = None
         with pytest.raises(LicenseNotFoundError):
             LicenseRenewalService.renew_license(
-                license_id=999, renewal_months=12, admin_id=99, db=db
+                license_id=999, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
             )
 
     def test_user_not_found_raises(self):
@@ -135,7 +157,7 @@ class TestRenewLicenseValidation:
         db.query.return_value.filter.return_value.first.side_effect = [lic, None]
         with pytest.raises(LicenseNotFoundError, match="User"):
             LicenseRenewalService.renew_license(
-                license_id=10, renewal_months=12, admin_id=99, db=db
+                license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
             )
 
     def test_insufficient_credits_raises(self):
@@ -144,7 +166,7 @@ class TestRenewLicenseValidation:
         db = _db_for_renewal(lic, usr)
         with pytest.raises(InsufficientCreditsError):
             LicenseRenewalService.renew_license(
-                license_id=10, renewal_months=12, admin_id=99, db=db
+                license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
             )
 
 
@@ -157,7 +179,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         assert usr.credit_balance == 1000
 
@@ -166,7 +188,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         assert usr.credit_balance == 1500
 
@@ -175,7 +197,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         result = LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         assert result["success"] is True
         assert result["license_id"] == 10
@@ -187,7 +209,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         db.commit.assert_called_once()
 
@@ -196,7 +218,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         db.add.assert_called()  # audit_log + credit_transaction
 
@@ -205,7 +227,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         assert lic.is_active is True
 
@@ -214,7 +236,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db, payment_verified=True
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal", payment_verified=True
         )
         assert lic.payment_verified is True
 
@@ -223,7 +245,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=5000)
         db = _db_for_renewal(lic, usr)
         result = LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=24, admin_id=99, db=db
+            license_id=10, renewal_months=24, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         assert result["renewal_months"] == 24
 
@@ -233,7 +255,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         result = LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         # New expiry should be ~60 + 360 days from now (>360 days from now)
         days_left = (result["new_expiration"] - _now()).days
@@ -245,7 +267,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         result = LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         # New expiry should be ~360 days from now (not 390)
         days_left = (result["new_expiration"] - _now()).days
@@ -256,7 +278,7 @@ class TestRenewLicenseSuccess:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         result = LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         days_left = (result["new_expiration"] - _now()).days
         assert 355 < days_left < 370
@@ -461,7 +483,7 @@ class TestRenewLicenseMutationTargets:
         usr = _user(credit_balance=1000)  # exactly enough
         db = _db_for_renewal(lic, usr)
         result = LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         assert result["success"] is True
         assert usr.credit_balance == 0  # 1000 - 1000 = 0
@@ -472,7 +494,7 @@ class TestRenewLicenseMutationTargets:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         result = LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         assert lic.expires_at == result["new_expiration"]
 
@@ -482,7 +504,7 @@ class TestRenewLicenseMutationTargets:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         # Must be set to some datetime — original MagicMock default is not a datetime
         assert lic.last_renewed_at is not None
@@ -494,7 +516,7 @@ class TestRenewLicenseMutationTargets:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db,
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal",
             payment_verified=False
         )
         # If `if payment_verified:` were removed, payment_verified would be True regardless.
@@ -508,7 +530,7 @@ class TestRenewLicenseMutationTargets:
         usr = _user(credit_balance=5000)
         db = _db_for_renewal(lic, usr)
         result = LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=24, admin_id=99, db=db
+            license_id=10, renewal_months=24, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         days_left = (result["new_expiration"] - _now()).days
         # 24 * 30 = 720; allow 5-day drift for test execution time
@@ -523,7 +545,7 @@ class TestRenewLicenseMutationTargets:
         usr = _user(credit_balance=2000)
         db = _db_for_renewal(lic, usr)
         result = LicenseRenewalService.renew_license(
-            license_id=10, renewal_months=12, admin_id=99, db=db
+            license_id=10, renewal_months=12, admin_id=99, db=db, idempotency_key="unit-test-license-renewal"
         )
         days_left = (result["new_expiration"] - _now()).days
         assert 455 < days_left <= 462

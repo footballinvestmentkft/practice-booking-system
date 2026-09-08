@@ -645,9 +645,16 @@
     }
 
     // ── Cancel / Refund ──────────────────────────────────────────────────────
-    function cancelOnboarding() {
-        if (confirm('Are you sure you want to cancel? 100 credits will be refunded to your account.')) {
-            window.location.href = '/specialization/lfa-player/onboarding-cancel';
+    async function cancelOnboarding() {
+        if (!confirm('Are you sure you want to cancel? The recorded unlock charge will be refunded to your account.')) return;
+        const response = await fetch('/specialization/lfa-player/onboarding-cancel', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': getCsrfToken() },
+        });
+        if (response.ok) {
+            window.location.href = response.url;
+        } else {
+            alert('Cancellation could not be completed. Your licence and credit balance were not changed.');
         }
     }
 

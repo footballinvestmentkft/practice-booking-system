@@ -14,6 +14,7 @@ from ...models.quiz import ALSessionStatus, AdaptiveLearningSession, ALAnswerLog
 from ...models.user import User
 from ...models.xp_transaction import XPTransaction
 from ...services.adaptive_learning import AdaptiveLearningService
+from ...services.authorization_policy import AuthorizationPolicy
 from ...services.gamification.xp_service import award_xp
 from .helpers import require_student_onboarding
 from .student_features import _spec_ctx
@@ -262,15 +263,11 @@ async def al_modules(
 
 def _session_guard(db: Session, session_id: int, user_id: int):
     """Return (session, error_response). error_response is None if session is valid and active."""
-    session = (
-        db.query(AdaptiveLearningSession)
-        .filter(
-            AdaptiveLearningSession.id == session_id,
-            AdaptiveLearningSession.user_id == user_id,
-        )
-        .first()
-    )
-    if not session:
+    session = db.query(AdaptiveLearningSession).filter(
+        AdaptiveLearningSession.id == session_id
+    ).first()
+    actor = type("_Actor", (), {"id": user_id})()
+    if not AuthorizationPolicy.can_access_adaptive_session(actor, session):
         return None, JSONResponse({"error": "session not found"}, status_code=404)
     if session.ended_at is not None:
         return session, JSONResponse(
@@ -628,14 +625,11 @@ async def al_session_complete(
     # ended_at IS NOT NULL and returns 410 — award_xp is never reached twice.
     session = (
         db.query(AdaptiveLearningSession)
-        .filter(
-            AdaptiveLearningSession.id == session_id,
-            AdaptiveLearningSession.user_id == user.id,
-        )
+        .filter(AdaptiveLearningSession.id == session_id)
         .with_for_update()
         .first()
     )
-    if not session:
+    if not AuthorizationPolicy.can_access_adaptive_session(user, session):
         return JSONResponse({"error": "session not found"}, status_code=404)
     if session.ended_at is not None:
         return JSONResponse(
@@ -644,7 +638,7 @@ async def al_session_complete(
         )
 
     service = AdaptiveLearningService(db)
-    summary = service.end_session(session_id)  # sets ended_at, commits → releases lock
+    summary = service.end_session(user.id, session_id)  # sets ended_at, commits → releases lock
 
     presented = summary.get("questions_answered", 0)
     correct = summary.get("correct_answers", 0)
@@ -698,14 +692,11 @@ async def al_session_discard(
 
     session = (
         db.query(AdaptiveLearningSession)
-        .filter(
-            AdaptiveLearningSession.id == session_id,
-            AdaptiveLearningSession.user_id == user.id,
-        )
+        .filter(AdaptiveLearningSession.id == session_id)
         .with_for_update()
         .first()
     )
-    if not session:
+    if not AuthorizationPolicy.can_access_adaptive_session(user, session):
         return JSONResponse({"error": "session not found"}, status_code=404)
     if session.ended_at is not None:
         return JSONResponse(

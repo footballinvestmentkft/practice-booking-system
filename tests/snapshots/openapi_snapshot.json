@@ -13045,38 +13045,34 @@
     },
     "/api/v1/progression/progress": {
       "get": {
-        "tags": [
-          "progression"
-        ],
-        "summary": "Get User Progress",
-        "description": "Get current user's progression status",
+        "description": "This legacy route has no persisted progression source.",
         "operationId": "get_user_progress_api_v1_progression_progress_get",
         "responses": {
           "200": {
-            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserProgressResponse"
                 }
               }
-            }
+            },
+            "description": "Successful Response"
           }
         },
         "security": [
           {
             "HTTPBearer": []
           }
+        ],
+        "summary": "Get User Progress",
+        "tags": [
+          "progression"
         ]
       }
     },
     "/api/v1/progression/progress/update": {
       "post": {
-        "tags": [
-          "progression"
-        ],
-        "summary": "Update User Progress",
-        "description": "Update user's progression status",
+        "description": "This legacy route never persisted updates and is deliberately disabled.",
         "operationId": "update_user_progress_api_v1_progression_progress_update_post",
         "requestBody": {
           "content": {
@@ -13090,28 +13086,32 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
               }
-            }
+            },
+            "description": "Successful Response"
           },
           "422": {
-            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
           {
             "HTTPBearer": []
           }
+        ],
+        "summary": "Update User Progress",
+        "tags": [
+          "progression"
         ]
       }
     },
@@ -21448,12 +21448,21 @@
     },
     "/api/v1/license-renewal/renew": {
       "post": {
-        "tags": [
-          "license-renewal"
-        ],
-        "summary": "Renew License",
         "description": "Renew a license for 12 or 24 months (Admin only).\n\nDeducts renewal_cost credits from user's balance and extends license expiration.",
         "operationId": "renew_license_api_v1_license_renewal_renew_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -21466,30 +21475,34 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LicenseRenewalResponse"
                 }
               }
-            }
+            },
+            "description": "Successful Response"
           },
           "422": {
-            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
           {
             "HTTPBearer": []
           }
+        ],
+        "summary": "Renew License",
+        "tags": [
+          "license-renewal"
         ]
       }
     },
@@ -31542,23 +31555,23 @@
       }
     },
     "/specialization/lfa-player/onboarding-cancel": {
-      "get": {
-        "tags": [
-          "web"
-        ],
-        "summary": "Lfa Player Onboarding Cancel",
+      "post": {
         "description": "Cancel LFA Player onboarding and refund credits",
-        "operationId": "lfa_player_onboarding_cancel_specialization_lfa_player_onboarding_cancel_get",
+        "operationId": "lfa_player_onboarding_cancel_specialization_lfa_player_onboarding_cancel_post",
         "responses": {
           "200": {
-            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
               }
-            }
+            },
+            "description": "Successful Response"
           }
-        }
+        },
+        "summary": "Lfa Player Onboarding Cancel",
+        "tags": [
+          "web"
+        ]
       }
     },
     "/specialization/lfa-player/onboarding-submit": {

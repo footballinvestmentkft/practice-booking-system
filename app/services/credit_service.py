@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text
 from typing import Optional, Literal
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from ..models.credit_transaction import CreditTransaction
@@ -25,6 +25,10 @@ class InsufficientCreditsError(Exception):
         self.required = required
         self.available = available
         super().__init__(f"Insufficient credits: required {required}, available {available}")
+
+
+class IdempotencyConflictError(ValueError):
+    """An idempotency key was reused for a different balance operation."""
 
 
 class CreditService:
@@ -98,7 +102,7 @@ class CreditService:
             idempotency_key=idempotency_key,
             semester_id=semester_id,
             enrollment_id=enrollment_id,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
         try:
@@ -153,42 +157,170 @@ class CreditService:
         """
         Atomically deduct credits from a user's balance.
 
-        Uses a SAVEPOINT so the caller owns the outer transaction (no commit here).
+        Uses a SAVEPOINT while the caller owns the outer transaction and commit
+        boundary.
 
         Raises:
             InsufficientCreditsError: if user has fewer credits than amount
         """
-        with self.db.begin_nested():
-            result = self.db.execute(
-                text(
-                    "UPDATE users SET credit_balance = credit_balance - :amount "
-                    "WHERE id = :uid AND credit_balance >= :amount "
-                    "RETURNING credit_balance"
-                ),
-                {"amount": amount, "uid": user.id},
-            ).fetchone()
-
-            if result is None:
-                self.db.refresh(user)
-                raise InsufficientCreditsError(required=amount, available=user.credit_balance)
-
-            new_balance = result[0]
-            transaction, _ = self.create_transaction(
-                user_id=user.id,
-                user_license_id=None,
+        # Use a connection-level SAVEPOINT so the debit and ledger flush are
+        # atomic without completing or replacing the caller's ORM transaction.
+        savepoint = self.db.connection().begin_nested()
+        try:
+            transaction, _ = self.deduct_with_status(
+                user=user,
+                amount=amount,
                 transaction_type=transaction_type,
-                amount=-amount,
-                balance_after=new_balance,
                 description=description,
                 idempotency_key=idempotency_key,
             )
+            savepoint.commit()
+        except Exception:
+            if savepoint.is_active:
+                savepoint.rollback()
+            raise
+        return transaction
+
+    def deduct_with_status(
+        self,
+        user: User,
+        amount: int,
+        transaction_type: str,
+        description: str,
+        idempotency_key: str,
+    ) -> tuple[CreditTransaction, bool]:
+        """Deduct credits and report whether this call created the ledger row."""
+        if amount <= 0:
+            raise ValueError("Credit deduction amount must be positive")
+
+        self._lock_idempotency_key(idempotency_key)
+        existing = self._get_idempotent_transaction(idempotency_key)
+        if existing:
+            self._validate_replay(
+                existing,
+                user_id=user.id,
+                transaction_type=transaction_type,
+                amount=-amount,
+                description=description,
+            )
+            self.db.refresh(user)
+            return existing, False
+
+        result = self.db.execute(
+            text(
+                "UPDATE users SET credit_balance = credit_balance - :amount "
+                "WHERE id = :uid AND credit_balance >= :amount "
+                "RETURNING credit_balance"
+            ),
+            {"amount": amount, "uid": user.id},
+        ).fetchone()
+
+        if result is None:
+            self.db.refresh(user)
+            raise InsufficientCreditsError(required=amount, available=user.credit_balance)
+
+        new_balance = result[0]
+        transaction, _ = self.create_transaction(
+            user_id=user.id,
+            user_license_id=None,
+            transaction_type=transaction_type,
+            amount=-amount,
+            balance_after=new_balance,
+            description=description,
+            idempotency_key=idempotency_key,
+        )
 
         user.credit_balance = new_balance
         logger.info(
             f"💳 Deducted {amount} credits from user {user.id}: "
             f"balance {new_balance + amount} → {new_balance} ({transaction_type})"
         )
+        return transaction, True
+
+    def credit(
+        self,
+        user: User,
+        amount: int,
+        transaction_type: str,
+        description: str,
+        idempotency_key: str,
+    ) -> CreditTransaction:
+        """Atomically credit a global user balance and its ledger exactly once."""
+        if amount <= 0:
+            raise ValueError("Credit amount must be positive")
+
+        self._lock_idempotency_key(idempotency_key)
+        existing = self._get_idempotent_transaction(idempotency_key)
+        if existing:
+            self._validate_replay(
+                existing,
+                user_id=user.id,
+                transaction_type=transaction_type,
+                amount=amount,
+                description=description,
+            )
+            self.db.refresh(user)
+            return existing
+
+        result = self.db.execute(
+            text(
+                "UPDATE users SET credit_balance = credit_balance + :amount "
+                "WHERE id = :uid RETURNING credit_balance"
+            ),
+            {"amount": amount, "uid": user.id},
+        ).fetchone()
+        if result is None:
+            raise ValueError(f"User {user.id} not found")
+
+        new_balance = result[0]
+        transaction, created = self.create_transaction(
+            user_id=user.id,
+            user_license_id=None,
+            transaction_type=transaction_type,
+            amount=amount,
+            balance_after=new_balance,
+            description=description,
+            idempotency_key=idempotency_key,
+        )
+        if not created:
+            raise RuntimeError("Idempotency lock did not serialize credit creation")
+
+        user.credit_balance = new_balance
         return transaction
+
+    def _lock_idempotency_key(self, idempotency_key: str) -> None:
+        """Serialize one logical operation for the lifetime of the DB transaction."""
+        self.db.execute(
+            text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"),
+            {"key": idempotency_key},
+        )
+
+    def _get_idempotent_transaction(
+        self, idempotency_key: str
+    ) -> Optional[CreditTransaction]:
+        return self.db.query(CreditTransaction).filter(
+            CreditTransaction.idempotency_key == idempotency_key
+        ).first()
+
+    @staticmethod
+    def _validate_replay(
+        transaction: CreditTransaction,
+        *,
+        user_id: int,
+        transaction_type: str,
+        amount: int,
+        description: str,
+    ) -> None:
+        if (
+            transaction.user_id != user_id
+            or transaction.user_license_id is not None
+            or transaction.transaction_type != transaction_type
+            or transaction.amount != amount
+            or transaction.description != description
+        ):
+            raise IdempotencyConflictError(
+                "Idempotency key was already used for a different credit operation"
+            )
 
     @staticmethod
     def generate_idempotency_key(

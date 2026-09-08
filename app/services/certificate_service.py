@@ -240,7 +240,7 @@ class CertificateService:
         return certificate
     
     def generate_certificate_pdf(self, certificate_id: str) -> bytes:
-        """Generate PDF version of certificate (placeholder for PDF generation)"""
+        """Render a self-contained, verifiable one-page certificate PDF."""
         certificate = self.db.query(IssuedCertificate)\
             .filter(IssuedCertificate.id == certificate_id)\
             .first()
@@ -248,9 +248,98 @@ class CertificateService:
         if not certificate:
             raise ValueError("Certificate not found")
         
-        # TODO: Implement actual PDF generation using library like weasyprint or reportlab
-        # For now, return placeholder
-        return b"PDF certificate content placeholder"
+        metadata = certificate.cert_metadata or {}
+        template = certificate.template
+        track = getattr(template, "track", None)
+        user = certificate.user
+
+        title = getattr(template, "title", None) or "LFA Certificate"
+        track_name = (
+            metadata.get("track_name")
+            or getattr(track, "name", None)
+            or "LFA Education Program"
+        )
+        learner_name = getattr(user, "name", None) or f"Learner {certificate.user_id}"
+        issue_date = certificate.issue_date.strftime("%Y-%m-%d")
+        completion_date = (
+            certificate.completion_date.strftime("%Y-%m-%d")
+            if certificate.completion_date
+            else "N/A"
+        )
+        grade = metadata.get("final_grade", "N/A")
+
+        lines = [
+            ("F2", 26, 421, 500, title),
+            ("F1", 14, 421, 440, "This certifies that"),
+            ("F2", 22, 421, 395, learner_name),
+            ("F1", 14, 421, 350, "successfully completed"),
+            ("F2", 18, 421, 312, track_name),
+            ("F1", 11, 421, 250, f"Completion date: {completion_date}"),
+            ("F1", 11, 421, 228, f"Final grade: {grade}"),
+            ("F1", 10, 421, 170, f"Issued: {issue_date}"),
+            ("F2", 10, 421, 145, f"Certificate ID: {certificate.unique_identifier}"),
+            ("F1", 9, 421, 115, "Verify this certificate using its Certificate ID."),
+        ]
+        commands = [
+            "0.08 0.20 0.36 rg",
+            "2 w 36 36 770 523 re S",
+        ]
+        for font, size, x, y, value in lines:
+            escaped = self._pdf_text(value)
+            commands.append(
+                f"BT /{font} {size} Tf {x} {y} Td ({escaped}) Tj ET"
+            )
+        stream = "\n".join(commands).encode("latin-1")
+
+        objects = [
+            b"<< /Type /Catalog /Pages 2 0 R >>",
+            b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            (
+                b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] "
+                b"/Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> "
+                b"/Contents 4 0 R >>"
+            ),
+            b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n"
+            + stream
+            + b"\nendstream",
+            b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+            b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+        ]
+        return self._build_pdf(objects)
+
+    @staticmethod
+    def _pdf_text(value: Any) -> str:
+        text_value = str(value).encode("latin-1", "replace").decode("latin-1")
+        return (
+            text_value.replace("\\", "\\\\")
+            .replace("(", "\\(")
+            .replace(")", "\\)")
+            .replace("\r", " ")
+            .replace("\n", " ")
+        )
+
+    @staticmethod
+    def _build_pdf(objects: List[bytes]) -> bytes:
+        result = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+        offsets = [0]
+        for index, body in enumerate(objects, start=1):
+            offsets.append(len(result))
+            result.extend(f"{index} 0 obj\n".encode("ascii"))
+            result.extend(body)
+            result.extend(b"\nendobj\n")
+
+        xref_offset = len(result)
+        result.extend(f"xref\n0 {len(objects) + 1}\n".encode("ascii"))
+        result.extend(b"0000000000 65535 f \n")
+        for offset in offsets[1:]:
+            result.extend(f"{offset:010d} 00000 n \n".encode("ascii"))
+        result.extend(
+            (
+                f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
+                f"startxref\n{xref_offset}\n%%EOF\n"
+            ).encode("ascii")
+        )
+        return bytes(result)
     
     def get_certificate_analytics(self) -> Dict[str, Any]:
         """Get certificate generation analytics"""

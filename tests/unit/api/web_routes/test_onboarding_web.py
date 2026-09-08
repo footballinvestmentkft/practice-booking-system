@@ -258,16 +258,32 @@ class TestOnboardingLfaPlayerCancel:
     def test_incomplete_license_refunds_and_redirects(self):
         license_mock = MagicMock()
         license_mock.id = 1
+        license_mock.is_active = True
         user = _user(credit_balance=0)
-        db = _mock_db(first_return=license_mock)
-        with patch(f"{_BASE}.CreditTransaction", MagicMock()), \
-             patch(f"{_BASE}.TransactionType", MagicMock()):
+        user.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
+        unlock = MagicMock(amount=-250)
+        q_license = MagicMock()
+        q_license.with_for_update.return_value.filter.return_value.first.return_value = license_mock
+        q_ledger = MagicMock()
+        q_ledger.filter.return_value.order_by.return_value.all.return_value = [unlock]
+        db = MagicMock()
+        db.query.side_effect = [q_license, q_ledger]
+
+        class FakeCreditService:
+            def __init__(self, db):
+                self.db = db
+
+            def credit(self, *, user, amount, **kwargs):
+                user.credit_balance += amount
+
+        with patch(f"{_BASE}.CreditService", FakeCreditService):
             result = _run(lfa_player_onboarding_cancel(
                 request=_req(), db=db, user=user
             ))
         assert isinstance(result, RedirectResponse)
-        assert user.credit_balance == 100
-        db.delete.assert_called_once_with(license_mock)
+        assert user.credit_balance == 250
+        assert license_mock.is_active is False
+        db.delete.assert_not_called()
 
 
 # ──────────────────────────────────────────────────────────────────────────────

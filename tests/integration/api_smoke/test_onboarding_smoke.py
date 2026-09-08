@@ -67,26 +67,26 @@ class TestOnboardingSmoke:
 
     def test_lfa_player_onboarding_cancel_happy_path(self, api_client: TestClient, admin_token: str):
         """
-        Happy path: GET /specialization/lfa-player/onboarding-cancel
+        Happy path: POST /specialization/lfa-player/onboarding-cancel
         Source: app/api/web_routes/onboarding.py:lfa_player_onboarding_cancel
         """
         cookies = {"access_token": f"Bearer {admin_token}"}
 
-        response = api_client.get("/specialization/lfa-player/onboarding-cancel", cookies=cookies)
+        response = api_client.post("/specialization/lfa-player/onboarding-cancel", cookies=cookies)
 
         assert response.status_code in _WEB_OK, (
-            f"GET /specialization/lfa-player/onboarding-cancel failed: {response.status_code} "
+            f"POST /specialization/lfa-player/onboarding-cancel failed: {response.status_code} "
             f"{response.text[:200]}"
         )
 
     def test_lfa_player_onboarding_cancel_auth_required(self, api_client: TestClient):
         """
-        Auth validation: GET /specialization/lfa-player/onboarding-cancel requires authentication
+        Auth validation: POST /specialization/lfa-player/onboarding-cancel requires authentication
         """
-        response = api_client.get("/specialization/lfa-player/onboarding-cancel")
+        response = api_client.post("/specialization/lfa-player/onboarding-cancel")
 
         assert response.status_code in _WEB_AUTH, (
-            f"GET /specialization/lfa-player/onboarding-cancel should require auth: {response.status_code}"
+            f"POST /specialization/lfa-player/onboarding-cancel should require auth: {response.status_code}"
         )
 
     def test_specialization_select_page_happy_path(self, api_client: TestClient, admin_token: str):

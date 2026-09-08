@@ -1,16 +1,9 @@
 """
-Integration tests — P0: onboarding cancel/refund CreditTransaction survives license delete.
-
-Root cause that was fixed:
-  lfa_player_onboarding_cancel() wrote CreditTransaction with user_license_id=license.id,
-  then called db.delete(license). The FK has ondelete="CASCADE" → the transaction was
-  CASCADE-deleted with the license, leaving no audit trail on /credits.
-
-Fix: use user_id=user.id instead of user_license_id on the REFUND transaction.
+Integration tests — P0: cancellation refunds the recorded debit and retains history.
 
 Tests:
   CREF-01: cancel refund → user.credit_balance increases by 100
-  CREF-02: CreditTransaction(REFUND) persists after license deletion (no CASCADE)
+  CREF-02: licence and original debit remain as immutable history
   CREF-03: transaction type is REFUND, amount is +100
   CREF-04: GET /credits returns 200 and renders the REFUND row
 """
@@ -63,7 +56,26 @@ def _incomplete_lfa_license(db: Session, user: User) -> UserLicense:
     )
     db.add(lic)
     db.flush()
+    db.add(CreditTransaction(
+        user_license_id=lic.id,
+        transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
+        amount=-100,
+        balance_after=user.credit_balance,
+        description="Recorded unlock charge",
+        idempotency_key=f"cref-unlock-{lic.id}-{_uid()}",
+    ))
     return lic
+
+
+def _cancel(client: TestClient, token: str):
+    client.cookies.set("access_token", token)
+    client.get("/login")
+    csrf_token = client.cookies.get("csrf_token")
+    return client.post(
+        "/specialization/lfa-player/onboarding-cancel",
+        headers={"X-CSRF-Token": csrf_token},
+        follow_redirects=False,
+    )
 
 
 @pytest.fixture
@@ -89,11 +101,7 @@ def test_cref01_cancel_refunds_100_credits(auth_client: TestClient, test_db: Ses
     test_db.commit()
 
     token = create_access_token(data={"sub": student.email})
-    resp = auth_client.get(
-        "/specialization/lfa-player/onboarding-cancel",
-        cookies={"access_token": token},
-        follow_redirects=False,
-    )
+    resp = _cancel(auth_client, token)
     assert resp.status_code in (302, 303)
 
     test_db.expire(student)
@@ -101,9 +109,9 @@ def test_cref01_cancel_refunds_100_credits(auth_client: TestClient, test_db: Ses
     assert student.credit_balance == 100, f"Expected 100, got {student.credit_balance}"
 
 
-# ── CREF-02: CreditTransaction survives license deletion ─────────────────────
+# ── CREF-02: licence and transaction history are retained ────────────────────
 
-def test_cref02_refund_transaction_survives_license_delete(
+def test_cref02_license_and_original_debit_are_retained(
     auth_client: TestClient, test_db: Session
 ):
     student = _student(test_db, credits=0)
@@ -113,27 +121,19 @@ def test_cref02_refund_transaction_survives_license_delete(
     test_db.commit()
 
     token = create_access_token(data={"sub": student.email})
-    auth_client.get(
-        "/specialization/lfa-player/onboarding-cancel",
-        cookies={"access_token": token},
-        follow_redirects=False,
-    )
+    _cancel(auth_client, token)
 
-    # License must be gone
-    deleted_license = test_db.query(UserLicense).filter(
+    retained_license = test_db.query(UserLicense).filter(
         UserLicense.id == license_id
     ).first()
-    assert deleted_license is None, "License should be deleted after cancel"
+    assert retained_license is not None
+    assert retained_license.is_active is False
 
-    # CreditTransaction must STILL exist — not CASCADE-deleted
-    tx = test_db.query(CreditTransaction).filter(
-        CreditTransaction.user_id == student.id,
-        CreditTransaction.transaction_type == TransactionType.REFUND.value,
-    ).first()
-    assert tx is not None, (
-        "CreditTransaction(REFUND) was CASCADE-deleted with the license — "
-        "fix: use user_id, not user_license_id"
-    )
+    original = test_db.query(CreditTransaction).filter(
+        CreditTransaction.user_license_id == license_id,
+        CreditTransaction.transaction_type == TransactionType.SPECIALIZATION_UNLOCK.value,
+    ).one()
+    assert original.amount == -100
 
 
 # ── CREF-03: transaction type + amount ───────────────────────────────────────
@@ -147,11 +147,7 @@ def test_cref03_refund_transaction_type_and_amount(
     test_db.commit()
 
     token = create_access_token(data={"sub": student.email})
-    auth_client.get(
-        "/specialization/lfa-player/onboarding-cancel",
-        cookies={"access_token": token},
-        follow_redirects=False,
-    )
+    _cancel(auth_client, token)
 
     tx = test_db.query(CreditTransaction).filter(
         CreditTransaction.user_id == student.id,
@@ -176,11 +172,7 @@ def test_cref04_credits_page_shows_refund_after_cancel(
     token = create_access_token(data={"sub": student.email})
 
     # Perform cancel
-    auth_client.get(
-        "/specialization/lfa-player/onboarding-cancel",
-        cookies={"access_token": token},
-        follow_redirects=False,
-    )
+    _cancel(auth_client, token)
 
     # Visit /credits
     resp = auth_client.get(

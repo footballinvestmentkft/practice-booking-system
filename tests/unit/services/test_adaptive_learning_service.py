@@ -493,19 +493,20 @@ class TestEndSession:
     def test_session_not_found_returns_empty_dict(self):
         svc, db = _svc()
         _q(db, first=None)
-        result = svc.end_session(session_id=99)
+        result = svc.end_session(user_id=1, session_id=99)
         assert result == {}
 
     def test_session_found_returns_stats(self):
         svc, db = _svc()
         session = MagicMock()
+        session.user_id = 42
         session.questions_presented = 10
         session.questions_correct = 8
         session.performance_trend = 0.5
         session.target_difficulty = 0.7
         session.user_id = 1
         _q(db, first=session)
-        result = svc.end_session(session_id=1)
+        result = svc.end_session(user_id=1, session_id=1)
         # score = 8*2 - 10 = 6; xp = max(0, 6) * 10 = 60
         assert result["questions_answered"] == 10
         assert result["correct_answers"] == 8
@@ -520,12 +521,12 @@ class TestEndSession:
 
 @pytest.mark.unit
 class TestRecordAnswer:
-    def test_session_not_found_still_returns_dict(self):
+    def test_session_not_found_fails_closed_without_mutation(self):
         svc, db = _svc()
         # session query returns None
         _q(db, first=None)
-        with patch.object(svc, "_update_user_question_performance"):
-            with patch.object(svc, "_update_question_metadata"):
+        with patch.object(svc, "_update_user_question_performance") as update_user:
+            with patch.object(svc, "_update_question_metadata") as update_question:
                 with patch.object(svc, "_get_mastery_update",
                                   return_value={"mastery_level": 0.0,
                                                 "success_rate": 0.0,
@@ -534,10 +535,10 @@ class TestRecordAnswer:
                         user_id=42, session_id=99, question_id=1,
                         is_correct=False, time_spent_seconds=30.0
                     )
-        assert result["score_delta"] == -1
-        assert result["score"] == 0
-        assert result["new_target_difficulty"] is None
-        assert result["performance_trend"] is None
+        assert result == {}
+        update_user.assert_not_called()
+        update_question.assert_not_called()
+        db.commit.assert_not_called()
 
 
 # ===========================================================================
@@ -573,6 +574,7 @@ class TestGetNextQuestion:
     def test_time_expired_returns_dict(self):
         svc, db = _svc()
         session = MagicMock()
+        session.user_id = 42
         _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=True):
             result = svc.get_next_question(user_id=42, session_id=1)
@@ -581,6 +583,7 @@ class TestGetNextQuestion:
     def test_no_candidate_questions_returns_pool_exhausted(self):
         svc, db = _svc()
         session = MagicMock()
+        session.user_id = 42
         _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
              patch.object(svc, "_get_user_performance_data", return_value={}), \
@@ -594,6 +597,7 @@ class TestGetNextQuestion:
         """All candidate questions are passed to weighted selection — no 1-hour blackout applied."""
         svc, db = _svc()
         session = MagicMock()
+        session.user_id = 42
         session.session_due_shown = 0
         question = MagicMock()
         question.id = 7
@@ -616,6 +620,7 @@ class TestGetNextQuestion:
         """_select_weighted_question returns None → pool_exhausted dict."""
         svc, db = _svc()
         session = MagicMock()
+        session.user_id = 42
         session.session_due_shown = 0
         _q(db, first=session, all_=[])
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
@@ -642,6 +647,7 @@ class TestRecordAnswerSessionFound:
     def _run(self, is_correct):
         svc, db = _svc()
         session = MagicMock()
+        session.user_id = 42
         session.questions_presented = 2
         session.questions_correct = 1
         session.performance_trend = 0.0
@@ -943,6 +949,7 @@ class TestNoBlackoutRepetition:
 
     def _call_next(self, svc, db, candidates, selected):
         session = MagicMock()
+        session.user_id = 42
         session.session_due_shown = 0
         _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
@@ -999,6 +1006,7 @@ class TestNoBlackoutRepetition:
         """record_answer must correctly decrement score on repeated wrong answer."""
         svc, db = _svc()
         session = MagicMock()
+        session.user_id = 42
         session.id = 1
         session.questions_presented = 3
         session.questions_correct = 1
@@ -1020,6 +1028,7 @@ class TestNoBlackoutRepetition:
         from app.models.quiz import UserQuestionPerformance
         svc, db = _svc()
         session = MagicMock()
+        session.user_id = 42
         session.session_due_shown = 0
         q = MagicMock(); q.id = 1; q.answer_options = []; q.question_type = None
         _q(db, first=session)
@@ -1066,7 +1075,9 @@ class TestGetNextQuestionDedup:
     def test_empty_pool_returns_pool_exhausted_no_exception(self):
         """Empty candidate list → pool_exhausted reason, no exception raised."""
         svc, db = _svc()
-        _q(db, first=MagicMock())
+        session = MagicMock()
+        session.user_id = 42
+        _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
              patch.object(svc, "_get_user_performance_data", return_value={
                  "weak_concepts": [], "strong_concepts": [], "due_for_review": []
@@ -1084,6 +1095,7 @@ class TestGetNextQuestionDedup:
         svc, db = _svc()
         q1, q2 = self._make_q(1), self._make_q(2)
         session = MagicMock()
+        session.user_id = 42
         session.session_due_shown = 0
         _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
@@ -1103,6 +1115,7 @@ class TestGetNextQuestionDedup:
         counts = {1: 0, 2: 0, 3: 0}
         for _ in range(200):
             session = MagicMock()
+            session.user_id = 42
             session.session_due_shown = 0
             _q(db, first=session)
             with patch.object(svc, "_is_session_time_expired", return_value=False), \
@@ -1123,6 +1136,7 @@ class TestGetNextQuestionDedup:
         svc, db = _svc()
         q1 = self._make_q(1)
         session = MagicMock()
+        session.user_id = 42
         session.session_due_shown = 0
         _q(db, first=session)
         with patch.object(svc, "_is_session_time_expired", return_value=False), \
@@ -1140,6 +1154,7 @@ class TestGetNextQuestionDedup:
         svc, db = _svc()
         q5 = self._make_q(5)
         session = MagicMock()
+        session.user_id = 42
         session.session_due_shown = 0
         _q(db, first=session)
 
@@ -1242,6 +1257,7 @@ class TestSessionDueShown:
         svc, db = _svc()
         q_due = self._make_q(10)
         session = MagicMock()
+        session.user_id = 42
         session.session_due_shown = 1
         _q(db, first=session)
 
@@ -1268,6 +1284,7 @@ class TestSessionDueShown:
         svc, db = _svc()
         q_normal = self._make_q(20)
         session = MagicMock()
+        session.user_id = 42
         session.session_due_shown = 1
         _q(db, first=session)
 

@@ -8,7 +8,7 @@ from datetime import datetime, timezone, timedelta
 from ....core import time_provider
 from ....database import get_db
 from ....dependencies import get_current_user, get_current_admin_or_instructor_user
-from ....models.user import User
+from ....models.user import User, UserRole
 from ....models.session import Session as SessionTypel, EventCategory
 from ....models.booking import Booking, BookingStatus
 from ....models.attendance import Attendance, AttendanceStatus
@@ -19,8 +19,17 @@ from ....schemas.attendance import (
 )
 from sqlalchemy.orm import joinedload
 from app.services import segment_reward_service
+from app.services.authorization_policy import AuthorizationPolicy
 
 router = APIRouter()
+
+
+def _require_attendance_manager(current_user: User, session: SessionTypel) -> None:
+    if not AuthorizationPolicy.can_manage_attendance(current_user, session):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not assigned to manage attendance for this session",
+        )
 
 
 @router.post("/", response_model=AttendanceSchema)
@@ -42,6 +51,7 @@ def create_attendance(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Session not found"
         )
+    _require_attendance_manager(current_user, session)
 
     # 🏆 TOURNAMENT SESSION: No booking required
     if session.event_category == EventCategory.MATCH:
@@ -77,6 +87,14 @@ def create_attendance(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Can only create attendance for confirmed bookings"
+            )
+        if (
+            booking.user_id != attendance_data.user_id
+            or booking.session_id != attendance_data.session_id
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Booking does not match the attendance user and session",
             )
 
         # Check if attendance already exists (by booking_id)
@@ -149,7 +167,12 @@ def list_attendance(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Session not found"
             )
+        _require_attendance_manager(current_user, session)
         query = query.filter(Attendance.session_id == session_id)
+    elif current_user.role != UserRole.ADMIN:
+        query = query.join(SessionTypel).filter(
+            SessionTypel.instructor_id == current_user.id
+        )
 
     # OPTIMIZED: Eager load relationships to avoid N+1 query pattern
     query = query.options(
@@ -279,7 +302,14 @@ def update_attendance(
 
     # 🏆 TOURNAMENT VALIDATION: Check if session is a tournament game
     session = db.query(SessionTypel).filter(SessionTypel.id == attendance.session_id).first()
-    if session and session.event_category == EventCategory.MATCH:
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found",
+        )
+    _require_attendance_manager(current_user, session)
+
+    if session.event_category == EventCategory.MATCH:
         # Tournament sessions ONLY support present/absent (NO late/excused)
         if hasattr(attendance_update, 'status') and attendance_update.status:
             if attendance_update.status not in [AttendanceStatus.present, AttendanceStatus.absent]:
