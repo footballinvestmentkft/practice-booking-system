@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional
+from types import SimpleNamespace
 import random
 import math
 
@@ -11,6 +12,7 @@ from ..models.quiz import (
     Quiz, QuizQuestion, UserQuestionPerformance, AdaptiveLearningSession,
     QuestionMetadata, QuizCategory, OptionType,
 )
+from .authorization_policy import AuthorizationPolicy
 
 
 _SESSION_DUE_CAP = 3
@@ -21,6 +23,21 @@ class AdaptiveLearningService:
 
     def __init__(self, db: Session):
         self.db = db
+
+    def _get_owned_session(
+        self, user_id: int, session_id: int
+    ) -> Optional[AdaptiveLearningSession]:
+        """Fetch a session only inside its learner ownership boundary."""
+        session = self.db.query(AdaptiveLearningSession).filter(
+            AdaptiveLearningSession.id == session_id,
+        ).first()
+        actor = SimpleNamespace(id=user_id)
+        return (
+            session
+            if AuthorizationPolicy.can_access_adaptive_session(actor, session)
+            else None
+        )
+
     def start_adaptive_session(
         self,
         user_id: int,
@@ -49,9 +66,7 @@ class AdaptiveLearningService:
         self, user_id: int, session_id: int, exclude_ids: set[int] | None = None
     ) -> Optional[Dict]:
         """Következő kérdés kiválasztása adaptív algoritmussal és időkorlát ellenőrzés"""
-        session = self.db.query(AdaptiveLearningSession).filter(
-            AdaptiveLearningSession.id == session_id
-        ).first()
+        session = self._get_owned_session(user_id, session_id)
         if not session:
             return None
         # Check if session time limit has expired
@@ -103,26 +118,25 @@ class AdaptiveLearningService:
         """Válasz rögzítése és adaptív súlyok frissítése"""
         
         # Update session
-        session = self.db.query(AdaptiveLearningSession).filter(
-            AdaptiveLearningSession.id == session_id
-        ).first()
-        
-        if session:
-            session.questions_presented += 1
-            if is_correct:
-                session.questions_correct += 1
-                
-            # Update performance trend
-            session.performance_trend = self._calculate_performance_trend(session)
+        session = self._get_owned_session(user_id, session_id)
+        if not session:
+            return {}
 
-            # Adjust target difficulty
-            session.target_difficulty = self._adjust_target_difficulty(
-                session.target_difficulty,
-                is_correct,
-                session.performance_trend
-            )
+        session.questions_presented += 1
+        if is_correct:
+            session.questions_correct += 1
 
-            session.last_activity_at = datetime.now(timezone.utc)
+        # Update performance trend
+        session.performance_trend = self._calculate_performance_trend(session)
+
+        # Adjust target difficulty
+        session.target_difficulty = self._adjust_target_difficulty(
+            session.target_difficulty,
+            is_correct,
+            session.performance_trend
+        )
+
+        session.last_activity_at = datetime.now(timezone.utc)
 
         # Update user question performance
         self._update_user_question_performance(user_id, question_id, is_correct, time_spent_seconds)
@@ -133,24 +147,19 @@ class AdaptiveLearningService:
         self.db.commit()
 
         score_delta = 1 if is_correct else -1
-        if session:
-            score = (session.questions_correct or 0) * 2 - (session.questions_presented or 0)
-        else:
-            score = 0
+        score = (session.questions_correct or 0) * 2 - (session.questions_presented or 0)
 
         return {
             "score_delta": score_delta,
             "score": score,
-            "new_target_difficulty": session.target_difficulty if session else None,
-            "performance_trend": session.performance_trend if session else None,
+            "new_target_difficulty": session.target_difficulty,
+            "performance_trend": session.performance_trend,
             "mastery_update": self._get_mastery_update(user_id, question_id)
         }
     
-    def end_session(self, session_id: int) -> Dict:
+    def end_session(self, user_id: int, session_id: int) -> Dict:
         """Session befejezése és eredmények összegzése"""
-        session = self.db.query(AdaptiveLearningSession).filter(
-            AdaptiveLearningSession.id == session_id
-        ).first()
+        session = self._get_owned_session(user_id, session_id)
         
         if not session:
             return {}

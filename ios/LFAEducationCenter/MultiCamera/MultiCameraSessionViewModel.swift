@@ -33,6 +33,9 @@ final class MultiCameraSessionViewModel: ObservableObject {
     @Published private(set) var sessionDeviceId: Int?
     @Published private(set) var clockSyncState: ClockSyncState = .notSynced
     @Published private(set) var deviceRegisterError: String?
+    /// Latest capture cycle, polled alongside the session (controller only) —
+    /// drives the status dashboard's per-device recording/completed/failed states.
+    @Published private(set) var latestCycle: CaptureCycleDTO?
 
     private var pollingTask: Task<Void, Never>?
     private var heartbeatTask: Task<Void, Never>?
@@ -78,8 +81,24 @@ final class MultiCameraSessionViewModel: ObservableObject {
 
     // MARK: — Public actions
 
+    /// Starting a NEW session must never inherit the previous one's state
+    /// (2026-07-12 physical-run lesson: the app silently stayed in the old
+    /// session and join deep links no-opped). In-flight create/join keeps its
+    /// guard; any settled state (inLobby / error) is fully reset first.
+    static func shouldResetBeforeStart(state: LobbyState) -> Bool {
+        switch state {
+        case .inLobby, .error:          return true
+        case .idle, .creating, .joining: return false
+        }
+    }
+
+    private func resetIfSettledInPreviousSession() {
+        if Self.shouldResetBeforeStart(state: state) { reset() }
+    }
+
     func createSession(maxP: Int = 2, maxD: Int = 4) {
         guard !isCreateInProgress else { return }
+        resetIfSettledInPreviousSession()
         guard case .idle = state else { return }
         isCreateInProgress = true
         state = .creating
@@ -101,6 +120,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
     }
 
     func joinSession(uuid: String, role: ParticipantRole = .player) {
+        resetIfSettledInPreviousSession()
         guard case .idle = state else { return }
         state = .joining
         Task {
@@ -161,6 +181,7 @@ final class MultiCameraSessionViewModel: ObservableObject {
         heartbeatTask = nil
         clockSyncTask = nil
         sessionDeviceId = nil
+        latestCycle = nil
         isCreateInProgress = false
         clockSyncState = .notSynced
         cycleOrchestrator?.reset()
@@ -267,6 +288,14 @@ final class MultiCameraSessionViewModel: ObservableObject {
                     let session = try await MultiCameraAPIClient.getSession(token: token, uuid: uuid)
                     guard !Task.isCancelled else { return }
                     self.state = .inLobby(session: session)
+                    // Status dashboard feed: the controller also polls the latest
+                    // cycle so per-device recording/completed/failed states come
+                    // from backend evidence, not local orchestrator guesses.
+                    if self.isController {
+                        let cycles = try await MultiCameraAPIClient.listCycles(token: token, uuid: uuid)
+                        guard !Task.isCancelled else { return }
+                        self.latestCycle = cycles.max { $0.cycleIndex < $1.cycleIndex }
+                    }
                 } catch {
                     // skip iteration, retry next cycle
                 }

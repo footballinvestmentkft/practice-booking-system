@@ -9,9 +9,6 @@ struct MultiCameraLobbyView: View {
     @StateObject private var captureManager: SessionCaptureManager
     @StateObject private var playerListener: PlayerCycleListener
     @StateObject private var playerOrchestrator: PlayerCaptureOrchestrator
-    @StateObject private var streamService: CameraStreamService
-    @StateObject private var playerStreamService: CameraStreamService
-    @StateObject private var framePublisher: CameraFramePublisher
     @State private var joinUuid = ""
     @State private var showQRScanner = false
     @State private var qrDecodeError: String?
@@ -37,9 +34,6 @@ struct MultiCameraLobbyView: View {
         _orchestrator = StateObject(wrappedValue: orch)
         _playerListener = StateObject(wrappedValue: listener)
         _playerOrchestrator = StateObject(wrappedValue: playerOrch)
-        _streamService = StateObject(wrappedValue: CameraStreamService(role: .instructor, sessionUuid: "pending"))
-        _playerStreamService = StateObject(wrappedValue: CameraStreamService(role: .player, sessionUuid: "pending", deviceName: UIDevice.current.name))
-        _framePublisher = StateObject(wrappedValue: CameraFramePublisher())
         _vm = StateObject(wrappedValue: MultiCameraSessionViewModel(
             authManager: authManager,
             clockSyncService: clockSync,
@@ -50,7 +44,7 @@ struct MultiCameraLobbyView: View {
         ))
     }
 
-    private static let buildFingerprint = "mc2-pr1-v2-2026-07-12"
+    private static let buildFingerprint = "mc2-pr3-v1-2026-07-12"
 
     var body: some View {
         NavigationView {
@@ -103,9 +97,6 @@ struct MultiCameraLobbyView: View {
         // would re-execute the last action (double GoPro shutter, spurious
         // reset-session). consume() returns true exactly once per posted action.
         .onReceive(MC1AutomationBridge.shared.$lastAction.compactMap { $0 }) { envelope in
-            // poseOverlayDiag belongs to InstructorDashboardView (owns the 3
-            // processor instances) — leave it unconsumed for that view.
-            if case .poseOverlayDiag = envelope.action { return }
             guard MC1AutomationBridge.shared.consume(envelope) else { return }
             let action = envelope.action
             switch action {
@@ -364,8 +355,7 @@ struct MultiCameraLobbyView: View {
                 }
             case .goProStreamStart:
                 // Non-blocking: fire-and-forget for the recording window duration.
-                // Dashboard's onReceive(goProStreamProbe.objectWillChange) feeds the
-                // GoPro panel's LivePoseOverlayProcessor as frames arrive.
+                // MC2-PR3: diagnostics-only — no UI consumes these frames anymore.
                 //
                 // The diag dict MUST be written (not discarded) — it is the only
                 // automated evidence that the GoPro preview actually received UDP
@@ -378,8 +368,6 @@ struct MultiCameraLobbyView: View {
                     let diag = await GoProStreamProbe.shared.run(durationSeconds: 60)
                     GoProStreamDiagWriter.write(diag)
                 }
-            case .poseOverlayDiag:
-                break // handled by InstructorDashboardView, which owns the 3 processor instances
             }
         }
         .sheet(isPresented: $showQRScanner) {
@@ -399,31 +387,16 @@ struct MultiCameraLobbyView: View {
             .ignoresSafeArea()
         }
         .fullScreenCover(isPresented: $showCaptureView) {
+            // MC2-PR3: no MPC anywhere — the instructor gets a backend-polling
+            // status dashboard, players get their local capture screen. Nothing
+            // streams frames between devices.
             if vm.isController {
-                InstructorDashboardView(
-                    captureManager: captureManager,
-                    streamService: streamService,
-                    orchestrator: orchestrator,
-                    vm: vm
-                )
-                .onAppear { streamService.start() }
-                .onDisappear { streamService.stop() }
+                InstructorDashboardView(orchestrator: orchestrator, vm: vm)
             } else {
                 PlayerCaptureView(
                     captureManager: captureManager,
                     playerOrchestrator: playerOrchestrator
                 )
-                .onAppear {
-                    playerStreamService.start()
-                    // Single-session camera ownership (2026-07-04 RCA): the publisher
-                    // taps captureManager's session instead of opening a second
-                    // AVCaptureSession on the same camera.
-                    framePublisher.startCapture(sharing: captureManager, streamService: playerStreamService)
-                }
-                .onDisappear {
-                    framePublisher.stopCapture()
-                    playerStreamService.stop()
-                }
             }
         }
     }

@@ -48,6 +48,29 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+_REDACTED_HEADER_VALUE = "[REDACTED]"
+_SENSITIVE_REQUEST_HEADERS = frozenset({
+    "authorization",
+    "cookie",
+    "set-cookie",
+    "proxy-authorization",
+    "x-csrf-token",
+    "x-csrftoken",
+    "idempotency-key",
+})
+
+
+def _redact_sensitive_headers(headers) -> dict[str, str]:
+    """Return request headers with credential and replay-token values removed."""
+    return {
+        name: (
+            _REDACTED_HEADER_VALUE
+            if name.lower() in _SENSITIVE_REQUEST_HEADERS
+            else value
+        )
+        for name, value in headers.items()
+    }
+
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     """
@@ -82,7 +105,11 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "url": url,
             "client_ip": client_ip,
             "user_agent": user_agent,
-            "headers": dict(request.headers) if logger.level <= logging.DEBUG else {}
+            "headers": (
+                _redact_sensitive_headers(request.headers)
+                if logger.isEnabledFor(logging.DEBUG)
+                else {}
+            )
         }
         
         logger.info(json.dumps(request_log))

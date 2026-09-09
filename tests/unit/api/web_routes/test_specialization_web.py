@@ -31,6 +31,19 @@ from app.models.specialization import SpecializationType
 _BASE = "app.api.web_routes.specialization"
 
 
+@pytest.fixture(autouse=True)
+def _credit_service_double(monkeypatch):
+    class FakeCreditService:
+        def __init__(self, db):
+            self.db = db
+
+        def deduct(self, *, user, amount, **kwargs):
+            user.credit_balance -= amount
+            return MagicMock()
+
+    monkeypatch.setattr(f"{_BASE}.CreditService", FakeCreditService)
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ──────────────────────────────────────────────────────────────────────────────
@@ -65,10 +78,11 @@ def _user(uid=99, credit_balance=200, age=20, role=UserRole.STUDENT):
     return u
 
 
-def _mock_db(first_return=None):
+def _mock_db(first_return=None, user_return=None):
     db = MagicMock()
     db.query.return_value.filter.return_value.first.return_value = first_return
     db.query.return_value.filter.return_value.filter.return_value.filter.return_value.first.return_value = first_return
+    db.query.return_value.with_for_update.return_value.filter.return_value.first.return_value = user_return
     return db
 
 
@@ -82,7 +96,7 @@ class TestSpecializationUnlock:
         user = _user(credit_balance=50)
         import pytest
         with pytest.raises(HTTPException) as exc_info:
-            _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=_mock_db(), current_user=user))
+            _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=_mock_db(user_return=user), current_user=user))
         assert exc_info.value.status_code == 400
         assert "credits" in exc_info.value.detail.lower()
 
@@ -112,8 +126,7 @@ class TestSpecializationUnlock:
         license_mock.id = 1
 
         with patch(f"{_BASE}.validate_specialization_for_age", return_value=True), \
-             patch(f"{_BASE}.UserLicense", return_value=license_mock), \
-             patch(f"{_BASE}.CreditTransaction", return_value=MagicMock()):
+             patch(f"{_BASE}.UserLicense", return_value=license_mock):
             result = _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=db, current_user=user))
         assert result["success"] is True
         assert user.credit_balance == 100  # 200 - 100
@@ -149,7 +162,6 @@ class TestSpecializationUnlock:
 
         with patch(f"{_BASE}.validate_specialization_for_age", return_value=True), \
              patch(f"{_BASE}.UserLicense", return_value=license_mock), \
-             patch(f"{_BASE}.CreditTransaction", return_value=MagicMock()), \
              pytest.raises(HTTPException) as exc_info:
             _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=db, current_user=user))
 
@@ -160,7 +172,7 @@ class TestSpecializationUnlock:
         """credit_balance=99 < 100 → 400 Bad Request."""
         user = _user(credit_balance=99)
         with pytest.raises(HTTPException) as exc_info:
-            _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=_mock_db(), current_user=user))
+            _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=_mock_db(user_return=user), current_user=user))
         assert exc_info.value.status_code == 400
         assert "credits" in exc_info.value.detail.lower()
 
@@ -174,8 +186,7 @@ class TestSpecializationUnlock:
         license_mock.id = 1
 
         with patch(f"{_BASE}.validate_specialization_for_age", return_value=True), \
-             patch(f"{_BASE}.UserLicense", return_value=license_mock), \
-             patch(f"{_BASE}.CreditTransaction", return_value=MagicMock()):
+             patch(f"{_BASE}.UserLicense", return_value=license_mock):
             result = _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=db, current_user=user))
 
         assert result["success"] is True

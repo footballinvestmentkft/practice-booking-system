@@ -167,25 +167,10 @@ def get_user_progress(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get current user's progression status"""
-    
-    # Mock data for now - in real implementation this would come from database
-    # You would store this in user profile or separate progression table
-    mock_progress = {
-        "internship_level": "junior",
-        "coach_foundation_level": "pre_assistant", 
-        "coach_specializations": [],
-        "gancuju_level": "bamboo"
-    }
-    
-    completed_semesters = calculate_completed_semesters(mock_progress)
-    
-    return UserProgressResponse(
-        internship_level=mock_progress.get("internship_level"),
-        coach_foundation_level=mock_progress.get("coach_foundation_level"),
-        coach_specializations=mock_progress.get("coach_specializations", []),
-        gancuju_level=mock_progress.get("gancuju_level"),
-        completed_semesters=completed_semesters
+    """This legacy route has no persisted progression source."""
+    raise HTTPException(
+        status_code=501,
+        detail="Legacy progression endpoint is unavailable; use specialization progression APIs",
     )
 
 @router.post("/progress/update")
@@ -194,44 +179,11 @@ def update_user_progress(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Update user's progression status"""
-    
-    # Get current progress
-    current_progress = {
-        "internship_level": "junior",  # Mock - get from database
-        "coach_foundation_level": "pre_assistant",
-        "coach_specializations": [],
-        "gancuju_level": "bamboo"
-    }
-    
-    # Validate prerequisites
-    if not validate_prerequisite(request.track, request.level, current_progress):
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Prerequisites not met for {request.track} level {request.level}"
-        )
-    
-    # Update progress (in real implementation, save to database)
-    if request.track == "internship":
-        current_progress["internship_level"] = request.level
-    elif request.track == "coach":
-        if request.level in PROGRESSION_SYSTEMS["coach"]["specializations"]:
-            # Adding specialization
-            if request.level not in current_progress["coach_specializations"]:
-                current_progress["coach_specializations"].append(request.level)
-        else:
-            # Foundation level
-            current_progress["coach_foundation_level"] = request.level
-    elif request.track == "gancuju":
-        current_progress["gancuju_level"] = request.level
-    
-    completed_semesters = calculate_completed_semesters(current_progress)
-    
-    return {
-        "message": "Progress updated successfully",
-        "new_progress": current_progress,
-        "completed_semesters": completed_semesters
-    }
+    """This legacy route never persisted updates and is deliberately disabled."""
+    raise HTTPException(
+        status_code=501,
+        detail="Legacy progression endpoint is unavailable; use specialization progression APIs",
+    )
 
 @router.get("/systems")
 def get_progression_systems():

@@ -197,20 +197,18 @@ def check_pco_attach_role_gated() -> None:
     )
 
 
-# ── CHECK 4: skeleton overlay feed wiring (all 3 panels) ────────────────────
+# ── CHECK 4: status dashboard wiring (MC2-PR3 — backend-polled, no frames) ──
 
 def check_skeleton_feed_wiring() -> None:
+    # Renamed purpose in MC2-PR3: the skeleton/live-frame feed is gone; what
+    # must be wired now is the polled-state path — the dashboard reads the VM's
+    # latestCycle (backend evidence), and the VM actually polls it.
     src = read(IOS_MC / "InstructorDashboardView.swift")
-    checks = {
-        "localPoseOverlay.attach(to:) wired on .onAppear": bool(
-            re.search(r"\.onAppear\s*\{[^}]*localPoseOverlay\.attach\(to:", src, re.S)),
-        "remotePoseOverlay fed from streamService.objectWillChange": bool(
-            re.search(r"onReceive\(streamService\.objectWillChange\).*?remotePoseOverlay\.feed\(", src, re.S)),
-        "goProPoseOverlay fed from goProStreamProbe.objectWillChange": bool(
-            re.search(r"onReceive\(goProStreamProbe\.objectWillChange\).*?goProPoseOverlay\.feed\(", src, re.S)),
-    }
-    for name, ok in checks.items():
-        check(name, ok)
+    check("dashboard reads vm.latestCycle (backend-polled cycle evidence)",
+          "vm.latestCycle" in src)
+    vm_src = read(IOS_MC / "MultiCameraSessionViewModel.swift")
+    check("view model polls listCycles for the controller (latestCycle feed)",
+          bool(re.search(r"if self\.isController \{.*?listCycles", vm_src, re.S)))
 
 
 # ── CHECK 5: device routing (MC2-PR1 final topology: iPad=non-recording ──────
@@ -275,52 +273,38 @@ def check_artifact_collectors() -> None:
         '"gopro preview stream quality"' in critical_block
     check("gopro preview stream quality gates PASS (critical_ok)", gate_ok)
 
-    # Per-panel (instructor/player/gopro) pose overlay frame-traffic collection must
-    # stay present (writer↔reader key contract pinned until MC2-PR3 removes both
-    # sides together), but per the 2026-07-12 no-MPC architecture decision the
-    # live-panel gates must NOT gate PASS — the dashboard moves to backend-polled
-    # status/thumbnail panels and this scenario is superseded by
-    # final-topology-proof in MC2-PR4.
+    # MC2-PR3 (no-MPC): the live-panel pose-overlay layer is REMOVED — writer,
+    # deep link and reader together (key-contract rule). The scenario must not
+    # reference pose_overlay_diag at all anymore.
     panel_names = ("instructor", "player", "gopro")
-    pose_collected = "pose_overlay_diag" in body
+    pose_removed = "pose_overlay_diag" not in body
     pose_not_gated = all(f'"{p} panel frame traffic"' not in critical_block for p in panel_names)
-    check("pose_overlay_diag.json collected (per-panel frame traffic)", pose_collected)
-    check("per-panel frame traffic is corroborating-only, NOT in critical_ok (no-MPC decision)", pose_not_gated)
+    check("pose_overlay_diag fully removed from tricamera scenario (MC2-PR3 no-MPC)", pose_removed)
+    check("per-panel frame traffic is NOT in critical_ok (no-MPC decision)", pose_not_gated)
 
 
-# ── CHECK 8: per-panel pose overlay diagnostics wiring (counters + export + deep link) ──
+# ── CHECK 8: MPC/live-panel layer stays removed (MC2-PR3 regression guard) ──
 
-def check_pose_overlay_diagnostics_wiring() -> None:
-    processor_src = read(IOS_MC / "LivePoseOverlayProcessor.swift")
-    required_counters = [
-        "framesReceived", "framesProcessed", "visionDetectionSuccesses",
-        "framesWithSkeletonPoints", "lastFrameReceivedAt",
-    ]
-    counters_ok = all(c in processor_src for c in required_counters)
-    check("LivePoseOverlayProcessor exposes all 5 required diagnostic counters", counters_ok,
-          f"missing: {[c for c in required_counters if c not in processor_src]}" if not counters_ok else "")
-
-    writer_ok = "enum PoseOverlayDiagWriter" in processor_src and "pose_overlay_diag.json" in processor_src
-    check("PoseOverlayDiagWriter exists and targets pose_overlay_diag.json", writer_ok)
+def check_mpc_layer_removed() -> None:
+    """MC2-PR3 removed the MPC streaming + live pose overlay layer after the
+    2026-07-12 dual-player run froze the iPad (main-actor frame publish storm ×
+    2 players × 3 on-device pose processors). This guard keeps it removed: no
+    hidden fallback, no re-introduced frame-processing path on the dashboard."""
+    for gone in ("CameraStreamService.swift", "CameraFramePublisher.swift",
+                 "RemoteCameraView.swift", "LivePoseOverlayProcessor.swift"):
+        check(f"{gone} stays deleted (no-MPC architecture)", not (IOS_MC / gone).exists())
 
     bridge_src = read(IOS_MC / "MC1AutomationBridge.swift")
-    action_ok = "poseOverlayDiag" in bridge_src and '"pose-overlay-diag"' in bridge_src
-    check("pose-overlay-diag deep link action registered in MC1AutomationBridge", action_ok)
+    check("pose-overlay-diag deep link action removed from MC1AutomationBridge",
+          "pose-overlay-diag" not in bridge_src and "poseOverlayDiag" not in bridge_src)
 
     dashboard_src = read(IOS_MC / "InstructorDashboardView.swift")
-    export_ok = bool(re.search(
-        r"case \.poseOverlayDiag = envelope\.action.*?PoseOverlayDiagWriter\.write\(",
-        dashboard_src, re.S,
-    ))
-    check("InstructorDashboardView exports pose overlay diag on pose-overlay-diag action", export_ok)
-
-    stream_service_src = read(IOS_MC / "CameraStreamService.swift")
-    source_counter_ok = "totalFramesReceived" in stream_service_src
-    check("CameraStreamService exposes totalFramesReceived (player panel source-frame count)", source_counter_ok)
-
-    gopro_probe_src = read(IOS_MC / "GoProStreamProbe.swift")
-    gopro_source_ok = bool(re.search(r"@Published private\(set\) var decodeSuccesses", gopro_probe_src))
-    check("GoProStreamProbe.decodeSuccesses is @Published (gopro panel source-frame count)", gopro_source_ok)
+    for banned in ("AVCaptureSession", "CameraStreamService", "LivePoseOverlayProcessor",
+                   "RemoteCameraView", "lastFrame", "UIImage("):
+        check(f"InstructorDashboardView has no live-frame path ({banned})",
+              banned not in dashboard_src)
+    check("InstructorDashboardView panels resolve via DevicePanelStateResolver",
+          "DevicePanelStateResolver.resolve" in dashboard_src)
 
 
 # ── CHECK 9: orientation/aspect wiring + no-distorting-stretch ──────────────
@@ -374,17 +358,8 @@ def check_orientation_aspect_wiring() -> None:
         and bool(re.search(r'"landscape":\s*\(16,\s*9\)', scenarios_src))
     check("effective-aspect expectation is orientation-aware (portrait→9:16, landscape→16:9)", aware_ok)
 
-    # "No distorting stretch" is a SwiftUI layout property, not runtime data — verify the
-    # GoPro preview panel uses aspectRatio(contentMode: .fit), which by definition letterboxes
-    # instead of stretching, and does NOT use .fill or a fixed non-aspect frame() override.
-    dashboard_src = read(IOS_MC / "InstructorDashboardView.swift")
-    panel_pos = dashboard_src.find("private var goProPreviewPanel")
-    panel_body = dashboard_src[panel_pos:panel_pos + 800] if panel_pos != -1 else ""
-    uses_fit = bool(re.search(r"\.aspectRatio\(contentMode:\s*\.fit\)", panel_body))
-    uses_fill = bool(re.search(r"\.aspectRatio\(contentMode:\s*\.fill\)", panel_body))
-    no_stretch_ok = panel_pos != -1 and uses_fit and not uses_fill
-    check("GoPro preview panel uses aspectRatio(.fit) — no distorting stretch", no_stretch_ok,
-          "goProPreviewPanel not found or does not use .fit (or also uses .fill)" if not no_stretch_ok else "")
+    # (The former GoPro preview-panel aspect check is gone with the panel itself:
+    # MC2-PR3 removed every live preview from the dashboard — status tiles only.)
 
 
 # ── CHECK 7: dual console log capture is distinctness-guarded ───────────────
@@ -431,27 +406,15 @@ def check_log_capture_config() -> None:
 # contract is also pinned at test time by tests/test_diag_contract.py.
 
 def check_pose_diag_key_contract() -> None:
-    processor_src = read(IOS_MC / "LivePoseOverlayProcessor.swift")
-    snap = re.search(r"var diagnosticSnapshot: \[String: Any\] \{\s*\[(.*?)\]\s*\}",
-                     processor_src, re.S)
-    writer_keys = set(re.findall(r'"(\w+)":', snap.group(1))) if snap else set()
-    if re.search(r'd\["sourceFramesSeen"\]\s*=', processor_src):
-        writer_keys.add("sourceFramesSeen")
-    check("diagnosticSnapshot writer keys extractable", bool(writer_keys))
-
+    # MC2-PR3: the pose-overlay writer is gone — the contract is now that NO
+    # reader remains either (a stale panel.get() reader would silently read
+    # nothing on a physical test day).
     scenarios_src = read(SCENARIOS_PY)
     reader_keys = set(re.findall(r'panel\.get\("(\w+)"', scenarios_src))
-    check("scenario reads at least one per-panel pose key", bool(reader_keys))
-
-    unknown = reader_keys - writer_keys
-    check(
-        "every per-panel key scenarios.py reads is emitted by PoseOverlayDiagWriter",
-        not unknown,
-        f"scenarios.py reads {sorted(unknown)} but the writer only emits "
-        f"{sorted(writer_keys)}" if unknown else "",
-    )
-    check("panel frame-traffic gate reads the writer's framesReceived counter",
-          "framesReceived" in reader_keys)
+    check("no per-panel pose keys read anywhere (writer removed in MC2-PR3)",
+          not reader_keys,
+          f"scenarios.py still reads {sorted(reader_keys)} but "
+          f"PoseOverlayDiagWriter no longer exists" if reader_keys else "")
 
 
 # ── CHECK 12: stale-artifact invalidation + freshness gating ─────────────────
@@ -487,8 +450,9 @@ def check_stale_artifact_protection() -> None:
     # Every gating diag read in the tricamera scenario must go through the
     # freshness loader instead of raw json.loads.
     fresh_reads = body.count("load_fresh_diag(")
-    check("tricamera gating diag reads use load_fresh_diag (>=5 call sites)",
-          fresh_reads >= 5, f"found {fresh_reads} load_fresh_diag call(s)")
+    # 4 call sites since MC2-PR3 (the pose-overlay read went away with the panel layer).
+    check("tricamera gating diag reads use load_fresh_diag (>=4 call sites)",
+          fresh_reads >= 4, f"found {fresh_reads} load_fresh_diag call(s)")
 
 
 # ── CHECK 13: deep-link action replay protection (consume mechanism) ─────────
@@ -502,9 +466,9 @@ def check_action_consume_mechanism() -> None:
         r"func consume\(_ envelope: MC1SequencedAction\) -> Bool", bridge_src))
     check("MC1AutomationBridge.consume() exists (once-only claim per action)", consume_ok)
 
-    # Both subscribers must claim via consume() before dispatching — otherwise a
-    # @Published replay on view rebuild re-runs the last action (double GoPro
-    # shutter / spurious reset-session / clobbered pose_overlay_diag.json).
+    # The lobby (sole bridge subscriber since MC2-PR3) must claim via consume()
+    # before dispatching — otherwise a @Published replay on view rebuild re-runs
+    # the last action (double GoPro shutter / spurious reset-session).
     lobby_src = read(IOS_MC / "MultiCameraLobbyView.swift")
     lobby_recv = re.search(r"onReceive\(MC1AutomationBridge\.shared\.\$lastAction.*?switch",
                            lobby_src, re.S)
@@ -512,11 +476,8 @@ def check_action_consume_mechanism() -> None:
     check("MultiCameraLobbyView dispatch is gated by consume()", lobby_gated)
 
     dash_src = read(IOS_MC / "InstructorDashboardView.swift")
-    dash_recv = re.search(
-        r"onReceive\(MC1AutomationBridge\.shared\.\$lastAction.*?PoseOverlayDiagWriter",
-        dash_src, re.S)
-    dash_gated = bool(dash_recv and "consume(" in dash_recv.group(0))
-    check("InstructorDashboardView poseOverlayDiag export is gated by consume()", dash_gated)
+    check("InstructorDashboardView no longer subscribes to the automation bridge",
+          "MC1AutomationBridge" not in dash_src)
 
 
 # ── CHECK 14: interactive scenarios excluded from unattended `all` ───────────
@@ -585,7 +546,7 @@ def main() -> int:
     check_skeleton_feed_wiring()
     check_device_routing()
     check_artifact_collectors()
-    check_pose_overlay_diagnostics_wiring()
+    check_mpc_layer_removed()
     check_orientation_aspect_wiring()
     check_log_capture_config()
     check_skip_preflight_cannot_pass()

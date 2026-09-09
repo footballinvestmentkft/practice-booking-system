@@ -19,6 +19,7 @@ from ...models.user import User, UserRole
 from ...models.session import Session as SessionModel
 from ...models.booking import Booking
 from ...models.attendance import Attendance, AttendanceHistory, AttendanceStatus, ConfirmationStatus
+from ...services.authorization_policy import AuthorizationPolicy
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -45,7 +46,7 @@ async def mark_attendance(
 
     # Verify session exists and instructor owns it
     session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
-    if not session or session.instructor_id != user.id:
+    if not session or not AuthorizationPolicy.can_manage_attendance(user, session):
         return RedirectResponse(url=f"/sessions/{session_id}?error=unauthorized", status_code=303)
 
     # Check if attendance can be marked (only from 15 min before start until session end)
@@ -328,5 +329,4 @@ async def handle_change_request(
 class ToggleSpecializationRequest(BaseModel):
     specialization: str
     is_active: bool
-
 

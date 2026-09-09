@@ -20,8 +20,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SCENARIOS_PY = REPO_ROOT / "scripts" / "mc1_regression" / "scenarios.py"
-PROCESSOR_SWIFT = (REPO_ROOT / "ios" / "LFAEducationCenter" / "MultiCamera"
-                   / "LivePoseOverlayProcessor.swift")
+IOS_MC = REPO_ROOT / "ios" / "LFAEducationCenter" / "MultiCamera"
 
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from mc1_regression.lib import (  # noqa: E402
@@ -31,59 +30,34 @@ from mc1_regression.lib import (  # noqa: E402
 )
 
 
-# ── Contract extraction helpers ──────────────────────────────────────────────
+# ── MC2-PR3 removal guard ─────────────────────────────────────────────────────
+#
+# The pose-overlay writer↔reader contract was retired when MC2-PR3 deleted the
+# MPC live-panel layer (writer, deep link and reader together — key-contract
+# rule). These tests keep it retired: an orphaned reader would silently read
+# nothing on a physical test day, and a resurrected writer would mean the
+# main-thread frame-processing path (the 2026-07-12 iPad freeze RCA) is back.
 
-def swift_pose_writer_keys() -> set[str]:
-    """Keys PoseOverlayDiagWriter actually emits per panel: the
-    diagnosticSnapshot dictionary literal's string keys, plus the
-    sourceFramesSeen field panelDict() adds on top."""
-    src = PROCESSOR_SWIFT.read_text(encoding="utf-8")
-    snap = re.search(r"var diagnosticSnapshot: \[String: Any\] \{\s*\[(.*?)\]\s*\}", src, re.S)
-    assert snap, "diagnosticSnapshot dictionary not found in LivePoseOverlayProcessor.swift"
-    keys = set(re.findall(r'"(\w+)":', snap.group(1)))
-    if re.search(r'd\["sourceFramesSeen"\]\s*=', src):
-        keys.add("sourceFramesSeen")
-    return keys
-
-
-def scenario_pose_reader_keys() -> set[str]:
-    """Keys the tricamera scenario reads off a per-panel dict (panel.get(...))."""
+def test_pose_overlay_reader_is_gone():
     src = SCENARIOS_PY.read_text(encoding="utf-8")
-    return set(re.findall(r'panel\.get\("(\w+)"', src))
-
-
-# ── Contract tests ───────────────────────────────────────────────────────────
-
-def test_pose_overlay_reader_keys_are_subset_of_writer_keys():
-    writer = swift_pose_writer_keys()
-    reader = scenario_pose_reader_keys()
-    assert reader, "scenarios.py reads no per-panel keys — extraction regex broke?"
-    missing = reader - writer
-    assert not missing, (
-        f"scenarios.py reads per-panel key(s) {sorted(missing)} that "
-        f"PoseOverlayDiagWriter never writes (writer emits: {sorted(writer)}). "
-        f"This is exactly the framesReceivedByProcessor bug class — fix the key "
-        f"name on one side."
+    assert not re.findall(r'panel\.get\("(\w+)"', src), (
+        "scenarios.py reads per-panel pose keys, but PoseOverlayDiagWriter was "
+        "removed in MC2-PR3 — an orphaned reader can only produce false FAILs."
     )
+    assert "pose-overlay-diag" not in src and "pose_overlay_diag" not in src
 
 
-def test_pose_overlay_gate_uses_frames_received():
-    """The frame-traffic gate must read the writer's real counter key."""
-    assert "framesReceived" in scenario_pose_reader_keys()
-
-
-def test_phantom_key_framesreceivedbyprocessor_is_gone():
-    src = SCENARIOS_PY.read_text(encoding="utf-8")
-    assert "framesReceivedByProcessor" not in src, (
-        "framesReceivedByProcessor resurfaced in scenarios.py — this key has "
-        "never existed in the Swift writer and guarantees a false FAIL."
+def test_pose_overlay_writer_stays_removed():
+    assert not (IOS_MC / "LivePoseOverlayProcessor.swift").exists(), (
+        "LivePoseOverlayProcessor.swift resurfaced — live pose inference on the "
+        "instructor dashboard was removed in MC2-PR3 (iPad freeze RCA)."
     )
-
-
-def test_writer_emits_all_five_diagnostic_counters():
-    expected = {"framesReceived", "framesProcessed", "visionDetectionSuccesses",
-                "framesWithSkeletonPoints", "lastFrameReceivedAt"}
-    assert expected <= swift_pose_writer_keys()
+    for mpc_file in ("CameraStreamService.swift", "CameraFramePublisher.swift",
+                     "RemoteCameraView.swift"):
+        assert not (IOS_MC / mpc_file).exists(), (
+            f"{mpc_file} resurfaced — the MPC streaming layer was fully retired "
+            f"in MC2-PR3 (backend-orchestrated no-MPC architecture)."
+        )
 
 
 # ── Freshness loader tests (stale-artifact protection) ───────────────────────

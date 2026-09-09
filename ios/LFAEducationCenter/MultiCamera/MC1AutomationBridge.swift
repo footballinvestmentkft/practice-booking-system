@@ -57,13 +57,9 @@ enum MC1AutomationAction: Equatable {
     // GoPro 8:7 Recording Preset Read/Write Validation — the first GoPro POC
     // that actually WRITES a setting, with mandatory rollback on any failure.
     case goProPresetWriteValidation
-    // Start GoProStreamProbe while the InstructorDashboard is live so the GoPro
-    // panel receives frames and skeleton overlay can be validated in-scenario.
+    // Run GoProStreamProbe as a standalone diagnostic (UDP/decode evidence to
+    // gopro_stream_diag.json). MC2-PR3: no UI consumes these frames anymore.
     case goProStreamStart
-    // Export per-panel (instructor/player/gopro) LivePoseOverlayProcessor frame
-    // diagnostics to Documents/pose_overlay_diag.json — handled directly by
-    // InstructorDashboardView (owns the 3 processor instances), not MultiCameraLobbyView.
-    case poseOverlayDiag
 }
 
 /// One posted automation action with a monotonically increasing sequence number.
@@ -213,10 +209,6 @@ final class MC1AutomationBridge: ObservableObject {
         case "gopro-stream-start":
             MC1Log.notice("[MC1-AUTO] received action=gopro-stream-start")
             post(.goProStreamStart)
-            return true
-        case "pose-overlay-diag":
-            MC1Log.notice("[MC1-AUTO] received action=pose-overlay-diag")
-            post(.poseOverlayDiag)
             return true
         default:
             MC1Log.notice("[MC1-AUTO] received unknown action=\(action)")

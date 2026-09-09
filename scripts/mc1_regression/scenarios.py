@@ -880,18 +880,15 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
       - gopro preview stream quality + 16:9 (probe runs on the player iPhone,
         which owns the GoPro AP connection)
 
-    SUPERSEDED (2026-07-12 no-MPC architektúra-döntés): the live dashboard
-    panel gates (pose_overlay_diag panel frame traffic) no longer gate PASS —
-    the dashboard moves to backend-polled status/thumbnail panels (MC2-PR3)
-    and this scenario is replaced by `final-topology-proof` in MC2-PR4. The
-    pose-overlay collection below is kept as best-effort corroborating output
-    only, so the diag writer↔reader key contract stays pinned until PR3
-    removes both sides together.
+    SUPERSEDED (2026-07-12 no-MPC architektúra-döntés): the scenario is
+    replaced by `final-topology-proof` in MC2-PR4. MC2-PR3 removed the MPC
+    live-panel layer entirely (writer + deep link + reader together), so the
+    former per-panel frame-traffic collection is gone — the dashboard is
+    backend-polled status panels now.
 
     CORROBORATING evidence (reported, does NOT gate PASS):
       - skeleton_output.json          (post-capture SkeletonProcessor run)
       - gopro media evidence          ([GOPRO-MEDIA-BEGIN] in iPhone log)
-      - pose_overlay_diag.json        (legacy live-panel counters, best-effort)
     """
     import time as _time
     from datetime import datetime as _dt, timezone as _tz
@@ -919,7 +916,6 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         _invalidate_stale_diags(ctx, report, run_id=run_id, targets=[
             (ctx.iphone_udid, "Documents/capture_metadata_diag.json"),
             (ctx.iphone_udid, "Documents/gopro_stream_diag.json"),
-            (ctx.iphone_udid, "Documents/pose_overlay_diag.json"),
             (ctx.iphone_udid, "Documents/skeleton_output.json"),
             (ctx.iphone_udid, "Documents/gopro_diag.json"),
             (ctx.iphone_udid, "Documents/pco_failure_diag.json"),
@@ -1128,13 +1124,6 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
         send_deep_link(ctx.iphone_udid, "dump-snapshot")
         _time.sleep(3)
 
-        # 16.5. Per-panel pose overlay diagnostics (instructor/player/gopro frame traffic).
-        # Sent while InstructorDashboardView is still on screen (never dismissed in this
-        # scenario) so PoseOverlayDiagWriter reads the 3 processors' live counters.
-        print("[proof] pose-overlay-diag → iPhone (Instructor/Player/GoPro panel frame counters)...")
-        send_deep_link(ctx.iphone_udid, "pose-overlay-diag")
-        _time.sleep(2)
-
         # 17. Artifact collection — copy_app_container_file (reliable, no console parsing).
         #     capture_metadata_diag.json is written by CaptureMetadataDiagWriter when
         #     the capture-info deep link fires (step 13 above).
@@ -1258,46 +1247,8 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
             report.step("gopro preview aspect ratio is 16:9", False,
                         error="gopro_stream_diag.json not found")
 
-        # 17c-3. Per-panel pose overlay frame traffic (pose_overlay_diag.json, written by
-        # PoseOverlayDiagWriter when the pose-overlay-diag deep link fires, step 16.5 above).
-        # PASS requires at least MIN_PANEL_FRAMES frames reached EACH of the three panels'
-        # LivePoseOverlayProcessor instances — this proves frame TRAFFIC flowed end-to-end
-        # (local capture / MultiPeer / GoPro decode → feed()) for all three panels. It does
-        # NOT require a detected skeleton (visionDetectionSuccesses/framesWithSkeletonPoints
-        # are reported as corroborating evidence only) — whether a human was actually visible
-        # in frame at any given moment is a physical-setup concern, not a wiring bug, and
-        # remains the one manual/visual check the screenshot requirement exists for.
-        MIN_PANEL_FRAMES = 1
-        local_pose_diag = str(artifacts_dir / "pose_overlay_diag.json")
-        pose_diag_ok = copy_app_container_file(ctx.iphone_udid, "Documents/pose_overlay_diag.json", local_pose_diag)
-        if pose_diag_ok:
-            pose_diag, stale_reason = load_fresh_diag(local_pose_diag, scenario_started_at)
-            if pose_diag is None:
-                for panel_name in ("instructor", "player", "gopro"):
-                    report.step(f"{panel_name} panel frame traffic", False, error=stale_reason)
-            else:
-                for panel_name in ("instructor", "player", "gopro"):
-                    panel = pose_diag.get(panel_name, {}) or {}
-                    # Key contract with PoseOverlayDiagWriter (LivePoseOverlayProcessor.swift):
-                    # the writer emits "framesReceived" — pinned by
-                    # tests/test_diag_contract.py and the static preflight, after the
-                    # 2026-07-04 review found this gate reading a key the writer never
-                    # emits (guaranteed false FAIL on every physical run).
-                    frames_received = panel.get("framesReceived", 0) or 0
-                    report.step(
-                        f"{panel_name} panel frame traffic", frames_received >= MIN_PANEL_FRAMES,
-                        framesReceived=frames_received,
-                        sourceFramesSeen=panel.get("sourceFramesSeen"),
-                        framesProcessed=panel.get("framesProcessed"),
-                        visionDetectionSuccesses=panel.get("visionDetectionSuccesses"),
-                        framesWithSkeletonPoints=panel.get("framesWithSkeletonPoints"),
-                        lastFrameReceivedAt=panel.get("lastFrameReceivedAt"),
-                    )
-        else:
-            for panel_name in ("instructor", "player", "gopro"):
-                report.step(f"{panel_name} panel frame traffic", False,
-                            error="pose_overlay_diag.json not found — pose-overlay-diag deep "
-                                  "link may not have completed")
+        # (17c-3 removed in MC2-PR3: the live pose-overlay panel layer — writer,
+        # deep link and this reader — was deleted with the MPC streaming stack.)
 
         # 17d. Skeleton JSON (SkeletonProcessor writes to Documents/skeleton_output.json)
         local_skeleton = str(artifacts_dir / "skeleton_output.json")
@@ -1316,13 +1267,12 @@ def scenario_tricamera_capture_skeleton_proof(ctx: ScenarioContext) -> ScenarioR
             report.step("skeleton json collected", False, error="copy_app_container_file failed — SkeletonProcessor may not have completed")
 
         # 18. Final PASS: all critical backend-grounded steps must be OK.
-        #     Artifact steps (skeleton, gopro media, legacy pose-overlay panels)
-        #     are corroborating evidence and do NOT gate the PASS.
+        #     Artifact steps (skeleton, gopro media) are corroborating evidence
+        #     and do NOT gate the PASS.
         #     MC2-PR1 changes: instructor confirm gates → player-only + pending
         #     guard; iPad capture gates → "instructor no capture output"
-        #     negative gate; the live-panel frame-traffic gates are removed per
-        #     the 2026-07-12 no-MPC decision (superseded by final-topology-proof
-        #     status/thumbnail gates in MC2-PR4).
+        #     negative gate. MC2-PR3 removed the live-panel layer entirely
+        #     (superseded by final-topology-proof status gates in MC2-PR4).
         critical_ok = all(
             s.get("ok") for s in report.steps
             if s["description"] in (

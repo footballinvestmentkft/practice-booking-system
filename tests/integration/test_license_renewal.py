@@ -101,6 +101,7 @@ def test_license_renewal():
             renewal_months=12,
             admin_id=1,  # Assume admin ID 1
             db=session,
+            idempotency_key="integration-license-52-renewal-1",
             payment_verified=True
         )
 
@@ -140,6 +141,7 @@ def test_license_renewal():
             renewal_months=12,
             admin_id=1,
             db=session,
+            idempotency_key="integration-license-52-renewal-2",
             payment_verified=True
         )
 
@@ -170,7 +172,8 @@ def test_license_renewal():
                 license_id=52,
                 renewal_months=12,
                 admin_id=1,
-                db=session
+                db=session,
+                idempotency_key="integration-license-52-insufficient",
             )
             print("   ❌ Should have raised InsufficientCreditsError!")
         except InsufficientCreditsError as e:
@@ -188,7 +191,8 @@ def test_license_renewal():
                 license_id=52,
                 renewal_months=6,  # Invalid (not 12 or 24)
                 admin_id=1,
-                db=session
+                db=session,
+                idempotency_key="integration-license-52-invalid",
             )
             print("   ❌ Should have raised ValueError!")
         except ValueError as e:

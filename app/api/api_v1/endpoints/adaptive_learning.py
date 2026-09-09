@@ -184,6 +184,11 @@ def submit_answer(
         is_correct=is_correct,
         time_spent_seconds=request.time_spent_seconds
     )
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found",
+        )
     
     # Get updated session stats
     session = db.query(AdaptiveLearningSession).filter(
@@ -218,7 +223,12 @@ def end_learning_session(
     End the adaptive learning session and get summary
     """
     adaptive_service = AdaptiveLearningService(db)
-    summary = adaptive_service.end_session(session_id)
+    summary = adaptive_service.end_session(current_user.id, session_id)
+    if not summary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found",
+        )
     
     return SessionSummaryResponse(
         questions_answered=summary["questions_answered"],

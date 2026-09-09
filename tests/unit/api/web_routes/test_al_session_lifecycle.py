@@ -285,7 +285,7 @@ class TestXPAfterContinue:
         db.query.return_value = q
 
         svc = AdaptiveLearningService(db)
-        summary = svc.end_session(session_id=10)
+        summary = svc.end_session(user_id=42, session_id=10)
 
         assert summary["xp_earned"] == 40           # max(0, 4) * 10
         assert session.status == ALSessionStatus.COMPLETED.value
@@ -443,7 +443,7 @@ class TestNormalCompleteXP:
             db.query.return_value = q
 
             svc = AdaptiveLearningService(db)
-            summary = svc.end_session(session_id=10)
+            summary = svc.end_session(user_id=42, session_id=10)
 
             assert summary["xp_earned"] == expected_xp, (
                 f"presented={presented} correct={correct}: "
