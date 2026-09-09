@@ -31,6 +31,8 @@ from sqlalchemy.orm import Session
 from app.services.specs.base_spec import BaseSpecializationService
 from app.models.license import UserLicense
 from app.models.semester_enrollment import SemesterEnrollment
+from app.services.canonical_policy import CanonicalProgram
+from app.services.program_eligibility_service import is_user_eligible_for_program
 
 
 class LFACoachService(BaseSpecializationService):
@@ -81,7 +83,7 @@ class LFACoachService(BaseSpecializationService):
             'age_group': 'Pre (5-13 years)',
             'role': 'Head Coach',
             'level': 2,
-            'min_coach_age': 16,
+            'min_coach_age': 14,
             'focus': 'Team management, parent communication, curriculum delivery',
             'requirements': {
                 'certification_exam': True,
@@ -97,7 +99,7 @@ class LFACoachService(BaseSpecializationService):
             'age_group': 'Youth (14-18 years)',
             'role': 'Assistant Coach',
             'level': 3,
-            'min_coach_age': 16,
+            'min_coach_age': 14,
             'focus': 'Advanced technical coaching, tactical principles',
             'requirements': {
                 'certification_exam': True,
@@ -113,7 +115,7 @@ class LFACoachService(BaseSpecializationService):
             'age_group': 'Youth (14-18 years)',
             'role': 'Head Coach',
             'level': 4,
-            'min_coach_age': 18,
+            'min_coach_age': 14,
             'focus': 'Competition strategy, match management, player pathways',
             'requirements': {
                 'certification_exam': True,
@@ -129,7 +131,7 @@ class LFACoachService(BaseSpecializationService):
             'age_group': 'Amateur (14+ years)',
             'role': 'Assistant Coach',
             'level': 5,
-            'min_coach_age': 18,
+            'min_coach_age': 14,
             'focus': 'Advanced tactics, performance analysis, physical conditioning',
             'requirements': {
                 'certification_exam': True,
@@ -145,7 +147,7 @@ class LFACoachService(BaseSpecializationService):
             'age_group': 'Amateur (14+ years)',
             'role': 'Head Coach',
             'level': 6,
-            'min_coach_age': 20,
+            'min_coach_age': 14,
             'focus': 'Full team operations, competitive season planning',
             'requirements': {
                 'certification_exam': True,
@@ -161,7 +163,7 @@ class LFACoachService(BaseSpecializationService):
             'age_group': 'PRO (16+ years)',
             'role': 'Assistant Coach',
             'level': 7,
-            'min_coach_age': 21,
+            'min_coach_age': 14,
             'focus': 'Elite training methodology, professional standards',
             'requirements': {
                 'certification_exam': True,
@@ -177,7 +179,7 @@ class LFACoachService(BaseSpecializationService):
             'age_group': 'PRO (16+ years)',
             'role': 'Head Coach',
             'level': 8,
-            'min_coach_age': 23,
+            'min_coach_age': 14,
             'focus': 'Professional club operations, academy director preparation',
             'requirements': {
                 'certification_exam': True,
@@ -219,24 +221,11 @@ class LFACoachService(BaseSpecializationService):
         Returns:
             Tuple of (is_eligible: bool, reason: str)
         """
-        # Check date of birth exists
-        is_valid, error = self.validate_date_of_birth(user)
-        if not is_valid:
-            return False, error
-
-        # Check minimum age (14 years to start coaching)
-        age = self.calculate_age(user.date_of_birth)
-        if age < self.MINIMUM_AGE:
-            return False, f"Age {age} is below minimum ({self.MINIMUM_AGE} years) for LFA Coach"
-
-        # If target certification level specified, check its age requirement
-        if target_group and target_group in self.LEVEL_INFO:
-            min_age_for_level = self.LEVEL_INFO[target_group]['min_coach_age']
-            if age < min_age_for_level:
-                level_name = self.LEVEL_INFO[target_group]['name']
-                return False, f"Age {age} is below minimum ({min_age_for_level} years) for {level_name}"
-
-        return True, f"Eligible for LFA Coach (age {age})"
+        # Certification levels add professional requirements, never new age gates.
+        eligible, denial = is_user_eligible_for_program(
+            db or self.db, user, CanonicalProgram.LFA_COACH
+        )
+        return eligible, denial or "Eligible for LFA Coach"
 
     # ========================================================================
     # SESSION BOOKING LOGIC

@@ -201,6 +201,7 @@ class TestCreateAssignment:
                 "current_level": 2,
                 "age_group": "PRE_FOOTBALL",
             }
+            MockTPS.can_teach_scope.return_value = False
             with pytest.raises(Exception) as exc:
                 create_assignment(d, db=db, current_user=_user())
         assert exc.value.status_code == 400

@@ -47,14 +47,15 @@ class CreditService:
         description: str,
         idempotency_key: str,
         semester_id: Optional[int] = None,
-        enrollment_id: Optional[int] = None
+        enrollment_id: Optional[int] = None,
+        context_user_license_id: Optional[int] = None,
     ) -> tuple[CreditTransaction, bool]:
         """
         Create a credit transaction with idempotency protection.
 
         Args:
-            user_id: User ID (either this or user_license_id must be set)
-            user_license_id: UserLicense ID (either this or user_id must be set)
+            user_id: Canonical global balance owner; required for every new row
+            user_license_id: Historical owner field; must be None for new rows
             transaction_type: Type of transaction (e.g., "TOURNAMENT_REWARD")
             amount: Credit amount (positive for awards, negative for deductions)
             balance_after: User's balance after this transaction
@@ -62,6 +63,7 @@ class CreditService:
             idempotency_key: Unique key to prevent duplicates
             semester_id: Optional semester reference
             enrollment_id: Optional enrollment reference
+            context_user_license_id: Optional specialization context; never a balance owner
 
         Returns:
             Tuple of (CreditTransaction, created)
@@ -73,11 +75,10 @@ class CreditService:
             IntegrityError: If database constraints are violated (shouldn't happen if idempotency_key is unique)
         """
         # Validate business rules
-        if user_id is None and user_license_id is None:
-            raise ValueError("Either user_id or user_license_id must be provided")
-
-        if user_id is not None and user_license_id is not None:
-            raise ValueError("Only one of user_id or user_license_id can be provided")
+        if user_id is None:
+            raise ValueError("Global credit transactions require user_id")
+        if user_license_id is not None:
+            raise ValueError("Legacy license wallet is read-only; use context_user_license_id")
 
         # Check for existing transaction (idempotency)
         existing = self.db.query(CreditTransaction).filter(
@@ -95,6 +96,7 @@ class CreditService:
         transaction = CreditTransaction(
             user_id=user_id,
             user_license_id=user_license_id,
+            context_user_license_id=context_user_license_id,
             transaction_type=transaction_type,
             amount=amount,
             balance_after=balance_after,

@@ -191,7 +191,7 @@ class TestGetCertificationInfo:
     def test_pro_head_returns_correct_level(self):
         info = _svc().get_certification_info('PRO_HEAD')
         assert info['level'] == 8
-        assert info['min_coach_age'] == 23
+        assert info['min_coach_age'] == 14
 
     def test_unknown_cert_returns_default(self):
         info = _svc().get_certification_info('MYSTERY_CERT')
@@ -291,9 +291,9 @@ class TestValidateAgeEligibility:
     def test_age_below_14_returns_false(self):
         svc = _svc()
         user = _user(dob=date(2020, 1, 1))  # age ~6
-        ok, msg = svc.validate_age_eligibility(user)
+        ok, msg = svc.validate_age_eligibility(user, db=MagicMock())
         assert ok is False
-        assert "14" in msg
+        assert msg == "PROGRAM_MINIMUM_AGE"
 
     def test_age_14_no_target_group_eligible(self):
         svc = _svc()
@@ -301,20 +301,18 @@ class TestValidateAgeEligibility:
         # Born Jan 1, (today.year - 14): birthday has passed (Jan < March)
         dob = date(today.year - 14, 1, 1)
         user = _user(dob=dob)
-        ok, msg = svc.validate_age_eligibility(user)
+        ok, msg = svc.validate_age_eligibility(user, db=MagicMock())
         assert ok is True
-        assert "14" in msg
+        assert "Eligible" in msg
 
     def test_target_group_age_too_low_returns_false(self):
-        """PRO_HEAD requires min_coach_age=23; user is 22."""
+        """Coach levels add no age gate beyond the canonical program minimum."""
         svc = _svc()
         today = date.today()
         dob = date(today.year - 22, 1, 1)
         user = _user(dob=dob)
         ok, msg = svc.validate_age_eligibility(user, target_group='PRO_HEAD')
-        assert ok is False
-        assert "23" in msg
-        assert "PRO" in msg
+        assert ok is True
 
     def test_target_group_age_exactly_at_minimum_passes(self):
         """PRO_HEAD requires 23; user is exactly 23."""
@@ -331,7 +329,7 @@ class TestValidateAgeEligibility:
         today = date.today()
         dob = date(today.year - 14, 1, 1)
         user = _user(dob=dob)
-        ok, _ = svc.validate_age_eligibility(user, target_group='PRE_ASSISTANT')
+        ok, _ = svc.validate_age_eligibility(user, target_group='PRE_ASSISTANT', db=MagicMock())
         assert ok is True
 
     def test_unknown_target_group_ignored(self):

@@ -116,7 +116,7 @@ def test_certification_info():
     info = service.get_certification_info("PRE_HEAD")
     assert info['name'] == "LFA Pre Football Head Coach"
     assert info['level'] == 2
-    assert info['min_coach_age'] == 16
+    assert info['min_coach_age'] == 14
     assert info['role'] == "Head Coach"
     assert info['requirements']['teaching_hours'] == 50
     assert info['requirements']['previous_cert'] == "PRE_ASSISTANT"
@@ -125,7 +125,7 @@ def test_certification_info():
     info = service.get_certification_info("PRO_HEAD")
     assert info['name'] == "LFA PRO Football Head Coach"
     assert info['level'] == 8
-    assert info['min_coach_age'] == 23
+    assert info['min_coach_age'] == 14
     assert info['role'] == "Head Coach"
     assert info['requirements']['teaching_hours'] == 1200
     assert info['requirements']['previous_cert'] == "PRO_ASSISTANT"
@@ -152,18 +152,18 @@ def test_certification_progression_requirements():
 
 
 def test_certification_age_requirements():
-    """Test that age requirements increase with certification level"""
+    """All levels use the canonical program-entry age gate."""
     service = LFACoachService()
 
     age_requirements = [
         ("PRE_ASSISTANT", 14),
-        ("PRE_HEAD", 16),
-        ("YOUTH_ASSISTANT", 16),
-        ("YOUTH_HEAD", 18),
-        ("AMATEUR_ASSISTANT", 18),
-        ("AMATEUR_HEAD", 20),
-        ("PRO_ASSISTANT", 21),
-        ("PRO_HEAD", 23),
+        ("PRE_HEAD", 14),
+        ("YOUTH_ASSISTANT", 14),
+        ("YOUTH_HEAD", 14),
+        ("AMATEUR_ASSISTANT", 14),
+        ("AMATEUR_HEAD", 14),
+        ("PRO_ASSISTANT", 14),
+        ("PRO_HEAD", 14),
     ]
 
     for cert_level, expected_age in age_requirements:

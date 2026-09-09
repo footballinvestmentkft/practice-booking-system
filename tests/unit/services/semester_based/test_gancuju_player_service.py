@@ -506,15 +506,14 @@ class TestValidateAgeEligibility:
         ok, reason = svc.validate_age_eligibility(user)
 
         assert ok is False
-        assert "below minimum" in reason
-        assert "5" in reason
+        assert reason == "MINIMUM_ACCOUNT_AGE"
 
     def test_exactly_minimum_age_passes(self):
         """age = 5 (MINIMUM_AGE) → eligible."""
         svc = _svc()
         user = _user(dob=_dob(years_ago=5))
 
-        ok, reason = svc.validate_age_eligibility(user)
+        ok, reason = svc.validate_age_eligibility(user, db=MagicMock())
 
         assert ok is True
         assert "Eligible" in reason

@@ -24,17 +24,16 @@ from app.services.specs.session_based.lfa_player_service import LFAPlayerService
 # ---------------------------------------------------------------------------
 
 def _dob(years_old: int) -> date:
-    """Return a date that makes a person exactly `years_old` years old today.
-
-    Uses today's month/day so the birthday has already occurred this year,
-    guaranteeing an exact integer age.  March 3 never causes month/day issues.
-    """
+    """Return a DOB with exactly this age at the current season's July 1."""
     today = date.today()
-    return date(today.year - years_old, today.month, today.day)
+    season_start_year = today.year if today.month >= 7 else today.year - 1
+    return date(season_start_year - years_old, 7, 1)
 
 
 def _service() -> LFAPlayerService:
-    return LFAPlayerService(db=None)
+    consent_db = MagicMock()
+    consent_db.query.return_value.filter.return_value.first.return_value = (1,)
+    return LFAPlayerService(db=consent_db)
 
 
 def _mock_user(years_old: int = 15, has_dob: bool = True):
@@ -107,9 +106,8 @@ class TestBasicOverrides:
 class TestCalculateAgeGroup:
     """Boundary-value tests for calculate_age_group."""
 
-    def test_age_5_raises(self):
-        with pytest.raises(ValueError, match="below minimum"):
-            _service().calculate_age_group(_dob(5))
+    def test_age_5_is_pre(self):
+        assert _service().calculate_age_group(_dob(5)) == 'PRE'
 
     def test_age_0_raises(self):
         with pytest.raises(ValueError):
@@ -124,8 +122,8 @@ class TestCalculateAgeGroup:
     def test_age_11_is_pre(self):
         assert _service().calculate_age_group(_dob(11)) == 'PRE'
 
-    def test_age_12_is_youth(self):
-        assert _service().calculate_age_group(_dob(12)) == 'YOUTH'
+    def test_age_12_is_pre(self):
+        assert _service().calculate_age_group(_dob(12)) == 'PRE'
 
     def test_age_14_is_youth(self):
         """14-year-olds map to YOUTH (natural UP category) by default."""
@@ -192,11 +190,11 @@ class TestValidateAgeEligibility:
         assert ok is False
         assert reason  # any non-empty error message
 
-    def test_age_5_too_young(self):
+    def test_age_5_is_program_minimum(self):
         user = _mock_user(years_old=5)
         ok, reason = _service().validate_age_eligibility(user)
-        assert ok is False
-        assert "below minimum" in reason
+        assert ok is True
+        assert "PRE" in reason
 
     def test_age_8_natural_pre_eligible(self):
         user = _mock_user(years_old=8)
@@ -229,40 +227,38 @@ class TestValidateAgeEligibility:
         ok, _ = _service().validate_age_eligibility(user, target_group='PRE')
         assert ok is True
 
-    def test_target_pre_age_12_above_max(self):
-        """PRE max_age=11; age 12 is over the limit."""
+    def test_target_pre_age_12_is_canonical_base(self):
         user = _mock_user(years_old=12)
         ok, reason = _service().validate_age_eligibility(user, target_group='PRE')
-        assert ok is False
-        assert "above maximum" in reason
+        assert ok is True
 
     def test_target_youth_age_10_below_min(self):
         """YOUTH min_age=12; age 10 is under the limit."""
         user = _mock_user(years_old=10)
         ok, reason = _service().validate_age_eligibility(user, target_group='YOUTH')
         assert ok is False
-        assert "below minimum" in reason
+        assert "Explicit football category movement required" in reason
 
     def test_target_amateur_age_14_ok(self):
         """AMATEUR min_age=14, no max → age 14 eligible."""
         user = _mock_user(years_old=14)
         ok, reason = _service().validate_age_eligibility(user, target_group='AMATEUR')
-        assert ok is True
-        assert "AMATEUR" in reason
+        assert ok is False
+        assert "Explicit football category movement required" in reason
 
     def test_target_pro_age_13_below_min(self):
         """PRO min_age=14; age 13 not eligible."""
         user = _mock_user(years_old=13)
         ok, reason = _service().validate_age_eligibility(user, target_group='PRO')
         assert ok is False
-        assert "below minimum" in reason
+        assert "Explicit football category movement required" in reason
 
     def test_target_pro_age_20_ok(self):
         """PRO has no max_age → age 20 eligible (age check only)."""
         user = _mock_user(years_old=20)
         ok, reason = _service().validate_age_eligibility(user, target_group='PRO')
-        assert ok is True
-        assert "PRO" in reason
+        assert ok is False
+        assert "Explicit football category movement required" in reason
 
 
 # ===========================================================================
@@ -291,10 +287,10 @@ class TestCanAttendAgeGroupSession:
         assert ok is True
 
     # PRE cross-group
-    def test_pre_to_youth_allowed(self):
+    def test_pre_to_youth_requires_assignment(self):
         ok, reason = _service().can_attend_age_group_session('PRE', 'YOUTH')
-        assert ok is True
-        assert "PRE" in reason and "YOUTH" in reason
+        assert ok is False
+        assert "canonical season assignment" in reason
 
     def test_pre_to_amateur_denied(self):
         ok, _ = _service().can_attend_age_group_session('PRE', 'AMATEUR')
@@ -305,22 +301,22 @@ class TestCanAttendAgeGroupSession:
         assert ok is False
 
     # YOUTH cross-group
-    def test_youth_to_pre_allowed(self):
+    def test_youth_to_pre_denied_without_assignment(self):
         ok, _ = _service().can_attend_age_group_session('YOUTH', 'PRE')
-        assert ok is True
+        assert ok is False
 
-    def test_youth_to_amateur_allowed(self):
+    def test_youth_to_amateur_denied_without_assignment(self):
         ok, _ = _service().can_attend_age_group_session('YOUTH', 'AMATEUR')
-        assert ok is True
+        assert ok is False
 
     def test_youth_to_pro_denied(self):
         ok, _ = _service().can_attend_age_group_session('YOUTH', 'PRO')
         assert ok is False
 
     # AMATEUR cross-group
-    def test_amateur_to_youth_allowed(self):
+    def test_amateur_to_youth_denied_without_assignment(self):
         ok, _ = _service().can_attend_age_group_session('AMATEUR', 'YOUTH')
-        assert ok is True
+        assert ok is False
 
     def test_amateur_to_pre_denied(self):
         ok, _ = _service().can_attend_age_group_session('AMATEUR', 'PRE')
@@ -342,7 +338,7 @@ class TestCanAttendAgeGroupSession:
     def test_pro_to_amateur_denied(self):
         ok, reason = _service().can_attend_age_group_session('PRO', 'AMATEUR')
         assert ok is False
-        assert "cannot attend" in reason
+        assert "canonical season assignment" in reason
 
 
 # ===========================================================================
@@ -547,7 +543,7 @@ class TestPromoteToHigherAgeGroup:
         db = MagicMock()
         ok, msg = _service().promote_to_higher_age_group(lic, 'SENIOR', 1, db)
         assert ok is False
-        assert "Invalid target age group" in msg
+        assert "canonical" in msg
 
     def test_invalid_current_spec_rejected(self):
         lic = MagicMock()
@@ -555,7 +551,7 @@ class TestPromoteToHigherAgeGroup:
         db = MagicMock()
         ok, msg = _service().promote_to_higher_age_group(lic, 'PRO', 1, db)
         assert ok is False
-        assert "Invalid current" in msg
+        assert "canonical" in msg
 
     def test_already_in_target_group_rejected(self):
         lic = MagicMock()
@@ -563,28 +559,28 @@ class TestPromoteToHigherAgeGroup:
         db = MagicMock()
         ok, msg = _service().promote_to_higher_age_group(lic, 'PRO', 1, db)
         assert ok is False
-        assert "already in PRO" in msg
+        assert "canonical" in msg
 
-    def test_successful_promotion_youth_to_pro(self):
+    def test_legacy_promotion_youth_to_pro_is_disabled(self):
         lic = MagicMock()
         lic.specialization_type = "LFA_PLAYER_YOUTH"
         db = MagicMock()
         ok, msg = _service().promote_to_higher_age_group(lic, 'PRO', 42, db)
-        assert ok is True
-        assert "YOUTH" in msg and "PRO" in msg
-        assert lic.specialization_type == "LFA_PLAYER_PRO"
+        assert ok is False
+        assert "canonical" in msg
+        assert lic.specialization_type == "LFA_PLAYER_YOUTH"
 
-    def test_successful_promotion_pre_to_amateur(self):
+    def test_legacy_promotion_pre_to_amateur_is_disabled(self):
         lic = MagicMock()
         lic.specialization_type = "LFA_PLAYER_PRE"
         db = MagicMock()
         ok, _ = _service().promote_to_higher_age_group(lic, 'AMATEUR', 1, db)
-        assert ok is True
-        assert lic.specialization_type == "LFA_PLAYER_AMATEUR"
+        assert ok is False
+        assert lic.specialization_type == "LFA_PLAYER_PRE"
 
-    def test_promotion_commits_db(self):
+    def test_legacy_promotion_does_not_commit(self):
         lic = MagicMock()
         lic.specialization_type = "LFA_PLAYER_YOUTH"
         db = MagicMock()
         _service().promote_to_higher_age_group(lic, 'PRO', 1, db)
-        db.commit.assert_called_once()
+        db.commit.assert_not_called()

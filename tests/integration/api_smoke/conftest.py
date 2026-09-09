@@ -231,7 +231,8 @@ def admin_token(test_db: Session):
             email="smoke.admin@example.com",
             password_hash=get_password_hash("admin123"),
             role=UserRole.ADMIN,
-            is_active=True
+            is_active=True,
+            date_of_birth=date(1980, 1, 1),
         )
         test_db.add(admin)
         test_db.commit()
@@ -283,7 +284,8 @@ def instructor_token(test_db: Session):
             email="smoke.instructor@example.com",
             password_hash=get_password_hash("instructor123"),
             role=UserRole.INSTRUCTOR,
-            is_active=True
+            is_active=True,
+            date_of_birth=date(1990, 1, 1),
         )
         test_db.add(instructor)
         test_db.commit()
@@ -422,6 +424,7 @@ def test_tournament(test_db: Session, test_campus_id: int, student_token: str) -
             password_hash=get_password_hash("student123"),
             role=UserRole.STUDENT,
             is_active=True,
+            date_of_birth=date(2000, 1, 1),
             credit_balance=1000
         )
         test_db.add(student2)
@@ -438,6 +441,7 @@ def test_tournament(test_db: Session, test_campus_id: int, student_token: str) -
             password_hash=get_password_hash("student123"),
             role=UserRole.STUDENT,
             is_active=True,
+            date_of_birth=date(2000, 1, 1),
             credit_balance=1000
         )
         test_db.add(student3)
@@ -454,6 +458,7 @@ def test_tournament(test_db: Session, test_campus_id: int, student_token: str) -
             password_hash=get_password_hash("student123"),
             role=UserRole.STUDENT,
             is_active=True,
+            date_of_birth=date(2000, 1, 1),
             credit_balance=1000
         )
         test_db.add(student4)

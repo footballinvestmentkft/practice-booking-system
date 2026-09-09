@@ -3,7 +3,7 @@
 Tracks all credit-related transactions (purchases, enrollments, refunds)
 """
 import enum
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, CheckConstraint
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, CheckConstraint, event
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from typing import Dict, Any
@@ -30,19 +30,24 @@ class TransactionType(enum.Enum):
 class CreditTransaction(Base):
     """Track all credit balance changes with full audit trail
 
-    Supports TWO types of credit transactions:
-    1. User-level (user_id): Tournament rewards, purchases - central credit pool
-    2. License-level (user_license_id): Semester enrollments - license-specific spending
-
-    Exactly ONE of {user_id, user_license_id} must be set.
+    New writes use ``user_id`` as the only balance owner. ``user_license_id``
+    remains solely for historical rows; ``context_user_license_id`` carries
+    optional specialization context for new rows.
     """
     __tablename__ = "credit_transactions"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # Support BOTH user-level (rewards) and license-level (spending) credits
+    # Historical rows may be license-owned; all new writes are user-owned.
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
-    user_license_id = Column(Integer, ForeignKey("user_licenses.id", ondelete="CASCADE"), nullable=True, index=True)
+    user_license_id = Column(Integer, ForeignKey("user_licenses.id", ondelete="RESTRICT"), nullable=True, index=True)
+    context_user_license_id = Column(
+        Integer,
+        ForeignKey("user_licenses.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="Optional specialization context; never a credit owner",
+    )
 
     # Transaction details
     transaction_type = Column(String(50), nullable=False)  # PURCHASE, ENROLLMENT, REFUND, etc.
@@ -78,7 +83,8 @@ class CreditTransaction(Base):
 
     # Relationships
     user = relationship("User", foreign_keys=[user_id], back_populates="credit_transactions", passive_deletes=True)
-    user_license = relationship("UserLicense", back_populates="credit_transactions")
+    user_license = relationship("UserLicense", back_populates="credit_transactions", foreign_keys=[user_license_id])
+    context_user_license = relationship("UserLicense", foreign_keys=[context_user_license_id])
     semester = relationship("Semester")
     enrollment = relationship("SemesterEnrollment")
     performed_by = relationship("User", foreign_keys=[performed_by_user_id])
@@ -89,6 +95,7 @@ class CreditTransaction(Base):
             "id": self.id,
             "user_id": self.user_id,
             "user_license_id": self.user_license_id,
+            "context_user_license_id": self.context_user_license_id,
             "transaction_type": self.transaction_type,
             "amount": self.amount,
             "balance_after": self.balance_after,
@@ -99,3 +106,11 @@ class CreditTransaction(Base):
             "performed_by_user_id": self.performed_by_user_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+@event.listens_for(CreditTransaction, "before_insert")
+def _enforce_global_credit_owner(mapper, connection, target):
+    if target.user_id is None or target.user_license_id is not None:
+        raise ValueError(
+            "New credit ledger rows require global user ownership; legacy license wallet is read-only"
+        )

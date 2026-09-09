@@ -133,7 +133,7 @@ class TestIsEligibleMasterInstructor:
     def test_e01_eligible_master_accepted(self, postgres_db: Session):
         """E-01: role=INSTRUCTOR, is_active, active non-expired license, level ≥ min."""
         instr = _make_instructor(postgres_db)
-        _make_coach_license(postgres_db, instr, level=5)
+        _make_coach_license(postgres_db, instr, level=6)
         postgres_db.commit()
 
         ok, reason = is_eligible_master_instructor(postgres_db, instr.id, ["AMATEUR"])
@@ -143,7 +143,7 @@ class TestIsEligibleMasterInstructor:
     def test_e02_inactive_user_rejected(self, postgres_db: Session):
         """E-02: User.is_active=False → rejected."""
         instr = _make_instructor(postgres_db, is_active=False)
-        _make_coach_license(postgres_db, instr, level=5)
+        _make_coach_license(postgres_db, instr, level=6)
         postgres_db.commit()
 
         ok, reason = is_eligible_master_instructor(postgres_db, instr.id, ["AMATEUR"])
@@ -209,13 +209,22 @@ class TestIsEligibleMasterInstructor:
         assert "insufficient" in reason.lower() or "level" in reason.lower()
 
     def test_e08_level_sufficient_master_accepted(self, postgres_db: Session):
-        """E-08: level 5 for AMATEUR (min 5) → accepted (boundary value)."""
+        """E-08: level 6 is the AMATEUR Head Coach boundary."""
         instr = _make_instructor(postgres_db)
-        _make_coach_license(postgres_db, instr, level=5)
+        _make_coach_license(postgres_db, instr, level=6)
         postgres_db.commit()
 
         ok, _ = is_eligible_master_instructor(postgres_db, instr.id, ["AMATEUR"])
         assert ok is True
+
+    def test_assistant_level_is_rejected_for_master_role_even_below_qualification(self, postgres_db: Session):
+        instr = _make_instructor(postgres_db)
+        _make_coach_license(postgres_db, instr, level=3)
+
+        ok, reason = is_eligible_master_instructor(postgres_db, instr.id, ["PRE"])
+
+        assert ok is False
+        assert "Head Coach" in reason
 
     def test_e11_multi_age_highest_requirement_applies(self, postgres_db: Session):
         """E-11: ["PRE", "AMATEUR"] → level 5 required (AMATEUR dominates)."""
@@ -223,7 +232,7 @@ class TestIsEligibleMasterInstructor:
         _make_coach_license(postgres_db, instr_low, level=3)  # ok for PRE, not AMATEUR
 
         instr_high = _make_instructor(postgres_db)
-        _make_coach_license(postgres_db, instr_high, level=5)  # ok for both
+        _make_coach_license(postgres_db, instr_high, level=6)  # AMATEUR Head, ok for both
 
         postgres_db.commit()
 
@@ -236,7 +245,7 @@ class TestIsEligibleMasterInstructor:
     def test_e12_expires_at_none_accepted(self, postgres_db: Session):
         """E-12: expires_at=None (perpetual license) → accepted."""
         instr = _make_instructor(postgres_db)
-        _make_coach_license(postgres_db, instr, level=5, expires_at=None)
+        _make_coach_license(postgres_db, instr, level=6, expires_at=None)
         postgres_db.commit()
 
         ok, _ = is_eligible_master_instructor(postgres_db, instr.id, ["AMATEUR"])
@@ -258,7 +267,7 @@ class TestIsEligibleMasterInstructor:
         """E-14: expires_at as naive datetime in the future → accepted (timezone-safe)."""
         instr = _make_instructor(postgres_db)
         naive_future = datetime(2099, 12, 31, 23, 59, 59)  # clearly in future, no tzinfo
-        _make_coach_license(postgres_db, instr, level=5, expires_at=naive_future)
+        _make_coach_license(postgres_db, instr, level=6, expires_at=naive_future)
         postgres_db.commit()
 
         ok, _ = is_eligible_master_instructor(postgres_db, instr.id, ["AMATEUR"])
@@ -274,21 +283,21 @@ class TestIsEligibleMasterInstructor:
 # ── Field instructor eligibility ──────────────────────────────────────────────
 
 class TestIsEligibleFieldInstructor:
-    """E-09, E-10: field instructor policy — one level lower minimum."""
+    """E-09, E-10: field instructor policy follows canonical assistant scopes."""
 
-    def test_e09_field_one_level_lower_accepted(self, postgres_db: Session):
-        """E-09: level 4 for AMATEUR field (min = max(1, 5-1) = 4) → accepted."""
+    def test_e09_amateur_assistant_boundary_accepted(self, postgres_db: Session):
+        """E-09: level 5 is the AMATEUR Assistant boundary."""
         instr = _make_instructor(postgres_db)
-        _make_coach_license(postgres_db, instr, level=4)
+        _make_coach_license(postgres_db, instr, level=5)
         postgres_db.commit()
 
         ok, _ = is_eligible_field_instructor(postgres_db, instr.id, ["AMATEUR"])
         assert ok is True
 
     def test_e10_field_too_low_rejected(self, postgres_db: Session):
-        """E-10: level 3 for AMATEUR field (min 4) → rejected."""
+        """E-10: a Youth-qualified coach cannot cover AMATEUR."""
         instr = _make_instructor(postgres_db)
-        _make_coach_license(postgres_db, instr, level=3)
+        _make_coach_license(postgres_db, instr, level=4)
         postgres_db.commit()
 
         ok, reason = is_eligible_field_instructor(postgres_db, instr.id, ["AMATEUR"])
@@ -346,7 +355,7 @@ class TestGetEligibleMasterInstructors:
         low = _make_instructor(postgres_db)
         _make_coach_license(postgres_db, low, level=3)
         high = _make_instructor(postgres_db)
-        _make_coach_license(postgres_db, high, level=5)
+        _make_coach_license(postgres_db, high, level=6)
         postgres_db.commit()
 
         result = get_eligible_master_instructors(postgres_db, age_groups=["AMATEUR"])
@@ -462,7 +471,7 @@ class TestCheckTournamentMasterInstructorEligible:
         """Assigned eligible master → (True, "")."""
         from app.models.semester import Semester
         instr = _make_instructor(postgres_db)
-        _make_coach_license(postgres_db, instr, level=5)
+        _make_coach_license(postgres_db, instr, level=6)
         sem = Semester(
             code=f"ELIG-{_uid()}",
             name="Elig Test 3",
@@ -613,9 +622,9 @@ class TestCallSiteEligibilityIntegration:
     # ── Planning path — P-02 (FIELD eligible) ─────────────────────────────────
 
     def test_p02_planning_field_valid_license_eligible(self, postgres_db: Session):
-        """P-02: LFA_COACH L6 for PRO FIELD (requires ≥6) → eligible."""
+        """P-02: LFA_COACH L7 is the PRO Assistant boundary."""
         instr = _make_instructor(postgres_db)
-        _make_coach_license(postgres_db, instr, level=6)
+        _make_coach_license(postgres_db, instr, level=7)
         ok, reason = is_eligible_field_instructor(postgres_db, instr.id, ["PRO"])
         assert ok is True
         assert reason == ""

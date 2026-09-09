@@ -113,7 +113,10 @@ async def get_specialization_levels(
         }
     except HTTPException:
         raise
+    except ValueError:
+        # Invalid or ambiguous identifiers are client input and must fail
+        # closed without exposing policy internals as a server error.
+        raise HTTPException(status_code=400, detail="Invalid specialization identifier")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch levels: {str(e)}")
-
 

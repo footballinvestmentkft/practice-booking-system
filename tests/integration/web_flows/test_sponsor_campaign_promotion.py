@@ -90,6 +90,7 @@ def _make_entry(db: Session, sponsor: Sponsor, campaign: SponsorCampaign,
         first_name="Test",
         last_name="Entry",
         email=f"entry+{uuid.uuid4().hex[:8]}@test.com",
+        date_of_birth=date(2000, 1, 1),
         status="ACTIVE",
         consent_given=True,
     )

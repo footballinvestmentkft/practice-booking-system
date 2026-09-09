@@ -520,10 +520,8 @@ class User(Base):
         """Calculate user's age in years"""
         if not self.date_of_birth:
             return None
-        today = datetime.now(timezone.utc).date()
-        dob = self.date_of_birth.date() if isinstance(self.date_of_birth, datetime) else self.date_of_birth
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        return age
+        from app.services.canonical_policy import calculate_age
+        return calculate_age(self.date_of_birth, datetime.now(timezone.utc).date())
 
     @property
     def is_minor(self) -> bool:
@@ -533,11 +531,7 @@ class User(Base):
 
     @property
     def needs_parental_consent(self) -> bool:
-        """Check if user needs parental consent for LFA_COACH specialization"""
-        # Only needed for LFA_COACH specialization
-        if self.specialization != SpecializationType.LFA_COACH:
-            return False
-        # And only if user is under 18
+        """Compatibility projection of the global under-18 consent rule."""
         return self.is_minor
 
     def give_parental_consent(self, parent_name: str) -> None:

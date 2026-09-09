@@ -42,6 +42,10 @@ def _credit_service_double(monkeypatch):
             return MagicMock()
 
     monkeypatch.setattr(f"{_BASE}.CreditService", FakeCreditService)
+    monkeypatch.setattr(
+        f"{_BASE}.is_user_eligible_for_program",
+        lambda db, user, program: (True, None),
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -96,7 +100,7 @@ class TestSpecializationUnlock:
         user = _user(credit_balance=50)
         import pytest
         with pytest.raises(HTTPException) as exc_info:
-            _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=_mock_db(user_return=user), current_user=user))
+            _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=_mock_db(user_return=user), current_user=user))
         assert exc_info.value.status_code == 400
         assert "credits" in exc_info.value.detail.lower()
 
@@ -110,9 +114,9 @@ class TestSpecializationUnlock:
     def test_age_requirement_not_met_raises_403(self):
         user = _user(credit_balance=500, age=3)
         import pytest
-        with patch(f"{_BASE}.validate_specialization_for_age", return_value=False):
+        with patch(f"{_BASE}.is_user_eligible_for_program", return_value=(False, "MINIMUM_ACCOUNT_AGE")):
             with pytest.raises(HTTPException) as exc_info:
-                _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=_mock_db(), current_user=user))
+                _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=_mock_db(), current_user=user))
         assert exc_info.value.status_code == 403
 
     def test_success_creates_license_and_deducts_credits(self):
@@ -125,9 +129,8 @@ class TestSpecializationUnlock:
         license_mock = MagicMock()
         license_mock.id = 1
 
-        with patch(f"{_BASE}.validate_specialization_for_age", return_value=True), \
-             patch(f"{_BASE}.UserLicense", return_value=license_mock):
-            result = _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=db, current_user=user))
+        with patch(f"{_BASE}.UserLicense", return_value=license_mock):
+            result = _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=db, current_user=user))
         assert result["success"] is True
         assert user.credit_balance == 100  # 200 - 100
         db.add.assert_called()
@@ -140,11 +143,12 @@ class TestSpecializationUnlock:
         db.query.return_value.with_for_update.return_value.filter.return_value.first.return_value = user
         # License check returns an existing license → 409
         existing_license = MagicMock()
-        db.query.return_value.filter.return_value.first.return_value = existing_license
+        existing_license.canonical_program_id = "LFA_FOOTBALL_PLAYER"
+        existing_license.specialization_type = "LFA_FOOTBALL_PLAYER"
+        db.query.return_value.filter.return_value.all.return_value = [existing_license]
 
-        with patch(f"{_BASE}.validate_specialization_for_age", return_value=True), \
-             pytest.raises(HTTPException) as exc_info:
-            _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=db, current_user=user))
+        with pytest.raises(HTTPException) as exc_info:
+            _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=db, current_user=user))
 
         assert exc_info.value.status_code == 409
         assert "already have a license" in exc_info.value.detail.lower()
@@ -160,10 +164,9 @@ class TestSpecializationUnlock:
         license_mock = MagicMock()
         license_mock.id = 1
 
-        with patch(f"{_BASE}.validate_specialization_for_age", return_value=True), \
-             patch(f"{_BASE}.UserLicense", return_value=license_mock), \
+        with patch(f"{_BASE}.UserLicense", return_value=license_mock), \
              pytest.raises(HTTPException) as exc_info:
-            _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=db, current_user=user))
+            _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=db, current_user=user))
 
         assert exc_info.value.status_code == 409
         assert "concurrent" in exc_info.value.detail.lower() or "already exists" in exc_info.value.detail.lower()
@@ -172,7 +175,7 @@ class TestSpecializationUnlock:
         """credit_balance=99 < 100 → 400 Bad Request."""
         user = _user(credit_balance=99)
         with pytest.raises(HTTPException) as exc_info:
-            _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=_mock_db(user_return=user), current_user=user))
+            _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=_mock_db(user_return=user), current_user=user))
         assert exc_info.value.status_code == 400
         assert "credits" in exc_info.value.detail.lower()
 
@@ -185,9 +188,8 @@ class TestSpecializationUnlock:
         license_mock = MagicMock()
         license_mock.id = 1
 
-        with patch(f"{_BASE}.validate_specialization_for_age", return_value=True), \
-             patch(f"{_BASE}.UserLicense", return_value=license_mock):
-            result = _run(specialization_unlock(specialization="LFA_PLAYER", duration_months=1, db=db, current_user=user))
+        with patch(f"{_BASE}.UserLicense", return_value=license_mock):
+            result = _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=db, current_user=user))
 
         assert result["success"] is True
         assert user.credit_balance == 0  # 100 - 100

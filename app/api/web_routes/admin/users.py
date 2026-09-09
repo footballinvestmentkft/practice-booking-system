@@ -28,6 +28,8 @@ from ....services.player_photo_service import (
     save_sponsor_logo,
     delete_sponsor_logo,
 )
+from ....services.canonical_policy import evaluate_profile_age_policy
+from ....services.program_eligibility_service import record_guardian_consent
 
 from . import templates, _admin_guard
 
@@ -114,6 +116,9 @@ async def admin_create_user(
     email: str = Form(...),
     role: str = Form(...),
     password: str = Form(...),
+    date_of_birth: str = Form(...),
+    guardian_consent: bool = Form(False),
+    guardian_name: str = Form(None),
     credit_balance: int = Form(default=0),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_web),
@@ -129,6 +134,15 @@ async def admin_create_user(
 
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    try:
+        dob = datetime.strptime(date_of_birth, "%Y-%m-%d").date()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="INVALID_DATE_OF_BIRTH") from exc
+    profile = evaluate_profile_age_policy(
+        dob, bool(guardian_consent and guardian_name)
+    )
+    if not profile.usable:
+        raise HTTPException(status_code=400, detail=profile.reason)
 
     new_email = email.lower().strip()
     if db.query(User).filter(User.email == new_email).first():
@@ -146,10 +160,20 @@ async def admin_create_user(
         credit_balance=max(0, credit_balance),
         credit_purchased=max(0, credit_balance),
         onboarding_completed=False,
+        date_of_birth=dob,
         payment_verified=(credit_balance > 0),
     )
     db.add(new_user)
     db.flush()
+
+    if profile.age is not None and profile.age < 18:
+        record_guardian_consent(
+            db,
+            user=new_user,
+            guardian_name=guardian_name,
+            granted_by_user_id=user.id,
+            evidence_reference="WEB_ADMIN_USER_CREATE",
+        )
 
     if credit_balance > 0:
         db.add(CreditTransaction(
@@ -158,7 +182,8 @@ async def admin_create_user(
             amount=credit_balance,
             balance_after=credit_balance,
             description="Initial credit balance set by admin on account creation",
-            created_by_admin_id=user.id,
+            idempotency_key=f"admin-initial-credit-{new_user.id}",
+            performed_by_user_id=user.id,
         ))
 
     db.commit()

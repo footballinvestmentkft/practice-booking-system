@@ -9,6 +9,7 @@ from typing import Dict
 from sqlalchemy.orm import Session
 
 from ..models.license import UserLicense
+from app.services.canonical_policy import AgeCategory, CoachRole, coach_can_teach
 
 
 # ============================================================================
@@ -46,8 +47,11 @@ def check_coach_level_sufficient(coach_level: int, age_group: str) -> bool:
         >>> check_coach_level_sufficient(5, "AMATEUR")
         True
     """
-    required_level = MINIMUM_COACH_LEVELS.get(age_group, 1)
-    return coach_level >= required_level
+    try:
+        category = AgeCategory(age_group)
+    except ValueError:
+        return False
+    return coach_can_teach(coach_level, category, CoachRole.ASSISTANT)
 
 
 def get_required_level_for_age_group(age_group: str) -> int:
@@ -88,8 +92,8 @@ def get_eligible_age_groups(coach_level: int) -> list[str]:
         ['PRE', 'YOUTH', 'AMATEUR', 'PRO']
     """
     eligible = []
-    for age_group, required_level in MINIMUM_COACH_LEVELS.items():
-        if coach_level >= required_level:
+    for age_group in MINIMUM_COACH_LEVELS:
+        if coach_can_teach(coach_level, AgeCategory(age_group), CoachRole.ASSISTANT):
             eligible.append(age_group)
     return eligible
 

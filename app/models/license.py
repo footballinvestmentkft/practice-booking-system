@@ -3,7 +3,7 @@
 Marketing-oriented license progression system with cultural narratives
 """
 import enum
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, JSON, Boolean, Float, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, JSON, Boolean, Float, UniqueConstraint, Index, event, text
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
@@ -121,6 +121,10 @@ class UserLicense(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     specialization_type = Column(String(20), nullable=False)  # COACH, PLAYER, INTERNSHIP
+    canonical_program_id = Column(
+        String(40), nullable=True, index=True,
+        comment="WS1 canonical program identity; NULL means legacy/unmapped and must fail closed",
+    )
     current_level = Column(Integer, nullable=False, default=1)
     max_achieved_level = Column(Integer, nullable=False, default=1)
     started_at = Column(DateTime, nullable=False)
@@ -254,6 +258,12 @@ class UserLicense(Base):
 
     __table_args__ = (
         UniqueConstraint('user_id', 'specialization_type', name='uq_user_license_spec'),
+        Index(
+            'uq_user_license_user_canonical_program',
+            'user_id', 'canonical_program_id', unique=True,
+            postgresql_where=text('canonical_program_id IS NOT NULL'),
+            sqlite_where=text('canonical_program_id IS NOT NULL'),
+        ),
     )
 
     # Relationships
@@ -267,7 +277,7 @@ class UserLicense(Base):
     belt_promotions = relationship("BeltPromotion", back_populates="user_license",
                                    cascade="all, delete-orphan")
     credit_transactions = relationship("CreditTransaction", back_populates="user_license",
-                                      cascade="all, delete-orphan")
+                                      foreign_keys="CreditTransaction.user_license_id")
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API responses"""
@@ -275,6 +285,7 @@ class UserLicense(Base):
             "id": self.id,
             "user_id": self.user_id,
             "specialization_type": self.specialization_type,
+            "canonical_program_id": self.canonical_program_id,
             "current_level": self.current_level,
             "max_achieved_level": self.max_achieved_level,
             "is_active": self.is_active,  # ✅ ADDED: Include is_active flag
@@ -284,6 +295,40 @@ class UserLicense(Base):
             "last_advanced_at": self.last_advanced_at.isoformat() if self.last_advanced_at else None,
             "instructor_notes": self.instructor_notes
         }
+
+
+@event.listens_for(UserLicense, "before_insert")
+def _set_canonical_program_for_new_license(mapper, connection, target):
+    """Require an unambiguous canonical identity for every new license."""
+    from app.services.canonical_policy import resolve_program_id
+
+    source = resolve_program_id(target.specialization_type)
+    if not source.usable:
+        raise ValueError("New license requires one of the four canonical program IDs")
+    if target.canonical_program_id is not None:
+        explicit = resolve_program_id(target.canonical_program_id)
+        if not explicit.usable or explicit.canonical_program is not source.canonical_program:
+            raise ValueError("Conflicting canonical and legacy license program identities")
+    canonical = source.canonical_program.value
+    target.canonical_program_id = canonical
+    # New writes expose the canonical ID in the compatibility field too.
+    target.specialization_type = canonical
+
+
+@event.listens_for(UserLicense, "before_insert")
+def _reject_new_legacy_wallet_balance(mapper, connection, target):
+    """New licenses cannot establish a second credit authority."""
+    if target.credit_balance not in (None, 0):
+        raise ValueError("Legacy license wallet is read-only")
+
+
+@event.listens_for(UserLicense, "before_update")
+def _reject_legacy_wallet_balance_change(mapper, connection, target):
+    """Preserve historical wallet evidence while rejecting balance changes."""
+    from sqlalchemy import inspect
+
+    if inspect(target).attrs.credit_balance.history.has_changes():
+        raise ValueError("Legacy license wallet is read-only")
 
 
 class LicenseProgression(Base):

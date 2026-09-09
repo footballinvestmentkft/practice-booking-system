@@ -113,7 +113,7 @@ class TestCreditService:
                 idempotency_key="test_validation_both"
             )
 
-        assert "Only one of user_id or user_license_id can be provided" in str(exc_info.value)
+        assert "Legacy license wallet is read-only" in str(exc_info.value)
 
     def test_create_transaction_validation_no_user_ids(self, postgres_db: Session):
         """Test that providing neither user_id nor user_license_id raises error"""
@@ -130,7 +130,7 @@ class TestCreditService:
                 idempotency_key="test_validation_none"
             )
 
-        assert "Either user_id or user_license_id must be provided" in str(exc_info.value)
+        assert "Global credit transactions require user_id" in str(exc_info.value)
 
     def test_generate_idempotency_key_format(self):
         """Test idempotency key generation format"""
@@ -154,8 +154,8 @@ class TestCreditService:
 
         assert key == "tournament_123_5_reward", "Key should be lowercase"
 
-    def test_create_transaction_with_user_license_id(self, postgres_db: Session, user_factory):
-        """Test creating transaction with user_license_id instead of user_id"""
+    def test_create_transaction_with_license_context_but_global_user_owner(self, postgres_db: Session, user_factory):
+        """License may be context, while the global User remains the owner."""
         from app.models.license import UserLicense
         from datetime import datetime, timezone
 
@@ -178,8 +178,9 @@ class TestCreditService:
         idempotency_key = "test_user_license_789"
 
         (transaction, created) = service.create_transaction(
-            user_id=None,
-            user_license_id=user_license.id,
+            user_id=user.id,
+            user_license_id=None,
+            context_user_license_id=user_license.id,
             transaction_type="TEST_REWARD",
             amount=50,
             balance_after=50,
@@ -188,8 +189,9 @@ class TestCreditService:
         )
 
         assert created is True
-        assert transaction.user_id is None
-        assert transaction.user_license_id == user_license.id
+        assert transaction.user_id == user.id
+        assert transaction.user_license_id is None
+        assert transaction.context_user_license_id == user_license.id
 
         # Cleanup
         postgres_db.delete(transaction)

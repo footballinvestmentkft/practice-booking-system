@@ -241,20 +241,21 @@ class TestCheckAgeRequirement:
         assert result["meets_requirement"] is True
         assert result["user_age"] == 18
 
-    def test_unknown_specialization_defaults_to_zero_required_age(self):
-        """AGE_REQUIREMENTS.get(unknown, 0) → required_age=0 → any age meets it."""
+    def test_unknown_specialization_fails_closed(self):
+        """Unknown program identities require manual review and grant no access."""
         u = _user_mock(date_of_birth=datetime(2020, 1, 1))   # age ~6
         result = self._check(u, "UNKNOWN_SPEC")
-        assert result["meets_requirement"] is True
-        assert result["required_age"] == 0
+        assert result["meets_requirement"] is False
+        assert "manual review" in result["reason"]
 
-    def test_reason_message_includes_both_ages_on_failure(self):
-        """Failure reason must embed required_age and user_age for UI display."""
+    def test_reason_uses_canonical_global_age_denial_code(self):
+        """A profile below age five is denied by the shared global policy."""
         u = _user_mock(date_of_birth=datetime(2023, 6, 15))   # age ~2
         result = self._check(u, "PLAYER")
         assert not result["meets_requirement"]
-        assert str(result["required_age"]) in result["reason"]
-        assert str(result["user_age"]) in result["reason"]
+        assert result["required_age"] == 5
+        assert result["user_age"] == 2
+        assert result["reason"] == "MINIMUM_ACCOUNT_AGE"
 
 
 # ============================================================================
@@ -521,14 +522,16 @@ class TestStartNewSpecializationFailurePaths:
         """User already has PLAYER → early return, db.add never called."""
         svc, db = _service()
         existing = MagicMock()
+        existing.canonical_program_id = None
+        existing.specialization_type = "PLAYER"
         existing.to_dict.return_value = {"id": 1, "specialization_type": "PLAYER"}
-        db.query.return_value.filter.return_value.first.return_value = existing
+        db.query.return_value.filter.return_value.all.return_value = [existing]
 
         result = svc.start_new_specialization(user_id=1, specialization="PLAYER")
 
         assert result["success"] is False
         assert "already has" in result["message"]
-        assert "PLAYER" in result["message"]
+        assert "GANCUJU_PLAYER" in result["message"]
         db.add.assert_not_called()
 
     def test_spec_not_available_returns_failure_without_db_write(self):
@@ -712,8 +715,8 @@ class TestEvaluateSpecializationType:
 
     def test_both_fail_reason_starts_with_display_name(self):
         """Reason prefix must be the human-readable spec display name."""
-        result = self._eval(spec_type="COACH", age_result=self._AGE_FAIL, pay_result=self._PAY_FAIL, meta_result=self._META)
-        assert result["reason"].startswith("Coach specializáció")
+        result = self._eval(spec_type="LFA_COACH", age_result=self._AGE_FAIL, pay_result=self._PAY_FAIL, meta_result=self._META)
+        assert result["reason"].startswith("LFA Coach specializáció")
 
     def test_both_fail_internship_display_name(self):
         """INTERNSHIP display name is 'Gyakornoki program' in failure reason."""
@@ -762,8 +765,8 @@ class TestEvaluateSpecializationType:
                 with _patch.object(svc, "check_payment_requirement", return_value=self._PAY_OK):
                     result_sem1 = svc.get_available_specializations_for_semester(user_id=1, semester=1)
 
-        assert len(result_sem1) == 3
-        player_entry = next(e for e in result_sem1 if e["specialization_type"] == "PLAYER")
+        assert len(result_sem1) == 4
+        player_entry = next(e for e in result_sem1 if e["reason"].startswith("LFA Football Player"))
         assert "alapképzés" in player_entry["reason"]
 
     def test_semester2_success_reason_lacks_extra_context(self):
@@ -779,7 +782,7 @@ class TestEvaluateSpecializationType:
                 with _patch.object(svc, "check_payment_requirement", return_value=self._PAY_OK):
                     result_sem2 = svc.get_available_specializations_for_semester(user_id=1, semester=2)
 
-        assert len(result_sem2) == 3
-        player_entry = next(e for e in result_sem2 if e["specialization_type"] == "PLAYER")
+        assert len(result_sem2) == 4
+        player_entry = next(e for e in result_sem2 if e["reason"].startswith("LFA Football Player"))
         assert "alapképzés" not in player_entry["reason"]
         assert "min. 5 év" in player_entry["reason"]

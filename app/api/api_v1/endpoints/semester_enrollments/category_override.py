@@ -1,25 +1,18 @@
-"""
-Instructor Override for Age Categories
-Allows instructors to manually change student age categories
+"""HTTP adapter for the canonical football category movement command."""
+from typing import Any, Dict
 
-Business Rules:
-- Instructors can change 14+ year-olds between YOUTH/AMATEUR/PRO anytime (even mid-season)
-- Students aged 5-13 MUST stay in PRE (cannot override)
-- Admins can override any category (with warnings)
-"""
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from datetime import datetime
-from typing import Dict, Any
 
 from .....database import get_db
 from .....dependencies import get_current_user_web
-from .....models.user import User, UserRole
-from .....models.semester_enrollment import SemesterEnrollment
-from .....services.age_category_service import (
-    calculate_age_at_season_start,
-    get_current_season_year,
-    validate_age_category_override
+from .....models.user import User
+from .....services.football_category_movement_service import (
+    FootballMovementAuthorizationError,
+    FootballMovementConcurrencyError,
+    FootballMovementError,
+    FootballMovementReplayConflict,
+    move_football_category,
 )
 from .schemas import CategoryOverride
 
@@ -32,73 +25,45 @@ async def override_age_category(
     enrollment_id: int,
     override: CategoryOverride,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_web)
+    current_user: User = Depends(get_current_user_web),
 ) -> Dict[str, Any]:
-    """
-    🎯 Override age category for a student enrollment.
-
-    **Permissions**:
-    - 🥋 Instructor (any instructor)
-    - 👑 Admin (can override any, with warnings)
-
-    **Business Rules**:
-    - ✅ 14+ year-olds can be moved between YOUTH/AMATEUR/PRO anytime (even mid-season)
-    - ❌ 5-13 year-olds MUST stay in PRE (cannot override)
-    - 🔒 Season lock: Category is determined at July 1 and stays fixed
-    - 📝 Override is audited (who, when)
-
-    **Example**:
-    - Student born 2007-12-06, season 2025/26 (July 1, 2025)
-    - Age at season start: 17 years
-    - Default: YOUTH
-    - Instructor can override to: AMATEUR or PRO
-    """
-    # Permission check: instructor or admin
-    if current_user.role not in [UserRole.INSTRUCTOR, UserRole.ADMIN]:
-        raise HTTPException(
-            status_code=403,
-            detail="Only instructors and admins can override age categories"
+    try:
+        result = move_football_category(
+            db,
+            enrollment_id=enrollment_id,
+            actor=current_user,
+            target_category=override.age_category,
+            expected_version=override.expected_version,
+            base_participation_retained=override.base_participation_retained,
+            reason=override.reason,
+            idempotency_key=override.idempotency_key,
+            source="API_V1_CATEGORY_OVERRIDE",
+            context={"request_path": str(request.url.path)},
         )
-
-    # Get enrollment with student info
-    enrollment = db.query(SemesterEnrollment).filter(
-        SemesterEnrollment.id == enrollment_id
-    ).first()
-
-    if not enrollment:
-        raise HTTPException(status_code=404, detail="Enrollment not found")
-
-    # Business rule validation: Check if student's age allows override
-    student = enrollment.user
-    if student.date_of_birth:
-        season_year = get_current_season_year()
-        age_at_season_start = calculate_age_at_season_start(student.date_of_birth, season_year)
-
-        # Validate override
-        is_valid, error_message = validate_age_category_override(age_at_season_start, override.age_category)
-
-        if not is_valid:
-            # Admin can override with warning, instructor cannot
-            if current_user.role == UserRole.ADMIN:
-                # Log warning but allow
-                print(f"⚠️ ADMIN OVERRIDE WARNING: {error_message}")
-            else:
-                raise HTTPException(status_code=400, detail=error_message)
-
-    # Update enrollment
-    enrollment.age_category = override.age_category
-    enrollment.age_category_overridden = True
-    enrollment.age_category_overridden_at = datetime.utcnow()
-    enrollment.age_category_overridden_by = current_user.id
-
-    db.commit()
-    db.refresh(enrollment)
+        db.commit()
+        db.refresh(result.assignment)
+    except FootballMovementAuthorizationError as exc:
+        db.rollback()
+        raise HTTPException(status_code=403, detail=exc.code) from exc
+    except FootballMovementConcurrencyError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=exc.code) from exc
+    except FootballMovementReplayConflict as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=exc.code) from exc
+    except FootballMovementError as exc:
+        db.rollback()
+        status_code = 404 if str(exc) == "Enrollment not found" else 400
+        raise HTTPException(status_code=status_code, detail=exc.code) from exc
 
     return {
         "success": True,
-        "message": f"Age category changed to {override.age_category}",
-        "enrollment_id": enrollment.id,
-        "age_category": enrollment.age_category,
-        "overridden_by": current_user.name,
-        "overridden_at": enrollment.age_category_overridden_at.isoformat() if enrollment.age_category_overridden_at else None
+        "enrollment_id": enrollment_id,
+        "season_base_category": result.assignment.season_base_category,
+        "effective_category": result.assignment.effective_category,
+        "age_category": result.assignment.effective_category,
+        "base_participation_retained": result.assignment.base_participation_retained,
+        "version": result.assignment.version,
+        "movement_event_id": result.event.id,
+        "replayed": not result.created,
     }

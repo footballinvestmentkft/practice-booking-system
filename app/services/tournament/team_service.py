@@ -15,7 +15,40 @@ from app.models.team import TeamInvite, TeamInviteStatus
 from app.models.tournament_configuration import TournamentConfiguration
 from app.models.team import TournamentTeamEnrollment
 from app.models.license import UserLicense
-from app.models.credit_transaction import CreditTransaction, TransactionType
+from app.models.credit_transaction import TransactionType
+from app.services.credit_service import CreditService, InsufficientCreditsError
+
+
+def _deduct_global_team_cost(
+    db: Session,
+    *,
+    user_id: int,
+    cost: int,
+    description: str,
+    idempotency_key: str,
+) -> None:
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="Captain user not found")
+    context_license = (
+        db.query(UserLicense)
+        .filter(UserLicense.user_id == user_id, UserLicense.is_active.is_(True))
+        .first()
+    )
+    try:
+        transaction = CreditService(db).deduct(
+            user=user,
+            amount=cost,
+            transaction_type=TransactionType.ENROLLMENT.value,
+            description=description,
+            idempotency_key=idempotency_key,
+        )
+    except InsufficientCreditsError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=f"Insufficient credits. Required: {exc.required}, Available: {exc.available}",
+        ) from exc
+    transaction.context_user_license_id = context_license.id if context_license else None
 
 
 def create_team(
@@ -284,31 +317,13 @@ def create_team_with_cost(
     cost = cfg.team_enrollment_cost if cfg else 0
 
     if cost > 0:
-        # Lock the license row to prevent concurrent over-spend
-        license = (
-            db.query(UserLicense)
-            .filter(
-                UserLicense.user_id == captain_user_id,
-                UserLicense.is_active == True,
-            )
-            .with_for_update()
-            .first()
-        )
-        if not license or license.credit_balance < cost:
-            available = license.credit_balance if license else 0
-            raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=f"Insufficient credits. Required: {cost}, Available: {available}",
-            )
-        license.credit_balance -= cost
-        db.add(CreditTransaction(
-            user_license_id=license.id,
-            amount=-cost,
-            balance_after=license.credit_balance,
-            transaction_type=TransactionType.ENROLLMENT.value,
+        _deduct_global_team_cost(
+            db,
+            user_id=captain_user_id,
+            cost=cost,
             description=f"Team creation fee for tournament {tournament_id}",
             idempotency_key=f"team-create-{captain_user_id}-{tournament_id}",
-        ))
+        )
 
     team = create_team(db, name, captain_user_id, specialization_type, code)
 
@@ -495,30 +510,13 @@ def admin_enroll_team_in_tournament(
     cost = cfg.team_enrollment_cost if cfg else 0
 
     if cost > 0:
-        license = (
-            db.query(UserLicense)
-            .filter(
-                UserLicense.user_id == team.captain_user_id,
-                UserLicense.is_active == True,
-            )
-            .with_for_update()
-            .first()
-        )
-        if not license or license.credit_balance < cost:
-            available = license.credit_balance if license else 0
-            raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=f"Insufficient credits. Required: {cost}, Available: {available}",
-            )
-        license.credit_balance -= cost
-        db.add(CreditTransaction(
-            user_license_id=license.id,
-            amount=-cost,
-            balance_after=license.credit_balance,
-            transaction_type=TransactionType.ENROLLMENT.value,
+        _deduct_global_team_cost(
+            db,
+            user_id=team.captain_user_id,
+            cost=cost,
             description=f"Team enrollment fee for tournament {tournament_id}",
             idempotency_key=f"team-enroll-{team_id}-{tournament_id}",
-        ))
+        )
 
     enrollment = TournamentTeamEnrollment(
         semester_id=tournament_id,
@@ -635,30 +633,13 @@ def enroll_existing_team_in_tournament(
     cost = cfg.team_enrollment_cost if cfg else 0
 
     if cost > 0:
-        license = (
-            db.query(UserLicense)
-            .filter(
-                UserLicense.user_id == captain_user_id,
-                UserLicense.is_active == True,
-            )
-            .with_for_update()
-            .first()
-        )
-        if not license or license.credit_balance < cost:
-            available = license.credit_balance if license else 0
-            raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=f"Insufficient credits. Required: {cost}, Available: {available}",
-            )
-        license.credit_balance -= cost
-        db.add(CreditTransaction(
-            user_license_id=license.id,
-            amount=-cost,
-            balance_after=license.credit_balance,
-            transaction_type=TransactionType.ENROLLMENT.value,
+        _deduct_global_team_cost(
+            db,
+            user_id=captain_user_id,
+            cost=cost,
             description=f"Team enrollment fee for tournament {tournament_id}",
             idempotency_key=f"team-enroll-{team_id}-{tournament_id}",
-        ))
+        )
 
     enrollment = TournamentTeamEnrollment(
         semester_id=tournament_id,

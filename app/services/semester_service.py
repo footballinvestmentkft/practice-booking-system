@@ -121,7 +121,8 @@ def create_enrollment_with_bookings(
 
     if cost > 0:
         db.add(CreditTransaction(
-            user_license_id=license_id,
+            user_id=user_id,
+            context_user_license_id=license_id,
             transaction_type="SEMESTER_ENROLLMENT",
             amount=-cost,
             balance_after=user_credit_balance,

@@ -6,34 +6,25 @@ Validates user eligibility for specializations based on:
 - Parental consent (for minors in LFA_COACH)
 - Age group matching (for LFA_FOOTBALL_PLAYER and LFA_COACH)
 
-Architecture note — intentional mixed validation model
-======================================================
-This validator intentionally mixes config-driven and hardcoded policy rules.
-
-  Config-driven rules (from config/specializations/*.json):
-    - min_age per specialization  (Step 1 → _validate_min_age)
-    - age_groups definitions      (Step 3 → _validate_age_group)
-    - display names, XP ranges, level requirements
-
-  Hardcoded policy rules (non-configurable regulatory constraints):
-    - LFA_COACH entry age == 14   (Step 2a in validate_user_for_specialization)
-    - Parental consent under 18   (Step 2b — is_minor property)
-
-Hardcoded constants represent regulatory constraints, not platform configuration.
-Changing them requires deliberate code + test change, not a JSON edit.
-The config-sync guardrail test (TestLFACoachConfigSync) detects drift between
-the two sources and fails CI if they diverge.
-
-Do NOT "unify" these two models without explicit stakeholder sign-off.
+WS1 routes all eligibility decisions through the canonical policy service. JSON
+configuration remains descriptive content and is not an authorization source.
 """
 
 import logging
+from datetime import date
 from typing import Dict, Any, Optional, List
 from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.models.specialization import SpecializationType
 from app.services.specialization_config_loader import get_config_loader
+from app.services.canonical_policy import (
+    PROGRAM_MINIMUM_AGES,
+    football_base_category,
+    football_season,
+    resolve_program_id,
+)
+from app.services.program_eligibility_service import is_user_eligible_for_program
 
 logger = logging.getLogger(__name__)
 
@@ -83,8 +74,8 @@ class SpecializationValidator:
         Raises:
             SpecializationValidationError: If validation fails and raise_exception=True
         """
-        errors = []
-        warnings = []
+        errors: List[str] = []
+        warnings: List[str] = []
 
         # Load specialization config
         try:
@@ -93,129 +84,29 @@ class SpecializationValidator:
             errors.append(f"Failed to load specialization config: {e}")
             return self._format_result(False, errors, warnings, {})
 
-        # 1. Check minimum age requirement
-        min_age = config.get('min_age', 0)
-        age_valid, age_error = self._validate_min_age(user, min_age)
-        if not age_valid:
-            errors.append(age_error)
+        resolution = resolve_program_id(specialization)
+        if not resolution.usable:
+            min_age = None
+            errors.append("PROGRAM_ID_MANUAL_REVIEW_OR_INVALID")
+        else:
+            min_age = PROGRAM_MINIMUM_AGES[resolution.canonical_program]
+            eligible, reason = is_user_eligible_for_program(self.db, user, specialization)
+            if not eligible:
+                errors.append(reason or "CANONICAL_ELIGIBILITY_DENIED")
 
-        # 2. Check LFA_COACH specific requirements
-        if specialization == SpecializationType.LFA_COACH:
-            # LFA_COACH has 14+ entry age requirement
-            if user.age is not None and user.age < 14:
-                errors.append(f"LFA_COACH requires minimum age of 14 years. User is {user.age} years old.")
-
-            # Check parental consent for minors (under 18)
-            if user.is_minor:
-                if not user.parental_consent:
-                    errors.append(
-                        "LFA_COACH requires parental consent for users under 18 years old. "
-                        "Parent/guardian must provide written consent."
-                    )
-                else:
-                    warnings.append(f"Parental consent provided by: {user.parental_consent_by}")
-
-        # 3. Check age group matching (for age-group based specializations)
-        age_groups = config.get('age_groups', [])
-        if age_groups:
-            age_group_valid, age_group_error = self._validate_age_group(user, age_groups)
-            if not age_group_valid:
-                errors.append(age_group_error)
-
-        # 4. Check date of birth is set
-        if user.date_of_birth is None:
-            warnings.append("User date of birth not set. Age validation skipped.")
-
-        # Compile requirements
         requirements = {
             'min_age': min_age,
             'specialization_name': config.get('name'),
-            'has_age_groups': len(age_groups) > 0,
-            'age_groups': age_groups if age_groups else None,
+            'has_age_groups': specialization == SpecializationType.LFA_FOOTBALL_PLAYER,
+            'age_groups': config.get('age_groups') if specialization == SpecializationType.LFA_FOOTBALL_PLAYER else None,
+            'canonical_policy': True,
+            'requires_parental_consent_under_18': True,
         }
-
-        if specialization == SpecializationType.LFA_COACH:
-            requirements['requires_parental_consent_under_18'] = True
-            requirements['min_age_override'] = 14  # LFA_COACH specific
-
-        # Determine if valid
         is_valid = len(errors) == 0
-
         result = self._format_result(is_valid, errors, warnings, requirements)
-
-        # Raise exception if requested and invalid
         if not is_valid and raise_exception:
-            error_msg = "; ".join(errors)
-            raise SpecializationValidationError(error_msg)
-
+            raise SpecializationValidationError("; ".join(errors))
         return result
-
-    def _validate_min_age(self, user: User, min_age: int) -> tuple[bool, Optional[str]]:
-        """
-        Validate user meets minimum age requirement.
-
-        Args:
-            user: User instance
-            min_age: Minimum required age
-
-        Returns:
-            Tuple of (is_valid, error_message)
-        """
-        if user.date_of_birth is None:
-            # Cannot validate without DOB, but don't fail
-            return True, None
-
-        user_age = user.age
-        if user_age is None:
-            return True, None
-
-        if user_age < min_age:
-            return False, f"User must be at least {min_age} years old. Current age: {user_age}"
-
-        return True, None
-
-    def _validate_age_group(self, user: User, age_groups: List[Dict[str, Any]]) -> tuple[bool, Optional[str]]:
-        """
-        Validate user falls into one of the allowed age groups.
-
-        Args:
-            user: User instance
-            age_groups: List of age group definitions from config
-
-        Returns:
-            Tuple of (is_valid, error_message)
-        """
-        if user.date_of_birth is None or user.age is None:
-            # Cannot validate without age
-            return True, None
-
-        user_age = user.age
-
-        # Check if user fits into any age group
-        for age_group in age_groups:
-            min_age = age_group.get('min_age', 0)
-            max_age = age_group.get('max_age')  # None means no upper limit
-
-            if max_age is None:
-                # No upper limit
-                if user_age >= min_age:
-                    return True, None
-            else:
-                # Has upper limit
-                if min_age <= user_age <= max_age:
-                    return True, None
-
-        # User doesn't fit any age group
-        age_ranges = []
-        for ag in age_groups:
-            min_a = ag.get('min_age', 0)
-            max_a = ag.get('max_age')
-            if max_a is None:
-                age_ranges.append(f"{min_a}+")
-            else:
-                age_ranges.append(f"{min_a}-{max_a}")
-
-        return False, f"User age {user_age} does not match any age group: {', '.join(age_ranges)}"
 
     def _format_result(
         self,
@@ -295,22 +186,18 @@ class SpecializationValidator:
         Returns:
             Age group dict or None if no match
         """
-        if user.age is None:
+        if specialization != SpecializationType.LFA_FOOTBALL_PLAYER or user.date_of_birth is None:
             return None
 
         config = self.config_loader.load_config(specialization)
         age_groups = config.get('age_groups', [])
-
+        season = football_season(date.today())
+        category = football_base_category(user.date_of_birth, season_start=season.start)
+        if category is None:
+            return None
         for age_group in age_groups:
-            min_age = age_group.get('min_age', 0)
-            max_age = age_group.get('max_age')
-
-            if max_age is None:
-                if user.age >= min_age:
-                    return age_group
-            else:
-                if min_age <= user.age <= max_age:
-                    return age_group
+            if str(age_group.get('name', '')).upper() == category.value:
+                return age_group
 
         return None
 

@@ -14,6 +14,8 @@ from .....schemas.user import (
     User as UserSchema, UserCreate, UserUpdate, UserWithStats, UserList
 )
 from .helpers import calculate_pagination, validate_email_unique, get_user_statistics
+from .....services.canonical_policy import evaluate_profile_age_policy
+from .....services.program_eligibility_service import record_guardian_consent
 
 router = APIRouter()
 
@@ -34,6 +36,13 @@ def create_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User with this email already exists"
         )
+
+    profile_decision = evaluate_profile_age_policy(
+        user_data.date_of_birth,
+        bool(user_data.parental_consent and user_data.parental_consent_by),
+    )
+    if not profile_decision.usable:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=profile_decision.reason)
     
     # Create new user
     from .....models.specialization import SpecializationType
@@ -71,6 +80,15 @@ def create_user(
     )
 
     db.add(user)
+    db.flush()
+    if profile_decision.age is not None and profile_decision.age < 18:
+        record_guardian_consent(
+            db,
+            user=user,
+            guardian_name=user_data.parental_consent_by,
+            granted_by_user_id=current_user.id,
+            evidence_reference="ADMIN_USER_CREATE",
+        )
     db.commit()
     db.refresh(user)
 

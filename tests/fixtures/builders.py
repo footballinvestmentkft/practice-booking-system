@@ -151,11 +151,20 @@ def build_user_license(
     `started_at` has no DB default — always supplied here.
     Override any column via kwargs.
     """
+    # Mirror the model's canonicalization before querying.  Otherwise a legacy
+    # alias such as PLAYER misses an existing GANCUJU_PLAYER row and only
+    # collides with the unique constraint during flush.
+    from app.services.canonical_policy import resolve_program_id
+
+    resolution = resolve_program_id(specialization_type)
+    canonical_specialization = (
+        resolution.canonical_program.value if resolution.usable else specialization_type
+    )
     existing = (
         db.query(UserLicense)
         .filter(
             UserLicense.user_id == user_id,
-            UserLicense.specialization_type == specialization_type,
+            UserLicense.specialization_type == canonical_specialization,
         )
         .first()
     )
@@ -165,7 +174,7 @@ def build_user_license(
     obj = UserLicense(
         **{
             "user_id":             user_id,
-            "specialization_type": specialization_type,
+            "specialization_type": canonical_specialization,
             "current_level":       1,
             "max_achieved_level":  1,
             "started_at":          _now_naive(),

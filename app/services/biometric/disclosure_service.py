@@ -54,8 +54,13 @@ def _assert_not_minor(user: User) -> None:
     Parental consent flow is out-of-scope (legal blocker); this gate prevents
     any biometric disclosure acceptance until that flow is implemented.
     """
-    age = user.age  # None when date_of_birth is NULL
-    if age is None or age < 18:
+    from app.services.canonical_policy import evaluate_profile_age_policy
+    decision = evaluate_profile_age_policy(
+        user.date_of_birth,
+        guardian_consent_active=True,
+        biometric=True,
+    )
+    if not decision.usable:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="parental_consent_required",

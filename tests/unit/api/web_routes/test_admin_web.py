@@ -437,7 +437,8 @@ class TestInstructorEditSkillsPage:
         student = MagicMock()
         license_obj = MagicMock()
         license_obj.user_id = 99
-        license_obj.specialization_type = "LFA_PLAYER_PRE"
+        license_obj.specialization_type = "LFA_FOOTBALL_PLAYER"
+        license_obj.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = MagicMock()
         db.query.return_value.filter.return_value.first.side_effect = [student, license_obj]
 
@@ -552,7 +553,8 @@ class TestInstructorUpdateSkills:
         student = MagicMock()
         license_obj = MagicMock()
         license_obj.user_id = 99
-        license_obj.specialization_type = "LFA_PLAYER_PRE"
+        license_obj.specialization_type = "LFA_FOOTBALL_PLAYER"
+        license_obj.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = MagicMock()
         db.query.return_value.filter.return_value.first.side_effect = [student, license_obj]
 
@@ -575,7 +577,8 @@ class TestInstructorUpdateSkills:
         student.email = "student@test.com"
         license_obj = MagicMock()
         license_obj.user_id = 99
-        license_obj.specialization_type = "LFA_PLAYER_PRE"
+        license_obj.specialization_type = "LFA_FOOTBALL_PLAYER"
+        license_obj.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = MagicMock()
         db.query.return_value.filter.return_value.first.side_effect = [student, license_obj]
 
@@ -717,7 +720,8 @@ class TestMotivationAssessmentSubmit:
         student.email = "student@test.com"
         license_obj = MagicMock()
         license_obj.user_id = 99
-        license_obj.specialization_type = "LFA_PLAYER_PRE"
+        license_obj.specialization_type = "LFA_FOOTBALL_PLAYER"
+        license_obj.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = MagicMock()
         db.query.return_value.filter.return_value.first.side_effect = [student, license_obj]
 

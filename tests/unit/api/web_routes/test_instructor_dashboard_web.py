@@ -169,7 +169,8 @@ class TestInstructorEditStudentSkillsPage:
         student = MagicMock()
         license = MagicMock()
         license.user_id = 7
-        license.specialization_type = "LFA_PLAYER_PRE"
+        license.specialization_type = "LFA_FOOTBALL_PLAYER"
+        license.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = MagicMock()
         db.query.return_value.filter.return_value.first.side_effect = [student, license]
 
@@ -183,7 +184,7 @@ class TestInstructorEditStudentSkillsPage:
         ctx = mock_tmpl.TemplateResponse.call_args.args[1]
         assert ctx["student"] is student
         assert ctx["license"] is license
-        assert "PRE" in ctx["specialization_display"]
+        assert ctx["specialization_display"] == "LFA Football Player"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -264,7 +265,8 @@ class TestInstructorUpdateStudentSkills:
         student.email = "test@lfa.hu"
         license = MagicMock()
         license.user_id = 7
-        license.specialization_type = "LFA_PLAYER_YOUTH"
+        license.specialization_type = "LFA_FOOTBALL_PLAYER"
+        license.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = MagicMock()
         db.query.return_value.filter.return_value.first.side_effect = [student, license]
 
@@ -289,7 +291,8 @@ class TestInstructorUpdateStudentSkills:
         student.email = "player@lfa.hu"
         license = MagicMock()
         license.user_id = 7
-        license.specialization_type = "LFA_PLAYER_PRE"
+        license.specialization_type = "LFA_FOOTBALL_PLAYER"
+        license.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = MagicMock()
         db.query.return_value.filter.return_value.first.side_effect = [student, license]
 
@@ -315,7 +318,8 @@ class TestInstructorUpdateStudentSkills:
         student.email = "player2@lfa.hu"
         license = MagicMock()
         license.user_id = 7
-        license.specialization_type = "LFA_PLAYER_AMATEUR"
+        license.specialization_type = "LFA_FOOTBALL_PLAYER"
+        license.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = MagicMock()
         db.query.return_value.filter.return_value.first.side_effect = [student, license]
 

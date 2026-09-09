@@ -103,7 +103,7 @@ class TestGetOrCreateUserLicense:
     def test_returns_existing_license(self):
         svc, db = _svc()
         existing = _mock_license()
-        db.query.return_value.filter.return_value.first.return_value = existing
+        db.query.return_value.filter.return_value.all.return_value = [existing]
         result = svc.get_or_create_user_license(user_id=42, specialization="coach")
         assert result is existing
         db.add.assert_not_called()
@@ -111,7 +111,7 @@ class TestGetOrCreateUserLicense:
 
     def test_creates_license_when_not_found(self):
         svc, db = _svc()
-        db.query.return_value.filter.return_value.first.return_value = None
+        db.query.return_value.filter.return_value.all.return_value = []
         result = svc.get_or_create_user_license(user_id=42, specialization="coach")
         db.add.assert_called_once()
         db.commit.assert_called_once()
@@ -120,13 +120,13 @@ class TestGetOrCreateUserLicense:
     def test_uppercases_specialization(self):
         svc, db = _svc()
         existing = _mock_license(spec="COACH")
-        db.query.return_value.filter.return_value.first.return_value = existing
+        db.query.return_value.filter.return_value.all.return_value = [existing]
         result = svc.get_or_create_user_license(user_id=42, specialization="coach")
         assert result is existing  # Should still work after upper()
 
     def test_new_license_starts_at_level_1(self):
         svc, db = _svc()
-        db.query.return_value.filter.return_value.first.return_value = None
+        db.query.return_value.filter.return_value.all.return_value = []
         svc.get_or_create_user_license(user_id=42, specialization="COACH")
         # The UserLicense created should have current_level=1
         added_obj = db.add.call_args[0][0]

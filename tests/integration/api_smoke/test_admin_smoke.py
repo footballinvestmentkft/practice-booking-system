@@ -531,7 +531,12 @@ class TestBatchCreatePlayersSmoke:
             self._URL,
             headers=headers,
             json={
-                "players": [{"email": unique_email, "password": "secret123", "name": "Smoke Player"}],
+                "players": [{
+                    "email": unique_email,
+                    "password": "secret123",
+                    "name": "Smoke Player",
+                    "date_of_birth": "2000-01-01",
+                }],
                 "skip_existing": True,
             },
         )
@@ -545,7 +550,12 @@ class TestBatchCreatePlayersSmoke:
         unique_email = f"smoke-idem-{uuid.uuid4().hex[:8]}@test.example.com"
         headers = {"Authorization": f"Bearer {admin_token}"}
         payload = {
-            "players": [{"email": unique_email, "password": "secret123", "name": "Idem Player"}],
+            "players": [{
+                "email": unique_email,
+                "password": "secret123",
+                "name": "Idem Player",
+                "date_of_birth": "2000-01-01",
+            }],
             "skip_existing": True,
         }
         r1 = api_client.post(self._URL, headers=headers, json=payload)

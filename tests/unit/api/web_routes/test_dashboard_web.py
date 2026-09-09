@@ -559,12 +559,13 @@ class TestGetLfaAgeCategory:
         assert cat == "YOUTH"
         assert rng == "14-18 years"
 
-    def test_adult_age_returns_none_instructor_assignment(self):
-        """Age 25 (>18) → None category, instructor assignment message."""
+    def test_adult_age_returns_amateur_base_category(self):
+        """Age 25 at season cutoff → canonical AMATEUR base category."""
         dob = date_cls(date_cls.today().year - 25, 1, 1)
         cat, name, rng, desc = get_lfa_age_category(dob)
-        assert cat is None
-        assert "instructor" in desc
+        assert cat == "AMATEUR"
+        assert rng == "19+ years"
+        assert "base category" in desc
 
     def test_below_min_age_returns_none(self):
         """Age 3 (<5) → else branch → None category."""

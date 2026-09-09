@@ -7,8 +7,8 @@ Business rules:
     promoted_at / promoted_by are never overwritten.
   - Email matches existing User → user_id linked only. User profile NOT modified.
     DOB is NOT overwritten on existing Users.
-  - No existing User → User + UserLicense created (role=STUDENT, random password).
-    date_of_birth copied from entry (may be None).
+  - No existing User → User + UserLicense created only when canonical profile
+    age policy passes. Sponsor marketing consent is not guardian consent.
   - Baseline onboarding (P2-D): written after promote IF all 4 conditions met:
       1. entry.status == ACTIVE  (already checked by promote gate)
       2. entry.consent_given     (already checked)
@@ -36,6 +36,7 @@ from app.models.sponsor import SponsorAudienceEntry
 from app.models.user import User, UserRole
 from app.services.skill_progression import SYSTEM_BASELINE
 from app.skills_config import get_all_skill_keys
+from app.services.canonical_policy import evaluate_profile_age_policy
 
 if TYPE_CHECKING:
     pass
@@ -195,6 +196,13 @@ def promote_entries(
                 .first()
             )
         else:
+            profile = evaluate_profile_age_policy(entry.date_of_birth, False)
+            if not profile.usable:
+                result.skipped += 1
+                result.errors.append(
+                    f"Entry {entry.id}: {profile.reason}; guardian consent evidence is not available in sponsor promotion"
+                )
+                continue
             new_user = User(
                 email=entry.email,
                 name=f"{entry.first_name} {entry.last_name}",

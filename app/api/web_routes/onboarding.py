@@ -409,6 +409,7 @@ async def lfa_player_onboarding_cancel(
             CreditTransaction.transaction_type == TransactionType.SPECIALIZATION_UNLOCK.value,
             or_(
                 CreditTransaction.user_license_id == license.id,
+                CreditTransaction.context_user_license_id == license.id,
                 CreditTransaction.idempotency_key == f"license_unlock_{license.id}",
             ),
         ).order_by(CreditTransaction.id.asc()).all()

@@ -49,6 +49,13 @@ class SemesterEnrollment(Base):
     user_license_id = Column(Integer, ForeignKey("user_licenses.id", ondelete="CASCADE"),
                             nullable=False,
                             comment="Link to UserLicense (tracks progress/levels)")
+    football_category_assignment_id = Column(
+        Integer,
+        ForeignKey("football_season_category_assignments.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+        comment="Canonical season-base/effective category record; legacy age_category remains a projection",
+    )
 
     # 🆕 NEW: Enrollment request workflow (student requests → admin approves)
     request_status = Column(Enum(EnrollmentStatus), nullable=False, default=EnrollmentStatus.PENDING,
@@ -110,6 +117,9 @@ class SemesterEnrollment(Base):
     user = relationship("User", foreign_keys=[user_id], back_populates="semester_enrollments")
     semester = relationship("Semester", back_populates="enrollments")
     user_license = relationship("UserLicense", back_populates="semester_enrollments")
+    football_category_assignment = relationship(
+        "FootballSeasonCategoryAssignment", foreign_keys=[football_category_assignment_id]
+    )
     payment_verifier = relationship("User", foreign_keys=[payment_verified_by])
     approver = relationship("User", foreign_keys=[approved_by])
     category_overrider = relationship("User", foreign_keys=[age_category_overridden_by])

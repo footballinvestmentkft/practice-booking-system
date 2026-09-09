@@ -24,12 +24,15 @@ if not hasattr(_stc, 'visit_ARRAY'):
     _stc.visit_ARRAY = lambda self, type_, **kw: 'TEXT'
 if not hasattr(_stc, 'visit_UUID'):
     _stc.visit_UUID = lambda self, type_, **kw: 'VARCHAR(36)'
+if not hasattr(_stc, 'visit_BYTEA'):
+    _stc.visit_BYTEA = lambda self, type_, **kw: 'BLOB'
 from app.models.user import User, UserRole
 from app.models.license import UserLicense
 from app.models.semester import Semester, SemesterStatus
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from app.models.session import Session as SessionModel
 from app.models.specialization import SpecializationType
+from app.models.ws1_domain import UserGuardianConsent
 from app.services.specs import get_spec_service
 from app.services.specs.semester_based.lfa_coach_service import LFACoachService
 
@@ -68,9 +71,12 @@ def young_coach_user(db_session):
         name="Young Coach",
         password_hash="hashed_test_password",
         date_of_birth=date(2011, 6, 15),  # ~14 years old
+        parental_consent=True,
         role=UserRole.STUDENT
     )
     db_session.add(user)
+    db_session.commit()
+    db_session.add(UserGuardianConsent(user_id=user.id, guardian_name="Test Guardian"))
     db_session.commit()
     return user
 
@@ -100,9 +106,12 @@ def too_young_user(db_session):
         name="Too Young",
         password_hash="hashed_test_password",
         date_of_birth=date(2013, 1, 1),  # ~12 years old
+        parental_consent=True,
         role=UserRole.STUDENT
     )
     db_session.add(user)
+    db_session.commit()
+    db_session.add(UserGuardianConsent(user_id=user.id, guardian_name="Test Guardian"))
     db_session.commit()
     return user
 
@@ -216,28 +225,27 @@ def test_age_validation_minimum_age(coach_service, young_coach_user, too_young_u
     # 14 years old - should be eligible
     is_eligible, msg = coach_service.validate_age_eligibility(young_coach_user, db=db_session)
     assert is_eligible == True
-    assert "14" in msg
+    assert "eligible" in msg.lower()
 
     # 12 years old - too young
     is_eligible, msg = coach_service.validate_age_eligibility(too_young_user, db=db_session)
     assert is_eligible == False
-    assert "below minimum" in msg.lower()
+    assert msg == "PROGRAM_MINIMUM_AGE"
 
 
 def test_age_validation_for_specific_certifications(coach_service, young_coach_user, db_session):
-    """Test age requirements for specific certification levels"""
-    # 14-year-old trying PRE_ASSISTANT (min age 14) - OK
+    """Certification levels do not introduce additional age gates."""
     is_eligible, msg = coach_service.validate_age_eligibility(
         young_coach_user, target_group="PRE_ASSISTANT", db=db_session
     )
     assert is_eligible == True
 
-    # 14-year-old trying PRO_HEAD (min age 23) - NOT OK
+    # The same canonical program-entry rule applies at PRO_HEAD.
     is_eligible, msg = coach_service.validate_age_eligibility(
         young_coach_user, target_group="PRO_HEAD", db=db_session
     )
-    assert is_eligible == False
-    assert "23 years" in msg
+    assert is_eligible == True
+    assert "eligible" in msg.lower()
 
 
 # ============================================================================
@@ -294,7 +302,7 @@ def test_certification_info(coach_service):
     info = coach_service.get_certification_info("PRO_HEAD")
     assert info['name'] == "LFA PRO Football Head Coach"
     assert info['level'] == 8
-    assert info['min_coach_age'] == 23
+    assert info['min_coach_age'] == 14
     assert info['role'] == "Head Coach"
 
 

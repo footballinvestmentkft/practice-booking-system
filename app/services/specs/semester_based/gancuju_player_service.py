@@ -33,6 +33,8 @@ from app.models.user import User
 from app.models.license import UserLicense
 from app.models.belt_promotion import BeltPromotion
 from app.models.semester_enrollment import SemesterEnrollment
+from app.services.canonical_policy import CanonicalProgram
+from app.services.program_eligibility_service import is_user_eligible_for_program
 
 
 class GanCujuPlayerService(BaseSpecializationService):
@@ -101,17 +103,10 @@ class GanCujuPlayerService(BaseSpecializationService):
         Returns:
             Tuple of (is_eligible: bool, reason: str)
         """
-        # Check date of birth exists
-        is_valid, error = self.validate_date_of_birth(user)
-        if not is_valid:
-            return False, error
-
-        # Check minimum age (5 years)
-        age = self.calculate_age(user.date_of_birth)
-        if age < self.MINIMUM_AGE:
-            return False, f"Age {age} is below minimum ({self.MINIMUM_AGE} years) for GanCuju Player"
-
-        return True, f"Eligible for GanCuju Player (age {age})"
+        eligible, denial = is_user_eligible_for_program(
+            db or self.db, user, CanonicalProgram.GANCUJU_PLAYER
+        )
+        return eligible, denial or "Eligible for GānCuju Player"
 
     # ========================================================================
     # SESSION BOOKING LOGIC

@@ -729,7 +729,7 @@ class TestLicensesSmoke:
         headers = {"Authorization": f"Bearer {admin_token}"}
 
         
-        payload = {"specialization": "LFA_PLAYER", "target_level": 2}
+        payload = {"specialization": "LFA_FOOTBALL_PLAYER", "target_level": 2}
         response = api_client.post("/advance", json=payload, headers=headers)
         
 
@@ -892,7 +892,7 @@ class TestLicensesSmoke:
         headers = {"Authorization": f"Bearer {admin_token}"}
 
         
-        payload = {"user_id": 9999, "specialization": "LFA_PLAYER", "target_level": 2}
+        payload = {"user_id": 9999, "specialization": "LFA_FOOTBALL_PLAYER", "target_level": 2}
         response = api_client.post("/instructor/advance", json=payload, headers=headers)
         
 
@@ -1153,4 +1153,3 @@ class TestLicensesSmoke:
             f"PUT /{license_id}/football-skills should validate input: {response.status_code}"
         )
         
-

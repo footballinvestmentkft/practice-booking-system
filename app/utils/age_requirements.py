@@ -4,6 +4,8 @@ Automatically filters available specializations based on user's age
 """
 from typing import List, Dict, Optional
 
+from app.services.canonical_policy import is_program_age_eligible, resolve_program_id
+
 
 def get_available_specializations(age: Optional[int]) -> List[Dict]:
     """
@@ -94,16 +96,7 @@ def validate_specialization_for_age(spec_type: str, age: Optional[int]) -> bool:
     if age is None:
         return False
 
-    age_requirements = {
-        "INTERNSHIP": 18,
-        "GANCUJU_PLAYER": 5,
-        "LFA_FOOTBALL_PLAYER": 5,
-        "LFA_PLAYER": 5,
-        "LFA_COACH": 14
-    }
-
-    min_age = age_requirements.get(spec_type)
-    if min_age is None:
+    resolution = resolve_program_id(spec_type)
+    if not resolution.usable:
         return False
-
-    return age >= min_age
+    return is_program_age_eligible(resolution.canonical_program, age)

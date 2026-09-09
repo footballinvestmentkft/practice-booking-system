@@ -17,6 +17,7 @@ DONE = pytest tests/integration/web_flows/test_sponsor_promote.py -v
 import base64
 import io
 import uuid
+from datetime import date
 import pytest
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
@@ -80,6 +81,7 @@ def _make_entry(
     status: str = "ACTIVE",
     consent_given: bool = True,
     user_id: int | None = None,
+    date_of_birth: date | None = date(2000, 1, 1),
 ) -> SponsorAudienceEntry:
     from app.models.club import CsvImportLog
     campaign = _make_campaign(db, sponsor, admin)
@@ -102,6 +104,7 @@ def _make_entry(
         email=email or f"promo+{uuid.uuid4().hex[:8]}@test.com",
         status=status,
         consent_given=consent_given,
+        date_of_birth=date_of_birth,
         user_id=user_id,
     )
     db.add(e)
@@ -151,6 +154,20 @@ class TestPromoteNewUser:
         assert lic.specialization_type == "LFA_FOOTBALL_PLAYER"
         assert lic.current_level == 1
         assert lic.is_active is True
+
+    def test_minor_marketing_consent_is_not_treated_as_guardian_consent(self, test_db: Session):
+        admin = _make_admin(test_db)
+        sponsor = _make_sponsor(test_db, admin)
+        entry = _make_entry(
+            test_db, sponsor, admin, date_of_birth=date(2015, 1, 1), consent_given=True
+        )
+        test_db.commit()
+
+        result = promote_entries([entry.id], sponsor.id, test_db, admin)
+
+        assert result.promoted == 0
+        assert result.skipped == 1
+        assert any("GUARDIAN_CONSENT_REQUIRED" in error for error in result.errors)
 
 
 class TestPromoteExistingUser:

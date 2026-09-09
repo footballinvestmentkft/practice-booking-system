@@ -169,7 +169,10 @@ def create_direct_hire_offer(
         for semester in location_semesters:
             semester_age_group = get_semester_age_group(semester.specialization_type)
 
-            if not can_teach_age_group(instructor_age_group, semester_age_group):
+            canonical_age_group = semester_age_group.removesuffix("_FOOTBALL")
+            if not TeachingPermissionService.can_teach_scope(
+                permissions.get("current_level", 0), canonical_age_group, "HEAD"
+            ):
                 incompatible_semesters.append({
                     "id": semester.id,
                     "code": semester.code,

@@ -198,7 +198,8 @@ async def tournament_enroll(
 
     # 10. Credit transaction record
     db.add(CreditTransaction(
-        user_license_id=license.id,
+        user_id=user.id,
+        context_user_license_id=license.id,
         transaction_type="TOURNAMENT_ENROLLMENT",
         amount=-cost,
         balance_after=user.credit_balance,
@@ -266,7 +267,8 @@ async def tournament_unenroll(
     db.refresh(user)
 
     db.add(CreditTransaction(
-        user_license_id=enrollment.user_license_id,
+        user_id=user.id,
+        context_user_license_id=enrollment.user_license_id,
         transaction_type="TOURNAMENT_UNENROLL_REFUND",
         amount=refund,
         balance_after=user.credit_balance,

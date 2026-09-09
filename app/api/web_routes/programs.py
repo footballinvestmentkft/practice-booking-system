@@ -298,7 +298,8 @@ async def semester_withdraw_enrollment(
         )
         db.refresh(user)
         db.add(CreditTransaction(
-            user_license_id=enrollment.user_license_id,
+            user_id=user.id,
+            context_user_license_id=enrollment.user_license_id,
             transaction_type="SEMESTER_UNENROLL_REFUND",
             amount=refund,
             balance_after=user.credit_balance,

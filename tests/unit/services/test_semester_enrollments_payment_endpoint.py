@@ -7,6 +7,7 @@ All endpoints are async → asyncio.run()
 import asyncio
 import json
 import pytest
+from fastapi import HTTPException
 from unittest.mock import MagicMock, patch
 
 from app.api.api_v1.endpoints.semester_enrollments.payment import (
@@ -249,79 +250,57 @@ class TestOverrideAgeCategory:
         return asyncio.run(override_age_category(
             request=MagicMock(),
             enrollment_id=enrollment_id,
-            override=CategoryOverride(age_category=age_category),
+            override=CategoryOverride(
+                age_category=age_category,
+                expected_version=1,
+                base_participation_retained=True,
+                reason="Unit-test movement",
+                idempotency_key="unit-test-movement-key",
+            ),
             db=db or MagicMock(),
             current_user=current_user or _instructor(),
         ))
 
-    def _enr(self, with_dob=False):
-        e = MagicMock()
-        e.id = 1
-        e.age_category = "YOUTH"
-        e.age_category_overridden_at = MagicMock()
-        e.age_category_overridden_at.isoformat.return_value = "2025-01-01T10:00:00"
-        if with_dob:
-            from datetime import date
-            e.user.date_of_birth = date(2005, 6, 15)
-        else:
-            e.user.date_of_birth = None
-        return e
+    @staticmethod
+    def _result(created=True):
+        assignment = MagicMock(
+            season_base_category="PRE", effective_category="YOUTH",
+            base_participation_retained=True, version=2,
+        )
+        event = MagicMock(id=17)
+        return MagicMock(assignment=assignment, event=event, created=created)
 
-    def test_oc01_student_403(self):
-        """OC-01: student role → 403."""
-        from fastapi import HTTPException
-        with pytest.raises(HTTPException) as exc:
-            self._call(current_user=_user(uid=42, role=UserRole.STUDENT))
-        assert exc.value.status_code == 403
-
-    def test_oc02_not_found_404(self):
-        """OC-02: enrollment not found → 404."""
-        from fastapi import HTTPException
-        db = MagicMock(); db.query.return_value = _q(first_val=None)
-        with pytest.raises(HTTPException) as exc:
-            self._call(db=db)
-        assert exc.value.status_code == 404
-
-    def test_oc03_no_dob_skip_validation(self):
-        """OC-03: student has no date_of_birth → validation skipped, override applied."""
-        enr = self._enr(with_dob=False)
-        db = MagicMock(); db.query.return_value = _q(first_val=enr)
-        result = self._call(db=db)
-        assert result["success"] is True
-        assert enr.age_category_overridden is True
+    def test_oc01_success_is_thin_canonical_adapter(self):
+        db = MagicMock()
+        with patch(f"{_BASE_CAT}.move_football_category", return_value=self._result()) as command:
+            result = self._call(db=db)
+        assert result["season_base_category"] == "PRE"
+        assert result["effective_category"] == "YOUTH"
+        assert result["movement_event_id"] == 17
+        assert result["replayed"] is False
+        command.assert_called_once()
         db.commit.assert_called_once()
 
-    def test_oc04_valid_override_instructor(self):
-        """OC-04: valid override → applied, committed."""
-        enr = self._enr(with_dob=True)
-        db = MagicMock(); db.query.return_value = _q(first_val=enr)
-        with patch(f"{_BASE_CAT}.get_current_season_year", return_value=2025), \
-             patch(f"{_BASE_CAT}.calculate_age_at_season_start", return_value=20), \
-             patch(f"{_BASE_CAT}.validate_age_category_override", return_value=(True, "")):
-            result = self._call(db=db, current_user=_instructor())
-        assert result["success"] is True
-        assert result["age_category"] == enr.age_category
+    def test_oc02_replay_returns_original_result(self):
+        with patch(f"{_BASE_CAT}.move_football_category", return_value=self._result(False)):
+            assert self._call()["replayed"] is True
 
-    def test_oc05_invalid_override_instructor_400(self):
-        """OC-05: invalid override for instructor (e.g. child) → 400."""
-        from fastapi import HTTPException
-        enr = self._enr(with_dob=True)
-        db = MagicMock(); db.query.return_value = _q(first_val=enr)
-        with patch(f"{_BASE_CAT}.get_current_season_year", return_value=2025), \
-             patch(f"{_BASE_CAT}.calculate_age_at_season_start", return_value=8), \
-             patch(f"{_BASE_CAT}.validate_age_category_override", return_value=(False, "Child must stay PRE")):
+    @pytest.mark.parametrize(
+        ("error_name", "status_code"),
+        [
+            ("FootballMovementAuthorizationError", 403),
+            ("FootballMovementConcurrencyError", 409),
+            ("FootballMovementReplayConflict", 409),
+            ("FootballMovementError", 400),
+        ],
+    )
+    def test_oc03_command_errors_are_safely_mapped(self, error_name, status_code):
+        from app.api.api_v1.endpoints.semester_enrollments import category_override as module
+        error = getattr(module, error_name)("internal detail")
+        db = MagicMock()
+        with patch(f"{_BASE_CAT}.move_football_category", side_effect=error):
             with pytest.raises(HTTPException) as exc:
-                self._call(db=db, current_user=_instructor())
-        assert exc.value.status_code == 400
-        assert "PRE" in exc.value.detail
-
-    def test_oc06_invalid_override_admin_warning_allowed(self):
-        """OC-06: invalid override for admin → warning logged but still applied."""
-        enr = self._enr(with_dob=True)
-        db = MagicMock(); db.query.return_value = _q(first_val=enr)
-        with patch(f"{_BASE_CAT}.get_current_season_year", return_value=2025), \
-             patch(f"{_BASE_CAT}.calculate_age_at_season_start", return_value=8), \
-             patch(f"{_BASE_CAT}.validate_age_category_override", return_value=(False, "Child must stay PRE")):
-            result = self._call(db=db, current_user=_user(uid=42, role=UserRole.ADMIN))
-        assert result["success"] is True
-        db.commit.assert_called_once()
+                self._call(db=db)
+        assert exc.value.status_code == status_code
+        assert "internal detail" not in exc.value.detail
+        db.rollback.assert_called_once()

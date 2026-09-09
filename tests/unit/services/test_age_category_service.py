@@ -84,12 +84,12 @@ class TestGetAutomaticAgeCategory:
     def test_age_18_is_youth(self):
         assert get_automatic_age_category(18) == "YOUTH"
 
-    # No automatic assignment: 0-4 and 19+
-    def test_age_19_is_none(self):
-        assert get_automatic_age_category(19) is None
+    # No automatic assignment below the minimum; 19+ has AMATEUR base.
+    def test_age_19_is_amateur(self):
+        assert get_automatic_age_category(19) == "AMATEUR"
 
-    def test_age_25_is_none(self):
-        assert get_automatic_age_category(25) is None
+    def test_age_25_is_amateur(self):
+        assert get_automatic_age_category(25) == "AMATEUR"
 
     def test_age_4_is_none(self):
         assert get_automatic_age_category(4) is None
@@ -104,7 +104,7 @@ class TestGetAutomaticAgeCategory:
 
     def test_boundary_18_to_19(self):
         assert get_automatic_age_category(18) == "YOUTH"
-        assert get_automatic_age_category(19) is None
+        assert get_automatic_age_category(19) == "AMATEUR"
 
 
 # ─── get_current_season_year ──────────────────────────────────────────────────
@@ -143,10 +143,10 @@ class TestGetCurrentSeasonYear:
 @pytest.mark.unit
 class TestCanOverrideAgeCategory:
 
-    def test_under_14_cannot_override(self):
-        assert can_override_age_category(5) is False
-        assert can_override_age_category(10) is False
-        assert can_override_age_category(13) is False
+    def test_program_age_can_enter_explicit_movement_command(self):
+        assert can_override_age_category(5) is True
+        assert can_override_age_category(10) is True
+        assert can_override_age_category(13) is True
 
     def test_exactly_14_can_override(self):
         assert can_override_age_category(14) is True
@@ -177,11 +177,11 @@ class TestValidateAgeCategoryOverride:
     def test_under_14_cannot_leave_pre(self):
         ok, err = validate_age_category_override(10, "AMATEUR")
         assert ok is False
-        assert "under 14" in err.lower() or "PRE" in err
+        assert err == "TARGET_MINIMUM_AGE_14"
 
-    def test_under_14_cannot_go_to_youth(self):
+    def test_under_14_can_move_up_to_youth(self):
         ok, err = validate_age_category_override(12, "YOUTH")
-        assert ok is False
+        assert ok is True
 
     def test_under_14_cannot_go_to_pro(self):
         ok, err = validate_age_category_override(13, "PRO")
@@ -209,7 +209,7 @@ class TestValidateAgeCategoryOverride:
         ok, err = validate_age_category_override(21, "PRO")
         assert ok is True
 
-    def test_all_valid_categories_accepted_for_adult(self):
-        for cat in ["PRE", "YOUTH", "AMATEUR", "PRO"]:
+    def test_adult_cannot_move_below_amateur_base(self):
+        for cat in ["PRE", "YOUTH"]:
             ok, err = validate_age_category_override(20, cat)
-            assert ok is True, f"Expected True for category {cat!r}"
+            assert ok is False, f"Expected denial below base for {cat!r}"

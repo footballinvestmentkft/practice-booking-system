@@ -13,7 +13,7 @@ using dependency override for auth (Bearer CSRF bypass, same pattern as ORG test
 DONE = pytest tests/integration/web_flows/test_sponsor_cleanup_http.py -v
 """
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from urllib.parse import urlencode
 
 import pytest
@@ -91,6 +91,7 @@ def _make_entry(db: Session, sponsor: Sponsor, log: CsvImportLog,
         first_name="HTTP",
         last_name="Player",
         email=f"http+{uuid.uuid4().hex[:8]}@test.com",
+        date_of_birth=date(2000, 1, 1),
     )
     defaults.update(kwargs)
     e = SponsorAudienceEntry(

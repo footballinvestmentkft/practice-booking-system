@@ -47,9 +47,11 @@ def _student(uid=99):
     return _user(uid=uid, role=UserRole.STUDENT)
 
 
-def _license_mock(spec_type="COACH"):
+def _license_mock(spec_type="COACH", level=1, canonical_program_id=None):
     lic = MagicMock()
     lic.specialization_type = spec_type
+    lic.current_level = level
+    lic.canonical_program_id = canonical_program_id
     return lic
 
 
@@ -242,16 +244,26 @@ class TestGetInstructorTeachableSpecializations:
             result = self._call(db=db)
         assert result == []
 
-    def test_coach_license_maps_lfa_player(self):
-        """GITS-03: COACH license → LFA_PLAYER_* specializations."""
-        lic = _license_mock(spec_type="COACH")
+    def test_pre_head_coach_only_maps_pre_football(self):
+        """GITS-03: level 2 Head Coach is scoped to PRE."""
+        lic = _license_mock(spec_type="COACH", level=2)
         q = _q(all_val=[lic])
         db = MagicMock()
         db.query.return_value = q
         with _gits_sys_modules():
             result = self._call(db=db)
         assert "LFA_PLAYER_PRE" in result
-        assert "LFA_PLAYER_YOUTH" in result
+        assert "LFA_PLAYER_YOUTH" not in result
+        assert "LFA_PLAYER_AMATEUR" not in result
+        assert "LFA_PLAYER_PRO" not in result
+
+    def test_youth_assistant_maps_only_pre_and_youth(self):
+        lic = _license_mock(spec_type="LFA_COACH", level=3)
+        q = _q(all_val=[lic])
+        db = MagicMock()
+        db.query.return_value = q
+        result = self._call(db=db)
+        assert result == ["LFA_PLAYER_PRE", "LFA_PLAYER_YOUTH"]
 
     def test_internship_license(self):
         """GITS-04: INTERNSHIP license → INTERNSHIP specialization."""
@@ -263,15 +275,15 @@ class TestGetInstructorTeachableSpecializations:
             result = self._call(db=db)
         assert "INTERNSHIP" in result
 
-    def test_player_license(self):
-        """GITS-05: PLAYER license → GANCUJU_PLAYER specialization."""
+    def test_player_license_does_not_grant_teaching_scope(self):
+        """GITS-05: player entitlement never grants instructor authority."""
         lic = _license_mock(spec_type="PLAYER")
         q = _q(all_val=[lic])
         db = MagicMock()
         db.query.return_value = q
         with _gits_sys_modules():
             result = self._call(db=db)
-        assert "GANCUJU_PLAYER" in result
+        assert result == []
 
     def test_admin_can_view_any(self):
         """GITS-06: admin viewing any instructor's specs → success."""
@@ -284,7 +296,7 @@ class TestGetInstructorTeachableSpecializations:
 
     def test_instructor_own_specs(self):
         """GITS-07: instructor viewing own → allowed."""
-        lic = _license_mock(spec_type="COACH")
+        lic = _license_mock(spec_type="COACH", level=2)
         q = _q(all_val=[lic])
         db = MagicMock()
         db.query.return_value = q

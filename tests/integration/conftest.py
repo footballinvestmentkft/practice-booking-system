@@ -24,6 +24,7 @@ collect_ignore = [
 
 import uuid
 import pytest
+from datetime import date
 from sqlalchemy import event
 from sqlalchemy.orm import Session, sessionmaker
 from fastapi.testclient import TestClient
@@ -124,6 +125,7 @@ def instructor_user(test_db: Session) -> User:
         password_hash=get_password_hash("instructor123"),
         role=UserRole.INSTRUCTOR,
         is_active=True,
+        date_of_birth=date(1990, 1, 1),
     )
     test_db.add(user)
     test_db.commit()
@@ -139,6 +141,7 @@ def student_user(test_db: Session) -> User:
         password_hash=get_password_hash("student123"),
         role=UserRole.STUDENT,
         is_active=True,
+        date_of_birth=date(2000, 1, 1),
     )
     test_db.add(user)
     test_db.commit()

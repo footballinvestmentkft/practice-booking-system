@@ -109,27 +109,20 @@ def process_refund(
         # Free tournament, no refund needed
         return None
 
-    # Update license credit balance
-    user_license.credit_balance = (user_license.credit_balance or 0) + refund_amount
-
-    # Create refund transaction using CreditService
+    user = enrollment.user
     credit_service = CreditService(db)
     idempotency_key = f"refund-tournament-{tournament.id}-enrollment-{enrollment.id}"
 
-    transaction, created = credit_service.create_transaction(
-        user_id=None,  # License-level credit
-        user_license_id=user_license.id,
+    transaction = credit_service.credit(
+        user=user,
         transaction_type=TransactionType.REFUND.value,
         amount=refund_amount,
-        balance_after=user_license.credit_balance,
         description=f"Tournament cancellation refund: {tournament.name} (ID: {tournament.id}). Reason: {reason}",
         idempotency_key=idempotency_key,
-        semester_id=tournament.id,
-        enrollment_id=enrollment.id
     )
-
-    # Get user details for response
-    user = enrollment.user
+    transaction.context_user_license_id = user_license.id
+    transaction.semester_id = tournament.id
+    transaction.enrollment_id = enrollment.id
 
     return RefundDetails(
         enrollment_id=enrollment.id,

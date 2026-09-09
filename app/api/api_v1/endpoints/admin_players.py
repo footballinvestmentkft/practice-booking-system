@@ -33,6 +33,12 @@ from app.dependencies import get_current_admin_user
 from app.models.user import User, UserRole
 from app.models.license import UserLicense
 from app.core.security import get_password_hash
+from app.services.canonical_policy import (
+    CanonicalProgram,
+    evaluate_profile_age_policy,
+    resolve_program_id,
+)
+from app.services.program_eligibility_service import record_guardian_consent
 
 import logging
 
@@ -97,9 +103,13 @@ class PlayerCreateEntry(BaseModel):
     email: str = Field(..., description="Player email address (must be unique)")
     password: str = Field(..., min_length=6, description="Plain-text password (hashed server-side)")
     name: str = Field(..., min_length=1, max_length=200, description="Display name")
-    date_of_birth: Optional[str] = Field(
-        default="2000-06-15",
-        description="ISO date string YYYY-MM-DD (defaults to 2000-06-15)"
+    date_of_birth: str = Field(
+        ...,
+        description="Required ISO date string YYYY-MM-DD"
+    )
+    guardian_name: Optional[str] = Field(
+        default=None,
+        description="Required guardian consent evidence for players under 18",
     )
 
     @field_validator("email")
@@ -173,6 +183,7 @@ def _commit_chunk(
     existing: Dict[str, int],
     specialization: str,
     now: datetime,
+    admin_user_id: int | None = None,
 ) -> Tuple[List[int], int, int, int]:
     """
     Insert one chunk of players + licenses, commit, return
@@ -188,10 +199,10 @@ def _commit_chunk(
             continue
 
         try:
-            try:
-                dob = datetime.strptime(entry.date_of_birth or "2000-06-15", "%Y-%m-%d").date()
-            except ValueError:
-                dob = datetime(2000, 6, 15).date()
+            dob = datetime.strptime(entry.date_of_birth, "%Y-%m-%d").date()
+            profile = evaluate_profile_age_policy(dob, bool(entry.guardian_name))
+            if not profile.usable:
+                raise ValueError(profile.reason)
 
             parts = entry.name.split()
             user = User(
@@ -207,6 +218,14 @@ def _commit_chunk(
             )
             db.add(user)
             db.flush()  # populate user.id before license FK
+            if profile.age is not None and profile.age < 18:
+                record_guardian_consent(
+                    db,
+                    user=user,
+                    guardian_name=entry.guardian_name,
+                    granted_by_user_id=admin_user_id,
+                    evidence_reference="ADMIN_BATCH_PLAYER_CREATE",
+                )
 
             db.add(UserLicense(
                 user_id=user.id,
@@ -265,6 +284,16 @@ def batch_create_players(
 ) -> BatchCreatePlayersResponse:
     t_start = time.perf_counter()
 
+    resolution = resolve_program_id(request.specialization)
+    if (
+        not resolution.usable
+        or resolution.canonical_program is not CanonicalProgram.LFA_FOOTBALL_PLAYER
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CANONICAL_FOOTBALL_PROGRAM_REQUIRED",
+        )
+
     # ── Rate guard ────────────────────────────────────────────────────────────
     _check_rate_limit(current_user.id, len(request.players))
 
@@ -282,7 +311,7 @@ def batch_create_players(
     for chunk_start in range(0, len(players), CHUNK_SIZE):
         chunk = players[chunk_start: chunk_start + CHUNK_SIZE]
         ids, created, skipped, failed = _commit_chunk(
-            db, chunk, existing, request.specialization, now
+            db, chunk, existing, request.specialization, now, current_user.id
         )
         player_ids.extend(ids)
         total_created += created

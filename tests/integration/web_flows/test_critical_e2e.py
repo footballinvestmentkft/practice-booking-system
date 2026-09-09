@@ -119,6 +119,7 @@ def _make_tournament(db: Session, enrollment_cost: int = 0) -> Semester:
         tournament_status="ENROLLMENT_OPEN",
         enrollment_cost=enrollment_cost,
         specialization_type="LFA_FOOTBALL_PLAYER",
+        age_group="AMATEUR",
     )
     db.add(sem)
     db.flush()
@@ -532,7 +533,7 @@ def test_credit_flow_deduction_and_history(test_db: Session, client: TestClient)
     # DB: CreditTransaction created with correct fields
     tx = (
         test_db.query(CreditTransaction)
-        .filter(CreditTransaction.user_license_id == lic.id)
+        .filter(CreditTransaction.context_user_license_id == lic.id)
         .order_by(CreditTransaction.id.desc())
         .first()
     )
@@ -869,7 +870,7 @@ def test_tournament_unenrollment_credit_refund(test_db: Session, client: TestCli
     tx = (
         test_db.query(CreditTransaction)
         .filter(
-            CreditTransaction.user_license_id == lic.id,
+            CreditTransaction.context_user_license_id == lic.id,
             CreditTransaction.amount > 0,
         )
         .order_by(CreditTransaction.id.desc())
@@ -912,8 +913,8 @@ def test_instructor_slot_duplicate_rejected(test_db: Session, client: TestClient
     coach_lic = UserLicense(
         user_id=instructor.id,
         specialization_type="LFA_COACH",
-        current_level=5,
-        max_achieved_level=5,
+        current_level=6,
+        max_achieved_level=6,
         is_active=True,
         expires_at=None,
         started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
@@ -1207,7 +1208,7 @@ def test_camp_enroll(test_db: Session, client: TestClient):
 
     # Step 5: DB — CreditTransaction recorded
     tx = test_db.query(CreditTransaction).filter(
-        CreditTransaction.user_license_id == lic.id,
+        CreditTransaction.context_user_license_id == lic.id,
         CreditTransaction.semester_id == camp.id,
     ).first()
     assert tx is not None, "CreditTransaction must exist after camp enrollment"
@@ -1271,7 +1272,7 @@ def test_camp_unenroll_refund(test_db: Session, client: TestClient):
 
     # Step 4: DB — CreditTransaction refund recorded
     tx = test_db.query(CreditTransaction).filter(
-        CreditTransaction.user_license_id == lic.id,
+        CreditTransaction.context_user_license_id == lic.id,
         CreditTransaction.semester_id == camp.id,
     ).first()
     assert tx is not None, "CreditTransaction must exist after camp unenroll"
@@ -1324,7 +1325,7 @@ def test_tournament_cancellation_refund(test_db: Session, client: TestClient):
     tx = (
         test_db.query(CreditTransaction)
         .filter(
-            CreditTransaction.user_license_id == lic.id,
+            CreditTransaction.context_user_license_id == lic.id,
             CreditTransaction.semester_id == tournament.id,
             CreditTransaction.amount == 100,
         )
@@ -1335,10 +1336,10 @@ def test_tournament_cancellation_refund(test_db: Session, client: TestClient):
         f"Transaction type must be REFUND, got {tx.transaction_type}"
     )
 
-    # DB: user_license.credit_balance increased by refund amount
-    test_db.refresh(lic)
-    assert lic.credit_balance >= 100, (
-        f"user_license.credit_balance must include refund; got {lic.credit_balance}"
+    # DB: canonical user balance restored by the refund.
+    test_db.refresh(student)
+    assert student.credit_balance == 500, (
+        f"user.credit_balance must be restored to 500; got {student.credit_balance}"
     )
 
     # UI: admin tournament edit page renders CANCELLED status
@@ -1424,24 +1425,24 @@ def test_team_enrollment_deducts_credits(test_db: Session, client: TestClient):
     """GAP-02: Captain enrolls existing team → TournamentTeamEnrollment + CreditTransaction(ENROLLMENT).
 
     Chain:
-      TEAM tournament(team_enrollment_cost=150) + Team + captain with license(credit_balance=500)
+      TEAM tournament(team_enrollment_cost=150) + Team + captain with user credit_balance=500
       POST /tournaments/{tid}/teams/{team_id}/enroll  → 303
       DB:  TournamentTeamEnrollment.is_active=True
       DB:  CreditTransaction(ENROLLMENT, amount=-150) created
-      DB:  UserLicense.credit_balance == 350 (500 - 150)
+      DB:  User.credit_balance == 350 (500 - 150)
       GET  /student/credits  → "350" visible in HTML (balance updated)
     """
     COST = 150
 
     # ── Setup ──────────────────────────────────────────────────────────────────
-    captain = _make_user(test_db, credit_balance=0)   # User.credit_balance unused for teams
+    captain = _make_user(test_db, credit_balance=500)
     lic = UserLicense(
         user_id=captain.id,
         specialization_type="LFA_FOOTBALL_PLAYER",
         is_active=True,
         onboarding_completed=True,
         started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
-        credit_balance=500,                             # team cost deducted from license balance
+        credit_balance=0,
         football_skills={"ball_control": 70.0},
     )
     test_db.add(lic)
@@ -1516,7 +1517,7 @@ def test_team_enrollment_deducts_credits(test_db: Session, client: TestClient):
     tx = (
         test_db.query(CreditTransaction)
         .filter(
-            CreditTransaction.user_license_id == lic.id,
+            CreditTransaction.context_user_license_id == lic.id,
             CreditTransaction.amount == -COST,
         )
         .first()
@@ -1526,10 +1527,10 @@ def test_team_enrollment_deducts_credits(test_db: Session, client: TestClient):
         f"transaction_type must be ENROLLMENT, got {tx.transaction_type}"
     )
 
-    # ── DB: license.credit_balance reduced by COST ────────────────────────────
-    test_db.refresh(lic)
-    assert lic.credit_balance == 500 - COST, (
-        f"license.credit_balance must be {500 - COST} after deducting {COST}, got {lic.credit_balance}"
+    # ── DB: canonical user balance reduced by COST ───────────────────────────
+    test_db.refresh(captain)
+    assert captain.credit_balance == 500 - COST, (
+        f"user.credit_balance must be {500 - COST} after deducting {COST}, got {captain.credit_balance}"
     )
 
     # ── UI: GET /credits → page renders and shows User.credit_balance ────────
@@ -2899,7 +2900,7 @@ def test_instructor_skills_form_renders(test_db: Session, client: TestClient):
     student = _make_user(test_db, role=UserRole.STUDENT)
     lic = UserLicense(
         user_id=student.id,
-        specialization_type="LFA_PLAYER_YOUTH",
+        specialization_type="LFA_FOOTBALL_PLAYER",
         is_active=True,
         onboarding_completed=True,
         started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
@@ -2921,8 +2922,8 @@ def test_instructor_skills_form_renders(test_db: Session, client: TestClient):
     # DB: license with LFA_PLAYER_ specialization exists
     found = test_db.query(UserLicense).filter(UserLicense.id == lic.id).first()
     assert found is not None, "UserLicense must exist in DB"
-    assert found.specialization_type.startswith("LFA_PLAYER_"), (
-        f"specialization_type must start with LFA_PLAYER_, got '{found.specialization_type}'"
+    assert found.specialization_type == "LFA_FOOTBALL_PLAYER", (
+        f"specialization_type must be canonical, got '{found.specialization_type}'"
     )
 
     # UI: skills form page rendered with heading
@@ -2942,7 +2943,7 @@ def test_instructor_skills_update_and_audit(test_db: Session, client: TestClient
     student = _make_user(test_db, role=UserRole.STUDENT)
     lic = UserLicense(
         user_id=student.id,
-        specialization_type="LFA_PLAYER_YOUTH",
+        specialization_type="LFA_FOOTBALL_PLAYER",
         is_active=True,
         onboarding_completed=True,
         started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
@@ -3013,7 +3014,7 @@ def test_instructor_skills_invalid_value_returns_error(test_db: Session, client:
     }
     lic = UserLicense(
         user_id=student.id,
-        specialization_type="LFA_PLAYER_YOUTH",
+        specialization_type="LFA_FOOTBALL_PLAYER",
         is_active=True,
         onboarding_completed=True,
         started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
@@ -3066,7 +3067,7 @@ def test_instructor_enrollments_page_renders(test_db: Session, client: TestClien
     student = _make_user(test_db, role=UserRole.STUDENT)
     lic = UserLicense(
         user_id=student.id,
-        specialization_type="LFA_PLAYER_YOUTH",
+        specialization_type="LFA_FOOTBALL_PLAYER",
         is_active=True,
         onboarding_completed=True,
         started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
@@ -3848,6 +3849,7 @@ def test_admin_user_create_creates_active_user(test_db: Session, client: TestCli
             "role": "student",
             "password": "Pass1234!",
             "credit_balance": "0",
+            "date_of_birth": "2000-01-01",
         },
         follow_redirects=False,
     )
@@ -4101,8 +4103,8 @@ def test_admin_instructor_slot_create_planned(test_db: Session, client: TestClie
     coach_lic_f61 = UserLicense(
         user_id=instructor.id,
         specialization_type="LFA_COACH",
-        current_level=5,
-        max_achieved_level=5,
+        current_level=6,
+        max_achieved_level=6,
         is_active=True,
         expires_at=None,
         started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
@@ -4120,6 +4122,7 @@ def test_admin_instructor_slot_create_planned(test_db: Session, client: TestClie
         status=SemesterStatus.ONGOING,
         semester_category=SemesterCategory.TOURNAMENT,
         tournament_status="ENROLLMENT_OPEN",
+        age_group="AMATEUR",
     )
     test_db.add(sem)
     test_db.flush()
@@ -5304,7 +5307,7 @@ def test_credit_balance_invariant(test_db: Session, client: TestClient):
     )
     tx_enroll = (
         test_db.query(CreditTransaction)
-        .filter_by(user_license_id=license_.id, transaction_type="SEMESTER_ENROLLMENT")
+        .filter_by(context_user_license_id=license_.id, transaction_type="SEMESTER_ENROLLMENT")
         .first()
     )
     assert tx_enroll is not None, "INV-01: CreditTransaction(SEMESTER_ENROLLMENT) must exist"
@@ -5334,7 +5337,7 @@ def test_credit_balance_invariant(test_db: Session, client: TestClient):
     )
     tx_refund = (
         test_db.query(CreditTransaction)
-        .filter_by(user_license_id=license_.id, transaction_type="SEMESTER_UNENROLL_REFUND")
+        .filter_by(context_user_license_id=license_.id, transaction_type="SEMESTER_UNENROLL_REFUND")
         .first()
     )
     assert tx_refund is not None, "INV-01: CreditTransaction(SEMESTER_UNENROLL_REFUND) must exist"

@@ -43,5 +43,11 @@ class EnrollmentRejection(BaseModel):
 
 
 class CategoryOverride(BaseModel):
-    """Request to override age category for a student enrollment"""
-    age_category: str = Field(..., description="New age category (PRE, YOUTH, AMATEUR, PRO)")
+    """Explicit, replay-safe football category movement command."""
+    age_category: str = Field(..., description="Target effective category (PRE, YOUTH, AMATEUR, PRO)")
+    expected_version: int = Field(..., ge=1, description="Current assignment version for optimistic concurrency")
+    base_participation_retained: bool = Field(
+        False, description="Whether the player remains eligible in the season base category"
+    )
+    reason: str = Field(..., min_length=1, max_length=1000)
+    idempotency_key: str = Field(..., min_length=8, max_length=255)
