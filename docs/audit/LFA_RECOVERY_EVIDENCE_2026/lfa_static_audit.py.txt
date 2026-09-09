@@ -1,0 +1,37 @@
+import ast, pathlib, json, subprocess, collections, re, hashlib
+root=pathlib.Path.cwd()
+out=root/'docs/audit'
+out.mkdir(parents=True,exist_ok=True)
+files=subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
+files=[p for p in files if p and (root/p).is_file()]
+summary={'tracked_files':len(files),'top_level':dict(collections.Counter(p.split('/')[0] for p in files)), 'extensions':dict(collections.Counter(pathlib.Path(p).suffix for p in files))}
+modules=[]; routes=[]; errors=[]; tables=[]; keywords=[]
+for p in files:
+ if not p.endswith('.py'): continue
+ try:
+  src=(root/p).read_text(); tree=ast.parse(src)
+ except Exception as e:
+  errors.append({'path':p,'error':type(e).__name__,'line':getattr(e,'lineno',None)});continue
+ funcs=[n for n in ast.walk(tree) if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef))]
+ modules.append({'path':p,'lines':len(src.splitlines()),'functions':len(funcs),'max_function_lines':max([n.end_lineno-n.lineno+1 for n in funcs] or [0]),'broad_excepts':sum(isinstance(n,ast.ExceptHandler) and (n.type is None or ast.unparse(n.type) in ('Exception','BaseException')) for n in ast.walk(tree))})
+ if p.startswith('app/models/'):
+  for n in ast.walk(tree):
+   if isinstance(n,ast.ClassDef):
+    for a in n.body:
+     if isinstance(a,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='__tablename__' for t in a.targets):
+      tables.append({'path':p,'symbol':n.name,'line':n.lineno,'table':ast.literal_eval(a.value),'foreign_keys':[ast.unparse(x) for x in ast.walk(n) if isinstance(x,ast.Call) and isinstance(x.func,ast.Name) and x.func.id=='ForeignKey'],'constraints':[ast.unparse(x) for x in ast.walk(n) if isinstance(x,ast.Call) and isinstance(x.func,ast.Name) and x.func.id in ('CheckConstraint','UniqueConstraint','Index')]})
+ for n in funcs:
+  for d in n.decorator_list:
+   if not isinstance(d,ast.Call) or not isinstance(d.func,ast.Attribute) or d.func.attr not in ('get','post','put','patch','delete','options','head','websocket','api_route'):continue
+   if not d.args or not isinstance(d.args[0],ast.Constant) or not isinstance(d.args[0].value,str):continue
+   kw={k.arg:ast.unparse(k.value) for k in d.keywords}
+   returns=[ast.unparse(x.value)[:400] if x.value else 'None' for x in ast.walk(n) if isinstance(x,ast.Return)]
+   routes.append({'path':p,'line':n.lineno,'symbol':n.name,'method':d.func.attr.upper(),'declared_route':d.args[0].value,'router':ast.unparse(d.func.value),'signature':ast.unparse(n.args),'declared_response':kw.get('response_model',ast.unparse(n.returns) if n.returns else 'UNVERIFIED'),'decorator_options':kw,'direct_calls':sorted(set(ast.unparse(x.func) for x in ast.walk(n) if isinstance(x,ast.Call))),'return_expressions':returns,'exceptions':[ast.unparse(x.exc)[:250] for x in ast.walk(n) if isinstance(x,ast.Raise) and x.exc],'production_readiness':'UNVERIFIED','expected_request':'UNVERIFIED — no independent per-endpoint product specification','expected_response':'UNVERIFIED — compare declared contract and consumer; see report','consumer':'UNVERIFIED','test_coverage':'UNVERIFIED'})
+ if p.startswith(('app/','ios/')):
+  for i,line in enumerate(src.splitlines(),1):
+   terms=re.findall(r'\b(?:legacy|deprecated|mock|fake|placeholder|TODO|FIXME|temporary|fallback|hardcoded|demo)\b',line,re.I)
+   if terms: keywords.append({'path':p,'line':i,'terms':sorted(set(x.lower() for x in terms)),'reachability':'UNVERIFIED — candidate only'})
+summary.update(python_modules=len(modules),route_declarations=len(routes),model_tables=len(tables),syntax_errors=errors,largest_modules=sorted([m for m in modules if m['path'].startswith('app/')],key=lambda m:m['lines'],reverse=True)[:25])
+for name,data in [('LFA_STATIC_INVENTORY_2026.json',{'summary':summary,'modules':modules,'tables':tables}),('LFA_API_DECLARATIONS_2026.json',routes),('LFA_LEGACY_CANDIDATES_2026.json',keywords)]:
+ (out/name).write_text(json.dumps(data,indent=2)+'\n')
+print(json.dumps(summary,indent=2))

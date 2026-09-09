@@ -1,0 +1,3957 @@
+[
+  {
+    "suite": "core",
+    "totals": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "17",
+      "tests": "647",
+      "time": "2.319",
+      "timestamp": "2026-09-08T19:19:37.828036",
+      "hostname": "MacBookAir.home"
+    },
+    "cases": [
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_neither_user_id_raises_with_exact_message",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_both_user_ids_raises_with_exact_message",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_pre_flight_match_returns_existing_without_flush",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_integrity_error_constraint_match_existing_found_returns_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_integrity_error_constraint_match_not_found_raises_value_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_integrity_error_race_condition_message_contains_key_and_phrase",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_integrity_error_other_constraint_reraises_as_integrity_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_generate_idempotency_key_as_unbound_class_method",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_generate_idempotency_key_is_lowercase",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_generate_idempotency_key_on_instance_kills_decorator_mutant",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_neither_user_id_message_is_exact",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_both_user_ids_message_is_exact",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_credit_service_unit.TestCreditServiceUnit",
+        "name": "test_race_condition_message_is_exact",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestConfigLoadFailure",
+        "name": "test_filenotfound_returns_invalid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestConfigLoadFailure",
+        "name": "test_filenotfound_error_message_describes_failure",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestConfigLoadFailure",
+        "name": "test_valueerror_returns_invalid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestConfigLoadFailure",
+        "name": "test_generic_exception_returns_invalid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestConfigLoadFailure",
+        "name": "test_early_return_has_empty_warnings",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestConfigLoadFailure",
+        "name": "test_early_return_has_empty_requirements",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestConfigLoadFailure",
+        "name": "test_config_failure_bypasses_raise_exception",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestMinAgeValidation",
+        "name": "test_age_above_min_valid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestMinAgeValidation",
+        "name": "test_age_exactly_at_min_valid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestMinAgeValidation",
+        "name": "test_age_below_min_invalid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestMinAgeValidation",
+        "name": "test_age_below_min_error_contains_current_age",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestMinAgeValidation",
+        "name": "test_min_age_zero_always_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestMinAgeValidation",
+        "name": "test_dob_none_skips_min_age_check",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestMinAgeValidation",
+        "name": "test_age_none_with_dob_set_skips_min_age_check",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestMinAgeValidation",
+        "name": "test_requirements_contain_min_age",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestMinAgeValidation",
+        "name": "test_requirements_contain_specialization_name",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachSpecific",
+        "name": "test_age_14_exactly_passes_step3a",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachSpecific",
+        "name": "test_age_13_fails_step3a",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachSpecific",
+        "name": "test_age_13_error_mentions_user_age",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachSpecific",
+        "name": "test_age_none_skips_step3a",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachSpecific",
+        "name": "test_non_lfa_coach_skips_step3a",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachSpecific",
+        "name": "test_lfa_coach_requirements_include_parental_consent_flag",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachSpecific",
+        "name": "test_lfa_coach_requirements_include_min_age_override",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachSpecific",
+        "name": "test_non_lfa_coach_no_parental_consent_requirement",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachSpecific",
+        "name": "test_inv6_step3a_error_before_age_group_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachSpecific",
+        "name": "test_inv1_step1_and_step3a_errors_both_accumulate",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestParentalConsentMatrix",
+        "name": "test_adult_no_consent_needed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestParentalConsentMatrix",
+        "name": "test_minor_without_consent_invalid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestParentalConsentMatrix",
+        "name": "test_minor_with_consent_valid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestParentalConsentMatrix",
+        "name": "test_minor_with_consent_warning_contains_parent_name",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestParentalConsentMatrix",
+        "name": "test_minor_without_consent_no_parent_warning",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestParentalConsentMatrix",
+        "name": "test_non_lfa_coach_minor_no_consent_check",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestParentalConsentMatrix",
+        "name": "test_inv1_step3a_and_step3b_errors_both_accumulate",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_age_in_bounded_group_valid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_age_at_lower_bound_valid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_age_at_upper_bound_valid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_age_in_unbounded_group_valid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_age_below_all_groups_invalid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_age_in_gap_between_groups_invalid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_no_age_groups_in_config_skips_validation",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_dob_none_skips_age_group_check",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_error_message_lists_bounded_and_unbounded_ranges",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_requirements_has_age_groups_flag_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_requirements_no_age_groups_flag_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestAgeGroupValidation",
+        "name": "test_inv6_step1_error_before_step4_age_group_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestSilentSkipsExact",
+        "name": "test_dob_none_age_none_no_errors_only_dob_warning",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestSilentSkipsExact",
+        "name": "test_lfa_coach_dob_none_age_none_skips_step3a",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestSilentSkipsExact",
+        "name": "test_inv5_lfa_coach_dob_none_age_set_step3a_fires",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestSilentSkipsExact",
+        "name": "test_dob_set_age_none_skips_both_min_and_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestSilentSkipsExact",
+        "name": "test_dob_none_triggers_dob_warning_for_lfa_coach_too",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestRaiseExceptionGate",
+        "name": "test_raise_exception_true_on_invalid_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestRaiseExceptionGate",
+        "name": "test_raise_exception_false_returns_dict_on_invalid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestRaiseExceptionGate",
+        "name": "test_raise_exception_true_valid_does_not_raise",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestRaiseExceptionGate",
+        "name": "test_raise_exception_default_is_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestRaiseExceptionGate",
+        "name": "test_inv6_exception_message_equals_joined_errors",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestRaiseExceptionGate",
+        "name": "test_inv6_lfa_coach_multi_error_message_order",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetEligibleSpecializations",
+        "name": "test_returns_entry_for_every_spec_enum_value",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetEligibleSpecializations",
+        "name": "test_result_dict_has_required_keys",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetEligibleSpecializations",
+        "name": "test_eligible_user_all_marked_eligible",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetEligibleSpecializations",
+        "name": "test_ineligible_user_all_marked_ineligible",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetEligibleSpecializations",
+        "name": "test_display_info_error_falls_back_to_enum_value",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetEligibleSpecializations",
+        "name": "test_specialization_id_matches_enum_value",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetMatchingAgeGroup",
+        "name": "test_age_none_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetMatchingAgeGroup",
+        "name": "test_age_in_bounded_group_returns_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetMatchingAgeGroup",
+        "name": "test_age_in_unbounded_group_returns_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetMatchingAgeGroup",
+        "name": "test_age_below_all_groups_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetMatchingAgeGroup",
+        "name": "test_age_above_bounded_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetMatchingAgeGroup",
+        "name": "test_first_matching_group_returned",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetMatchingAgeGroup",
+        "name": "test_no_age_groups_in_config_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetMatchingAgeGroup",
+        "name": "test_age_exactly_at_lower_bound_matches",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestGetMatchingAgeGroup",
+        "name": "test_age_exactly_at_upper_bound_matches",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachConfigSync",
+        "name": "test_lfa_coach_config_min_age_equals_hardcoded_14",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachConfigSync",
+        "name": "test_lfa_coach_config_parental_consent_flag_set",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_validation.TestLFACoachConfigSync",
+        "name": "test_lfa_coach_all_age_groups_allow_entry_at_14",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestInit",
+        "name": "test_valid_config_dir_ok",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestInit",
+        "name": "test_missing_config_dir_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestLoadConfig",
+        "name": "test_valid_spec_returns_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestLoadConfig",
+        "name": "test_missing_file_raises_file_not_found",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestLoadConfig",
+        "name": "test_invalid_json_raises_value_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestLoadConfig",
+        "name": "test_missing_required_top_fields_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestLoadConfig",
+        "name": "test_empty_levels_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestLoadConfig",
+        "name": "test_levels_not_a_list_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestLoadConfig",
+        "name": "test_level_missing_fields_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetLevelConfig",
+        "name": "test_found_returns_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetLevelConfig",
+        "name": "test_not_found_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetLevelConfig",
+        "name": "test_second_level_found",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetXpRange",
+        "name": "test_valid_level_returns_tuple",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetXpRange",
+        "name": "test_invalid_level_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetMaxLevel",
+        "name": "test_returns_max_int",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetMaxLevel",
+        "name": "test_real_config_max_level",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetLevelName",
+        "name": "test_level_not_found_returns_placeholder",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetLevelName",
+        "name": "test_english_false_returns_default_name",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetLevelName",
+        "name": "test_english_true_with_name_en",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetLevelName",
+        "name": "test_english_true_without_name_en_fallback",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetLevelRequirements",
+        "name": "test_with_requirements",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetLevelRequirements",
+        "name": "test_level_not_found_returns_empty_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetLevelRequirements",
+        "name": "test_level_with_no_requirements_key",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetAgeGroups",
+        "name": "test_no_age_groups_returns_empty_list",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetAgeGroups",
+        "name": "test_with_age_groups",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetAgeGroups",
+        "name": "test_real_lfa_player_has_age_groups",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetDisplayInfo",
+        "name": "test_returns_expected_keys",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestGetDisplayInfo",
+        "name": "test_missing_optional_fields_return_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestClearCache",
+        "name": "test_clear_cache_works",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestModuleFunctions",
+        "name": "test_get_config_loader_singleton",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestModuleFunctions",
+        "name": "test_get_config_loader_creates_instance",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_config_loader.TestModuleFunctions",
+        "name": "test_load_specialization_config_convenience",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractAgeGroup",
+        "name": "test_none_input_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractAgeGroup",
+        "name": "test_empty_string_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractAgeGroup",
+        "name": "test_lfa_player_pre",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractAgeGroup",
+        "name": "test_lfa_player_youth",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractAgeGroup",
+        "name": "test_lfa_player_amateur",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractAgeGroup",
+        "name": "test_lfa_player_pro",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractAgeGroup",
+        "name": "test_gancuju_player_pre",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractAgeGroup",
+        "name": "test_lfa_coach_without_age_group_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractAgeGroup",
+        "name": "test_completely_unknown_spec_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractBaseSpec",
+        "name": "test_none_input_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractBaseSpec",
+        "name": "test_empty_string_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractBaseSpec",
+        "name": "test_player_keyword_returns_player",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractBaseSpec",
+        "name": "test_gancuju_player_returns_player",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractBaseSpec",
+        "name": "test_coach_keyword_returns_coach",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractBaseSpec",
+        "name": "test_coach_with_age_group_returns_coach",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractBaseSpec",
+        "name": "test_internship_keyword_returns_internship",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractBaseSpec",
+        "name": "test_intern_substring_returns_internship",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestExtractBaseSpec",
+        "name": "test_no_match_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_no_licenses_in_db_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_all_licenses_expired_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_partial_expiration_only_active_used",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_db_commit_always_called",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_db_commit_called_when_authorized",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_invalid_specialization_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_age_group_provided_directly",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_age_group_none_extracted_from_spec",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_age_group_none_spec_has_no_age_group_default_min",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_internship_semester_with_internship_license_authorized",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_internship_semester_without_internship_license_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_internship_semester_intern_keyword_in_spec",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_pre_age_group_min_level_1",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_youth_age_group_min_level_3",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_amateur_meets_minimum",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_amateur_below_minimum",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_pro_exact_level",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_pro_insufficient_level",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_coach_license_authorized",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_coach_license_below_minimum",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_both_licenses_qualify",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_coach_min_levels_unknown_age_group_uses_default",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_player_semester_reason_includes_license_desc",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_coach_semester_pre_coach_license_authorized",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_coach_semester_youth_coach_license_authorized",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_coach_semester_amateur_coach_license_authorized",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_coach_semester_pro_coach_license_authorized",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_coach_semester_coach_license_below_minimum",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_coach_semester_player_license_any_level_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_coach_semester_player_license_low_level_also_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanBeMasterInstructor",
+        "name": "test_coach_semester_unknown_age_group_uses_default",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_is_mixed_session_authorized_without_db",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_no_session_spec_authorized_without_db",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_mixed_and_no_spec_both_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_db_commit_not_called_for_mixed_session",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_no_licenses_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_all_licenses_expired_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_partial_expiration_only_active_used",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_db_commit_called_when_non_mixed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_invalid_specialization_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_player_session_player_license_with_age_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_player_session_player_license_below_min_with_age_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_player_session_player_license_no_age_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_player_session_player_license_pro_age_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_player_session_coach_license_with_age_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_player_session_coach_license_below_min",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_player_session_coach_license_no_age_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_player_session_internship_license_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_player_session_reason_includes_license_info",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_player_session_denied_reason_includes_spec",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_coach_session_coach_license_with_age_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_coach_session_coach_license_no_age_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_coach_session_coach_below_min",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_coach_session_player_license_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_coach_session_pro_age_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_coach_session_amateur_age_group",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_internship_session_internship_license_authorized",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_internship_session_player_license_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_internship_session_coach_license_denied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_internship_session_via_intern_keyword",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestCanTeachSession",
+        "name": "test_internship_session_reason_includes_license_desc",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestGetQualifiedInstructors",
+        "name": "test_no_users_with_licenses_returns_empty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestGetQualifiedInstructors",
+        "name": "test_authorized_user_included_in_result",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestGetQualifiedInstructors",
+        "name": "test_unauthorized_user_excluded",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestGetQualifiedInstructors",
+        "name": "test_mixed_authorized_and_unauthorized",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_authorization_service.TestGetQualifiedInstructors",
+        "name": "test_multiple_authorized_users",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestCheckLicenseExpiration",
+        "name": "test_no_expires_at_is_perpetual",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestCheckLicenseExpiration",
+        "name": "test_future_expiry_returns_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestCheckLicenseExpiration",
+        "name": "test_past_expiry_returns_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestCheckLicenseExpiration",
+        "name": "test_expired_deactivates_is_active",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestCheckLicenseExpiration",
+        "name": "test_still_active_does_not_modify",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestCheckLicenseExpiration",
+        "name": "test_expiry_exactly_at_now_boundary_is_not_expired",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestCheckLicenseExpiration",
+        "name": "test_naive_datetime_handled",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestCheckLicenseExpiration",
+        "name": "test_naive_future_datetime_returns_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseValidation",
+        "name": "test_invalid_renewal_period_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseValidation",
+        "name": "test_renewal_period_0_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseValidation",
+        "name": "test_license_not_found_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseValidation",
+        "name": "test_user_not_found_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseValidation",
+        "name": "test_insufficient_credits_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_deducts_credits",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_uses_license_renewal_cost_if_set",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_returns_success_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_commits_once",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_audit_log_added",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_license_reactivated",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_payment_verified_flag_set",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_24_month_renewal",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_not_expired_license_extends_from_current_expiry",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_expired_license_extends_from_now",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseSuccess",
+        "name": "test_no_expiry_starts_from_now",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetExpiringLicenses",
+        "name": "test_returns_list_from_db",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetExpiringLicenses",
+        "name": "test_returns_empty_list_if_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetExpiringLicenses",
+        "name": "test_queries_with_threshold",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestBulkCheckExpirations",
+        "name": "test_counts_active_and_expired",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestBulkCheckExpirations",
+        "name": "test_all_active_returns_zero_expired",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestBulkCheckExpirations",
+        "name": "test_all_expired_returns_zero_active",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestBulkCheckExpirations",
+        "name": "test_commits_after_check",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestBulkCheckExpirations",
+        "name": "test_empty_list_returns_zeros",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatus",
+        "name": "test_perpetual_license",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatus",
+        "name": "test_active_license_status",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatus",
+        "name": "test_expiring_soon_within_30_days",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatus",
+        "name": "test_expired_license",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatus",
+        "name": "test_days_until_expiration_positive",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatus",
+        "name": "test_days_until_expiration_negative_when_expired",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatus",
+        "name": "test_naive_expires_at_handled",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatus",
+        "name": "test_is_active_false_when_expired",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatusBoundaries",
+        "name": "test_zero_days_left_is_active_not_expired",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatusBoundaries",
+        "name": "test_one_day_left_is_expiring_soon",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatusBoundaries",
+        "name": "test_exactly_30_days_left_is_expiring_soon",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestGetLicenseStatusBoundaries",
+        "name": "test_exactly_31_days_left_is_active",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseMutationTargets",
+        "name": "test_exactly_sufficient_credits_succeeds",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseMutationTargets",
+        "name": "test_license_expires_at_updated_on_renewal",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseMutationTargets",
+        "name": "test_license_last_renewed_at_set_on_renewal",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseMutationTargets",
+        "name": "test_payment_not_verified_does_not_set_flag",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseMutationTargets",
+        "name": "test_24_month_renewal_adds_exactly_720_days_from_now",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_license_renewal_service.TestRenewLicenseMutationTargets",
+        "name": "test_renew_extends_from_existing_non_expired_date",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestValidateFilesUnit",
+        "name": "test_als01_valid_v1_file",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestValidateFilesUnit",
+        "name": "test_als02_wrong_spec",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestValidateFilesUnit",
+        "name": "test_als03_bad_json",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestValidateFilesUnit",
+        "name": "test_als04_file_too_large",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestValidateFilesIntegration",
+        "name": "test_als05_existing_quiz_is_skipped",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestValidateFilesIntegration",
+        "name": "test_als06_mixed_batch",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestValidateFilesIntegration",
+        "name": "test_als07_v2_file_accepted",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestValidateFilesIntegration",
+        "name": "test_als08_apply_payload_json_structure",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestApplyImport",
+        "name": "test_als09_creates_quiz_questions_options",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestApplyImport",
+        "name": "test_als10_idempotency_existing_quiz_skipped",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestApplyImport",
+        "name": "test_als11_tampered_payload_blocked",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_al_import_service.TestApplyImport",
+        "name": "test_als12_writes_al_import_log",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculatePerformanceTrend",
+        "name": "test_few_questions_returns_current_trend",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculatePerformanceTrend",
+        "name": "test_high_success_rate_increases_trend",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculatePerformanceTrend",
+        "name": "test_high_trend_clamped_at_one",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculatePerformanceTrend",
+        "name": "test_low_success_rate_decreases_trend",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculatePerformanceTrend",
+        "name": "test_low_trend_clamped_at_neg_one",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculatePerformanceTrend",
+        "name": "test_neutral_success_rate_decays_trend",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculatePerformanceTrend",
+        "name": "test_exactly_three_questions_triggers_calculation",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestAdjustTargetDifficulty",
+        "name": "test_correct_with_high_trend_increases_difficulty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestAdjustTargetDifficulty",
+        "name": "test_correct_difficulty_clamped_at_0_9",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestAdjustTargetDifficulty",
+        "name": "test_incorrect_with_low_trend_decreases_difficulty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestAdjustTargetDifficulty",
+        "name": "test_incorrect_difficulty_clamped_at_0_1",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestAdjustTargetDifficulty",
+        "name": "test_correct_with_neutral_trend_small_increase",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestAdjustTargetDifficulty",
+        "name": "test_incorrect_with_neutral_trend_small_decrease",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestIsSessionTimeExpired",
+        "name": "test_no_start_time_returns_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestIsSessionTimeExpired",
+        "name": "test_no_time_limit_returns_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestIsSessionTimeExpired",
+        "name": "test_expired_session_returns_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestIsSessionTimeExpired",
+        "name": "test_not_expired_returns_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestIsSessionTimeExpired",
+        "name": "test_exactly_at_limit_returns_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetSessionTimeRemaining",
+        "name": "test_no_start_time_returns_zero",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetSessionTimeRemaining",
+        "name": "test_no_time_limit_returns_zero",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetSessionTimeRemaining",
+        "name": "test_expired_returns_zero",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetSessionTimeRemaining",
+        "name": "test_remaining_time_is_positive",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetUserLearningAnalytics",
+        "name": "test_no_performances_returns_zeros",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetUserLearningAnalytics",
+        "name": "test_with_performances_calculates_stats",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateAdaptiveXp",
+        "name": "test_incorrect_answer_returns_consolation_xp",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateAdaptiveXp",
+        "name": "test_correct_no_metadata_returns_base_xp",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateAdaptiveXp",
+        "name": "test_correct_with_metadata_difficulty_bonus",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateAdaptiveXp",
+        "name": "test_correct_with_time_bonus",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetMasteryUpdate",
+        "name": "test_no_performance_returns_zero_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetMasteryUpdate",
+        "name": "test_with_performance_returns_values",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetMasteryUpdate",
+        "name": "test_with_performance_and_review_date",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestStartAdaptiveSession",
+        "name": "test_creates_session_and_commits",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestStartAdaptiveSession",
+        "name": "test_uses_provided_session_duration",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateTargetDifficulty",
+        "name": "test_high_success_rate_increases_difficulty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateTargetDifficulty",
+        "name": "test_low_success_rate_decreases_difficulty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateTargetDifficulty",
+        "name": "test_middle_success_rate_returns_base",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateTargetDifficulty",
+        "name": "test_learning_velocity_adjusts_base",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestUpdateUserQuestionPerformance",
+        "name": "test_no_existing_performance_creates_new",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestUpdateUserQuestionPerformance",
+        "name": "test_existing_performance_increments_attempts",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestUpdateUserQuestionPerformance",
+        "name": "test_incorrect_answer_does_not_increment_correct",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestUpdateQuestionMetadata",
+        "name": "test_no_existing_metadata_creates_new",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestUpdateQuestionMetadata",
+        "name": "test_existing_metadata_updates_success_rate",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestEndSession",
+        "name": "test_session_not_found_returns_empty_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestEndSession",
+        "name": "test_session_found_returns_stats",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestRecordAnswer",
+        "name": "test_session_not_found_still_returns_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetNextQuestion",
+        "name": "test_session_not_found_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetNextQuestion",
+        "name": "test_time_expired_returns_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetNextQuestion",
+        "name": "test_no_candidate_questions_returns_pool_exhausted",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetNextQuestion",
+        "name": "test_all_candidates_available_without_blackout",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetNextQuestion",
+        "name": "test_no_selected_question_returns_pool_exhausted_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestRecordAnswerSessionFound",
+        "name": "test_is_correct_true_increments_correct_count",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestRecordAnswerSessionFound",
+        "name": "test_is_correct_false_does_not_increment_correct_count",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetUserLearningAnalyticsBranches",
+        "name": "test_with_category_joins_query",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetUserLearningAnalyticsBranches",
+        "name": "test_with_recent_performances_calculates_velocity",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateQuestionWeight",
+        "name": "test_al_sel_01_due_within_cap_gets_high_weight",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateQuestionWeight",
+        "name": "test_al_sel_02_due_cap_exhausted_falls_back_to_difficulty_weight",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateQuestionWeight",
+        "name": "test_al_sel_03_weak_concept_gets_elevated_weight",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateQuestionWeight",
+        "name": "test_al_sel_04_never_seen_gets_slight_boost",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateQuestionWeight",
+        "name": "test_al_sel_05_strong_mastery_gets_normal_weight",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateQuestionWeight",
+        "name": "test_al_sel_06_exclude_ids_applies_recency_penalty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestCalculateQuestionWeight",
+        "name": "test_al_sel_07_weight_floor_is_0_05",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestSelectWeightedQuestion",
+        "name": "test_empty_candidates_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestSelectWeightedQuestion",
+        "name": "test_single_candidate_always_returned",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestSelectWeightedQuestion",
+        "name": "test_due_questions_selected_more_often_within_cap",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestSelectWeightedQuestion",
+        "name": "test_cap_exhausted_due_question_not_dominant",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestSelectWeightedQuestion",
+        "name": "test_excluded_questions_still_selectable",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetCandidateQuestionsFallback",
+        "name": "test_empty_range_falls_back_to_category_query",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestUpdateQuestionMetadataDifficultyBranches",
+        "name": "test_high_success_rate_decreases_difficulty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestUpdateQuestionMetadataDifficultyBranches",
+        "name": "test_low_success_rate_increases_difficulty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestNoBlackoutRepetition",
+        "name": "test_wrong_answer_question_remains_in_pool",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestNoBlackoutRepetition",
+        "name": "test_correct_answer_question_not_permanently_excluded",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestNoBlackoutRepetition",
+        "name": "test_timeout_question_not_permanently_excluded",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestNoBlackoutRepetition",
+        "name": "test_small_pool_does_not_dead_end",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestNoBlackoutRepetition",
+        "name": "test_full_candidate_list_reaches_selector",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestNoBlackoutRepetition",
+        "name": "test_repeated_question_score_updates_correctly",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestNoBlackoutRepetition",
+        "name": "test_no_userquestionperformance_query_for_blackout",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetNextQuestionDedup",
+        "name": "test_empty_pool_returns_pool_exhausted_no_exception",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetNextQuestionDedup",
+        "name": "test_exclude_ids_applies_recency_penalty_not_hard_filter",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetNextQuestionDedup",
+        "name": "test_exclude_ids_reduces_probability_of_seen_questions",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetNextQuestionDedup",
+        "name": "test_single_candidate_with_exclude_still_returns_result",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestGetNextQuestionDedup",
+        "name": "test_weak_due_mismatch_falls_back_to_all_candidates",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestLanguageFilter",
+        "name": "test_al_lang_01_get_user_learning_analytics_applies_language_filter",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestLanguageFilter",
+        "name": "test_al_lang_02_get_user_performance_data_applies_language_filter",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestLanguageFilter",
+        "name": "test_al_lang_03_calculate_target_difficulty_passes_language_to_analytics",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestSessionDueShown",
+        "name": "test_due_question_increments_session_due_shown",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_service.TestSessionDueShown",
+        "name": "test_non_due_question_does_not_increment_session_due_shown",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederValidation",
+        "name": "test_legacy_4_option_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederValidation",
+        "name": "test_pool_7_option_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederValidation",
+        "name": "test_pool_5_option_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederValidation",
+        "name": "test_3_option_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederValidation",
+        "name": "test_1_option_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederValidation",
+        "name": "test_true_false_exactly_2_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederValidation",
+        "name": "test_true_false_3_options_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederValidation",
+        "name": "test_true_false_1_option_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederValidation",
+        "name": "test_multiple_correct_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederValidation",
+        "name": "test_zero_correct_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederScramble",
+        "name": "test_sd01_random_shuffle_present_before_insert_loop",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederScramble",
+        "name": "test_sd02_shuffle_produces_multiple_orderings",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederScramble",
+        "name": "test_sd03_is_correct_flag_and_texts_survive_shuffle",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsShape",
+        "name": "test_legacy_4_option_returns_4",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsShape",
+        "name": "test_pool_7_option_returns_4",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsShape",
+        "name": "test_legacy_contains_exactly_1_correct",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsShape",
+        "name": "test_pool_contains_exactly_1_correct",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsShape",
+        "name": "test_correct_option_always_present",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsShape",
+        "name": "test_output_contains_id_and_text_keys",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsShape",
+        "name": "test_output_contains_no_is_correct_key",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsRandomness",
+        "name": "test_correct_position_varies",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsRandomness",
+        "name": "test_all_4_positions_covered",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsRandomness",
+        "name": "test_distractor_combinations_vary",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestBuildPresentedOptionsRandomness",
+        "name": "test_legacy_4_option_distractors_unchanged",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestAnswerValidationWithShuffle",
+        "name": "test_correct_option_id_survives_shuffle",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestAnswerValidationWithShuffle",
+        "name": "test_incorrect_option_ids_survive_shuffle",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestPerformanceTrackingQuestionId",
+        "name": "test_question_id_unchanged_across_builds",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestPerformanceTrackingQuestionId",
+        "name": "test_different_distractor_sets_same_question_id",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestProductionShuffleIntegration",
+        "name": "test_shuf01_all_4_positions_covered_via_orm",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestProductionShuffleIntegration",
+        "name": "test_shuf02_returns_exactly_4_options",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestProductionShuffleIntegration",
+        "name": "test_shuf03_output_items_have_id_and_text",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestVariantPoolMode",
+        "name": "test_bp01_pool_mode_all_4_positions_covered",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestVariantPoolMode",
+        "name": "test_bp02_both_variants_presented_across_runs",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestVariantPoolMode",
+        "name": "test_bp03_exactly_3_distractors_in_output",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestVariantPoolMode",
+        "name": "test_bp04_distractor_combinations_vary",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestVariantPoolMode",
+        "name": "test_bp05_no_is_correct_leaks_to_output",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestVariantPoolMode",
+        "name": "test_bp06_fixed_fallback_unchanged_for_legacy_question",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestVariantPoolModeIntegration",
+        "name": "test_bp_int01_pool_mode_activates_via_orm",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestVariantPoolModeIntegration",
+        "name": "test_bp_int02_all_4_positions_covered_via_orm",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestOptionTypeBackfill",
+        "name": "test_opt01_default_option_type_is_fixed",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestOptionTypeBackfill",
+        "name": "test_opt02_explicit_variant_type_persists",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestOptionTypeBackfill",
+        "name": "test_opt03_distractor_type_persists",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederV2",
+        "name": "test_sd04_v2_valid_question_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederV2",
+        "name": "test_sd05_v1_question_still_validates",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederV2",
+        "name": "test_sd06_v2_too_few_distractors_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederV2",
+        "name": "test_sd07_v2_too_few_variants_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederV2",
+        "name": "test_sd08_v2_true_false_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_distractor_pool.TestSeederV2",
+        "name": "test_sd09_seed_options_v2_creates_typed_rows",
+        "status": "SKIPPED"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestStartAdaptiveSession",
+        "name": "test_non_student_returns_403",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestStartAdaptiveSession",
+        "name": "test_student_creates_session",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetNextQuestion",
+        "name": "test_result_none_returns_404",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetNextQuestion",
+        "name": "test_session_complete_time_expired",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetNextQuestion",
+        "name": "test_session_complete_no_questions",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetNextQuestion",
+        "name": "test_session_complete_other_reason",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetNextQuestion",
+        "name": "test_normal_question_returned",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestSubmitAnswer",
+        "name": "test_question_not_found_returns_404",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestSubmitAnswer",
+        "name": "test_mc_question_no_option_id_is_correct_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestSubmitAnswer",
+        "name": "test_fill_in_blank_correct_answer",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestSubmitAnswer",
+        "name": "test_fill_in_blank_wrong_answer",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestSubmitAnswer",
+        "name": "test_session_questions_presented_zero",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestSubmitAnswer",
+        "name": "test_session_none_uses_defaults",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestEndLearningSession",
+        "name": "test_success_returns_summary",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetLearningAnalytics",
+        "name": "test_returns_analytics",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetAvailableCategories",
+        "name": "test_returns_all_categories",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetAdaptiveLeaderboard",
+        "name": "test_timeframe_week",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetAdaptiveLeaderboard",
+        "name": "test_timeframe_month",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetAdaptiveLeaderboard",
+        "name": "test_timeframe_all_time_else_branch",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetAdaptiveLeaderboard",
+        "name": "test_category_filter_applied",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetAdaptiveLeaderboard",
+        "name": "test_user_position_found_when_in_leaderboard",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetAdaptiveLeaderboard",
+        "name": "test_user_not_found_skipped_in_leaderboard",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_adaptive_learning_endpoint.TestGetAdaptiveLeaderboard",
+        "name": "test_zero_questions_success_rate",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetQuizById",
+        "name": "test_returns_quiz_when_found",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetQuizById",
+        "name": "test_returns_none_when_not_found",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetAvailableQuizzes",
+        "name": "test_returns_empty_list_when_all_completed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetAvailableQuizzes",
+        "name": "test_returns_available_quizzes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetQuizzesByCategory",
+        "name": "test_returns_quizzes_for_category",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetQuizzesByCategory",
+        "name": "test_returns_empty_for_empty_category",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestStartQuizAttempt",
+        "name": "test_raises_when_already_completed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestStartQuizAttempt",
+        "name": "test_returns_ongoing_attempt_when_exists",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestStartQuizAttempt",
+        "name": "test_raises_when_quiz_not_found",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestStartQuizAttempt",
+        "name": "test_raises_when_quiz_inactive",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestStartQuizAttempt",
+        "name": "test_creates_new_attempt_happy_path",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestStartQuizAttempt",
+        "name": "test_creates_new_attempt_with_zero_questions",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttempt",
+        "name": "test_raises_when_attempt_not_found",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttempt",
+        "name": "test_raises_when_time_limit_exceeded",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetUserQuizAttempts",
+        "name": "test_returns_empty_list",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetUserQuizAttempts",
+        "name": "test_returns_attempts",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetUserQuizStatistics",
+        "name": "test_empty_user_has_zero_stats",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetUserQuizStatistics",
+        "name": "test_user_with_one_completed_passing_attempt",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetQuizStatistics",
+        "name": "test_quiz_with_no_attempts",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetQuizStatistics",
+        "name": "test_quiz_with_completed_attempts",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetUserOngoingAttempt",
+        "name": "test_returns_ongoing_when_found",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetUserOngoingAttempt",
+        "name": "test_returns_none_when_no_ongoing",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestIsQuizCompletedByUser",
+        "name": "test_returns_true_when_completed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestIsQuizCompletedByUser",
+        "name": "test_returns_false_when_not_completed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestCreateQuiz",
+        "name": "test_create_quiz_with_no_questions",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestCreateQuiz",
+        "name": "test_create_quiz_with_one_question_and_two_answers",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestCreateQuiz",
+        "name": "test_create_quiz_with_fill_in_blank_question",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptHappyPath",
+        "name": "test_multiple_choice_correct_answer_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptHappyPath",
+        "name": "test_multiple_choice_wrong_answer_fails_no_xp",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptHappyPath",
+        "name": "test_fill_in_blank_correct_answer_case_insensitive",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptBranchCoverage",
+        "name": "test_question_id_not_in_dict_continues",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptBranchCoverage",
+        "name": "test_mc_no_selected_option_id_is_wrong",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptBranchCoverage",
+        "name": "test_unknown_question_type_not_mc_not_fib",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptBranchCoverage",
+        "name": "test_fib_no_answer_text_is_wrong",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptBranchCoverage",
+        "name": "test_fib_answer_no_matching_option_is_wrong",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptBranchCoverage",
+        "name": "test_naive_started_at_gets_utc_tzinfo",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptBranchCoverage",
+        "name": "test_non_utc_tz_started_at_converted",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestSubmitQuizAttemptBranchCoverage",
+        "name": "test_negative_time_warning_branch",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestProcessEnrollmentQuizBranchCoverage",
+        "name": "test_existing_project_enrollment_returns_early",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestProcessEnrollmentQuizBranchCoverage",
+        "name": "test_existing_enrollment_quiz_returns_early",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestProcessEnrollmentQuizBranchCoverage",
+        "name": "test_priority_incremented_for_higher_score_existing",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestProcessEnrollmentQuizBranchCoverage",
+        "name": "test_failed_quiz_creates_not_eligible_enrollment",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetUserQuizStatisticsBranchCoverage",
+        "name": "test_attempt_without_completed_at_skipped_in_category_loop",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_quiz_service.TestGetUserQuizStatisticsBranchCoverage",
+        "name": "test_completed_attempt_with_quiz_not_found_skips_category",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestValidateConsistency",
+        "name": "test_neither_exists_is_consistent",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestValidateConsistency",
+        "name": "test_only_license_inconsistent",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestValidateConsistency",
+        "name": "test_only_progress_inconsistent",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestValidateConsistency",
+        "name": "test_both_exist_same_level_consistent",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestValidateConsistency",
+        "name": "test_both_exist_different_levels_desync",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestValidateConsistency",
+        "name": "test_lowercase_specialization_normalised",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_level_unchanged_no_progression_record",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_level_changes_progression_record_created",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_level_changes_max_achieved_updated",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_max_achieved_not_downgraded",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_coach_theory_practice_hours_updated",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_player_does_not_update_coach_hours",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_invalid_level_below_1_returns_validation_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_invalid_level_above_max_returns_validation_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_negative_xp_raises_validation_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_sqlalchemy_error_returns_database_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_unexpected_exception_returns_unknown_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestUpdateLevelAtomic",
+        "name": "test_xp_and_sessions_added_to_progress",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestSyncExistingRecordsAtomic",
+        "name": "test_source_progress_already_in_sync",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestSyncExistingRecordsAtomic",
+        "name": "test_source_progress_out_of_sync_updates_license",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestSyncExistingRecordsAtomic",
+        "name": "test_source_license_already_in_sync",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestSyncExistingRecordsAtomic",
+        "name": "test_source_license_out_of_sync_updates_progress",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestSyncExistingRecordsAtomic",
+        "name": "test_invalid_source_returns_failure",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestSyncExistingRecordsAtomic",
+        "name": "test_exception_during_sync_triggers_rollback",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_progress_license_coupling.TestSyncExistingRecordsAtomic",
+        "name": "test_final_level_in_result",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLogin",
+        "name": "test_user_not_found_401",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLogin",
+        "name": "test_wrong_password_401",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLogin",
+        "name": "test_inactive_user_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLogin",
+        "name": "test_success_returns_tokens",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLogin",
+        "name": "test_success_gamification_exception_ignored",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLogin",
+        "name": "test_success_with_unlocked_achievements",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLoginForm",
+        "name": "test_user_not_found_401",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLoginForm",
+        "name": "test_wrong_password_401",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLoginForm",
+        "name": "test_inactive_user_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLoginForm",
+        "name": "test_success",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRefreshToken",
+        "name": "test_invalid_token_401",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRefreshToken",
+        "name": "test_user_not_found_401",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRefreshToken",
+        "name": "test_inactive_user_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRefreshToken",
+        "name": "test_success_returns_tokens",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestLogout",
+        "name": "test_success",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestReadUsersMe",
+        "name": "test_returns_current_user",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestChangePassword",
+        "name": "test_wrong_old_password_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestChangePassword",
+        "name": "test_success_updates_hash",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_email_already_exists_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_invitation_code_not_found_404",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_code_used_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_code_expired_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_email_restricted_403",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_password_too_short_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_invalid_first_name_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_invalid_last_name_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_invalid_phone_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_invalid_address_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_auth_endpoint.TestRegisterWithInvitation",
+        "name": "test_success_registers_user",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetLevelRequirements",
+        "name": "test_invalid_specialization_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetLevelRequirements",
+        "name": "test_invalid_enum_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetLevelRequirements",
+        "name": "test_no_level_config_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetLevelRequirements",
+        "name": "test_returns_formatted_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetLevelRequirements",
+        "name": "test_belt_fields_included_if_present",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetLevelRequirements",
+        "name": "test_requirements_fields_added_if_present",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetLevelRequirements",
+        "name": "test_exception_in_config_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestCanLevelUp",
+        "name": "test_no_next_level_returns_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestCanLevelUp",
+        "name": "test_insufficient_xp_returns_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestCanLevelUp",
+        "name": "test_insufficient_sessions_returns_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestCanLevelUp",
+        "name": "test_meets_all_requirements_returns_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestCanLevelUp",
+        "name": "test_coach_spec_also_checks_hours",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestCanLevelUp",
+        "name": "test_coach_spec_hours_met_returns_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetAllLevels",
+        "name": "test_invalid_specialization_returns_empty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetAllLevels",
+        "name": "test_invalid_enum_returns_empty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetAllLevels",
+        "name": "test_returns_levels_list",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetAllLevels",
+        "name": "test_skips_none_levels",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetAllLevels",
+        "name": "test_exception_returns_empty",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestEnrollUser",
+        "name": "test_invalid_specialization_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestEnrollUser",
+        "name": "test_user_not_found_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestEnrollUser",
+        "name": "test_already_enrolled_returns_false_success",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestEnrollUser",
+        "name": "test_successful_enrollment",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetLevelRequirementsNameEn",
+        "name": "test_name_en_included_if_present",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetLevelRequirementsNameEn",
+        "name": "test_name_en_absent_key_not_in_response",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetStudentProgress",
+        "name": "test_invalid_spec_raises_value_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetStudentProgress",
+        "name": "test_existing_progress_returns_full_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetStudentProgress",
+        "name": "test_no_progress_creates_new_and_returns",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetStudentProgress",
+        "name": "test_max_level_flags_correctly",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetStudentProgress",
+        "name": "test_progress_percentage_capped_at_100",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetStudentProgress",
+        "name": "test_xp_needed_computed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetStudentProgress",
+        "name": "test_xp_needed_zero_when_exceeded",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetStudentProgress",
+        "name": "test_coach_spec_adds_hours_fields",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestGetStudentProgress",
+        "name": "test_coach_spec_no_next_level_no_hours_needed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestUpdateProgress",
+        "name": "test_invalid_spec_raises_value_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestUpdateProgress",
+        "name": "test_no_level_up_returns_success",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestUpdateProgress",
+        "name": "test_xp_and_sessions_incremented",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestUpdateProgress",
+        "name": "test_level_up_increments_level",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestUpdateProgress",
+        "name": "test_multiple_level_ups_in_one_call",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestUpdateProgress",
+        "name": "test_sync_exception_does_not_fail_update",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestUpdateProgress",
+        "name": "test_sync_failure_logged_but_returns_success",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestUpdateProgress",
+        "name": "test_no_progress_creates_new",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestUpdateProgress",
+        "name": "test_achievements_included_in_result",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.services.test_specialization_common.TestUpdateProgress",
+        "name": "test_db_committed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetClientIp",
+        "name": "test_x_forwarded_for_first_ip",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetClientIp",
+        "name": "test_x_forwarded_for_single_ip",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetClientIp",
+        "name": "test_x_real_ip_fallback",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetClientIp",
+        "name": "test_client_host_fallback",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetClientIp",
+        "name": "test_unknown_when_no_client",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetUserId",
+        "name": "test_bearer_token_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetUserId",
+        "name": "test_no_auth_header_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetUserId",
+        "name": "test_malformed_auth_header_no_exception",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetEndpointLimit",
+        "name": "test_auth_login_endpoint_specific_limit",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetEndpointLimit",
+        "name": "test_users_endpoint_limit",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetEndpointLimit",
+        "name": "test_bookings_endpoint_limit",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetEndpointLimit",
+        "name": "test_unknown_endpoint_uses_defaults",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetEndpointLimit",
+        "name": "test_login_subpath_matches",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCheckRateLimit",
+        "name": "test_first_request_allowed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCheckRateLimit",
+        "name": "test_requests_under_limit_allowed",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCheckRateLimit",
+        "name": "test_request_at_limit_blocked",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCheckRateLimit",
+        "name": "test_aggressive_blocking_threshold",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCheckRateLimit",
+        "name": "test_authenticated_user_requests_tracked",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCheckRateLimit",
+        "name": "test_user_limit_exceeded_blocks",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestIsIpBlocked",
+        "name": "test_unblocked_ip_returns_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestIsIpBlocked",
+        "name": "test_blocked_ip_with_future_expiry_returns_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestIsIpBlocked",
+        "name": "test_blocked_ip_with_past_expiry_returns_false",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestIsIpBlocked",
+        "name": "test_expired_block_removed_from_dict",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetRemainingRequests",
+        "name": "test_no_prior_requests_returns_full_limit",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetRemainingRequests",
+        "name": "test_after_n_requests_remaining_decreases",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestGetRemainingRequests",
+        "name": "test_remaining_never_negative",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCleanupOldEntries",
+        "name": "test_no_cleanup_before_interval",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCleanupOldEntries",
+        "name": "test_cleanup_removes_old_ip_requests",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCleanupOldEntries",
+        "name": "test_cleanup_removes_old_user_requests",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCleanupOldEntries",
+        "name": "test_cleanup_removes_expired_blocked_ips",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestCleanupOldEntries",
+        "name": "test_cleanup_preserves_recent_requests",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRateLimitDispatch",
+        "name": "test_blocked_ip_returns_429",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRateLimitDispatch",
+        "name": "test_blocked_ip_response_has_retry_after",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRateLimitDispatch",
+        "name": "test_rate_limit_exceeded_returns_429",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRateLimitDispatch",
+        "name": "test_allowed_request_passes_through",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRateLimitDispatch",
+        "name": "test_rate_limit_headers_added",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_x_content_type_options_nosniff",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_x_frame_options_sameorigin",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_x_xss_protection",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_content_security_policy_present",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_strict_transport_security_present",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_referrer_policy_present",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_permissions_policy_present",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_server_header_set",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_custom_csp_policy_used",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_default_csp_contains_default_src_self",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_geo_sec_01_connect_src_no_hardcoded_lan_ip",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_geo_sec_02_connect_src_contains_self",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestSecurityHeadersMiddleware",
+        "name": "test_geo_sec_03_permissions_policy_geolocation_self",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddleware",
+        "name": "test_no_content_length_passes_through",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddleware",
+        "name": "test_content_length_within_limit_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddleware",
+        "name": "test_content_length_exceeds_limit_returns_413",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddleware",
+        "name": "test_content_length_exactly_at_limit_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddleware",
+        "name": "test_non_integer_content_length_no_crash",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddleware",
+        "name": "test_413_response_contains_error_message",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddlewareJugglingExclusion",
+        "name": "test_jug_excl_01_juggling_upload_5mb_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddlewareJugglingExclusion",
+        "name": "test_jug_excl_02_juggling_upload_12mb_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddlewareJugglingExclusion",
+        "name": "test_jug_excl_03_juggling_upload_99mb_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddlewareJugglingExclusion",
+        "name": "test_jug_excl_04_juggling_upload_no_content_length_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddlewareJugglingExclusion",
+        "name": "test_jug_excl_05_other_endpoint_12mb_blocked",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddlewareJugglingExclusion",
+        "name": "test_jug_excl_06_other_endpoint_5mb_passes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddlewareJugglingExclusion",
+        "name": "test_jug_excl_07_juggling_path_without_upload_suffix_blocked",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddlewareJugglingExclusion",
+        "name": "test_jug_excl_08_413_body_from_middleware_has_structured_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.middleware.test_security_middleware.TestRequestSizeLimitMiddlewareJugglingExclusion",
+        "name": "test_jug_excl_09_no_exclusion_juggling_path_blocked",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyFieldSchema",
+        "name": "test_difficulty_key_present",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyFieldSchema",
+        "name": "test_difficulty_values_are_valid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyFieldSchema",
+        "name": "test_all_three_difficulties_representable",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyFieldSchema",
+        "name": "test_multi_category_all_valid",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyOrdering",
+        "name": "test_mixed_order_sorted_correctly",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyOrdering",
+        "name": "test_sort_is_idempotent",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyOrdering",
+        "name": "test_already_sorted_unchanged",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyOrdering",
+        "name": "test_hard_first_gets_reordered",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyOrdering",
+        "name": "test_multi_category_each_sorted",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyOrdering",
+        "name": "test_sort_preserves_all_topics",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestNoDuplicateTopics",
+        "name": "test_no_duplicates_in_clean_data",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestNoDuplicateTopics",
+        "name": "test_duplicate_detected_correctly",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestNoDuplicateTopics",
+        "name": "test_same_topic_different_difficulties_not_duplicates",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestNoDuplicateTopics",
+        "name": "test_multi_category_no_duplicates",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestNoDuplicateTopics",
+        "name": "test_quiz_id_uniqueness_within_category",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyInTemplate",
+        "name": "test_easy_completed_modules_var_in_output",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyInTemplate",
+        "name": "test_diff_sort_constants_in_output",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyInTemplate",
+        "name": "test_als_diff_section_css_in_output",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyInTemplate",
+        "name": "test_diff_labels_hu_and_en_in_output",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.test_al_difficulty_progression.TestDifficultyInTemplate",
+        "name": "test_available_topics_json_injected",
+        "status": "PASS"
+      }
+    ]
+  },
+  {
+    "suite": "additional",
+    "totals": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "138",
+      "time": "1.544",
+      "timestamp": "2026-09-08T19:28:50.094709",
+      "hostname": "MacBookAir.home"
+    },
+    "cases": [
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc01_encrypt_returns_ciphertext_iv_tuple",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc02_iv_is_always_12_bytes",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc03_ciphertext_differs_from_plaintext",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc04_decrypt_encrypt_roundtrip",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc05_different_plaintext_different_ciphertext",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc06_each_encrypt_produces_different_iv",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc07_tampered_ciphertext_raises_value_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc08_tampered_iv_raises_value_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc09_empty_key_raises_value_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc10_embedding_serialization_roundtrip",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_encryption_service",
+        "name": "test_benc_allow_test_key_enables_empty_key",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms01_none_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms02_empty_dict_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms03_all_allowed_fields_preserved",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_forbidden_field_dropped[device_model-iPhone 15 Pro]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_forbidden_field_dropped[ios_version-18.2]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_forbidden_field_dropped[yaw-0.35]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_forbidden_field_dropped[roll--0.12]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_forbidden_field_dropped[landmarks-value4]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_forbidden_field_dropped[frames-value5]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_forbidden_field_dropped[face_match_score-0.72]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_forbidden_field_dropped[embedding-value7]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_forbidden_field_dropped[bounding_box-value8]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms12_unknown_non_forbidden_field_dropped",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms13_forbidden_field_triggers_warning",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms14_mix_allowed_and_forbidden",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms15_challenge_version_too_long",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms16_steps_completed_exceeds_max",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms17_steps_completed_item_too_long",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms18_total_duration_ms_exceeds_ceiling",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms19_total_duration_ms_negative",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms20_total_duration_ms_float_not_accepted",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms21_retry_count_exceeds_max",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms22_failure_reason_not_in_whitelist",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms23_failure_reason_none_not_stored",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms24_failure_reason_whitelist_accepted[timeout]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms24_failure_reason_whitelist_accepted[face_lost]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms24_failure_reason_whitelist_accepted[max_retries]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms24_failure_reason_whitelist_accepted[capture_error]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms24_failure_reason_whitelist_accepted[multiple_faces]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms25_non_dict_returns_none[string]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms25_non_dict_returns_none[42]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms25_non_dict_returns_none[bad_input2]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms25_non_dict_returns_none[True]",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms26_face_match_score_never_in_result",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms27_embedding_never_in_result",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_liveness_metadata_sanitizer",
+        "name": "test_bms28_yaw_never_in_result",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_feature_flag",
+        "name": "test_bmf01_flag_off_by_default",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_feature_flag",
+        "name": "test_bmf02_flag_on_when_patched",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_feature_flag",
+        "name": "test_bmf03_require_raises_503_when_flag_off",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_feature_flag",
+        "name": "test_bmf04_require_does_not_raise_when_flag_on",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.biometric.test_feature_flag",
+        "name": "test_bmf05_503_detail_mentions_flag",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_kalman_tracker.TestKalmanBallTracker",
+        "name": "test_bt06_first_detection_returns_raw",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_kalman_tracker.TestKalmanBallTracker",
+        "name": "test_bt07_consecutive_detections_converge",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_kalman_tracker.TestKalmanBallTracker",
+        "name": "test_bt08_few_misses_predict_returns_position",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_kalman_tracker.TestKalmanBallTracker",
+        "name": "test_bt09_many_misses_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_kalman_tracker.TestKalmanBallTracker",
+        "name": "test_bt10_detection_after_lost_reinit",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_kalman_tracker.TestKalmanBallTracker",
+        "name": "test_bt11_seed_reinit",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_kalman_tracker.TestKalmanBallTracker",
+        "name": "test_bt12_is_lost_property",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_kalman_tracker.TestKalmanBallTracker",
+        "name": "test_bt06b_uninitialized_predict_returns_none",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveThumbnailPath",
+        "name": "test_ms01_pending_upload_raises_not_ready",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveThumbnailPath",
+        "name": "test_ms02_uploaded_raises_not_ready",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveThumbnailPath",
+        "name": "test_ms03_processing_raises_not_ready",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveThumbnailPath",
+        "name": "test_ms04_thumbnail_path_none_raises_missing",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveThumbnailPath",
+        "name": "test_ms05_file_not_on_disk_raises_missing",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveThumbnailPath",
+        "name": "test_ms06_success_returns_path",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveThumbnailPath",
+        "name": "test_ms07_rejected_with_thumbnail_returns_path",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveThumbnailPath",
+        "name": "test_ms08_failed_with_thumbnail_returns_path",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveThumbnailPath",
+        "name": "test_ms09_path_safety_violation_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms10_rejected_raises_not_ready",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms11_failed_raises_not_ready",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms12_processing_raises_not_ready",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms13_transcode_failed_raises_not_ready",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms14_transcode_skipped_no_processed_path_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms15_no_processed_path_raises_not_ready",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms16_file_not_on_disk_raises_missing",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms17_success_returns_path",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms18_original_path_never_fallback",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms19_path_safety_violation_raises",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms20_transcode_skipped_with_processed_path_serves",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms21_transcode_none_with_processed_path_serves",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.juggling.test_media_service.TestResolveMediaPath",
+        "name": "test_ms22_transcode_processing_raises_not_ready",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlSessionStartV4",
+        "name": "test_fresh_user_returns_new_session",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlSessionStartV4",
+        "name": "test_exact_match_returns_resumed_true",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlSessionStartV4",
+        "name": "test_exact_match_force_new_retires_and_creates",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlSessionStartV4",
+        "name": "test_different_category_auto_retires",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlSessionStartV4",
+        "name": "test_different_module_same_category_auto_retires",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlSessionStartV4",
+        "name": "test_different_language_auto_retires",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlSessionStartV4",
+        "name": "test_missing_module_prefix_returns_422",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlSessionStartV4",
+        "name": "test_invalid_module_prefix_returns_422",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlSessionStartV4",
+        "name": "test_pool_exhausted_passes_through",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlAvailableCategories",
+        "name": "test_returns_all_categories_with_flags",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlAvailableCategories",
+        "name": "test_invalid_language_returns_422",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlModules",
+        "name": "test_en_lesson_returns_modules_without_al_prefix",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlModules",
+        "name": "test_hu_lesson_display_names_no_al_prefix",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlModules",
+        "name": "test_empty_category_returns_empty_list_not_404",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlModules",
+        "name": "test_invalid_language_returns_422",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_adaptive_learning_web.TestAlModules",
+        "name": "test_invalid_category_returns_422",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationUnlock",
+        "name": "test_insufficient_credits_raises_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationUnlock",
+        "name": "test_invalid_specialization_raises_400",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationUnlock",
+        "name": "test_age_requirement_not_met_raises_403",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationUnlock",
+        "name": "test_success_creates_license_and_deducts_credits",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationUnlock",
+        "name": "test_existing_license_raises_409",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationUnlock",
+        "name": "test_integrity_error_during_commit_raises_409",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationUnlock",
+        "name": "test_credit_boundary_99_is_rejected",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationUnlock",
+        "name": "test_credit_boundary_100_is_accepted",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestMotivationQuestionnairePage",
+        "name": "test_invalid_spec_redirects_to_select",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestMotivationQuestionnairePage",
+        "name": "test_valid_spec_renders_template",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestMotivationQuestionnairePage",
+        "name": "test_context_includes_specialization_display",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestMotivationQuestionnaireSubmit",
+        "name": "test_invalid_spec_redirects",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestMotivationQuestionnaireSubmit",
+        "name": "test_score_out_of_range_renders_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestMotivationQuestionnaireSubmit",
+        "name": "test_valid_submit_with_existing_license_commits_and_redirects",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestMotivationQuestionnaireSubmit",
+        "name": "test_valid_submit_creates_license_if_not_found",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationSwitch",
+        "name": "test_invalid_spec_redirects",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationSwitch",
+        "name": "test_no_license_redirects",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationSwitch",
+        "name": "test_has_license_commits_and_redirects_to_dashboard",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_specialization_web.TestSpecializationSwitch",
+        "name": "test_return_url_is_honoured",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestHome",
+        "name": "test_unauthenticated_redirects_to_login",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestHome",
+        "name": "test_authenticated_redirects_to_dashboard",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestHome",
+        "name": "test_auth_exception_redirects_to_login",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestLoginPage",
+        "name": "test_renders_login_html_template",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestLoginSubmit",
+        "name": "test_user_not_found_renders_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestLoginSubmit",
+        "name": "test_wrong_password_renders_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestLoginSubmit",
+        "name": "test_inactive_account_renders_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestLoginSubmit",
+        "name": "test_instructor_login_redirects_to_dashboard",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestLoginSubmit",
+        "name": "test_student_with_dob_redirects_to_dashboard",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestLoginSubmit",
+        "name": "test_student_without_dob_redirects_to_age_verification",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestLogout",
+        "name": "test_redirects_to_login",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestLogout",
+        "name": "test_deletes_access_token_cookie",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestAgeVerificationPage",
+        "name": "test_non_student_redirects_to_dashboard",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestAgeVerificationPage",
+        "name": "test_student_already_has_dob_redirects_to_dashboard",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestAgeVerificationPage",
+        "name": "test_unverified_student_renders_template",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestAgeVerificationSubmit",
+        "name": "test_non_student_redirects_to_dashboard",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestAgeVerificationSubmit",
+        "name": "test_future_date_renders_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestAgeVerificationSubmit",
+        "name": "test_too_young_renders_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestAgeVerificationSubmit",
+        "name": "test_too_old_renders_error",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestAgeVerificationSubmit",
+        "name": "test_valid_dob_saves_and_redirects",
+        "status": "PASS"
+      },
+      {
+        "class": "tests.unit.api.web_routes.test_auth_web.TestAgeVerificationSubmit",
+        "name": "test_invalid_date_format_renders_error",
+        "status": "PASS"
+      }
+    ]
+  }
+]

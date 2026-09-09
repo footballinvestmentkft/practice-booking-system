@@ -1,0 +1,46 @@
+import os,sys,pathlib,json,inspect,collections,socket
+root=pathlib.Path.cwd();sys.path.insert(0,str(root))
+os.environ.update(TESTING='true',ENVIRONMENT='test',DATABASE_URL='postgresql://audit:audit@127.0.0.1:1/lfa_audit_unavailable',REDIS_URL='redis://127.0.0.1:1/15',CELERY_BROKER_URL='redis://127.0.0.1:1/15',CELERY_RESULT_BACKEND='redis://127.0.0.1:1/15',PYTHONDONTWRITEBYTECODE='1')
+import dotenv
+dotenv.load_dotenv=lambda *a,**k:False
+from pydantic_settings import BaseSettings
+_orig=BaseSettings.__init__
+def no_env(self,*a,**k):k['_env_file']=None;_orig(self,*a,**k)
+BaseSettings.__init__=no_env
+import sqlalchemy,psycopg2
+def denied(*a,**k):raise RuntimeError('AUDIT: external connection disabled')
+psycopg2.connect=denied
+socket.create_connection=denied
+socket.socket.connect=denied
+import logging
+logging.disable(logging.CRITICAL)
+from app.main import app
+from fastapi.routing import APIRoute
+rows=[]
+def deps(d):
+ out=[]
+ for x in d.dependencies:
+  c=x.call;out.append(getattr(c,'__module__','')+'.'+getattr(c,'__name__',type(c).__name__));out.extend(deps(x))
+ return sorted(set(out))
+def fields(fs):return [{'name':f.name,'type':str(f.field_info.annotation),'required':f.field_info.is_required()} for f in fs]
+for r in app.routes:
+ if not hasattr(r,'endpoint'):continue
+ f=r.endpoint
+ try:p=str(pathlib.Path(inspect.getfile(f)).relative_to(root));line=inspect.getsourcelines(f)[1]
+ except Exception:p=getattr(f,'__module__','');line=None
+ row={'route':r.path,'methods':sorted(getattr(r,'methods',[]) or ['WEBSOCKET']),'source':p,'line':line,'symbol':getattr(f,'__name__',''),'authentication_dependencies':deps(r.dependant) if hasattr(r,'dependant') else [],'production_readiness':'UNVERIFIED'}
+ if isinstance(r,APIRoute):
+  row.update(request={'path':fields(r.dependant.path_params),'query':fields(r.dependant.query_params),'body':fields(r.dependant.body_params)},response_model=str(r.response_model),response_class=str(r.response_class),status_code=r.status_code,openapi_included=r.include_in_schema)
+ rows.append(row)
+out=root/'docs/audit'
+(out/'LFA_RUNTIME_ROUTES_2026.json').write_text(json.dumps(rows,indent=2)+'\n')
+try:
+ schema=app.openapi();(out/'LFA_OPENAPI_SNAPSHOT_2026.json').write_text(json.dumps(schema,indent=2,default=str)+'\n');schema_status='PASS'
+except Exception as e:schema_status=type(e).__name__+': '+str(e)[:300]
+from app.database import Base
+orm=[]
+for t in Base.metadata.sorted_tables:
+ orm.append({'table':t.name,'columns':[{'name':c.name,'type':str(c.type),'nullable':c.nullable,'primary_key':c.primary_key,'unique':c.unique,'index':c.index,'server_default':str(c.server_default.arg) if c.server_default else None,'foreign_keys':[{'target':fk.target_fullname,'ondelete':fk.ondelete,'onupdate':fk.onupdate} for fk in c.foreign_keys]} for c in t.columns],'constraints':[{'type':type(c).__name__,'name':c.name,'columns':[v.name for v in c.columns],'expression':str(c.sqltext) if hasattr(c,'sqltext') else None} for c in t.constraints],'indexes':[{'name':i.name,'unique':i.unique,'expressions':[str(e) for e in i.expressions],'postgresql_where':str(i.dialect_options['postgresql'].get('where'))} for i in t.indexes]})
+(out/'LFA_ORM_SCHEMA_2026.json').write_text(json.dumps(orm,indent=2)+'\n')
+counts=collections.Counter((method,r['route']) for r in rows for method in r['methods'])
+print(json.dumps({'mounted_routes':len(rows),'method_routes':sum(len(r['methods']) for r in rows),'duplicate_method_paths':[{'method':k[0],'route':k[1],'count':v} for k,v in counts.items() if v>1],'orm_tables':len(orm),'openapi':schema_status},indent=2))

@@ -1,0 +1,2366 @@
+[
+  {
+    "path": "app/templates/about_specializations.html",
+    "reference_candidates": [
+      "app/api/web_routes/student_features.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/achievements.html",
+    "reference_candidates": [
+      "app/api/web_routes/student_features.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/adaptive_learning.html",
+    "reference_candidates": [
+      "app/api/web_routes/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/adaptive_learning_session.html",
+    "reference_candidates": [
+      "app/api/web_routes/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/_live_group_knockout.html",
+    "reference_candidates": [
+      "app/templates/admin/tournament_live.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/_live_knockout.html",
+    "reference_candidates": [
+      "app/templates/admin/tournament_live.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/_live_league.html",
+    "reference_candidates": [
+      "app/templates/admin/tournament_live.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/admin_base.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/credits.py",
+      "app/templates/dashboard_admin.html",
+      "app/templates/admin/al_audit_trail.html",
+      "app/templates/admin/tournament_teams.html",
+      "app/templates/admin/al_quiz_list.html",
+      "app/templates/admin/user_edit.html",
+      "app/templates/admin/sponsor_campaign_detail.html",
+      "app/templates/admin/game_preset_edit.html",
+      "app/templates/admin/instructors.html",
+      "app/templates/admin/sponsor_new.html",
+      "app/templates/admin/enrollments.html",
+      "app/templates/admin/al_quiz_detail.html",
+      "app/templates/admin/game_presets.html",
+      "app/templates/admin/pitches.html",
+      "app/templates/admin/club_detail.html",
+      "app/templates/admin/sponsor_detail.html",
+      "app/templates/admin/card_designs.html",
+      "app/templates/admin/config_hub.html",
+      "app/templates/admin/tournament_attendance.html",
+      "app/templates/admin/payments.html",
+      "app/templates/admin/user_profile.html",
+      "app/templates/admin/al_quiz_analytics.html",
+      "app/templates/admin/al_dashboard.html",
+      "app/templates/admin/events_location.html",
+      "app/templates/admin/card_themes_upload.html",
+      "app/templates/admin/sponsor_csv_upload.html",
+      "app/templates/admin/sport_directors.html",
+      "app/templates/admin/al_question_detail.html",
+      "app/templates/admin/events_hub.html",
+      "app/templates/admin/campus_edit.html",
+      "app/templates/admin/motivation_assessment.html",
+      "app/templates/admin/semester_new.html",
+      "app/templates/admin/teams.html",
+      "app/templates/admin/promotion_events.html",
+      "app/templates/admin/users.html",
+      "app/templates/admin/sponsor_csv_preview.html",
+      "app/templates/admin/al_content_quality.html",
+      "app/templates/admin/clubs.html",
+      "app/templates/admin/card_themes.html",
+      "app/templates/admin/tournament_players.html",
+      "app/templates/admin/card_designs_upload.html",
+      "app/templates/admin/semesters.html",
+      "app/templates/admin/al_import_history.html",
+      "app/templates/admin/system_events.html",
+      "app/templates/admin/al_import.html",
+      "app/templates/admin/sponsor_audience_list.html",
+      "app/templates/admin/camp_edit.html",
+      "app/templates/admin/bookings.html",
+      "app/templates/admin/analytics.html",
+      "app/templates/admin/sessions.html",
+      "app/templates/admin/semester_schedule.html",
+      "app/templates/admin/tournament_edit.html",
+      "app/templates/admin/location_detail.html",
+      "app/templates/admin/al_analytics.html",
+      "app/templates/admin/tournaments.html",
+      "app/templates/admin/al_import_success.html",
+      "app/templates/admin/club_team_detail.html",
+      "app/templates/admin/camps.html",
+      "app/templates/admin/campus_detail.html",
+      "app/templates/admin/invitation_codes.html",
+      "app/templates/admin/sponsors.html",
+      "app/templates/admin/programs_hub.html",
+      "app/templates/admin/sponsor_promotion_wizard.html",
+      "app/templates/admin/coupons.html",
+      "app/templates/admin/tournament_live.html",
+      "app/templates/admin/al_question_edit.html",
+      "app/templates/admin/location_edit.html",
+      "app/templates/admin/instructor_detail.html",
+      "app/templates/admin/al_quiz_edit.html",
+      "app/templates/admin/locations.html",
+      "app/templates/sport_director/tournament_teams.html",
+      "app/templates/sport_director/tournaments.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_analytics.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_audit_trail.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_content_quality.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_dashboard.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_import.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_import_history.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_import_success.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_question_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_question_edit.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_quiz_analytics.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_quiz_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_quiz_edit.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/al_quiz_list.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/analytics.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/adaptive_learning.py",
+      "app/api/web_routes/admin/analytics.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/bookings.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/bookings.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/camp_edit.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/analytics.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/camps.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/analytics.py",
+      "app/api/web_routes/tournaments/camps.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/campus_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/locations.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/campus_edit.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/locations.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/card_designs.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/card_designs.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/card_designs_upload.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/card_designs.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/card_themes.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/card_themes.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/card_themes_upload.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/card_themes.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/club_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/clubs.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/club_team_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/clubs.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/clubs.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/clubs.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/config_hub.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/analytics.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/coupons.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/coupons.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/enrollments.html",
+    "reference_candidates": [
+      "app/api/web_routes/instructor_dashboard.py",
+      "app/api/web_routes/admin/enrollments.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/events_hub.html",
+    "reference_candidates": [
+      "app/api/web_routes/events.py",
+      "app/api/web_routes/admin/analytics.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/events_location.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/locations.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/game_preset_edit.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/game_presets.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/game_presets.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/game_presets.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/instructor_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/tournaments/instructors_admin.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/instructors.html",
+    "reference_candidates": [
+      "app/api/web_routes/tournaments/instructors_admin.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/invitation_codes.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/coupons.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/location_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/locations.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/location_edit.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/locations.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/locations.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/locations.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/motivation_assessment.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/analytics.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/payments.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/finance.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/pitches.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/bookings.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/programs_hub.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/analytics.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/promotion_events.html",
+    "reference_candidates": [
+      "app/api/web_routes/tournaments/lifecycle.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/semester_new.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/semesters.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/semester_schedule.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/semesters.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/semesters.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/semesters.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/sessions.html",
+    "reference_candidates": [
+      "app/api/web_routes/sessions.py",
+      "app/api/web_routes/admin/bookings.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/sponsor_audience_list.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/sponsors.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/sponsor_campaign_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/sponsors.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/sponsor_csv_preview.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/sponsors.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/sponsor_csv_upload.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/sponsors.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/sponsor_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/sponsors.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/sponsor_new.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/sponsors.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/sponsor_promotion_wizard.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/sponsors.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/sponsors.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/sponsors.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/sport_directors.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/sport_directors.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/system_events.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/analytics.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/teams.html",
+    "reference_candidates": [
+      "app/api/web_routes/sport_director.py",
+      "app/api/web_routes/admin/clubs.py",
+      "app/api/web_routes/tournaments/teams.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/tournament_attendance.html",
+    "reference_candidates": [
+      "app/api/web_routes/tournaments/attendance.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/tournament_edit.html",
+    "reference_candidates": [
+      "app/api/web_routes/tournaments/edit.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/tournament_live.html",
+    "reference_candidates": [
+      "app/api/web_routes/tournament_live.py",
+      "app/services/tournament/live_model_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/tournament_players.html",
+    "reference_candidates": [
+      "app/api/web_routes/tournaments/players.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/tournament_teams.html",
+    "reference_candidates": [
+      "app/api/web_routes/sport_director.py",
+      "app/api/web_routes/tournaments/teams.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/tournaments.html",
+    "reference_candidates": [
+      "app/api/web_routes/sport_director.py",
+      "app/api/web_routes/tournaments/browse.py",
+      "app/api/web_routes/tournaments/instructor.py",
+      "app/api/web_routes/tournaments/lifecycle.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/user_edit.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/users.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/user_profile.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/users.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/admin/users.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/users.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/age_verification.html",
+    "reference_candidates": [
+      "app/api/web_routes/auth.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/base.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/admin/credits.py",
+      "app/templates/dashboard_card_editor.html",
+      "app/templates/virtual_training_stroop_challenge_result.html",
+      "app/templates/profile.html",
+      "app/templates/lfa_player_profile.html",
+      "app/templates/training_hub.html",
+      "app/templates/skills.html",
+      "app/templates/virtual_training_memory_sequence.html",
+      "app/templates/virtual_training_number_color_conflict.html",
+      "app/templates/virtual_training_go_no_go_result.html",
+      "app/templates/virtual_training_peripheral_vision_result.html",
+      "app/templates/calendar.html",
+      "app/templates/virtual_training_color_reaction.html",
+      "app/templates/virtual_training_hub.html",
+      "app/templates/shop_unified.html",
+      "app/templates/virtual_training_direction_swipe.html",
+      "app/templates/vt_challenge_detail.html",
+      "app/templates/age_verification.html",
+      "app/templates/vt_challenge_lobby.html",
+      "app/templates/my_cards_welcome_card.html",
+      "app/templates/progress.html",
+      "app/templates/vt_challenge_results.html",
+      "app/templates/card_studio_shell.html",
+      "app/templates/dashboard_student_new.html",
+      "app/templates/notifications.html",
+      "app/templates/profile_edit.html",
+      "app/templates/vt_challenge_result_card.html",
+      "app/templates/achievements.html",
+      "app/templates/virtual_training_direction_swipe_result.html",
+      "app/templates/my_cards_shop.html",
+      "app/templates/dashboard_admin.html",
+      "app/templates/register.html",
+      "app/templates/login.html",
+      "app/templates/vt_challenges.html",
+      "app/templates/vt_challenge_send.html",
+      "app/templates/dashboard_instructor.html",
+      "app/templates/events_hub.html",
+      "app/templates/card_editor_welcome.html",
+      "app/templates/card_studio_challenge.html",
+      "app/templates/my_cards_player_card.html",
+      "app/templates/message_detail.html",
+      "app/templates/virtual_training_target_tracking_result.html",
+      "app/templates/specialization_select.html",
+      "app/templates/lfa_player_mood_photos.html",
+      "app/templates/messages.html",
+      "app/templates/virtual_training_stroop_challenge.html",
+      "app/templates/card_studio_welcome.html",
+      "app/templates/virtual_training_peripheral_vision.html",
+      "app/templates/virtual_training_memory_sequence_result.html",
+      "app/templates/semester_enrollment_request.html",
+      "app/templates/adaptive_learning.html",
+      "app/templates/card_studio_landing.html",
+      "app/templates/my_cards_hub.html",
+      "app/templates/student_motivation_questionnaire.html",
+      "app/templates/shop_card_player_colors.html",
+      "app/templates/virtual_training_go_no_go.html",
+      "app/templates/sessions.html",
+      "app/templates/credits.html",
+      "app/templates/tournaments.html",
+      "app/templates/student_base.html",
+      "app/templates/camps.html",
+      "app/templates/virtual_training_hand_finger_stats.html",
+      "app/templates/session_details.html",
+      "app/templates/skill_history.html",
+      "app/templates/friends.html",
+      "app/templates/virtual_training_number_color_conflict_result.html",
+      "app/templates/virtual_training_history.html",
+      "app/templates/shop_player_card_detail.html",
+      "app/templates/hub_specializations.html",
+      "app/templates/virtual_training_target_tracking.html",
+      "app/templates/adaptive_learning_session.html",
+      "app/templates/lfa_player_profile_edit.html",
+      "app/templates/virtual_training_result.html",
+      "app/templates/my_cards_challenge_card.html",
+      "app/templates/student/team_create.html",
+      "app/templates/student/team_invites.html",
+      "app/templates/student/team_dashboard.html",
+      "app/templates/student/onboarding_new.html",
+      "app/templates/admin/al_audit_trail.html",
+      "app/templates/admin/tournament_teams.html",
+      "app/templates/admin/al_quiz_list.html",
+      "app/templates/admin/user_edit.html",
+      "app/templates/admin/sponsor_campaign_detail.html",
+      "app/templates/admin/game_preset_edit.html",
+      "app/templates/admin/instructors.html",
+      "app/templates/admin/sponsor_new.html",
+      "app/templates/admin/enrollments.html",
+      "app/templates/admin/al_quiz_detail.html",
+      "app/templates/admin/game_presets.html",
+      "app/templates/admin/pitches.html",
+      "app/templates/admin/club_detail.html",
+      "app/templates/admin/sponsor_detail.html",
+      "app/templates/admin/card_designs.html",
+      "app/templates/admin/config_hub.html",
+      "app/templates/admin/tournament_attendance.html",
+      "app/templates/admin/payments.html",
+      "app/templates/admin/user_profile.html",
+      "app/templates/admin/al_quiz_analytics.html",
+      "app/templates/admin/al_dashboard.html",
+      "app/templates/admin/events_location.html",
+      "app/templates/admin/card_themes_upload.html",
+      "app/templates/admin/sponsor_csv_upload.html",
+      "app/templates/admin/sport_directors.html",
+      "app/templates/admin/al_question_detail.html",
+      "app/templates/admin/events_hub.html",
+      "app/templates/admin/campus_edit.html",
+      "app/templates/admin/motivation_assessment.html",
+      "app/templates/admin/semester_new.html",
+      "app/templates/admin/teams.html",
+      "app/templates/admin/promotion_events.html",
+      "app/templates/admin/users.html",
+      "app/templates/admin/sponsor_csv_preview.html",
+      "app/templates/admin/al_content_quality.html",
+      "app/templates/admin/clubs.html",
+      "app/templates/admin/card_themes.html",
+      "app/templates/admin/tournament_players.html",
+      "app/templates/admin/card_designs_upload.html",
+      "app/templates/admin/semesters.html",
+      "app/templates/admin/al_import_history.html",
+      "app/templates/admin/system_events.html",
+      "app/templates/admin/al_import.html",
+      "app/templates/admin/sponsor_audience_list.html",
+      "app/templates/admin/camp_edit.html",
+      "app/templates/admin/bookings.html",
+      "app/templates/admin/analytics.html",
+      "app/templates/admin/sessions.html",
+      "app/templates/admin/semester_schedule.html",
+      "app/templates/admin/tournament_edit.html",
+      "app/templates/admin/location_detail.html",
+      "app/templates/admin/al_analytics.html",
+      "app/templates/admin/tournaments.html",
+      "app/templates/admin/al_import_success.html",
+      "app/templates/admin/club_team_detail.html",
+      "app/templates/admin/camps.html",
+      "app/templates/admin/campus_detail.html",
+      "app/templates/admin/invitation_codes.html",
+      "app/templates/admin/sponsors.html",
+      "app/templates/admin/programs_hub.html",
+      "app/templates/admin/sponsor_promotion_wizard.html",
+      "app/templates/admin/coupons.html",
+      "app/templates/admin/tournament_live.html",
+      "app/templates/admin/al_question_edit.html",
+      "app/templates/admin/location_edit.html",
+      "app/templates/admin/instructor_detail.html",
+      "app/templates/admin/al_quiz_edit.html",
+      "app/templates/admin/locations.html",
+      "app/templates/sport_director/tournament_teams.html",
+      "app/templates/sport_director/tournaments.html",
+      "app/templates/dashboard/lfa_public_profile_editor.html",
+      "app/templates/macros/card_ovr_badge.html",
+      "app/templates/public/welcome_card.html",
+      "app/templates/public/player_card.html",
+      "app/templates/public/player_profile.html",
+      "app/templates/public/player_card_compact.html",
+      "app/templates/public/player_card_atlas.html",
+      "app/templates/public/player_card_fclassic.html",
+      "app/templates/public/player_card_compact_bg.html",
+      "app/templates/public/player_card_pulse.html",
+      "app/templates/public/player_card_base.html",
+      "app/templates/public/player_card_showcase_bg.html",
+      "app/templates/public/player_card_showcase.html",
+      "app/templates/errors/4xx.html",
+      "app/templates/errors/5xx.html",
+      "app/templates/instructor/enrollments.html",
+      "app/templates/instructor/student_skills.html",
+      "app/templates/instructor/tournaments.html",
+      "app/templates/instructor/student_skills_v2.html",
+      "app/templates/public/export/vt/landscape.html",
+      "app/templates/public/export/square/fclassic.html",
+      "app/templates/public/export/portrait/fclassic.html",
+      "app/templates/public/export/shared/export_base.html",
+      "app/templates/public/export/shared/column_archetype.html",
+      "app/templates/public/export/welcome/band.html",
+      "app/templates/public/export/welcome/full_bleed.html",
+      "app/templates/public/export/welcome/split.html",
+      "app/templates/public/export/welcome/vertical.html",
+      "app/templates/public/export/welcome/horizontal.html",
+      "app/templates/public/export/welcome/cinematic.html",
+      "app/templates/public/export/welcome/banner.html",
+      "app/templates/public/export/welcome/panel.html",
+      "app/templates/public/export/welcome/square.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/og/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/templates/public/export/story/fclassic.html",
+      "app/templates/public/export/banner/fclassic.html",
+      "app/services/card_theme_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/calendar.html",
+    "reference_candidates": [
+      "app/api/web_routes/sessions.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/camps.html",
+    "reference_candidates": [
+      "app/api/web_routes/admin/analytics.py",
+      "app/api/web_routes/tournaments/camps.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/card_editor_welcome.html",
+    "reference_candidates": [
+      "app/api/web_routes/card_editor.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/card_studio_challenge.html",
+    "reference_candidates": [
+      "app/api/web_routes/card_editor.py",
+      "app/templates/includes/cs_studio_shared.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/card_studio_landing.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/card_studio_shell.html",
+    "reference_candidates": [
+      "app/api/web_routes/card_studio.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/card_studio_welcome.html",
+    "reference_candidates": [
+      "app/templates/includes/cs_studio_shared.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/credits.html",
+    "reference_candidates": [
+      "app/api/web_routes/student_features.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/dashboard/lfa_public_profile_editor.html",
+    "reference_candidates": [
+      "app/api/web_routes/dashboard.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/dashboard_admin.html",
+    "reference_candidates": [
+      "app/api/web_routes/dashboard.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/dashboard_card_editor.html",
+    "reference_candidates": [
+      "app/api/web_routes/dashboard.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/dashboard_instructor.html",
+    "reference_candidates": [
+      "app/api/web_routes/dashboard.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/dashboard_student_new.html",
+    "reference_candidates": [
+      "app/api/web_routes/dashboard.py",
+      "app/templates/skills.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/errors/4xx.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/errors/5xx.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/events_hub.html",
+    "reference_candidates": [
+      "app/api/web_routes/events.py",
+      "app/api/web_routes/admin/analytics.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/friends.html",
+    "reference_candidates": [
+      "app/api/web_routes/friends.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/hub_specializations.html",
+    "reference_candidates": [
+      "app/api/web_routes/dashboard.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/cs_challenge_panel.html",
+    "reference_candidates": [
+      "app/templates/card_studio_shell.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/cs_color_panel.html",
+    "reference_candidates": [
+      "app/templates/card_studio_shell.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/cs_export_panel.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/includes/cs_format_bar.html",
+    "reference_candidates": [
+      "app/templates/card_studio_shell.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/cs_mood_quick_row.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/includes/cs_player_panel.html",
+    "reference_candidates": [
+      "app/templates/card_studio_shell.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/cs_preview_panel.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/includes/cs_studio_shared.html",
+    "reference_candidates": [
+      "app/templates/card_studio_shell.html",
+      "app/templates/card_studio_challenge.html",
+      "app/templates/card_studio_welcome.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/cs_type_switcher.html",
+    "reference_candidates": [
+      "app/templates/card_studio_shell.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/cs_vt_panel.html",
+    "reference_candidates": [
+      "app/templates/card_studio_shell.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/mc_format_grid.html",
+    "reference_candidates": [
+      "app/templates/my_cards_welcome_card.html",
+      "app/templates/card_studio_shell.html",
+      "app/templates/card_editor_welcome.html",
+      "app/templates/my_cards_player_card.html",
+      "app/templates/card_studio_welcome.html",
+      "app/templates/shop_player_card_detail.html",
+      "app/templates/my_cards_challenge_card.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/player_editor/design_panel.html",
+    "reference_candidates": [
+      "app/templates/dashboard_card_editor.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/player_editor/highlight_video_panel.html",
+    "reference_candidates": [
+      "app/templates/dashboard_card_editor.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/player_editor/photo_panel.html",
+    "reference_candidates": [
+      "app/templates/dashboard_card_editor.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/player_editor/platform_panel.html",
+    "reference_candidates": [
+      "app/templates/dashboard_card_editor.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/player_editor/preview_panel.html",
+    "reference_candidates": [
+      "app/templates/dashboard_card_editor.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/player_editor/scripts.html",
+    "reference_candidates": [
+      "app/templates/dashboard_card_editor.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/player_editor/styles.html",
+    "reference_candidates": [
+      "app/templates/dashboard_card_editor.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/includes/spec_subpage_hdr.html",
+    "reference_candidates": [
+      "app/api/web_routes/dashboard.py",
+      "app/templates/virtual_training_stroop_challenge_result.html",
+      "app/templates/lfa_player_profile.html",
+      "app/templates/training_hub.html",
+      "app/templates/skills.html",
+      "app/templates/virtual_training_memory_sequence.html",
+      "app/templates/virtual_training_number_color_conflict.html",
+      "app/templates/virtual_training_go_no_go_result.html",
+      "app/templates/virtual_training_peripheral_vision_result.html",
+      "app/templates/calendar.html",
+      "app/templates/virtual_training_color_reaction.html",
+      "app/templates/virtual_training_hub.html",
+      "app/templates/shop_unified.html",
+      "app/templates/virtual_training_direction_swipe.html",
+      "app/templates/vt_challenge_detail.html",
+      "app/templates/vt_challenge_lobby.html",
+      "app/templates/my_cards_welcome_card.html",
+      "app/templates/progress.html",
+      "app/templates/vt_challenge_results.html",
+      "app/templates/card_studio_shell.html",
+      "app/templates/dashboard_student_new.html",
+      "app/templates/vt_challenge_result_card.html",
+      "app/templates/achievements.html",
+      "app/templates/virtual_training_direction_swipe_result.html",
+      "app/templates/my_cards_shop.html",
+      "app/templates/vt_challenges.html",
+      "app/templates/vt_challenge_send.html",
+      "app/templates/events_hub.html",
+      "app/templates/card_editor_welcome.html",
+      "app/templates/card_studio_challenge.html",
+      "app/templates/my_cards_player_card.html",
+      "app/templates/virtual_training_target_tracking_result.html",
+      "app/templates/lfa_player_mood_photos.html",
+      "app/templates/virtual_training_stroop_challenge.html",
+      "app/templates/card_studio_welcome.html",
+      "app/templates/virtual_training_peripheral_vision.html",
+      "app/templates/virtual_training_memory_sequence_result.html",
+      "app/templates/adaptive_learning.html",
+      "app/templates/card_studio_landing.html",
+      "app/templates/my_cards_hub.html",
+      "app/templates/shop_card_player_colors.html",
+      "app/templates/virtual_training_go_no_go.html",
+      "app/templates/sessions.html",
+      "app/templates/tournaments.html",
+      "app/templates/camps.html",
+      "app/templates/virtual_training_hand_finger_stats.html",
+      "app/templates/friends.html",
+      "app/templates/virtual_training_number_color_conflict_result.html",
+      "app/templates/virtual_training_history.html",
+      "app/templates/shop_player_card_detail.html",
+      "app/templates/virtual_training_target_tracking.html",
+      "app/templates/adaptive_learning_session.html",
+      "app/templates/lfa_player_profile_edit.html",
+      "app/templates/virtual_training_result.html",
+      "app/templates/my_cards_challenge_card.html",
+      "app/templates/public/welcome_card.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/instructor/enrollments.html",
+    "reference_candidates": [
+      "app/api/web_routes/instructor_dashboard.py",
+      "app/api/web_routes/admin/enrollments.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/instructor/student_belt_status.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/instructor/student_skills.html",
+    "reference_candidates": [
+      "app/api/web_routes/instructor_dashboard.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/instructor/student_skills_v2.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/instructor/tournaments.html",
+    "reference_candidates": [
+      "app/api/web_routes/sport_director.py",
+      "app/api/web_routes/tournaments/browse.py",
+      "app/api/web_routes/tournaments/instructor.py",
+      "app/api/web_routes/tournaments/lifecycle.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/lfa_player_mood_photos.html",
+    "reference_candidates": [
+      "app/api/web_routes/mood_photos.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/lfa_player_onboarding.html",
+    "reference_candidates": [
+      "app/api/web_routes/onboarding.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/lfa_player_profile.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/lfa_player_profile_edit.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/login.html",
+    "reference_candidates": [
+      "app/api/web_routes/auth.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/macros/card_ovr_badge.html",
+    "reference_candidates": [
+      "app/templates/public/export/square/fclassic.html",
+      "app/templates/public/export/portrait/fclassic.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/og/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/templates/public/export/story/fclassic.html",
+      "app/templates/public/export/banner/fclassic.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/macros/card_photo_fallback.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/macros/card_position_map.html",
+    "reference_candidates": [
+      "app/templates/public/export/square/fclassic.html",
+      "app/templates/public/export/portrait/fclassic.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/og/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/templates/public/export/story/fclassic.html",
+      "app/templates/public/export/banner/fclassic.html",
+      "app/templates/public/export/shared/drivers/column_driver.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/macros/card_skill_row.html",
+    "reference_candidates": [
+      "app/templates/public/player_card_fclassic.html",
+      "app/templates/public/export/square/fclassic.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/templates/public/export/banner/fclassic.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/macros/card_sponsor_block.html",
+    "reference_candidates": [
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/templates/public/export/banner/fclassic.html",
+      "app/templates/public/export/shared/drivers/column_driver.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/macros/card_theme_root.html",
+    "reference_candidates": [
+      "app/templates/public/export/shared/export_base.html",
+      "app/templates/public/export/shared/wc_base.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/macros/vt_protocol_hand.html",
+    "reference_candidates": [
+      "app/templates/virtual_training_number_color_conflict.html",
+      "app/templates/virtual_training_color_reaction.html",
+      "app/templates/virtual_training_go_no_go.html",
+      "app/templates/virtual_training_hand_finger_stats.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/message_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/communications.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/messages.html",
+    "reference_candidates": [
+      "app/api/web_routes/communications.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/my_cards_challenge_card.html",
+    "reference_candidates": [
+      "app/api/web_routes/my_cards.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/my_cards_hub.html",
+    "reference_candidates": [
+      "app/api/web_routes/my_cards.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/my_cards_player_card.html",
+    "reference_candidates": [
+      "app/api/web_routes/my_cards.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/my_cards_shop.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/my_cards_welcome_card.html",
+    "reference_candidates": [
+      "app/api/web_routes/my_cards.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/notifications.html",
+    "reference_candidates": [
+      "app/api/web_routes/communications.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/profile.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/public_player.py",
+      "app/api/web_routes/admin/users.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/profile_edit.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/progress.html",
+    "reference_candidates": [
+      "app/api/web_routes/student_features.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/banner/fclassic.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/public_player.py",
+      "app/templates/admin/card_designs_upload.html",
+      "app/templates/macros/card_photo_fallback.html",
+      "app/templates/public/player_card_fclassic.html",
+      "app/templates/public/export/shared/column_archetype.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/services/card_design_service.py",
+      "app/services/card_system/_welcome_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/challenge/post_16_9.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_challenges.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/challenge/story_9_16.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_challenges.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/landscape/fclassic.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/public_player.py",
+      "app/templates/admin/card_designs_upload.html",
+      "app/templates/macros/card_photo_fallback.html",
+      "app/templates/public/player_card_fclassic.html",
+      "app/templates/public/export/shared/column_archetype.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/services/card_design_service.py",
+      "app/services/card_system/_welcome_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/og/fclassic.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/public_player.py",
+      "app/templates/admin/card_designs_upload.html",
+      "app/templates/macros/card_photo_fallback.html",
+      "app/templates/public/player_card_fclassic.html",
+      "app/templates/public/export/shared/column_archetype.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/services/card_design_service.py",
+      "app/services/card_system/_welcome_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/portrait/fclassic.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/public_player.py",
+      "app/templates/admin/card_designs_upload.html",
+      "app/templates/macros/card_photo_fallback.html",
+      "app/templates/public/player_card_fclassic.html",
+      "app/templates/public/export/shared/column_archetype.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/services/card_design_service.py",
+      "app/services/card_system/_welcome_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/shared/column_archetype.html",
+    "reference_candidates": [
+      "app/templates/public/export/shared/export_base.html",
+      "app/templates/public/export/shared/drivers/column_driver.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/shared/drivers/column_driver.html",
+    "reference_candidates": [
+      "app/api/web_routes/public_player.py",
+      "app/services/card_design_admin_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/shared/drivers/pulse_driver.html",
+    "reference_candidates": [
+      "app/api/web_routes/public_player.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/shared/export_base.html",
+    "reference_candidates": [
+      "app/templates/macros/card_ovr_badge.html",
+      "app/templates/public/export/vt/landscape.html",
+      "app/templates/public/export/square/fclassic.html",
+      "app/templates/public/export/portrait/fclassic.html",
+      "app/templates/public/export/shared/column_archetype.html",
+      "app/templates/public/export/welcome/vertical.html",
+      "app/templates/public/export/welcome/horizontal.html",
+      "app/templates/public/export/welcome/square.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/og/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/templates/public/export/story/fclassic.html",
+      "app/templates/public/export/banner/fclassic.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/shared/wc_base.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/templates/public/welcome_card.html",
+      "app/templates/public/export/welcome/band.html",
+      "app/templates/public/export/welcome/full_bleed.html",
+      "app/templates/public/export/welcome/split.html",
+      "app/templates/public/export/welcome/cinematic.html",
+      "app/templates/public/export/welcome/banner.html",
+      "app/templates/public/export/welcome/panel.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/square/fclassic.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/public_player.py",
+      "app/templates/admin/card_designs_upload.html",
+      "app/templates/macros/card_photo_fallback.html",
+      "app/templates/public/player_card_fclassic.html",
+      "app/templates/public/export/shared/column_archetype.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/services/card_design_service.py",
+      "app/services/card_system/_welcome_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/square/pulse.html",
+    "reference_candidates": [
+      "app/templates/public/export/shared/drivers/pulse_driver.html",
+      "app/services/card_design_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/story/fclassic.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/public_player.py",
+      "app/templates/admin/card_designs_upload.html",
+      "app/templates/macros/card_photo_fallback.html",
+      "app/templates/public/player_card_fclassic.html",
+      "app/templates/public/export/shared/column_archetype.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/templates/public/export/tiktok/fclassic.html",
+      "app/services/card_design_service.py",
+      "app/services/card_system/_welcome_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/tiktok/fclassic.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/public_player.py",
+      "app/templates/admin/card_designs_upload.html",
+      "app/templates/macros/card_photo_fallback.html",
+      "app/templates/public/player_card_fclassic.html",
+      "app/templates/public/export/shared/column_archetype.html",
+      "app/templates/public/export/landscape/fclassic.html",
+      "app/services/card_design_service.py",
+      "app/services/card_system/_welcome_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/vt/landscape.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/vt/portrait.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/vt_reward/landscape.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/vt_reward/portrait.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_card.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/welcome/band.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/public/export/welcome/banner.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/public/export/welcome/cinematic.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/public/export/welcome/full_bleed.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/public/export/welcome/horizontal.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/public/export/welcome/panel.html",
+    "reference_candidates": [
+      "app/templates/dashboard_card_editor.html",
+      "app/templates/card_studio_shell.html",
+      "app/templates/includes/player_editor/highlight_video_panel.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/export/welcome/split.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/public/export/welcome/square.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/public/export/welcome/vertical.html",
+    "reference_candidates": [],
+    "removal_proven_safe": false,
+    "status": "UNVERIFIED \u2014 no literal reference; dynamic includes possible"
+  },
+  {
+    "path": "app/templates/public/player_card.html",
+    "reference_candidates": [
+      "app/api/web_routes/my_cards.py",
+      "app/api/web_routes/public_player.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/player_card_atlas.html",
+    "reference_candidates": [
+      "app/services/card_design_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/player_card_base.html",
+    "reference_candidates": [
+      "app/templates/public/player_card.html",
+      "app/templates/public/player_card_compact.html",
+      "app/templates/public/player_card_atlas.html",
+      "app/templates/public/player_card_fclassic.html",
+      "app/templates/public/player_card_compact_bg.html",
+      "app/templates/public/player_card_pulse.html",
+      "app/templates/public/player_card_showcase_bg.html",
+      "app/templates/public/player_card_showcase.html",
+      "app/services/card_theme_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/player_card_compact.html",
+    "reference_candidates": [
+      "app/services/card_design_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/player_card_compact_bg.html",
+    "reference_candidates": [
+      "app/services/card_design_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/player_card_fclassic.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/public_player.py",
+      "app/templates/admin/card_designs_upload.html",
+      "app/services/card_design_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/player_card_public.html",
+    "reference_candidates": [
+      "app/api/web_routes/public_player.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/player_card_pulse.html",
+    "reference_candidates": [
+      "app/services/card_design_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/player_card_showcase.html",
+    "reference_candidates": [
+      "app/services/card_design_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/player_card_showcase_bg.html",
+    "reference_candidates": [
+      "app/services/card_design_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/player_profile.html",
+    "reference_candidates": [
+      "app/api/web_routes/profile.py",
+      "app/api/web_routes/public_player.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/tournament_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/public_tournament.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/public/welcome_card.html",
+    "reference_candidates": [
+      "app/api/web_routes/my_cards.py",
+      "app/api/web_routes/profile.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/quiz_result.html",
+    "reference_candidates": [
+      "app/api/web_routes/quiz.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/quiz_take.html",
+    "reference_candidates": [
+      "app/api/web_routes/quiz.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/register.html",
+    "reference_candidates": [
+      "app/api/web_routes/auth.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/semester_enrollment_request.html",
+    "reference_candidates": [
+      "app/api/web_routes/programs.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/session_details.html",
+    "reference_candidates": [
+      "app/api/web_routes/sessions.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/sessions.html",
+    "reference_candidates": [
+      "app/api/web_routes/sessions.py",
+      "app/api/web_routes/admin/bookings.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/shop_card_player_colors.html",
+    "reference_candidates": [
+      "app/api/web_routes/shop.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/shop_player_card_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/shop.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/shop_unified.html",
+    "reference_candidates": [
+      "app/api/web_routes/shop.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/skill_history.html",
+    "reference_candidates": [
+      "app/api/web_routes/student_features.py",
+      "app/services/skill_progression/_views.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/skills.html",
+    "reference_candidates": [
+      "app/api/web_routes/instructor_dashboard.py",
+      "app/api/web_routes/student_features.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/specialization_select.html",
+    "reference_candidates": [
+      "app/api/web_routes/onboarding.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/sport_director/tournament_teams.html",
+    "reference_candidates": [
+      "app/api/web_routes/sport_director.py",
+      "app/api/web_routes/tournaments/teams.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/sport_director/tournaments.html",
+    "reference_candidates": [
+      "app/api/web_routes/sport_director.py",
+      "app/api/web_routes/tournaments/browse.py",
+      "app/api/web_routes/tournaments/instructor.py",
+      "app/api/web_routes/tournaments/lifecycle.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/student/onboarding_new.html",
+    "reference_candidates": [
+      "app/api/web_routes/onboarding.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/student/team_create.html",
+    "reference_candidates": [
+      "app/api/web_routes/teams.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/student/team_dashboard.html",
+    "reference_candidates": [
+      "app/api/web_routes/teams.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/student/team_invites.html",
+    "reference_candidates": [
+      "app/api/web_routes/teams.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/student_base.html",
+    "reference_candidates": [
+      "app/templates/dashboard_card_editor.html",
+      "app/templates/virtual_training_stroop_challenge_result.html",
+      "app/templates/profile.html",
+      "app/templates/lfa_player_profile.html",
+      "app/templates/training_hub.html",
+      "app/templates/skills.html",
+      "app/templates/virtual_training_memory_sequence.html",
+      "app/templates/virtual_training_number_color_conflict.html",
+      "app/templates/virtual_training_go_no_go_result.html",
+      "app/templates/virtual_training_peripheral_vision_result.html",
+      "app/templates/calendar.html",
+      "app/templates/virtual_training_color_reaction.html",
+      "app/templates/virtual_training_hub.html",
+      "app/templates/shop_unified.html",
+      "app/templates/virtual_training_direction_swipe.html",
+      "app/templates/vt_challenge_detail.html",
+      "app/templates/vt_challenge_lobby.html",
+      "app/templates/my_cards_welcome_card.html",
+      "app/templates/progress.html",
+      "app/templates/vt_challenge_results.html",
+      "app/templates/card_studio_shell.html",
+      "app/templates/dashboard_student_new.html",
+      "app/templates/notifications.html",
+      "app/templates/profile_edit.html",
+      "app/templates/vt_challenge_result_card.html",
+      "app/templates/achievements.html",
+      "app/templates/virtual_training_direction_swipe_result.html",
+      "app/templates/my_cards_shop.html",
+      "app/templates/vt_challenges.html",
+      "app/templates/vt_challenge_send.html",
+      "app/templates/events_hub.html",
+      "app/templates/card_editor_welcome.html",
+      "app/templates/card_studio_challenge.html",
+      "app/templates/my_cards_player_card.html",
+      "app/templates/message_detail.html",
+      "app/templates/virtual_training_target_tracking_result.html",
+      "app/templates/lfa_player_mood_photos.html",
+      "app/templates/messages.html",
+      "app/templates/virtual_training_stroop_challenge.html",
+      "app/templates/card_studio_welcome.html",
+      "app/templates/virtual_training_peripheral_vision.html",
+      "app/templates/virtual_training_memory_sequence_result.html",
+      "app/templates/adaptive_learning.html",
+      "app/templates/card_studio_landing.html",
+      "app/templates/my_cards_hub.html",
+      "app/templates/shop_card_player_colors.html",
+      "app/templates/virtual_training_go_no_go.html",
+      "app/templates/sessions.html",
+      "app/templates/credits.html",
+      "app/templates/tournaments.html",
+      "app/templates/camps.html",
+      "app/templates/virtual_training_hand_finger_stats.html",
+      "app/templates/session_details.html",
+      "app/templates/skill_history.html",
+      "app/templates/friends.html",
+      "app/templates/virtual_training_number_color_conflict_result.html",
+      "app/templates/virtual_training_history.html",
+      "app/templates/shop_player_card_detail.html",
+      "app/templates/virtual_training_target_tracking.html",
+      "app/templates/adaptive_learning_session.html",
+      "app/templates/lfa_player_profile_edit.html",
+      "app/templates/virtual_training_result.html",
+      "app/templates/my_cards_challenge_card.html",
+      "app/templates/student/team_create.html",
+      "app/templates/student/team_invites.html",
+      "app/templates/student/team_dashboard.html",
+      "app/templates/public/welcome_card.html"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/student_motivation_questionnaire.html",
+    "reference_candidates": [
+      "app/api/web_routes/specialization.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/tournaments.html",
+    "reference_candidates": [
+      "app/api/web_routes/sport_director.py",
+      "app/api/web_routes/tournaments/browse.py",
+      "app/api/web_routes/tournaments/instructor.py",
+      "app/api/web_routes/tournaments/lifecycle.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/training_hub.html",
+    "reference_candidates": [
+      "app/api/web_routes/training.py",
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/verify_academy_id.html",
+    "reference_candidates": [
+      "app/api/web_routes/verify.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_color_reaction.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_direction_swipe.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_direction_swipe_result.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_go_no_go.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_go_no_go_result.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_hand_finger_stats.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_history.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_hub.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_memory_sequence.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_memory_sequence_result.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_number_color_conflict.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_number_color_conflict_result.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_peripheral_vision.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_peripheral_vision_result.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_result.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_stroop_challenge.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_stroop_challenge_result.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_target_tracking.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py",
+      "app/services/challenge_snapshot_service.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/virtual_training_target_tracking_result.html",
+    "reference_candidates": [
+      "app/api/web_routes/virtual_training.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/vt_challenge_detail.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_challenges.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/vt_challenge_lobby.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_challenges.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/vt_challenge_result_card.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_challenges.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/vt_challenge_results.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_challenges.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/vt_challenge_send.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_challenges.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  },
+  {
+    "path": "app/templates/vt_challenges.html",
+    "reference_candidates": [
+      "app/api/web_routes/vt_challenges.py"
+    ],
+    "removal_proven_safe": false,
+    "status": "REFERENCED"
+  }
+]

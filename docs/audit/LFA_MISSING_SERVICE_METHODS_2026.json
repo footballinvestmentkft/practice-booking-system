@@ -1,0 +1,218 @@
+[
+  {
+    "path": "app/api/api_v1/endpoints/coach/hours.py",
+    "line": 270,
+    "symbol": "add_theory_hours",
+    "missing_method": "LFACoachService.add_theory_hours",
+    "routes": [
+      "/api/v1/coach/theory-hours"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/coach/hours.py",
+    "line": 318,
+    "symbol": "add_practice_hours",
+    "missing_method": "LFACoachService.add_practice_hours",
+    "routes": [
+      "/api/v1/coach/practice-hours"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/coach/licenses.py",
+    "line": 326,
+    "symbol": "create_license",
+    "missing_method": "LFACoachService.create_license",
+    "routes": [
+      "/api/v1/coach/licenses"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/coach/progression.py",
+    "line": 270,
+    "symbol": "check_expiry",
+    "missing_method": "LFACoachService.check_expiry",
+    "routes": [
+      "/api/v1/coach/licenses/{license_id}/expiry"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/coach/progression.py",
+    "line": 314,
+    "symbol": "renew_certification",
+    "missing_method": "LFACoachService.renew_certification",
+    "routes": [
+      "/api/v1/coach/licenses/{license_id}/renew"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/coach/progression.py",
+    "line": 362,
+    "symbol": "promote_level",
+    "missing_method": "LFACoachService.promote_level",
+    "routes": [
+      "/api/v1/coach/licenses/{license_id}/promote"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/coach/progression.py",
+    "line": 406,
+    "symbol": "get_license_stats",
+    "missing_method": "LFACoachService.get_license_stats",
+    "routes": [
+      "/api/v1/coach/licenses/{license_id}/stats"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/gancuju/activities.py",
+    "line": 249,
+    "symbol": "record_competition",
+    "missing_method": "GanCujuPlayerService.record_competition",
+    "routes": [
+      "/api/v1/gancuju/competitions"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/gancuju/activities.py",
+    "line": 299,
+    "symbol": "record_teaching_hours",
+    "missing_method": "GanCujuPlayerService.record_teaching_hours",
+    "routes": [
+      "/api/v1/gancuju/teaching-hours"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/gancuju/activities.py",
+    "line": 345,
+    "symbol": "get_license_stats",
+    "missing_method": "GanCujuPlayerService.get_license_stats",
+    "routes": [
+      "/api/v1/gancuju/licenses/{license_id}/stats"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/gancuju/belts.py",
+    "line": 248,
+    "symbol": "promote_level",
+    "missing_method": "GanCujuPlayerService.promote_level",
+    "routes": [
+      "/api/v1/gancuju/licenses/{license_id}/promote"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/gancuju/belts.py",
+    "line": 293,
+    "symbol": "demote_level",
+    "missing_method": "GanCujuPlayerService.demote_level",
+    "routes": [
+      "/api/v1/gancuju/licenses/{license_id}/demote"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/gancuju/licenses.py",
+    "line": 302,
+    "symbol": "create_license",
+    "missing_method": "GanCujuPlayerService.create_license",
+    "routes": [
+      "/api/v1/gancuju/licenses"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/internship/credits.py",
+    "line": 314,
+    "symbol": "purchase_credits",
+    "missing_method": "LFAInternshipService.purchase_credits",
+    "routes": [
+      "/api/v1/internship/credits/purchase"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/internship/credits.py",
+    "line": 369,
+    "symbol": "spend_credits",
+    "missing_method": "LFAInternshipService.spend_credits",
+    "routes": [
+      "/api/v1/internship/credits/spend"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/internship/credits.py",
+    "line": 417,
+    "symbol": "get_credit_balance",
+    "missing_method": "LFAInternshipService.get_credit_balance",
+    "routes": [
+      "/api/v1/internship/credits/balance"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/internship/licenses.py",
+    "line": 341,
+    "symbol": "create_license",
+    "missing_method": "LFAInternshipService.create_license",
+    "routes": [
+      "/api/v1/internship/licenses"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/internship/xp_renewal.py",
+    "line": 286,
+    "symbol": "add_xp",
+    "missing_method": "LFAInternshipService.add_xp",
+    "routes": [
+      "/api/v1/internship/xp"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/internship/xp_renewal.py",
+    "line": 335,
+    "symbol": "check_expiry",
+    "missing_method": "LFAInternshipService.check_expiry",
+    "routes": [
+      "/api/v1/internship/licenses/{license_id}/expiry"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/internship/xp_renewal.py",
+    "line": 379,
+    "symbol": "renew_license",
+    "missing_method": "LFAInternshipService.renew_license",
+    "routes": [
+      "/api/v1/internship/licenses/{license_id}/renew"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/lfa_player/credits.py",
+    "line": 85,
+    "symbol": "purchase_credits",
+    "missing_method": "LFAPlayerService.purchase_credits",
+    "routes": [
+      "/api/v1/lfa-player/credits/purchase"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/lfa_player/credits.py",
+    "line": 129,
+    "symbol": "spend_credits",
+    "missing_method": "LFAPlayerService.spend_credits",
+    "routes": [
+      "/api/v1/lfa-player/credits/spend"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/lfa_player/credits.py",
+    "line": 170,
+    "symbol": "get_credit_balance",
+    "missing_method": "LFAPlayerService.get_credit_balance",
+    "routes": [
+      "/api/v1/lfa-player/credits/balance"
+    ]
+  },
+  {
+    "path": "app/api/api_v1/endpoints/lfa_player/credits.py",
+    "line": 196,
+    "symbol": "get_transaction_history",
+    "missing_method": "LFAPlayerService.get_transaction_history",
+    "routes": [
+      "/api/v1/lfa-player/credits/transactions"
+    ]
+  }
+]

@@ -1,0 +1,500 @@
+{
+  "active_revisions": 121,
+  "heads": [
+    "2026_06_24_1000"
+  ],
+  "roots": [
+    "1ec11c73ea62"
+  ],
+  "missing_parent_revisions": [],
+  "legacy_files": 143,
+  "revisions": {
+    "1ec11c73ea62": {
+      "path": "alembic/versions/2026_02_21_0859-1ec11c73ea62_squashed_baseline_schema.py",
+      "down_revision": null
+    },
+    "2026_02_21_2100": {
+      "path": "alembic/versions/2026_02_21_2100-add_missing_e2e_fields.py",
+      "down_revision": "1ec11c73ea62"
+    },
+    "2026_02_24_1200": {
+      "path": "alembic/versions/2026_02_24_1200-add_skill_assessment_lifecycle.py",
+      "down_revision": "2026_02_21_2100"
+    },
+    "bb4309c201b6": {
+      "path": "alembic/versions/2026_03_02_1947-bb4309c201b6_add_missing_unique_constraints.py",
+      "down_revision": "2026_02_24_1200"
+    },
+    "2026_03_02_2115": {
+      "path": "alembic/versions/2026_03_02_2115-create_match_structures_and_match_results.py",
+      "down_revision": "bb4309c201b6"
+    },
+    "2026_03_09_1400": {
+      "path": "alembic/versions/2026_03_09_1400-add_attendance_partial_unique_and_quiz_notes.py",
+      "down_revision": "2026_03_02_2115"
+    },
+    "2026_03_09_1500": {
+      "path": "alembic/versions/2026_03_09_1500-add_uq_booking_attendance.py",
+      "down_revision": "2026_03_09_1400"
+    },
+    "2026_03_12_1000": {
+      "path": "alembic/versions/2026_03_12_1000-drop_semester_is_active.py",
+      "down_revision": "2026_03_09_1500"
+    },
+    "2026_03_12_1100": {
+      "path": "alembic/versions/2026_03_12_1100-remove_legacy_coupon_types.py",
+      "down_revision": "2026_03_12_1000"
+    },
+    "2026_03_12_1200": {
+      "path": "alembic/versions/2026_03_12_1200-drop_location_venue.py",
+      "down_revision": "2026_03_12_1100"
+    },
+    "2026_03_13_1400": {
+      "path": "alembic/versions/2026_03_13_1400-add_skill_tier_reached_notification_type.py",
+      "down_revision": "2026_03_12_1200"
+    },
+    "2026_03_13_1500": {
+      "path": "alembic/versions/2026_03_13_1500-add_performed_by_to_credit_transactions.py",
+      "down_revision": "2026_03_13_1400"
+    },
+    "2026_03_15_1000": {
+      "path": "alembic/versions/2026_03_15_1000-add_semester_category_and_parent.py",
+      "down_revision": "2026_03_13_1500"
+    },
+    "2026_03_15_1100": {
+      "path": "alembic/versions/2026_03_15_1100-add_session_semantic_dimensions.py",
+      "down_revision": "2026_03_15_1000"
+    },
+    "2026_03_15_1200": {
+      "path": "alembic/versions/2026_03_15_1200-create_event_reward_logs.py",
+      "down_revision": "2026_03_15_1100"
+    },
+    "2026_03_15_1300": {
+      "path": "alembic/versions/2026_03_15_1300-backfill_event_category_from_is_tournament_game.py",
+      "down_revision": "2026_03_15_1200"
+    },
+    "2026_03_15_1400": {
+      "path": "alembic/versions/2026_03_15_1400-drop_is_tournament_game.py",
+      "down_revision": "2026_03_15_1300"
+    },
+    "2026_03_15_1500": {
+      "path": "alembic/versions/2026_03_15_1500-add_unique_constraint_event_reward_log.py",
+      "down_revision": "2026_03_15_1400"
+    },
+    "2026_03_15_1600": {
+      "path": "alembic/versions/2026_03_15_1600-add_missing_booking_session_indexes.py",
+      "down_revision": "2026_03_15_1500"
+    },
+    "2026_03_16_1000": {
+      "path": "alembic/versions/2026_03_16_1000-add_location_type_check_constraint_to_semesters.py",
+      "down_revision": "2026_03_15_1600"
+    },
+    "2026_03_18_1800": {
+      "path": "alembic/versions/2026_03_18_1800-game_config_preset_not_null.py",
+      "down_revision": "2026_03_16_1000"
+    },
+    "2026_03_20_1000": {
+      "path": "alembic/versions/2026_03_20_1000-add_unique_constraint_user_license_spec.py",
+      "down_revision": "2026_03_18_1800"
+    },
+    "2026_03_23_1000": {
+      "path": "alembic/versions/2026_03_23_1000_team_participant_support.py",
+      "down_revision": "2026_03_20_1000"
+    },
+    "2026_03_23_1100": {
+      "path": "alembic/versions/2026_03_23_1100_team_invite_and_cost.py",
+      "down_revision": "2026_03_23_1000"
+    },
+    "2026_03_24_0900": {
+      "path": "alembic/versions/2026_03_24_0900_pitch_model_sport_director.py",
+      "down_revision": "2026_03_23_1100"
+    },
+    "2026_03_24_1000": {
+      "path": "alembic/versions/2026_03_24_1000_club_and_csv_import.py",
+      "down_revision": "2026_03_24_0900"
+    },
+    "2026_03_24_1100": {
+      "path": "alembic/versions/2026_03_24_1100_lfa_player_card_photo.py",
+      "down_revision": "2026_03_24_1000"
+    },
+    "2026_03_25_1200": {
+      "path": "alembic/versions/2026_03_25_1200_tournament_instructor_slots.py",
+      "down_revision": "2026_03_24_1100"
+    },
+    "2026_03_26_1400": {
+      "path": "alembic/versions/2026_03_26_1400_team_enrollment_payment_audit.py",
+      "down_revision": "2026_03_25_1200"
+    },
+    "2026_03_26_1500": {
+      "path": "alembic/versions/2026_03_26_1500_team_player_attendance.py",
+      "down_revision": "2026_03_26_1400"
+    },
+    "2026_03_27_1000": {
+      "path": "alembic/versions/2026_03_27_1000_checkin_opens_at.py",
+      "down_revision": "2026_03_26_1500"
+    },
+    "2026_03_28_1200": {
+      "path": "alembic/versions/2026_03_28_1200_number_of_legs.py",
+      "down_revision": "2026_03_27_1000"
+    },
+    "2026_04_17_1000": {
+      "path": "alembic/versions/2026_04_17_1000_add_semester_schedule_configs.py",
+      "down_revision": "2026_03_28_1200"
+    },
+    "2026_04_17_1100": {
+      "path": "alembic/versions/2026_04_17_1100_session_instructor_fk_set_null.py",
+      "down_revision": "2026_04_17_1000"
+    },
+    "2026_04_20_0900": {
+      "path": "alembic/versions/2026_04_20_0900_xp_ledger_repair.py",
+      "down_revision": "2026_04_17_1100"
+    },
+    "2026_04_21_1000": {
+      "path": "alembic/versions/2026_04_21_1000_sessions_game_preset_fk.py",
+      "down_revision": "2026_04_20_0900"
+    },
+    "2026_04_21_1100": {
+      "path": "alembic/versions/2026_04_21_1100_session_segments.py",
+      "down_revision": "2026_04_21_1000"
+    },
+    "2026_04_25_0900": {
+      "path": "alembic/versions/2026_04_25_0900_add_language_to_quizzes_and_al_sessions.py",
+      "down_revision": "2026_04_21_1100"
+    },
+    "2026_04_26_1000": {
+      "path": "alembic/versions/2026_04_26_1000_card_fields_to_user_licenses.py",
+      "down_revision": "2026_04_25_0900"
+    },
+    "2026_04_28_1000": {
+      "path": "alembic/versions/2026_04_28_1000_add_module_prefix_to_al_sessions.py",
+      "down_revision": "2026_04_26_1000"
+    },
+    "2026_04_29_1000": {
+      "path": "alembic/versions/2026_04_29_1000_add_public_card_platform.py",
+      "down_revision": "2026_04_28_1000"
+    },
+    "2026_04_30_1000": {
+      "path": "alembic/versions/2026_04_30_1000_add_dominant_foot_scores.py",
+      "down_revision": "2026_04_29_1000"
+    },
+    "2026_05_01_1000": {
+      "path": "alembic/versions/2026_05_01_1000_add_sponsor_logo_url.py",
+      "down_revision": "2026_04_30_1000"
+    },
+    "2026_05_01_1100": {
+      "path": "alembic/versions/2026_05_01_1100_add_foot_context_to_tournament_participations.py",
+      "down_revision": "2026_05_01_1000"
+    },
+    "2026_05_01_1200": {
+      "path": "alembic/versions/2026_05_01_1200_add_foot_score_check_constraints.py",
+      "down_revision": "2026_05_01_1100"
+    },
+    "2026_05_02_1000": {
+      "path": "alembic/versions/2026_05_02_1000_add_promotion_event_semester_category.py",
+      "down_revision": "2026_05_01_1200"
+    },
+    "2026_05_02_1100": {
+      "path": "alembic/versions/2026_05_02_1100_add_sponsor_tables.py",
+      "down_revision": "2026_05_02_1000"
+    },
+    "2026_05_02_1200": {
+      "path": "alembic/versions/2026_05_02_1200_add_semester_organizer_fks.py",
+      "down_revision": "2026_05_02_1100"
+    },
+    "2026_05_03_1000": {
+      "path": "alembic/versions/2026_05_03_1000_sponsor_audience_import.py",
+      "down_revision": "2026_05_02_1200"
+    },
+    "2026_05_03_1100": {
+      "path": "alembic/versions/2026_05_03_1100_sponsor_audience_promote.py",
+      "down_revision": "2026_05_03_1000"
+    },
+    "2026_05_03_1200": {
+      "path": "alembic/versions/2026_05_03_1200_sponsor_audience_position.py",
+      "down_revision": "2026_05_03_1100"
+    },
+    "2026_05_03_1300": {
+      "path": "alembic/versions/2026_05_03_1300_sponsor_campaigns_phase1.py",
+      "down_revision": "2026_05_03_1200"
+    },
+    "2026_05_03_1400": {
+      "path": "alembic/versions/2026_05_03_1400_sponsor_campaigns_phase2.py",
+      "down_revision": "2026_05_03_1300"
+    },
+    "2026_05_03_1500": {
+      "path": "alembic/versions/2026_05_03_1500_promotion_campaign_link.py",
+      "down_revision": "2026_05_03_1400"
+    },
+    "2026_05_03_1600": {
+      "path": "alembic/versions/2026_05_03_1600_p6_p7_campaign_credit.py",
+      "down_revision": "2026_05_03_1500"
+    },
+    "2026_05_05_1000": {
+      "path": "alembic/versions/2026_05_05_1000_semesters_age_groups.py",
+      "down_revision": "2026_05_03_1600"
+    },
+    "2026_05_10_1000": {
+      "path": "alembic/versions/2026_05_10_1000_users_secondary_nationality.py",
+      "down_revision": "2026_05_05_1000"
+    },
+    "2026_05_13_1000": {
+      "path": "alembic/versions/2026_05_13_1000_add_session_due_shown.py",
+      "down_revision": "2026_05_10_1000"
+    },
+    "2026_05_14_1000": {
+      "path": "alembic/versions/2026_05_14_1000_published_card_state.py",
+      "down_revision": "2026_05_13_1000"
+    },
+    "2026_05_15_1100": {
+      "path": "alembic/versions/2026_05_15_1100_add_card_drafts.py",
+      "down_revision": "2026_05_14_1000"
+    },
+    "2026_05_16_1000": {
+      "path": "alembic/versions/2026_05_16_1000_add_wc_photo_fields.py",
+      "down_revision": "2026_05_15_1100"
+    },
+    "2026_05_16_1001": {
+      "path": "alembic/versions/2026_05_16_1001_backfill_wc_photo_fields.py",
+      "down_revision": "2026_05_16_1000"
+    },
+    "2026_05_17_1000": {
+      "path": "alembic/versions/2026_05_17_1000_add_card_themes.py",
+      "down_revision": "2026_05_16_1001"
+    },
+    "2026_05_17_1100": {
+      "path": "alembic/versions/2026_05_17_1100_add_card_designs.py",
+      "down_revision": "2026_05_17_1000"
+    },
+    "2026_05_17_1200": {
+      "path": "alembic/versions/2026_05_17_1200_add_component_config.py",
+      "down_revision": "2026_05_17_1100"
+    },
+    "2026_05_17_1300": {
+      "path": "alembic/versions/2026_05_17_1300_add_classic_lite_design.py",
+      "down_revision": "2026_05_17_1200"
+    },
+    "2026_05_17_1400": {
+      "path": "alembic/versions/2026_05_17_1400_backfill_archetype_id_card_designs.py",
+      "down_revision": "2026_05_17_1300"
+    },
+    "2026_05_17_1500": {
+      "path": "alembic/versions/2026_05_17_1500_update_fifa_portrait_story_config.py",
+      "down_revision": "2026_05_17_1400"
+    },
+    "2026_05_20_1000": {
+      "path": "alembic/versions/2026_05_20_1000_add_adaptive_learning_answer_log.py",
+      "down_revision": "2026_05_17_1500"
+    },
+    "2026_05_20_1100": {
+      "path": "alembic/versions/2026_05_20_1100_add_option_type_to_quiz_answer_options.py",
+      "down_revision": "2026_05_20_1000"
+    },
+    "2026_05_20_1200": {
+      "path": "alembic/versions/2026_05_20_1200_add_al_import_logs.py",
+      "down_revision": "2026_05_20_1100"
+    },
+    "2026_05_20_1300": {
+      "path": "alembic/versions/2026_05_20_1300_add_quiz_content_status.py",
+      "down_revision": "2026_05_20_1200"
+    },
+    "2026_05_21_1400": {
+      "path": "alembic/versions/2026_05_21_1400_al_session_status.py",
+      "down_revision": "2026_05_20_1300"
+    },
+    "2026_05_21_1500": {
+      "path": "alembic/versions/2026_05_21_1500_virtual_training_schema.py",
+      "down_revision": "2026_05_21_1400"
+    },
+    "2026_05_21_1600": {
+      "path": "alembic/versions/2026_05_21_1600_vt_attempt_game_columns.py",
+      "down_revision": "2026_05_21_1500"
+    },
+    "2026_05_22_1000": {
+      "path": "alembic/versions/2026_05_22_1000_vt_wrong_click_column.py",
+      "down_revision": "2026_05_21_1600"
+    },
+    "2026_05_22_1100": {
+      "path": "alembic/versions/2026_05_22_1100_vt_raw_metrics.py",
+      "down_revision": "2026_05_22_1000"
+    },
+    "2026_05_24_0900": {
+      "path": "alembic/versions/2026_05_24_0900_friendship_schema.py",
+      "down_revision": "2026_05_22_1100"
+    },
+    "2026_05_24_1000": {
+      "path": "alembic/versions/2026_05_24_1000_vt_challenge_schema.py",
+      "down_revision": "2026_05_24_0900"
+    },
+    "2026_05_24_1100": {
+      "path": "alembic/versions/2026_05_24_1100_vt_challenge_difficulty.py",
+      "down_revision": "2026_05_24_1000"
+    },
+    "2026_05_25_1100": {
+      "path": "alembic/versions/2026_05_25_1100_add_challenge_snapshot.py",
+      "down_revision": "2026_05_24_1100"
+    },
+    "2026_05_25_1200": {
+      "path": "alembic/versions/2026_05_25_1200_vt_challenge_completion_deadline.py",
+      "down_revision": "2026_05_25_1100"
+    },
+    "2026_05_25_1300": {
+      "path": "alembic/versions/2026_05_25_1300_vt_challenge_live_lobby.py",
+      "down_revision": "2026_05_25_1200"
+    },
+    "2026_05_25_1400": {
+      "path": "alembic/versions/2026_05_25_1400_notification_type_live_lobby.py",
+      "down_revision": "2026_05_25_1300"
+    },
+    "2026_05_26_1100": {
+      "path": "alembic/versions/2026_05_26_1100_user_mood_photos.py",
+      "down_revision": "2026_05_25_1400"
+    },
+    "2026_05_26_1200": {
+      "path": "alembic/versions/2026_05_26_1200_mood_photos_6slots.py",
+      "down_revision": "2026_05_26_1100"
+    },
+    "2026_05_28_0900": {
+      "path": "alembic/versions/2026_05_28_0900_add_card_design_ownerships.py",
+      "down_revision": "2026_05_26_1200"
+    },
+    "2026_05_28_1000": {
+      "path": "alembic/versions/2026_05_28_1000_fix_card_design_pricing.py",
+      "down_revision": "2026_05_28_0900"
+    },
+    "2026_05_29_1100": {
+      "path": "alembic/versions/2026_05_29_1100_add_og_bucket_to_fifa.py",
+      "down_revision": "2026_05_28_1000"
+    },
+    "2026_05_29_1200": {
+      "path": "alembic/versions/2026_05_29_1200_add_card_color_ownership.py",
+      "down_revision": "2026_05_29_1100"
+    },
+    "2026_05_30_1200": {
+      "path": "alembic/versions/2026_05_30_1200_rename_fifa_label_to_fclassic_player.py",
+      "down_revision": "2026_05_29_1200"
+    },
+    "2026_05_31_1000": {
+      "path": "alembic/versions/2026_05_31_1000_migrate_fifa_to_fclassic.py",
+      "down_revision": "2026_05_30_1200"
+    },
+    "2026_06_02_1000": {
+      "path": "alembic/versions/2026_06_02_1000_add_challenge_card_photo_snapshot.py",
+      "down_revision": "2026_05_31_1000"
+    },
+    "2026_06_03_1000": {
+      "path": "alembic/versions/2026_06_03_1000_mood_photos_9slots.py",
+      "down_revision": "2026_06_02_1000"
+    },
+    "2026_06_05_1000": {
+      "path": "alembic/versions/2026_06_05_1000_vta_location_training_day.py",
+      "down_revision": "2026_06_03_1000"
+    },
+    "2026_06_08_1000": {
+      "path": "alembic/versions/2026_06_08_1000_add_profile_photo.py",
+      "down_revision": "2026_06_05_1000"
+    },
+    "2026_06_09_1000": {
+      "path": "alembic/versions/2026_06_09_1000_add_academy_id_phase_2a.py",
+      "down_revision": "2026_06_08_1000"
+    },
+    "2026_06_09_1100": {
+      "path": "alembic/versions/2026_06_09_1100_academy_id_color.py",
+      "down_revision": "2026_06_09_1000"
+    },
+    "2026_06_10_1000": {
+      "path": "alembic/versions/2026_06_10_1000_add_biometric_foundation.py",
+      "down_revision": "2026_06_09_1000"
+    },
+    "2026_06_10_1100": {
+      "path": "alembic/versions/2026_06_10_1100_merge_academy_id_color_and_biometric_heads.py",
+      "down_revision": [
+        "2026_06_09_1100",
+        "2026_06_10_1000"
+      ]
+    },
+    "2026_06_10_1200": {
+      "path": "alembic/versions/2026_06_10_1200_biometric_disclosure.py",
+      "down_revision": "2026_06_10_1100"
+    },
+    "2026_06_10_1300": {
+      "path": "alembic/versions/2026_06_10_1300_add_juggling_video_tables.py",
+      "down_revision": "2026_06_10_1200"
+    },
+    "2026_06_11_1000": {
+      "path": "alembic/versions/2026_06_11_1000_add_juggling_transcode_fields.py",
+      "down_revision": "2026_06_10_1300"
+    },
+    "2026_06_11_1100": {
+      "path": "alembic/versions/2026_06_11_1100_add_juggling_retention_fields.py",
+      "down_revision": "2026_06_11_1000"
+    },
+    "2026_06_13_1000": {
+      "path": "alembic/versions/2026_06_13_1000_add_juggling_contact_events.py",
+      "down_revision": "2026_06_11_1100"
+    },
+    "2026_06_14_1000": {
+      "path": "alembic/versions/2026_06_14_1000_add_juggling_media_deleted_status.py",
+      "down_revision": "2026_06_13_1000"
+    },
+    "2026_06_16_1000": {
+      "path": "alembic/versions/2026_06_16_1000_add_juggling_pose_snapshots.py",
+      "down_revision": "2026_06_14_1000"
+    },
+    "2026_06_17_1000": {
+      "path": "alembic/versions/2026_06_17_1000_extend_pose_snapshot_capture_source.py",
+      "down_revision": "2026_06_16_1000"
+    },
+    "2026_06_17_1100": {
+      "path": "alembic/versions/2026_06_17_1100_add_user_rotation_degrees.py",
+      "down_revision": "2026_06_17_1000"
+    },
+    "2026_06_17_1200": {
+      "path": "alembic/versions/2026_06_17_1200_widen_audit_logs_action.py",
+      "down_revision": "2026_06_17_1100"
+    },
+    "2026_06_18_1000": {
+      "path": "alembic/versions/2026_06_18_1000_add_training_video_type.py",
+      "down_revision": "2026_06_17_1200"
+    },
+    "2026_06_18_1100": {
+      "path": "alembic/versions/2026_06_18_1100_add_juggling_ball_detections.py",
+      "down_revision": "2026_06_18_1000"
+    },
+    "2026_06_18_1200": {
+      "path": "alembic/versions/2026_06_18_1200_fix_ball_detection_source_v1.py",
+      "down_revision": "2026_06_18_1100"
+    },
+    "2026_06_18_1300": {
+      "path": "alembic/versions/2026_06_18_1300_add_ball_detection_auto_coords.py",
+      "down_revision": "2026_06_18_1200"
+    },
+    "2026_06_18_1400": {
+      "path": "alembic/versions/2026_06_18_1400_add_auto_confidence.py",
+      "down_revision": "2026_06_18_1300"
+    },
+    "2026_06_18_1500": {
+      "path": "alembic/versions/2026_06_18_1500_add_juggling_ball_trajectories.py",
+      "down_revision": "2026_06_18_1400"
+    },
+    "2026_06_18_2000": {
+      "path": "alembic/versions/2026_06_18_2000_add_juggling_ball_feedback_tables.py",
+      "down_revision": "2026_06_18_1500"
+    },
+    "2026_06_19_1000": {
+      "path": "alembic/versions/2026_06_19_1000_add_ball_training_assignments.py",
+      "down_revision": "2026_06_18_2000"
+    },
+    "2026_06_22_1000": {
+      "path": "alembic/versions/2026_06_22_1000_multicamera_session_contract.py",
+      "down_revision": "2026_06_19_1000"
+    },
+    "2026_06_22_2000": {
+      "path": "alembic/versions/2026_06_22_2000_scheduled_start_stream_lifecycle.py",
+      "down_revision": "2026_06_22_1000"
+    },
+    "2026_06_24_1000": {
+      "path": "alembic/versions/2026_06_24_1000_capture_cycles.py",
+      "down_revision": "2026_06_22_2000"
+    }
+  }
+}

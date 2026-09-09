@@ -1,0 +1,4219 @@
+[
+  {
+    "path": "app/api/api_v1/endpoints/_semesters_main.py",
+    "line": 109,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/analytics.py",
+    "line": 121,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/analytics.py",
+    "line": 135,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/coupons.py",
+    "line": 507,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/curriculum/exercises.py",
+    "line": 216,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/curriculum/exercises.py",
+    "line": 223,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/curriculum/exercises.py",
+    "line": 232,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/curriculum/exercises.py",
+    "line": 320,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/assignments.py",
+    "line": 293,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/assignments.py",
+    "line": 406,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/masters/__init__.py",
+    "line": 8,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/masters/__init__.py",
+    "line": 17,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/masters/__init__.py",
+    "line": 25,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/masters/direct_hire.py",
+    "line": 84,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/masters/legacy.py",
+    "line": 2,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/masters/legacy.py",
+    "line": 38,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/masters/legacy.py",
+    "line": 40,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/masters/legacy.py",
+    "line": 69,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/masters/legacy.py",
+    "line": 76,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/instructor_management/masters/offers.py",
+    "line": 163,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/lfa_player/licenses.py",
+    "line": 27,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/lfa_player/licenses.py",
+    "line": 92,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/lfa_player/licenses.py",
+    "line": 99,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/lfa_player/skills.py",
+    "line": 2,
+    "terms": [
+      "deprecated",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/lfa_player/skills.py",
+    "line": 26,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/lfa_player/skills.py",
+    "line": 33,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/licenses/instructor.py",
+    "line": 88,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/progression.py",
+    "line": 172,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/progression.py",
+    "line": 201,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/projects/quizzes.py",
+    "line": 310,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/projects/validators.py",
+    "line": 65,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/reports/standard.py",
+    "line": 193,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/sandbox/run_test.py",
+    "line": 63,
+    "terms": [
+      "temporary"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/specializations/info.py",
+    "line": 60,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/students.py",
+    "line": 3,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/__init__.py",
+    "line": 42,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/calculate_rankings.py",
+    "line": 387,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/cancellation.py",
+    "line": 378,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/checkin.py",
+    "line": 41,
+    "terms": [
+      "fallback",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/enroll.py",
+    "line": 149,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/generate_sessions.py",
+    "line": 31,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/generate_sessions.py",
+    "line": 523,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/generate_sessions.py",
+    "line": 659,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/generator.py",
+    "line": 47,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/generator.py",
+    "line": 680,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/instructor.py",
+    "line": 21,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/instructor.py",
+    "line": 121,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/instructor.py",
+    "line": 158,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/instructor.py",
+    "line": 236,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/instructor.py",
+    "line": 457,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/instructor.py",
+    "line": 716,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/lifecycle.py",
+    "line": 461,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+    "line": 680,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/ops_scenario/schemas.py",
+    "line": 83,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/results/__init__.py",
+    "line": 7,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/results/submission.py",
+    "line": 9,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/results/submission.py",
+    "line": 258,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/reward_config.py",
+    "line": 211,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/reward_config.py",
+    "line": 213,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/reward_config.py",
+    "line": 257,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/rewards.py",
+    "line": 343,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/rewards.py",
+    "line": 350,
+    "terms": [
+      "temporary"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/rewards.py",
+    "line": 402,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/rewards.py",
+    "line": 411,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/schedule_config.py",
+    "line": 12,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tournaments/schedule_config.py",
+    "line": 112,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/tracks.py",
+    "line": 180,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/users/biometric_consent.py",
+    "line": 123,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/users/biometric_liveness.py",
+    "line": 55,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/api_v1/endpoints/users/credits.py",
+    "line": 91,
+    "terms": [
+      "temporary"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/admin/card_designs.py",
+    "line": 228,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/admin/card_themes.py",
+    "line": 223,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/admin/sponsors.py",
+    "line": 866,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/admin/sponsors.py",
+    "line": 873,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/admin/sponsors.py",
+    "line": 886,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/admin/sponsors.py",
+    "line": 900,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/admin/users.py",
+    "line": 513,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 7,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 320,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 716,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 727,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 729,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 733,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 752,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 753,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 758,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 759,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/card_studio.py",
+    "line": 866,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 64,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 84,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 168,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 411,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 439,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 547,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 1031,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 1295,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 1424,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 1579,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/dashboard.py",
+    "line": 1780,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/instructor_dashboard.py",
+    "line": 285,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/mood_photos.py",
+    "line": 8,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/mood_photos.py",
+    "line": 263,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/my_cards.py",
+    "line": 103,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/onboarding.py",
+    "line": 454,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/onboarding.py",
+    "line": 461,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/onboarding.py",
+    "line": 468,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/onboarding.py",
+    "line": 473,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/profile.py",
+    "line": 685,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/profile.py",
+    "line": 743,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/profile.py",
+    "line": 858,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/profile.py",
+    "line": 894,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/profile.py",
+    "line": 914,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 58,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 153,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 285,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 366,
+    "terms": [
+      "fallback",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 421,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 435,
+    "terms": [
+      "fallback",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 444,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 477,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 482,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 646,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 738,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 849,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_player.py",
+    "line": 862,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_tournament.py",
+    "line": 277,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/public_tournament.py",
+    "line": 377,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/tournaments/instructor_planning.py",
+    "line": 101,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/tournaments/instructor_planning.py",
+    "line": 107,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/tournaments/instructor_planning.py",
+    "line": 113,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/tournaments/instructor_planning.py",
+    "line": 120,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/tournaments/lifecycle.py",
+    "line": 148,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/verify.py",
+    "line": 5,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/verify.py",
+    "line": 76,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/virtual_training.py",
+    "line": 884,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/virtual_training.py",
+    "line": 1255,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/vt_card.py",
+    "line": 250,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/vt_challenges.py",
+    "line": 101,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/vt_challenges.py",
+    "line": 1165,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/api/web_routes/vt_challenges.py",
+    "line": 1216,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/config.py",
+    "line": 202,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/config.py",
+    "line": 313,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/config.py",
+    "line": 314,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/middleware/logging.py",
+    "line": 164,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/middleware/security.py",
+    "line": 130,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/campus.py",
+    "line": 47,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/campus_schedule_config.py",
+    "line": 20,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/card_design.py",
+    "line": 7,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/card_design.py",
+    "line": 66,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/card_design.py",
+    "line": 74,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/card_design_ownership.py",
+    "line": 5,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/card_draft.py",
+    "line": 8,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/card_theme.py",
+    "line": 7,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/game_preset.py",
+    "line": 172,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/instructor_assignment.py",
+    "line": 198,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/instructor_assignment.py",
+    "line": 200,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/instructor_assignment.py",
+    "line": 221,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/instructor_assignment.py",
+    "line": 237,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/juggling.py",
+    "line": 262,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/juggling.py",
+    "line": 472,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/license.py",
+    "line": 185,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/license.py",
+    "line": 338,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/license.py",
+    "line": 339,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/license.py",
+    "line": 346,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/license.py",
+    "line": 349,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/license.py",
+    "line": 360,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/location.py",
+    "line": 36,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/multicamera_session.py",
+    "line": 212,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/quiz.py",
+    "line": 17,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/quiz.py",
+    "line": 65,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/quiz.py",
+    "line": 215,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/semester.py",
+    "line": 115,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/semester.py",
+    "line": 134,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/semester.py",
+    "line": 145,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/semester.py",
+    "line": 150,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/user.py",
+    "line": 494,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/user_mood_photos.py",
+    "line": 5,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/user_progress.py",
+    "line": 119,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/vt_challenge.py",
+    "line": 27,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/vt_challenge.py",
+    "line": 172,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/models/xp_transaction.py",
+    "line": 29,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/schemas/location.py",
+    "line": 12,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/schemas/semester.py",
+    "line": 19,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/schemas/user.py",
+    "line": 90,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/schemas/user.py",
+    "line": 100,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/schemas/user.py",
+    "line": 122,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/action_determiner.py",
+    "line": 317,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/action_determiner.py",
+    "line": 325,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/action_determiner.py",
+    "line": 356,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/adaptive_learning.py",
+    "line": 374,
+    "terms": [
+      "fallback",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/adaptive_learning.py",
+    "line": 391,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/al_quality_service.py",
+    "line": 27,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/availability_service.py",
+    "line": 201,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/consent_service.py",
+    "line": 10,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/consent_service.py",
+    "line": 136,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/embedding_service.py",
+    "line": 50,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/embedding_service.py",
+    "line": 59,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/embedding_service.py",
+    "line": 98,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/embedding_service.py",
+    "line": 102,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/embedding_service.py",
+    "line": 104,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/embedding_service.py",
+    "line": 105,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/liveness_service.py",
+    "line": 12,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/liveness_service.py",
+    "line": 62,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/onnx_provider.py",
+    "line": 99,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/rate_limiter.py",
+    "line": 14,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/rate_limiter.py",
+    "line": 94,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/rate_limiter.py",
+    "line": 169,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/biometric/rate_limiter.py",
+    "line": 199,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_constants.py",
+    "line": 12,
+    "terms": [
+      "fallback",
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_constants.py",
+    "line": 14,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_constants.py",
+    "line": 74,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_constants.py",
+    "line": 76,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_constants.py",
+    "line": 78,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_constants.py",
+    "line": 84,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_constants.py",
+    "line": 101,
+    "terms": [
+      "deprecated",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_constants.py",
+    "line": 102,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_admin_service.py",
+    "line": 11,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 12,
+    "terms": [
+      "fallback",
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 21,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 70,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 210,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 213,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 215,
+    "terms": [
+      "deprecated",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 218,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 223,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 250,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 252,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 259,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 285,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 345,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 347,
+    "terms": [
+      "fallback",
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 363,
+    "terms": [
+      "deprecated",
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 415,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 420,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 463,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 464,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 479,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 489,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 522,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_design_service.py",
+    "line": 534,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_draft_service.py",
+    "line": 3,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_draft_service.py",
+    "line": 11,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_draft_service.py",
+    "line": 331,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_theme_service.py",
+    "line": 11,
+    "terms": [
+      "fallback",
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_theme_service.py",
+    "line": 48,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_theme_service.py",
+    "line": 52,
+    "terms": [
+      "fallback",
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_theme_service.py",
+    "line": 105,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/card_theme_service.py",
+    "line": 160,
+    "terms": [
+      "fallback",
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/certificate_service.py",
+    "line": 243,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/certificate_service.py",
+    "line": 251,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/certificate_service.py",
+    "line": 252,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/certificate_service.py",
+    "line": 253,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/challenge_snapshot_service.py",
+    "line": 17,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/challenge_snapshot_service.py",
+    "line": 126,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/coach_level_service.py",
+    "line": 124,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/competency_service.py",
+    "line": 348,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/csv_import_service.py",
+    "line": 286,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/enrollment_conflict_service.py",
+    "line": 370,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/football_skill_service.py",
+    "line": 41,
+    "terms": [
+      "deprecated",
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/gamification/xp_service.py",
+    "line": 207,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/health_monitor.py",
+    "line": 173,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/health_monitor.py",
+    "line": 244,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/juggling/media_service.py",
+    "line": 142,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/juggling/metadata_service.py",
+    "line": 131,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/juggling/metadata_service.py",
+    "line": 139,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/juggling/metadata_service.py",
+    "line": 151,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/juggling/quality_service.py",
+    "line": 57,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/juggling/quality_service.py",
+    "line": 62,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/juggling/quality_service.py",
+    "line": 68,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/juggling/video_service.py",
+    "line": 347,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/licence_package.py",
+    "line": 82,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/license_service.py",
+    "line": 332,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/location/reverse_geocode_service.py",
+    "line": 7,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/mood_photo_service.py",
+    "line": 6,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 22,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 102,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 103,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 104,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 105,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 112,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 116,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 122,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 123,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 124,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 140,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 183,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 193,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 208,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 284,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/player_photo_service.py",
+    "line": 299,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/profile_grid_service.py",
+    "line": 507,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/redis_cache.py",
+    "line": 10,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/redis_cache.py",
+    "line": 27,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/reward_service.py",
+    "line": 58,
+    "terms": [
+      "fallback",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/reward_service.py",
+    "line": 141,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/reward_service.py",
+    "line": 145,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/role_semester_filter_service.py",
+    "line": 78,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/role_semester_filter_service.py",
+    "line": 93,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/role_semester_filter_service.py",
+    "line": 103,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/role_semester_filter_service.py",
+    "line": 138,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/role_semester_filter_service.py",
+    "line": 146,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/sandbox_test_orchestrator.py",
+    "line": 5,
+    "terms": [
+      "temporary"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/sandbox_test_orchestrator.py",
+    "line": 29,
+    "terms": [
+      "fallback",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/sandbox_test_orchestrator.py",
+    "line": 190,
+    "terms": [
+      "temporary"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/sandbox_test_orchestrator.py",
+    "line": 260,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/sandbox_test_orchestrator.py",
+    "line": 264,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/sandbox_test_orchestrator.py",
+    "line": 268,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/sandbox_test_orchestrator.py",
+    "line": 481,
+    "terms": [
+      "fallback",
+      "hardcoded",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/segment_reward_service.py",
+    "line": 34,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/segment_reward_service.py",
+    "line": 134,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/semester_status_service.py",
+    "line": 39,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/semester_status_service.py",
+    "line": 61,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/semester_status_service.py",
+    "line": 69,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/semester_status_service.py",
+    "line": 84,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/semester_templates.py",
+    "line": 210,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/session_group_service.py",
+    "line": 65,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/shop_catalog_service.py",
+    "line": 220,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skeleton/legacy_adapter.py",
+    "line": 2,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_config.py",
+    "line": 54,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_config.py",
+    "line": 66,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_config.py",
+    "line": 67,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_config.py",
+    "line": 69,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_config.py",
+    "line": 97,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_config.py",
+    "line": 119,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_config.py",
+    "line": 135,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_config.py",
+    "line": 140,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_formulas.py",
+    "line": 39,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_formulas.py",
+    "line": 71,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_formulas.py",
+    "line": 75,
+    "terms": [
+      "fallback",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_formulas.py",
+    "line": 78,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_formulas.py",
+    "line": 80,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_formulas.py",
+    "line": 127,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression/_lateral.py",
+    "line": 20,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/skill_progression_service.py",
+    "line": 21,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/__init__.py",
+    "line": 153,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/common.py",
+    "line": 32,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/common.py",
+    "line": 56,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/common.py",
+    "line": 86,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/common.py",
+    "line": 109,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/common.py",
+    "line": 247,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/common.py",
+    "line": 357,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/validation.py",
+    "line": 23,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/validation.py",
+    "line": 47,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/validation.py",
+    "line": 60,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/validation.py",
+    "line": 63,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/validation.py",
+    "line": 66,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization/validation.py",
+    "line": 103,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization_service.py",
+    "line": 2,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization_validation.py",
+    "line": 11,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization_validation.py",
+    "line": 18,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specialization_validation.py",
+    "line": 22,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specs/semester_based/lfa_coach_service.py",
+    "line": 518,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specs/semester_based/lfa_internship_service.py",
+    "line": 574,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/specs/session_based/lfa_player_service.py",
+    "line": 86,
+    "terms": [
+      "deprecated",
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/student_state_service.py",
+    "line": 48,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/core.py",
+    "line": 61,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/instructor_eligibility_service.py",
+    "line": 74,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/instructor_eligibility_service.py",
+    "line": 105,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/instructor_planning_service.py",
+    "line": 328,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/instructor_planning_service.py",
+    "line": 333,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/instructor_planning_service.py",
+    "line": 408,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/instructor_planning_service.py",
+    "line": 415,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/knockout_progression_service.py",
+    "line": 37,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/knockout_progression_service.py",
+    "line": 343,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/knockout_progression_service.py",
+    "line": 361,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/live_model_service.py",
+    "line": 12,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/live_model_service.py",
+    "line": 156,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/live_model_service.py",
+    "line": 403,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/live_model_service.py",
+    "line": 449,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/participant_filter_service.py",
+    "line": 110,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/ranking/ranking_service.py",
+    "line": 254,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/ranking/ranking_service.py",
+    "line": 292,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/ranking/ranking_service.py",
+    "line": 294,
+    "terms": [
+      "temporary"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/ranking/ranking_service.py",
+    "line": 303,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/ranking/strategies/base.py",
+    "line": 126,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/ranking/strategies/base.py",
+    "line": 173,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/repositories.py",
+    "line": 277,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/repositories.py",
+    "line": 359,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/repositories.py",
+    "line": 368,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/repositories.py",
+    "line": 370,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/repositories.py",
+    "line": 372,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/repositories.py",
+    "line": 373,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/result_processor.py",
+    "line": 78,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/result_processor.py",
+    "line": 454,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/result_processor.py",
+    "line": 476,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/result_processor.py",
+    "line": 537,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/result_processor.py",
+    "line": 550,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/result_processor.py",
+    "line": 822,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/results/calculators/standings_calculator.py",
+    "line": 100,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/results/finalization/group_stage_finalizer.py",
+    "line": 200,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/results/finalization/session_finalizer.py",
+    "line": 272,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/seeding_calculator.py",
+    "line": 55,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/seeding_calculator.py",
+    "line": 89,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/seeding_calculator.py",
+    "line": 92,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/seeding_calculator.py",
+    "line": 93,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/builders/__init__.py",
+    "line": 2,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/formats/group_knockout_generator.py",
+    "line": 116,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/formats/group_knockout_generator.py",
+    "line": 141,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/formats/group_knockout_generator.py",
+    "line": 156,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/formats/group_knockout_generator.py",
+    "line": 161,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/formats/group_knockout_generator.py",
+    "line": 206,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/formats/group_knockout_generator.py",
+    "line": 213,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/formats/group_knockout_generator.py",
+    "line": 256,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/formats/group_knockout_generator.py",
+    "line": 281,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/formats/group_knockout_generator.py",
+    "line": 288,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/formats/swiss_generator.py",
+    "line": 78,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/session_generator.py",
+    "line": 140,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/session_generator.py",
+    "line": 173,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/session_generator.py",
+    "line": 198,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/session_generator.py",
+    "line": 205,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/session_generator.py",
+    "line": 389,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/session_generator.py",
+    "line": 402,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/utils.py",
+    "line": 93,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/utils.py",
+    "line": 95,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/utils.py",
+    "line": 97,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/utils.py",
+    "line": 100,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/utils.py",
+    "line": 135,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/session_generation/utils.py",
+    "line": 143,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/status_service.py",
+    "line": 336,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/status_validator.py",
+    "line": 150,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/status_validator.py",
+    "line": 175,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/status_validator.py",
+    "line": 185,
+    "terms": [
+      "fallback",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/status_validator.py",
+    "line": 233,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_badge_service.py",
+    "line": 243,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_badge_service.py",
+    "line": 298,
+    "terms": [
+      "fallback",
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_badge_service.py",
+    "line": 329,
+    "terms": [
+      "fallback",
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_badge_service.py",
+    "line": 330,
+    "terms": [
+      "hardcoded"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_participation_service.py",
+    "line": 81,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_participation_service.py",
+    "line": 109,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_reward_orchestrator.py",
+    "line": 55,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_reward_orchestrator.py",
+    "line": 67,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_reward_orchestrator.py",
+    "line": 78,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_reward_orchestrator.py",
+    "line": 107,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_reward_orchestrator.py",
+    "line": 444,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_reward_orchestrator.py",
+    "line": 484,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/tournament_xp_service.py",
+    "line": 118,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament/validation.py",
+    "line": 113,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament_service.py",
+    "line": 4,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament_service.py",
+    "line": 43,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament_service.py",
+    "line": 87,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament_service.py",
+    "line": 108,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament_service.py",
+    "line": 113,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament_service.py",
+    "line": 118,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament_service.py",
+    "line": 133,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament_service.py",
+    "line": 144,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament_service.py",
+    "line": 154,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/tournament_service.py",
+    "line": 167,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/training_day.py",
+    "line": 3,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/training_day.py",
+    "line": 5,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/training_day.py",
+    "line": 7,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/training_day.py",
+    "line": 10,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/training_day.py",
+    "line": 96,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/training_day.py",
+    "line": 124,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/training_day.py",
+    "line": 145,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/virtual_training_metrics.py",
+    "line": 246,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/virtual_training_metrics.py",
+    "line": 270,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/virtual_training_metrics.py",
+    "line": 281,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/virtual_training_metrics.py",
+    "line": 303,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/virtual_training_metrics.py",
+    "line": 339,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/virtual_training_metrics.py",
+    "line": 342,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/virtual_training_service.py",
+    "line": 29,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/virtual_training_service.py",
+    "line": 207,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/vt_card_eligibility.py",
+    "line": 14,
+    "terms": [
+      "fallback",
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/services/vt_card_eligibility.py",
+    "line": 68,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/skills_config.py",
+    "line": 342,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tasks/biometric_tasks.py",
+    "line": 58,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tasks/biometric_tasks.py",
+    "line": 160,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tasks/biometric_tasks.py",
+    "line": 171,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 4,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 9,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 45,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 48,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 51,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 66,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 69,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 78,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 80,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 109,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 115,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 131,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 146,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 150,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 158,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 161,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/.archive/test_specialization_deprecation.py",
+    "line": 166,
+    "terms": [
+      "deprecated"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/conftest.py",
+    "line": 20,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_action_determiner.py",
+    "line": 9,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_action_determiner.py",
+    "line": 25,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_action_determiner.py",
+    "line": 26,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_action_determiner.py",
+    "line": 33,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_action_determiner.py",
+    "line": 34,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_action_determiner.py",
+    "line": 293,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_action_determiner.py",
+    "line": 295,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_action_determiner.py",
+    "line": 299,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_action_determiner.py",
+    "line": 459,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_critical_flows.py",
+    "line": 114,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_critical_flows.py",
+    "line": 194,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_e2e.py",
+    "line": 9,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_e2e.py",
+    "line": 298,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_e2e.py",
+    "line": 390,
+    "terms": [
+      "placeholder"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_juggling_media.py",
+    "line": 30,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_juggling_pose_snapshots.py",
+    "line": 94,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_juggling_pose_snapshots.py",
+    "line": 95,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_juggling_rotation_persistence.py",
+    "line": 39,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_juggling_rotation_persistence.py",
+    "line": 40,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_juggling_transcode.py",
+    "line": 29,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_juggling_transcode.py",
+    "line": 257,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_juggling_upload.py",
+    "line": 11,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_juggling_upload.py",
+    "line": 210,
+    "terms": [
+      "fake"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_licence_duration_unlock.py",
+    "line": 263,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_result_processor.py",
+    "line": 427,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_result_processor.py",
+    "line": 430,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_session_management_e2e.py",
+    "line": 190,
+    "terms": [
+      "fallback"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_tournament_format_logic_e2e.py",
+    "line": 10,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_tournament_format_logic_e2e.py",
+    "line": 11,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_tournament_session_generation_api.py",
+    "line": 458,
+    "terms": [
+      "mock"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_tournament_workflow_e2e.py",
+    "line": 34,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/tests/test_tournament_workflow_e2e.py",
+    "line": 35,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/utils/country_codes.py",
+    "line": 1,
+    "terms": [
+      "todo"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/utils/football_positions.py",
+    "line": 11,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/utils/football_positions.py",
+    "line": 57,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/utils/football_positions.py",
+    "line": 141,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/utils/football_positions.py",
+    "line": 207,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  },
+  {
+    "path": "app/utils/game_results.py",
+    "line": 47,
+    "terms": [
+      "legacy"
+    ],
+    "reachability": "UNVERIFIED \u2014 candidate only"
+  }
+]

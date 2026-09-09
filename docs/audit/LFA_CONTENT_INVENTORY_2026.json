@@ -1,0 +1,417 @@
+{
+  "files": [
+    {
+      "path": "content/adaptive_learning/_shared/sports_physiology/conditioning_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Conditioning & Fitness - Physical Conditioning Fundamentals [EN]",
+      "topic": "Physical Conditioning Fundamentals",
+      "module": "Conditioning",
+      "questions": 10,
+      "sha256": "29e5963f36f162a7fbb62d672938cdd184f8ee0af0725476d55021c28757d316"
+    },
+    {
+      "path": "content/adaptive_learning/_shared/sports_physiology/conditioning_hard.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Conditioning & Fitness - Advanced Physiology & Periodization [EN]",
+      "topic": "Advanced Physiology & Periodization",
+      "module": "Conditioning",
+      "questions": 10,
+      "sha256": "dc9f526ab911f328e1723e01132325d99e600927a8a426cf6a2a34a315b48b94"
+    },
+    {
+      "path": "content/adaptive_learning/_shared/sports_physiology/conditioning_medium.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Conditioning & Fitness - Physical Conditioning Applied [EN]",
+      "topic": "Physical Conditioning Applied",
+      "module": "Conditioning",
+      "questions": 9,
+      "sha256": "e79ed3dde798b99121658f504465fcddf8c6117eee1b09e5b2a3bdf3cbb351de"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_01_physical_culture_background_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Introduction - Physical Culture Background [EN]",
+      "topic": "Physical Culture Background",
+      "module": "Introduction",
+      "questions": 15,
+      "sha256": "d20b1e9c31cd96cb7594ddfcd2bff158dd53a2096d9025206de6648df60c8062"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_02_civilizational_development_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Introduction - Civilizational Development and Lifestyle [EN]",
+      "topic": "The Response to Lifestyle Problems Caused by Civilizational Development",
+      "module": "Introduction",
+      "questions": 14,
+      "sha256": "66ba4b10f8df733f31ed9b0fdc8ef47fe659fbb92ffeef514f142eb884011b92"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_03_concept_of_training_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Fundamentals of Training Theory - The Concept of Training [EN]",
+      "topic": "The Concept and Interpretation of Training",
+      "module": "Fundamentals of Training Theory",
+      "questions": 15,
+      "sha256": "9fbdd352d75cf6e445df94e3ec0b67543d0ff26dc70e8cef1333ff45917e6a52"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_04_load_and_adaptation_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Fundamentals of Training Theory - Load and Adaptation [EN]",
+      "topic": "The Relationship Between Load and Adaptation",
+      "module": "Fundamentals of Training Theory",
+      "questions": 15,
+      "sha256": "b54fc1a41fb78b9d996eb12f3014a57fc64d20aafd58eb7c47108d1a7ce92735"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_05_training_load_components_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Fundamentals of Training Theory - Components of Training Load [EN]",
+      "topic": "Components of Training Load",
+      "module": "Fundamentals of Training Theory",
+      "questions": 15,
+      "sha256": "f7404ad6f3e41e10982e59906e892574aca68103e24dd9c0196f1bfea0700037"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_06_structure_of_training_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Fundamentals of Training Theory - Structure of Training [EN]",
+      "topic": "Structure of Training (Parts of a Training Session)",
+      "module": "Fundamentals of Training Theory",
+      "questions": 14,
+      "sha256": "7b93ec837811f3aa26d64a849794fa51a19c8c6ec160cbe3b0234c9695b59554"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_07_training_principles_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Fundamentals of Training Theory - Training Principles [EN]",
+      "topic": "Training Principles (Fundamental Principles)",
+      "module": "Fundamentals of Training Theory",
+      "questions": 14,
+      "sha256": "bceaad94b9374c691afaf27c3534a0ca26df7158ec981272a12b6c746fc1140a"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_08_motor_abilities_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Fundamentals of Training Theory - Motor Abilities [EN]",
+      "topic": "Classification of Motor Abilities",
+      "module": "Fundamentals of Training Theory",
+      "questions": 15,
+      "sha256": "0d39ff7357c4c71213b9e571cf6df7c40900d305504a6455ae49d86526b3c84d"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/general/football_awareness_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Football Awareness - Football Fundamentals [EN]",
+      "topic": "Football Fundamentals",
+      "module": "General",
+      "questions": 12,
+      "sha256": "7bb849e7f91bace808d90e39186ee5ec61809a04771f2c30ccd5299ed2c9ac0b"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/general/football_awareness_hard.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Football Awareness - Football Governance & Global Structures [EN]",
+      "topic": "Football Governance & Global Structures",
+      "module": "Football Awareness",
+      "questions": 12,
+      "sha256": "f0be0ecae0c64f27352ba29914db9afe847ce4f0d78fb1ce6f3797af6b54a7f0"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/general/football_awareness_medium.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Football Awareness - Football Governance & Competition [EN]",
+      "topic": "Football Governance & Competition",
+      "module": "General",
+      "questions": 10,
+      "sha256": "fcb400984356fe3b3594a6335be504f2a7940968d46d9b8fe031c87d12355083"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_01_testkulturalis_elozmenyek_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "hu",
+      "quiz_title": "AL \u2014 Bevezet\u00e9s - Testkultur\u00e1lis el\u0151zm\u00e9nyek [HU]",
+      "topic": "Testkultur\u00e1lis el\u0151zm\u00e9nyek",
+      "module": "Bevezet\u00e9s",
+      "questions": 15,
+      "sha256": "6d680156f90bb26a1f84fbfd03b12211c7bdd1ae58d9e19038afc4f0596f6c25"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_02_bevezetes_civilizacios_problemak_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "hu",
+      "quiz_title": "AL \u2014 Bevezet\u00e9s - Civiliz\u00e1ci\u00f3s fejl\u0151d\u00e9s \u00e9s \u00e9letm\u00f3d [HU]",
+      "topic": "A v\u00e1lasz a civiliz\u00e1ci\u00f3s fejl\u0151d\u00e9s \u00e9letm\u00f3dra hat\u00f3 probl\u00e9m\u00e1ira",
+      "module": "Bevezet\u00e9s",
+      "questions": 14,
+      "sha256": "c6bb65bfdc99661047579df0a83c12473682d404289b97ea2b2eb534238be0cb"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_03_edzes_fogalma_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "hu",
+      "quiz_title": "AL \u2014 Edz\u00e9selm\u00e9let alapjai - Az edz\u00e9s fogalma [HU]",
+      "topic": "Az edz\u00e9s fogalma \u00e9s \u00e9rtelmez\u00e9se",
+      "module": "Edz\u00e9selm\u00e9let alapjai",
+      "questions": 15,
+      "sha256": "dac5110be8b1a23df9401df14decc5769ac5549ed0023e958a0111498e14e06e"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_04_terheles_adaptacio_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "hu",
+      "quiz_title": "AL \u2014 Edz\u00e9selm\u00e9let alapjai - Terhel\u00e9s \u00e9s adapt\u00e1ci\u00f3 [HU]",
+      "topic": "A terhel\u00e9s \u00e9s alkalmazkod\u00e1s (adapt\u00e1ci\u00f3) \u00f6sszef\u00fcgg\u00e9se",
+      "module": "Edz\u00e9selm\u00e9let alapjai",
+      "questions": 15,
+      "sha256": "e569c79c98e8cba0808d7550ba50a3538e5730cf5541a2e09a420642a01b5b0c"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_05_edzesterheles_osszetevoi_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "hu",
+      "quiz_title": "AL \u2014 Edz\u00e9selm\u00e9let alapjai - Az edz\u00e9sterhel\u00e9s \u00f6sszetev\u0151i [HU]",
+      "topic": "Az edz\u00e9sterhel\u00e9s \u00f6sszetev\u0151i",
+      "module": "Edz\u00e9selm\u00e9let alapjai",
+      "questions": 15,
+      "sha256": "e4180223c94d61e93f9d98055ed0ad9cd26f7c340fd9f652d748fd0c85d5b4c9"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_06_edzes_felepitese_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "hu",
+      "quiz_title": "AL \u2014 Edz\u00e9selm\u00e9let alapjai - Az edz\u00e9s fel\u00e9p\u00edt\u00e9se [HU]",
+      "topic": "Az edz\u00e9s fel\u00e9p\u00edt\u00e9se (edz\u00e9s r\u00e9szei)",
+      "module": "Edz\u00e9selm\u00e9let alapjai",
+      "questions": 14,
+      "sha256": "d2ee93ce8d1aff7daf21a05f151ea2f1a3c9d005d4d05da5d8e67820482efbac"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_07_edzeselvek_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "hu",
+      "quiz_title": "AL \u2014 Edz\u00e9selm\u00e9let alapjai - Edz\u00e9selvek [HU]",
+      "topic": "Az edz\u00e9selvek (alapelvek)",
+      "module": "Edz\u00e9selm\u00e9let alapjai",
+      "questions": 14,
+      "sha256": "2bed47d5480d2fbcb299617fbd1b7a39c6dcace8980d07178bb9c9c5b4b62ff3"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_08_motoros_kepessegek_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "hu",
+      "quiz_title": "AL \u2014 Edz\u00e9selm\u00e9let alapjai - Motoros k\u00e9pess\u00e9gek [HU]",
+      "topic": "Motoros k\u00e9pess\u00e9gek feloszt\u00e1sa",
+      "module": "Edz\u00e9selm\u00e9let alapjai",
+      "questions": 15,
+      "sha256": "e7a7427ade09f8fd5bff99ef5f98c379ae236688b94301cb483f4b3c0fad10a8"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/lesson/rules_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Football Rules - Laws of the Game Fundamentals [EN]",
+      "topic": "Laws of the Game",
+      "module": "Rules",
+      "questions": 10,
+      "sha256": "6edb0e41826b1879fe28fd0b8eefd370b5b10f09b9019b3d6b1f61642f71f149"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/lesson/rules_hard.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Football Rules - Laws of the Game Advanced [EN]",
+      "topic": "Laws of the Game",
+      "module": "Rules",
+      "questions": 6,
+      "sha256": "d6c535216a152027985c946d70477b38887d608fdc9d0c94dbf08002c1d42ae2"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/lesson/rules_medium.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Football Rules - Laws of the Game Applied [EN]",
+      "topic": "Laws of the Game",
+      "module": "Rules",
+      "questions": 8,
+      "sha256": "792aa7f8a0d76f2c67a1e01020059e6e74c5137df9a83307bba6a3be7bf23c2e"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/lesson/tactics_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Football Tactics - Formations and Basic Principles [EN]",
+      "topic": "Formations and Basic Principles",
+      "module": "Tactics",
+      "questions": 8,
+      "sha256": "d38cbbc4e57ad48665e447d5bebeced99d9bc11e4613342af03ee2e02823e538"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/lesson/tactics_hard.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Football Tactics - Advanced Tactics [EN]",
+      "topic": "Advanced Tactics",
+      "module": "Tactics",
+      "questions": 10,
+      "sha256": "ed9afee8500e2739bb27373901447053d914f04a882c06eaa2efb37480a84b46"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/lesson/tactics_medium.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Football Tactics - Formations and Systems of Play [EN]",
+      "topic": "Formations and Systems of Play",
+      "module": "Tactics",
+      "questions": 6,
+      "sha256": "8793c02ae7528cd65dbc58232d0f76117f7f9405cca74e53d2bbb271425dda7c"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/nutrition/athlete_nutrition_easy.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Athlete Nutrition - Foundations of Sports Nutrition [EN]",
+      "topic": "Foundations of Sports Nutrition",
+      "module": "Nutrition",
+      "questions": 10,
+      "sha256": "eb3cf685689345c75120b9cae8c5be8b2147937d9b29422ee900b397593581ae"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/nutrition/athlete_nutrition_hard.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Athlete Nutrition - Elite Nutrition Periodization [EN]",
+      "topic": "Elite Nutrition Periodization",
+      "module": "Athlete Nutrition",
+      "questions": 12,
+      "sha256": "10e8b24af9ae4ee006b26a0b06f798abe818d0696c269794fe05f439ba33f562"
+    },
+    {
+      "path": "content/adaptive_learning/lfa_football_player/nutrition/athlete_nutrition_medium.json",
+      "schema_version": "1.0",
+      "specializations": [
+        "LFA_FOOTBALL_PLAYER"
+      ],
+      "language": "en",
+      "quiz_title": "AL \u2014 Athlete Nutrition - Advanced Sports Nutrition [EN]",
+      "topic": "Advanced Sports Nutrition",
+      "module": "Nutrition",
+      "questions": 8,
+      "sha256": "92e098b6b1004e3848b616b3aa4c20e5d1abd6ffbee58ebf56c0c874cac356e6"
+    }
+  ],
+  "question_count": 375,
+  "duplicate_titles": [],
+  "duplicate_question_text_groups": 0,
+  "domain_files": {
+    "LFA_FOOTBALL_PLAYER": 31
+  },
+  "languages": {
+    "en": 23,
+    "hu": 8
+  }
+}

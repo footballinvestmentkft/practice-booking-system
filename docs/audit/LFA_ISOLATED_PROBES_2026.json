@@ -1,0 +1,65 @@
+[
+  {
+    "probe": "AL foreign session completion",
+    "result": "REPRODUCED",
+    "scope": "isolated real handler/service with fake persistence; no live DB/network",
+    "details": {
+      "actor_id": 42,
+      "record_owner_id": 999,
+      "status_after": "COMPLETED",
+      "commits": 1
+    }
+  },
+  {
+    "probe": "AL multiple-choice response failure",
+    "result": "REPRODUCED",
+    "scope": "isolated real handler/service with fake persistence; no live DB/network",
+    "details": {
+      "error": "NameError: name 'QuizAnswerOption' is not defined",
+      "commits_before_error": 0
+    }
+  },
+  {
+    "probe": "AL fill-in foreign-session mutation then response failure",
+    "result": "REPRODUCED",
+    "scope": "isolated real handler/service with fake persistence; no live DB/network",
+    "details": {
+      "error": "KeyError: 'xp_earned'",
+      "record_owner": 999,
+      "correct_count": 1,
+      "commits_before_error": 1
+    }
+  },
+  {
+    "probe": "Credit deduct existing key",
+    "result": "REPRODUCED",
+    "scope": "isolated real handler/service with fake persistence; no live DB/network",
+    "details": {
+      "debit_statements": 1,
+      "new_ledger_rows": 0,
+      "existing_ledger_returned": true
+    }
+  },
+  {
+    "probe": "Instructor modifies another instructor session attendance",
+    "result": "REPRODUCED",
+    "scope": "isolated real handler/service with fake persistence; no live DB/network",
+    "details": {
+      "actor": 42,
+      "assigned_instructor": 999,
+      "status_after": "present",
+      "commits": 1
+    }
+  },
+  {
+    "probe": "Quiz partial-answer scoring",
+    "result": "REPRODUCED",
+    "scope": "isolated real handler/service with fake persistence; no live DB/network",
+    "details": {
+      "submitted": 1,
+      "available": 10,
+      "score": 100.0,
+      "passed": true
+    }
+  }
+]

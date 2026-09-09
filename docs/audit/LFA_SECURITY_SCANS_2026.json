@@ -1,0 +1,4499 @@
+{
+  "declared_python": {
+    "packages": 24,
+    "vulnerable_packages": 5,
+    "unique_package_advisory_ids": 19,
+    "dependencies": [
+      {
+        "name": "fastapi",
+        "version": "0.129.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "uvicorn",
+        "version": "0.35.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "sqlalchemy",
+        "version": "2.0.36",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "psycopg2-binary",
+        "version": "2.9.9",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "alembic",
+        "version": "1.12.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "python-jose",
+        "version": "3.3.0",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2024-233",
+            "aliases": [
+              "GHSA-cjwg-qfpm-7377",
+              "CVE-2024-33664"
+            ],
+            "fix_versions": [
+              "3.4.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2024-232",
+            "aliases": [
+              "CVE-2024-33663",
+              "GHSA-6c5p-j8vq-pqhj"
+            ],
+            "fix_versions": [
+              "3.4.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2025-185",
+            "aliases": [
+              "CVE-2024-29370"
+            ],
+            "fix_versions": []
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "passlib",
+        "version": "1.7.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "python-multipart",
+        "version": "0.0.6",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2024-38",
+            "aliases": [
+              "GHSA-qf9m-vfgh-m389",
+              "GHSA-2jv5-9r88-3w3p",
+              "CVE-2024-24762"
+            ],
+            "fix_versions": [
+              "0.0.7"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1850",
+            "aliases": [
+              "GHSA-2jv5-9r88-3w3p",
+              "CVE-2024-24762"
+            ],
+            "fix_versions": [
+              "0.0.7"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1852",
+            "aliases": [
+              "GHSA-wp53-j4wj-2cfg",
+              "CVE-2026-24486"
+            ],
+            "fix_versions": [
+              "0.0.22"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1851",
+            "aliases": [
+              "CVE-2024-53981",
+              "GHSA-59g5-xgcq-4qw3"
+            ],
+            "fix_versions": [
+              "0.0.18"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3038",
+            "aliases": [
+              "GHSA-mj87-hwqh-73pj",
+              "CVE-2026-40347"
+            ],
+            "fix_versions": [
+              "0.0.26"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3037",
+            "aliases": [
+              "GHSA-6jv3-5f52-599m",
+              "CVE-2026-53538"
+            ],
+            "fix_versions": [
+              "0.0.30"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3036",
+            "aliases": [
+              "CVE-2026-53539",
+              "GHSA-5rvq-cxj2-64vf"
+            ],
+            "fix_versions": [
+              "0.0.30"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3040",
+            "aliases": [
+              "GHSA-v9pg-7xvm-68hf",
+              "CVE-2026-53540"
+            ],
+            "fix_versions": [
+              "0.0.31"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3039",
+            "aliases": [
+              "GHSA-pp6c-gr5w-3c5g",
+              "CVE-2026-42561"
+            ],
+            "fix_versions": [
+              "0.0.27"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "pydantic",
+        "version": "2.9.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pydantic-settings",
+        "version": "2.1.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "python-dotenv",
+        "version": "1.0.0",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-2270",
+            "aliases": [
+              "CVE-2026-28684",
+              "GHSA-mf9w-mj56-hr94"
+            ],
+            "fix_versions": [
+              "1.2.2"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "email-validator",
+        "version": "2.1.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest",
+        "version": "7.4.3",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-1845",
+            "aliases": [
+              "GHSA-6w46-j5rx-g56g",
+              "CVE-2025-71176"
+            ],
+            "fix_versions": [
+              "9.0.3"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "httpx",
+        "version": "0.25.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest-asyncio",
+        "version": "0.21.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "jinja2",
+        "version": "3.1.2",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-1473",
+            "aliases": [
+              "CVE-2024-22195",
+              "GHSA-h5c8-rqwp-cp95"
+            ],
+            "fix_versions": [
+              "3.1.3"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1471",
+            "aliases": [
+              "CVE-2025-27516",
+              "GHSA-cpwx-vrp4-4pq7"
+            ],
+            "fix_versions": [
+              "3.1.6"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1474",
+            "aliases": [
+              "CVE-2024-34064",
+              "GHSA-h75v-3vvj-5mfj"
+            ],
+            "fix_versions": [
+              "3.1.4"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1475",
+            "aliases": [
+              "CVE-2024-56326",
+              "GHSA-q2x7-8rv6-6q7h"
+            ],
+            "fix_versions": [
+              "3.1.5"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1472",
+            "aliases": [
+              "CVE-2024-56201",
+              "GHSA-gmj6-6f8f-6699"
+            ],
+            "fix_versions": [
+              "3.1.5"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "plotly",
+        "version": "6.5.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "phonenumbers",
+        "version": "9.0.24",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "celery",
+        "version": "5.3.6",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "redis",
+        "version": "5.0.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "apscheduler",
+        "version": "3.10.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "rembg",
+        "version": "2.0.75",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "onnxruntime",
+        "version": "1.26.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "timezonefinder",
+        "version": "6.5.9",
+        "vulnerabilities": [],
+        "skip_reason": null
+      }
+    ]
+  },
+  "installed_python": {
+    "packages": 199,
+    "vulnerable_packages": 24,
+    "unique_package_advisory_ids": 108,
+    "dependencies": [
+      {
+        "name": "apscheduler",
+        "version": "3.11.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "configargparse",
+        "version": "1.7.5",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "deprecated",
+        "version": "1.3.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "flask",
+        "version": "3.1.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "flask-basicauth",
+        "version": "0.2.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "gitpython",
+        "version": "3.1.46",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-2161",
+            "aliases": [
+              "CVE-2026-42284",
+              "GHSA-x2qx-6953-8485"
+            ],
+            "fix_versions": [
+              "3.1.47"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2160",
+            "aliases": [
+              "CVE-2026-42215",
+              "GHSA-rpm5-65cw-6hj4"
+            ],
+            "fix_versions": [
+              "3.1.47"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2162",
+            "aliases": [
+              "GHSA-7545-fcxq-7j24",
+              "CVE-2026-44243"
+            ],
+            "fix_versions": [
+              "3.1.48"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2163",
+            "aliases": [
+              "CVE-2026-44244",
+              "GHSA-v87r-6q3f-2j67"
+            ],
+            "fix_versions": [
+              "3.1.49"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3785",
+            "aliases": [
+              "CVE-2026-78675",
+              "GHSA-7833-fr7j-v32q"
+            ],
+            "fix_versions": [
+              "3.1.59"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3786",
+            "aliases": [
+              "CVE-2026-78676",
+              "GHSA-284h-m62q-gf8w"
+            ],
+            "fix_versions": [
+              "3.1.59"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3783",
+            "aliases": [
+              "CVE-2026-76221",
+              "GHSA-jm78-9fvv-mhgr"
+            ],
+            "fix_versions": [
+              "3.1.58"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3787",
+            "aliases": [
+              "CVE-2026-78677",
+              "GHSA-8mcc-hrx5-hvxc"
+            ],
+            "fix_versions": [
+              "3.1.59"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3788",
+            "aliases": [
+              "CVE-2026-78678",
+              "GHSA-5xxx-qhh7-9287"
+            ],
+            "fix_versions": [
+              "3.1.59"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3784",
+            "aliases": [
+              "GHSA-hmq2-w58f-27jc",
+              "CVE-2026-76222"
+            ],
+            "fix_versions": [
+              "3.1.58"
+            ]
+          },
+          {
+            "id": "GHSA-mv93-w799-cj2w",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.50"
+            ]
+          },
+          {
+            "id": "GHSA-2f96-g7mh-g2hx",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.51"
+            ]
+          },
+          {
+            "id": "GHSA-956x-8gvw-wg5v",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.51"
+            ]
+          },
+          {
+            "id": "GHSA-3rp5-jjmw-4wv2",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.53"
+            ]
+          },
+          {
+            "id": "GHSA-fjr4-x663-mwxc",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.54"
+            ]
+          },
+          {
+            "id": "GHSA-6p8h-3wgx-97gf",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.54"
+            ]
+          },
+          {
+            "id": "GHSA-r9mr-m37c-5fr3",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.54"
+            ]
+          },
+          {
+            "id": "GHSA-94p4-4cq8-9g67",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.55"
+            ]
+          },
+          {
+            "id": "CVE-2026-73620",
+            "aliases": [
+              "GHSA-3f7w-8rr8-f37f"
+            ],
+            "fix_versions": [
+              "3.1.57"
+            ]
+          },
+          {
+            "id": "GHSA-p538-c434-8v24",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.56"
+            ]
+          },
+          {
+            "id": "GHSA-9rj7-rf2p-w77r",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.58"
+            ]
+          },
+          {
+            "id": "GHSA-4gmw-gg2m-w46p",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.58"
+            ]
+          },
+          {
+            "id": "CVE-2026-76217",
+            "aliases": [
+              "GHSA-hh9p-6wh2-4mfc"
+            ],
+            "fix_versions": [
+              "3.1.58"
+            ]
+          },
+          {
+            "id": "GHSA-wvpp-8hx9-p66j",
+            "aliases": [],
+            "fix_versions": [
+              "3.1.58"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "imageio",
+        "version": "2.37.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "jinja2",
+        "version": "3.1.2",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-1473",
+            "aliases": [
+              "CVE-2024-22195",
+              "GHSA-h5c8-rqwp-cp95"
+            ],
+            "fix_versions": [
+              "3.1.3"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1471",
+            "aliases": [
+              "GHSA-cpwx-vrp4-4pq7",
+              "CVE-2025-27516"
+            ],
+            "fix_versions": [
+              "3.1.6"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1474",
+            "aliases": [
+              "CVE-2024-34064",
+              "GHSA-h75v-3vvj-5mfj"
+            ],
+            "fix_versions": [
+              "3.1.4"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1475",
+            "aliases": [
+              "GHSA-q2x7-8rv6-6q7h",
+              "CVE-2024-56326"
+            ],
+            "fix_versions": [
+              "3.1.5"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1472",
+            "aliases": [
+              "GHSA-gmj6-6f8f-6699",
+              "CVE-2024-56201"
+            ],
+            "fix_versions": [
+              "3.1.5"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "mako",
+        "version": "1.3.10",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-2617",
+            "aliases": [
+              "CVE-2026-44307",
+              "GHSA-2h4p-vjrc-8xpq"
+            ],
+            "fix_versions": [
+              "1.3.12"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "markupsafe",
+        "version": "3.0.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pyjwt",
+        "version": "2.11.0",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-120",
+            "aliases": [
+              "CVE-2026-32597",
+              "GHSA-752w-5fwx-jx9f"
+            ],
+            "fix_versions": [
+              "2.12.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-179",
+            "aliases": [
+              "CVE-2026-48526",
+              "GHSA-xgmm-8j9v-c9wx"
+            ],
+            "fix_versions": [
+              "2.13.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-175",
+            "aliases": [
+              "CVE-2026-48522",
+              "GHSA-993g-76c3-p5m4"
+            ],
+            "fix_versions": [
+              "2.13.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-177",
+            "aliases": [
+              "CVE-2026-48524",
+              "GHSA-fhv5-28vv-h8m8"
+            ],
+            "fix_versions": [
+              "2.13.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-178",
+            "aliases": [
+              "CVE-2026-48525",
+              "GHSA-w7vc-732c-9m39"
+            ],
+            "fix_versions": [
+              "2.13.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-176",
+            "aliases": [
+              "CVE-2026-48523",
+              "GHSA-jq35-7prp-9v3f"
+            ],
+            "fix_versions": [
+              "2.13.0"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "pymatting",
+        "version": "1.1.15",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pysocks",
+        "version": "1.7.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pyyaml",
+        "version": "6.0.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pyyaml-ft",
+        "version": "8.0.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pygments",
+        "version": "2.19.2",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-2987",
+            "aliases": [
+              "CVE-2026-4539",
+              "GHSA-5239-wwwm-4pmq"
+            ],
+            "fix_versions": [
+              "2.20.0"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "sqlalchemy",
+        "version": "2.0.46",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "werkzeug",
+        "version": "3.1.8",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "aiosmtplib",
+        "version": "5.1.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "alembic",
+        "version": "1.12.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "altair",
+        "version": "6.0.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "amqp",
+        "version": "5.3.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "annotated-doc",
+        "version": "0.0.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "annotated-types",
+        "version": "0.7.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "antlr4-python3-runtime",
+        "version": "4.9.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "anyio",
+        "version": "3.7.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "attrs",
+        "version": "25.4.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "bcrypt",
+        "version": "5.0.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "beautifulsoup4",
+        "version": "4.15.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "billiard",
+        "version": "4.2.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "blinker",
+        "version": "1.9.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "brotli",
+        "version": "1.2.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "cachetools",
+        "version": "6.2.6",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "celery",
+        "version": "5.3.6",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "certifi",
+        "version": "2026.1.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "cffi",
+        "version": "1.17.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "charset-normalizer",
+        "version": "3.4.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "click",
+        "version": "8.4.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "click-didyoumean",
+        "version": "0.3.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "click-plugins",
+        "version": "1.1.1.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "click-repl",
+        "version": "0.3.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "contourpy",
+        "version": "1.3.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "coverage",
+        "version": "7.13.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "cryptography",
+        "version": "46.0.5",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-35",
+            "aliases": [
+              "GHSA-m959-cc7f-wv43",
+              "CVE-2026-34073"
+            ],
+            "fix_versions": [
+              "46.0.6"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-36",
+            "aliases": [
+              "GHSA-p423-j2cm-9vmq",
+              "CVE-2026-39892"
+            ],
+            "fix_versions": [
+              "46.0.7"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3554",
+            "aliases": [
+              "CVE-2026-69248",
+              "GHSA-m2h6-j472-rp4c"
+            ],
+            "fix_versions": [
+              "49.0.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3553",
+            "aliases": [
+              "CVE-2026-69249",
+              "GHSA-jwv3-5hgf-82ww"
+            ],
+            "fix_versions": [
+              "49.0.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3552",
+            "aliases": [
+              "GHSA-g6cj-pr64-35w5",
+              "CVE-2026-69247"
+            ],
+            "fix_versions": [
+              "50.0.0"
+            ]
+          },
+          {
+            "id": "GHSA-537c-gmf6-5ccf",
+            "aliases": [],
+            "fix_versions": [
+              "48.0.1"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "cycler",
+        "version": "0.12.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "dnspython",
+        "version": "2.8.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "ecdsa",
+        "version": "0.19.1",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-1325",
+            "aliases": [
+              "CVE-2024-23342",
+              "GHSA-wj6h-64fc-37mp"
+            ],
+            "fix_versions": []
+          },
+          {
+            "id": "PYSEC-2026-2467",
+            "aliases": [
+              "GHSA-9f5j-8jwj-x28g",
+              "CVE-2026-33936"
+            ],
+            "fix_versions": [
+              "0.19.2"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "effdet",
+        "version": "0.4.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "email-validator",
+        "version": "2.1.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "execnet",
+        "version": "2.1.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "fastapi",
+        "version": "0.129.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "filelock",
+        "version": "3.29.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "flask-cors",
+        "version": "6.0.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "flatbuffers",
+        "version": "25.12.19",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "fonttools",
+        "version": "4.63.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "fsspec",
+        "version": "2026.4.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "gdown",
+        "version": "6.1.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "gevent",
+        "version": "26.4.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "geventhttpclient",
+        "version": "2.3.9",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "gitdb",
+        "version": "4.0.12",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "glob2",
+        "version": "0.7",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "greenlet",
+        "version": "3.3.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "h11",
+        "version": "0.16.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "h3",
+        "version": "4.5.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "hf-xet",
+        "version": "1.5.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "httpcore",
+        "version": "1.0.9",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "httptools",
+        "version": "0.7.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "httpx",
+        "version": "0.25.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "huggingface-hub",
+        "version": "1.19.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "idna",
+        "version": "3.11",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-215",
+            "aliases": [
+              "GHSA-65pc-fj4g-8rjx",
+              "CVE-2026-45409"
+            ],
+            "fix_versions": [
+              "3.15"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "iniconfig",
+        "version": "2.3.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "insightface",
+        "version": "1.0.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "itsdangerous",
+        "version": "2.2.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "jsonschema",
+        "version": "4.26.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "jsonschema-specifications",
+        "version": "2025.9.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "junit-xml",
+        "version": "1.9",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "kiwisolver",
+        "version": "1.5.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "kombu",
+        "version": "5.6.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "lazy-loader",
+        "version": "0.5",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "libcst",
+        "version": "1.8.6",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "limits",
+        "version": "5.8.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "linkify-it-py",
+        "version": "2.1.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "llvmlite",
+        "version": "0.47.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "locust",
+        "version": "2.17.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "markdown-it-py",
+        "version": "4.0.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "matplotlib",
+        "version": "3.11.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "mdit-py-plugins",
+        "version": "0.5.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "mdurl",
+        "version": "0.1.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "ml-dtypes",
+        "version": "0.5.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "mpmath",
+        "version": "1.3.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "msgpack",
+        "version": "1.1.2",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-3625",
+            "aliases": [
+              "CVE-2026-57585",
+              "GHSA-6v7p-g79w-8964"
+            ],
+            "fix_versions": [
+              "1.2.1"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "mutmut",
+        "version": "2.4.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "narwhals",
+        "version": "2.16.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "networkx",
+        "version": "3.6.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "numba",
+        "version": "0.65.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "numpy",
+        "version": "2.4.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "omegaconf",
+        "version": "2.3.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "onnx",
+        "version": "1.21.0",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-2689",
+            "aliases": [
+              "GHSA-hwpq-hmq9-wj77",
+              "CVE-2026-44512"
+            ],
+            "fix_versions": [
+              "1.22.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3587",
+            "aliases": [
+              "GHSA-p893-rvq9-2xf9",
+              "CVE-2026-63632"
+            ],
+            "fix_versions": [
+              "1.22.0"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "onnx-ir",
+        "version": "0.2.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "onnxruntime",
+        "version": "1.26.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "onnxscript",
+        "version": "0.7.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "opencv-python",
+        "version": "4.13.0.92",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "opencv-python-headless",
+        "version": "4.13.0.92",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "packaging",
+        "version": "26.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pandas",
+        "version": "2.3.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "parso",
+        "version": "0.8.6",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "passlib",
+        "version": "1.7.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "phonenumbers",
+        "version": "9.0.24",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pillow",
+        "version": "12.1.1",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-165",
+            "aliases": [
+              "CVE-2026-42308",
+              "GHSA-wjx4-4jcj-g98j"
+            ],
+            "fix_versions": [
+              "12.2.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2250",
+            "aliases": [
+              "CVE-2026-40192",
+              "BIT-pillow-2026-40192",
+              "GHSA-whj4-6x5x-4v2j"
+            ],
+            "fix_versions": [
+              "12.2.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2253",
+            "aliases": [
+              "GHSA-8v84-f9pq-wr9x",
+              "BIT-pillow-2026-54059",
+              "CVE-2026-54059"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2251",
+            "aliases": [
+              "CVE-2026-42309",
+              "GHSA-5xmw-vc9v-4wf2",
+              "BIT-pillow-2026-42309"
+            ],
+            "fix_versions": [
+              "12.2.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2255",
+            "aliases": [
+              "BIT-pillow-2026-55379",
+              "GHSA-45hq-cxwh-f6vc",
+              "CVE-2026-55379"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2257",
+            "aliases": [
+              "GHSA-4x4j-2g7c-83w6",
+              "CVE-2026-55798"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2256",
+            "aliases": [
+              "GHSA-phj9-mv4w-65pm",
+              "CVE-2026-55380",
+              "BIT-pillow-2026-55380"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2254",
+            "aliases": [
+              "CVE-2026-54060",
+              "GHSA-5x94-69rx-g8h2",
+              "BIT-pillow-2026-54060"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2252",
+            "aliases": [
+              "BIT-pillow-2026-42311",
+              "GHSA-pwv6-vv43-88gr",
+              "CVE-2026-42311"
+            ],
+            "fix_versions": [
+              "12.2.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2874",
+            "aliases": [
+              "CVE-2026-42310",
+              "BIT-pillow-2026-42310",
+              "GHSA-r73j-pqj5-w3x7"
+            ],
+            "fix_versions": [
+              "12.2.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3453",
+            "aliases": [
+              "GHSA-9hw9-ch79-4vh6",
+              "BIT-pillow-2026-59205",
+              "CVE-2026-59205"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3451",
+            "aliases": [
+              "GHSA-6r8x-57c9-28j4",
+              "BIT-pillow-2026-59199",
+              "CVE-2026-59199"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3452",
+            "aliases": [
+              "BIT-pillow-2026-59203",
+              "GHSA-pg7v-jwj7-p798",
+              "CVE-2026-59203"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3454",
+            "aliases": [
+              "BIT-pillow-2026-59197",
+              "GHSA-xj96-63gp-2gmr",
+              "CVE-2026-59197"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3495",
+            "aliases": [
+              "GHSA-jjj6-mw9f-p565",
+              "CVE-2026-59200",
+              "BIT-pillow-2026-59200"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3496",
+            "aliases": [
+              "GHSA-vjc4-5qp5-m44j",
+              "BIT-pillow-2026-59204",
+              "CVE-2026-59204"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3494",
+            "aliases": [
+              "GHSA-fj7v-r99m-22gq",
+              "BIT-pillow-2026-59198",
+              "CVE-2026-59198"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3493",
+            "aliases": [
+              "BIT-pillow-2026-54058",
+              "GHSA-62p4-gmf7-7g93",
+              "CVE-2026-54058"
+            ],
+            "fix_versions": [
+              "12.3.0"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "pip",
+        "version": "26.0.1",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-196",
+            "aliases": [
+              "GHSA-wf93-45jw-7689",
+              "CVE-2026-8643"
+            ],
+            "fix_versions": [
+              "26.1.2"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2875",
+            "aliases": [
+              "GHSA-58qw-9mgm-455v",
+              "CVE-2026-3219"
+            ],
+            "fix_versions": [
+              "26.1"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2876",
+            "aliases": [
+              "GHSA-jp4c-xjxw-mgf9",
+              "CVE-2026-6357"
+            ],
+            "fix_versions": [
+              "26.1"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3721",
+            "aliases": [
+              "CVE-2026-13346",
+              "GHSA-qwm4-qh6w-59xr"
+            ],
+            "fix_versions": [
+              "26.2"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "platformdirs",
+        "version": "4.9.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "playwright",
+        "version": "1.58.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "plotly",
+        "version": "6.5.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pluggy",
+        "version": "1.6.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pony",
+        "version": "0.7.19",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pooch",
+        "version": "1.9.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "prompt-toolkit",
+        "version": "3.0.52",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "protobuf",
+        "version": "6.33.5",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "psutil",
+        "version": "7.2.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "psycopg2-binary",
+        "version": "2.9.11",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pyarrow",
+        "version": "23.0.0",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-113",
+            "aliases": [
+              "CVE-2026-25087",
+              "GHSA-rgxp-2hwp-jwgg"
+            ],
+            "fix_versions": [
+              "23.0.1"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "pyasn1",
+        "version": "0.6.2",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-2263",
+            "aliases": [
+              "GHSA-jr27-m4p2-rc6r",
+              "CVE-2026-30922"
+            ],
+            "fix_versions": [
+              "0.6.3"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3457",
+            "aliases": [
+              "CVE-2026-59886",
+              "GHSA-hm4w-wwcw-mr6r"
+            ],
+            "fix_versions": [
+              "0.6.4"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3456",
+            "aliases": [
+              "CVE-2026-59885",
+              "GHSA-8ppf-4f7h-5ppj"
+            ],
+            "fix_versions": [
+              "0.6.4"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3455",
+            "aliases": [
+              "CVE-2026-59884",
+              "GHSA-m4p7-r5rc-7g4j"
+            ],
+            "fix_versions": [
+              "0.6.4"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "pycocotools",
+        "version": "2.0.11",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pycparser",
+        "version": "3.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pydantic",
+        "version": "2.9.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pydantic-settings",
+        "version": "2.1.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pydantic-core",
+        "version": "2.23.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pydeck",
+        "version": "0.9.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pyee",
+        "version": "13.0.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pyparsing",
+        "version": "3.3.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pypng",
+        "version": "0.20220715.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest",
+        "version": "7.4.3",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-1845",
+            "aliases": [
+              "CVE-2025-71176",
+              "GHSA-6w46-j5rx-g56g"
+            ],
+            "fix_versions": [
+              "9.0.3"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest-asyncio",
+        "version": "0.21.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest-base-url",
+        "version": "2.1.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest-cov",
+        "version": "7.0.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest-html",
+        "version": "4.2.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest-metadata",
+        "version": "3.1.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest-mock",
+        "version": "3.15.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest-playwright",
+        "version": "0.7.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest-repeat",
+        "version": "0.9.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytest-xdist",
+        "version": "3.8.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "python-dateutil",
+        "version": "2.9.0.post0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "python-dotenv",
+        "version": "1.0.0",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-2270",
+            "aliases": [
+              "GHSA-mf9w-mj56-hr94",
+              "CVE-2026-28684"
+            ],
+            "fix_versions": [
+              "1.2.2"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "python-jose",
+        "version": "3.3.0",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2024-233",
+            "aliases": [
+              "GHSA-cjwg-qfpm-7377",
+              "CVE-2024-33664"
+            ],
+            "fix_versions": [
+              "3.4.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2024-232",
+            "aliases": [
+              "CVE-2024-33663",
+              "GHSA-6c5p-j8vq-pqhj"
+            ],
+            "fix_versions": [
+              "3.4.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2025-185",
+            "aliases": [
+              "CVE-2024-29370"
+            ],
+            "fix_versions": []
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "python-multipart",
+        "version": "0.0.6",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2024-38",
+            "aliases": [
+              "GHSA-qf9m-vfgh-m389",
+              "CVE-2024-24762",
+              "GHSA-2jv5-9r88-3w3p"
+            ],
+            "fix_versions": [
+              "0.0.7"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1850",
+            "aliases": [
+              "CVE-2024-24762",
+              "GHSA-2jv5-9r88-3w3p"
+            ],
+            "fix_versions": [
+              "0.0.7"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1852",
+            "aliases": [
+              "GHSA-wp53-j4wj-2cfg",
+              "CVE-2026-24486"
+            ],
+            "fix_versions": [
+              "0.0.22"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-1851",
+            "aliases": [
+              "CVE-2024-53981",
+              "GHSA-59g5-xgcq-4qw3"
+            ],
+            "fix_versions": [
+              "0.0.18"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3038",
+            "aliases": [
+              "CVE-2026-40347",
+              "GHSA-mj87-hwqh-73pj"
+            ],
+            "fix_versions": [
+              "0.0.26"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3037",
+            "aliases": [
+              "GHSA-6jv3-5f52-599m",
+              "CVE-2026-53538"
+            ],
+            "fix_versions": [
+              "0.0.30"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3036",
+            "aliases": [
+              "CVE-2026-53539",
+              "GHSA-5rvq-cxj2-64vf"
+            ],
+            "fix_versions": [
+              "0.0.30"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3040",
+            "aliases": [
+              "GHSA-v9pg-7xvm-68hf",
+              "CVE-2026-53540"
+            ],
+            "fix_versions": [
+              "0.0.31"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3039",
+            "aliases": [
+              "GHSA-pp6c-gr5w-3c5g",
+              "CVE-2026-42561"
+            ],
+            "fix_versions": [
+              "0.0.27"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "python-slugify",
+        "version": "8.0.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pytz",
+        "version": "2025.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "pyzmq",
+        "version": "27.1.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "redis",
+        "version": "5.0.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "referencing",
+        "version": "0.37.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "rembg",
+        "version": "2.0.75",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "requests",
+        "version": "2.32.5",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-2275",
+            "aliases": [
+              "CVE-2026-25645",
+              "GHSA-gc5v-m9x4-r6x2"
+            ],
+            "fix_versions": [
+              "2.33.0"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "rich",
+        "version": "14.3.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "roundrobin",
+        "version": "0.1.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "rpds-py",
+        "version": "0.30.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "rsa",
+        "version": "4.9.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "safetensors",
+        "version": "0.8.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "scikit-image",
+        "version": "0.26.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "scipy",
+        "version": "1.17.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "setproctitle",
+        "version": "1.3.7",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "setuptools",
+        "version": "81.0.0",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-3447",
+            "aliases": [
+              "GHSA-h35f-9h28-mq5c",
+              "BIT-setuptools-2026-59890",
+              "CVE-2026-59890"
+            ],
+            "fix_versions": [
+              "83.0.0"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "shellingham",
+        "version": "1.5.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "six",
+        "version": "1.17.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "slowapi",
+        "version": "0.1.10",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "smmap",
+        "version": "5.0.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "sniffio",
+        "version": "1.3.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "soupsieve",
+        "version": "2.8.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "starlette",
+        "version": "0.52.1",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-161",
+            "aliases": [
+              "X41-2026-002",
+              "CVE-2026-48710",
+              "GHSA-86qp-5c8j-p5mr"
+            ],
+            "fix_versions": [
+              "1.0.1"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-248",
+            "aliases": [
+              "CVE-2026-54282",
+              "GHSA-jp82-jpqv-5vv3"
+            ],
+            "fix_versions": [
+              "1.3.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-249",
+            "aliases": [
+              "GHSA-82w8-qh3p-5jfq",
+              "CVE-2026-54283"
+            ],
+            "fix_versions": [
+              "1.3.1"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2281",
+            "aliases": [
+              "GHSA-wqp7-x3pw-xc5r",
+              "CVE-2026-48818"
+            ],
+            "fix_versions": [
+              "1.1.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2280",
+            "aliases": [
+              "GHSA-x746-7m8f-x49c",
+              "CVE-2026-48817"
+            ],
+            "fix_versions": [
+              "1.1.0"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "streamlit",
+        "version": "1.54.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "sympy",
+        "version": "1.14.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "tenacity",
+        "version": "9.1.4",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "text-unidecode",
+        "version": "1.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "textual",
+        "version": "8.0.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "tifffile",
+        "version": "2026.5.15",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "timezonefinder",
+        "version": "6.5.9",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "timm",
+        "version": "1.0.27",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "toml",
+        "version": "0.10.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "torch",
+        "version": "2.12.1",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2025-194",
+            "aliases": [
+              "GHSA-rrmf-rvhw-rf47",
+              "BIT-pytorch-2025-3000",
+              "CVE-2025-3000"
+            ],
+            "fix_versions": [
+              "2.13.0"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "torchvision",
+        "version": "0.27.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "tornado",
+        "version": "6.5.4",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-140",
+            "aliases": [
+              "GHSA-qjxf-f2mg-c6mc",
+              "CVE-2026-31958"
+            ],
+            "fix_versions": [
+              "6.5.5"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-2287",
+            "aliases": [
+              "CVE-2026-35536",
+              "GHSA-fqwm-6jpj-5wxc",
+              "GHSA-78cv-mqj4-43f7"
+            ],
+            "fix_versions": [
+              "6.5.5"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3387",
+            "aliases": [
+              "CVE-2026-49853",
+              "GHSA-3x9g-8vmp-wqvf"
+            ],
+            "fix_versions": [
+              "6.5.6"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3388",
+            "aliases": [
+              "CVE-2026-49854",
+              "GHSA-cx3h-4qpv-8hc9"
+            ],
+            "fix_versions": [
+              "6.5.6"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-3389",
+            "aliases": [
+              "GHSA-mgf9-4vpg-hj56",
+              "CVE-2026-49855"
+            ],
+            "fix_versions": [
+              "6.5.6"
+            ]
+          },
+          {
+            "id": "GHSA-pw6j-qg29-8w7f",
+            "aliases": [],
+            "fix_versions": [
+              "6.5.7"
+            ]
+          },
+          {
+            "id": "GHSA-8423-8fgw-73vq",
+            "aliases": [],
+            "fix_versions": [
+              "6.5.8"
+            ]
+          },
+          {
+            "id": "CVE-2026-82397",
+            "aliases": [
+              "GHSA-mpf4-983q-p7j4"
+            ],
+            "fix_versions": [
+              "6.5.8"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "tqdm",
+        "version": "4.67.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "typer",
+        "version": "0.25.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "typing-inspection",
+        "version": "0.4.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "typing-extensions",
+        "version": "4.15.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "tzdata",
+        "version": "2025.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "tzlocal",
+        "version": "5.3.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "uc-micro-py",
+        "version": "2.0.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "urllib3",
+        "version": "2.6.3",
+        "vulnerabilities": [
+          {
+            "id": "PYSEC-2026-142",
+            "aliases": [
+              "GHSA-mf9v-mfxr-j63j",
+              "CVE-2026-44432"
+            ],
+            "fix_versions": [
+              "2.7.0"
+            ]
+          },
+          {
+            "id": "PYSEC-2026-141",
+            "aliases": [
+              "GHSA-qccp-gfcp-xxvc",
+              "CVE-2026-44431"
+            ],
+            "fix_versions": [
+              "2.7.0"
+            ]
+          }
+        ],
+        "skip_reason": null
+      },
+      {
+        "name": "uv",
+        "version": "0.11.23",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "uvicorn",
+        "version": "0.35.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "uvloop",
+        "version": "0.22.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "vine",
+        "version": "5.1.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "watchfiles",
+        "version": "1.1.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "wcwidth",
+        "version": "0.6.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "websockets",
+        "version": "16.0",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "wheel",
+        "version": "0.46.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "wrapt",
+        "version": "2.2.2",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "zope-event",
+        "version": "6.1",
+        "vulnerabilities": [],
+        "skip_reason": null
+      },
+      {
+        "name": "zope-interface",
+        "version": "8.3",
+        "vulnerabilities": [],
+        "skip_reason": null
+      }
+    ]
+  },
+  "bandit": {
+    "version": "1.9.4",
+    "severity_counts": {
+      "LOW": 112,
+      "HIGH": 2,
+      "MEDIUM": 5
+    },
+    "results": [
+      {
+        "filename": "app/api/api_v1/endpoints/admin_biometric_review.py",
+        "line_number": 139,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/admin_biometric_review.py",
+        "line_number": 191,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/auth.py",
+        "line_number": 113,
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "issue_text": "Possible hardcoded password: 'bearer'",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/auth.py",
+        "line_number": 150,
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "issue_text": "Possible hardcoded password: 'bearer'",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/auth.py",
+        "line_number": 193,
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "issue_text": "Possible hardcoded password: 'bearer'",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/auth.py",
+        "line_number": 444,
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "issue_text": "Possible hardcoded password: 'bearer'",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/invoices/requests.py",
+        "line_number": 68,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/invoices/requests.py",
+        "line_number": 74,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/projects/validators.py",
+        "line_number": 142,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/projects/validators.py",
+        "line_number": 148,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/sessions/results.py",
+        "line_number": 105,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/generate_sessions.py",
+        "line_number": 656,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 105,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 216,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 220,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 221,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 310,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 313,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 319,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 320,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 322,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 415,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 418,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 424,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 425,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/__init__.py",
+        "line_number": 427,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_finalization.py",
+        "line_number": 34,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_group.py",
+        "line_number": 73,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_group.py",
+        "line_number": 76,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_group.py",
+        "line_number": 82,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_group.py",
+        "line_number": 83,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_group.py",
+        "line_number": 85,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_ir.py",
+        "line_number": 116,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_ir.py",
+        "line_number": 118,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_ir.py",
+        "line_number": 120,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_ir.py",
+        "line_number": 140,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_ir.py",
+        "line_number": 146,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_ir.py",
+        "line_number": 152,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_knockout.py",
+        "line_number": 77,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_knockout.py",
+        "line_number": 188,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_knockout.py",
+        "line_number": 192,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_knockout.py",
+        "line_number": 193,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_league.py",
+        "line_number": 54,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_league.py",
+        "line_number": 57,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_league.py",
+        "line_number": 63,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_league.py",
+        "line_number": 64,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/ops_scenario/_simulate_league.py",
+        "line_number": 66,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/rewards.py",
+        "line_number": 495,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/tournaments/rewards.py",
+        "line_number": 508,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/credits.py",
+        "line_number": 105,
+        "test_id": "B324",
+        "issue_severity": "HIGH",
+        "issue_confidence": "HIGH",
+        "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b324_hashlib.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 167,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 181,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 249,
+        "test_id": "B112",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Continue detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 268,
+        "test_id": "B112",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Continue detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 284,
+        "test_id": "B112",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Continue detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 301,
+        "test_id": "B112",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Continue detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 366,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 380,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 408,
+        "test_id": "B112",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Continue detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 410,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/api_v1/endpoints/users/instructor_analytics.py",
+        "line_number": 422,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/adaptive_learning.py",
+        "line_number": 599,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/auth.py",
+        "line_number": 42,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/auth.py",
+        "line_number": 255,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/mood_photos.py",
+        "line_number": 96,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/public_tournament.py",
+        "line_number": 104,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/public_tournament.py",
+        "line_number": 391,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/public_tournament.py",
+        "line_number": 641,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/public_tournament.py",
+        "line_number": 662,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/tournament_live.py",
+        "line_number": 361,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/tournaments/__init__.py",
+        "line_number": 111,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/api/web_routes/ws_events.py",
+        "line_number": 57,
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "issue_text": "Possible hardcoded password: ''",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html"
+      },
+      {
+        "filename": "app/api/web_routes/ws_events.py",
+        "line_number": 59,
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "issue_text": "Possible hardcoded password: ''",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html"
+      },
+      {
+        "filename": "app/api/web_routes/ws_events.py",
+        "line_number": 137,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/background/scheduler.py",
+        "line_number": 394,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/core/auth.py",
+        "line_number": 44,
+        "test_id": "B107",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "issue_text": "Possible hardcoded password: 'access'",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b107_hardcoded_password_default.html"
+      },
+      {
+        "filename": "app/main.py",
+        "line_number": 90,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/middleware/audit_middleware.py",
+        "line_number": 79,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/middleware/logging.py",
+        "line_number": 181,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/middleware/security.py",
+        "line_number": 133,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/models/audit_log.py",
+        "line_number": 53,
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "issue_text": "Possible hardcoded password: 'PASSWORD_CHANGE'",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html"
+      },
+      {
+        "filename": "app/models/audit_log.py",
+        "line_number": 54,
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "issue_confidence": "MEDIUM",
+        "issue_text": "Possible hardcoded password: 'PASSWORD_RESET'",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html"
+      },
+      {
+        "filename": "app/models/semester_enrollment.py",
+        "line_number": 263,
+        "test_id": "B324",
+        "issue_severity": "HIGH",
+        "issue_confidence": "HIGH",
+        "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b324_hashlib.html"
+      },
+      {
+        "filename": "app/services/adaptive_learning.py",
+        "line_number": 366,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/adaptive_learning.py",
+        "line_number": 387,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/adaptive_learning.py",
+        "line_number": 388,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/adaptive_learning.py",
+        "line_number": 397,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/biometric/disclosure_service.py",
+        "line_number": 243,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/services/biometric/rate_limiter.py",
+        "line_number": 338,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/services/biometric/rate_limiter.py",
+        "line_number": 355,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/services/card_export_service.py",
+        "line_number": 305,
+        "test_id": "B404",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Consider possible security implications associated with the subprocess module.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess"
+      },
+      {
+        "filename": "app/services/card_export_service.py",
+        "line_number": 343,
+        "test_id": "B603",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "subprocess call - check for execution of untrusted input.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html"
+      },
+      {
+        "filename": "app/services/challenge_snapshot_service.py",
+        "line_number": 108,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/challenge_snapshot_service.py",
+        "line_number": 150,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/challenge_snapshot_service.py",
+        "line_number": 151,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/challenge_snapshot_service.py",
+        "line_number": 323,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/challenge_snapshot_service.py",
+        "line_number": 326,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/challenge_snapshot_service.py",
+        "line_number": 331,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/juggling/ball_feedback_service.py",
+        "line_number": 183,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/services/juggling/ball_training_service.py",
+        "line_number": 402,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/services/juggling/metadata_service.py",
+        "line_number": 17,
+        "test_id": "B404",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Consider possible security implications associated with the subprocess module.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess"
+      },
+      {
+        "filename": "app/services/juggling/metadata_service.py",
+        "line_number": 33,
+        "test_id": "B603",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "subprocess call - check for execution of untrusted input.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html"
+      },
+      {
+        "filename": "app/services/juggling/transcode_service.py",
+        "line_number": 47,
+        "test_id": "B404",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Consider possible security implications associated with the subprocess module.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess"
+      },
+      {
+        "filename": "app/services/juggling/transcode_service.py",
+        "line_number": 173,
+        "test_id": "B603",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "subprocess call - check for execution of untrusted input.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html"
+      },
+      {
+        "filename": "app/services/juggling/transcode_service.py",
+        "line_number": 181,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/services/juggling/transcode_service.py",
+        "line_number": 241,
+        "test_id": "B603",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "subprocess call - check for execution of untrusted input.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html"
+      },
+      {
+        "filename": "app/services/juggling/transcode_service.py",
+        "line_number": 326,
+        "test_id": "B603",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "subprocess call - check for execution of untrusted input.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html"
+      },
+      {
+        "filename": "app/services/sandbox_test_orchestrator.py",
+        "line_number": 75,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/sandbox_test_orchestrator.py",
+        "line_number": 489,
+        "test_id": "B608",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "LOW",
+        "issue_text": "Possible SQL injection vector through string-based query construction.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html"
+      },
+      {
+        "filename": "app/services/tournament/live_model_service.py",
+        "line_number": 153,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/services/tournament/seeding_calculator.py",
+        "line_number": 100,
+        "test_id": "B311",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      },
+      {
+        "filename": "app/services/virtual_training_service.py",
+        "line_number": 259,
+        "test_id": "B112",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Continue detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b112_try_except_continue.html"
+      },
+      {
+        "filename": "app/services/virtual_training_service.py",
+        "line_number": 599,
+        "test_id": "B608",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "LOW",
+        "issue_text": "Possible SQL injection vector through string-based query construction.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html"
+      },
+      {
+        "filename": "app/services/virtual_training_service.py",
+        "line_number": 658,
+        "test_id": "B608",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "LOW",
+        "issue_text": "Possible SQL injection vector through string-based query construction.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html"
+      },
+      {
+        "filename": "app/services/virtual_training_service.py",
+        "line_number": 689,
+        "test_id": "B608",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "LOW",
+        "issue_text": "Possible SQL injection vector through string-based query construction.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html"
+      },
+      {
+        "filename": "app/tasks/biometric_tasks.py",
+        "line_number": 226,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/tasks/biometric_tasks.py",
+        "line_number": 327,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/tasks/juggling_trajectory_task.py",
+        "line_number": 254,
+        "test_id": "B110",
+        "issue_severity": "LOW",
+        "issue_confidence": "HIGH",
+        "issue_text": "Try, Except, Pass detected.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html"
+      },
+      {
+        "filename": "app/utils/rbac.py",
+        "line_number": 47,
+        "test_id": "B608",
+        "issue_severity": "MEDIUM",
+        "issue_confidence": "LOW",
+        "issue_text": "Possible SQL injection vector through string-based query construction.",
+        "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html"
+      }
+    ],
+    "errors": []
+  },
+  "npm": {
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 2,
+        "moderate": 6,
+        "high": 10,
+        "critical": 0,
+        "total": 18
+      },
+      "dependencies": {
+        "prod": 172,
+        "dev": 173,
+        "optional": 5,
+        "peer": 77,
+        "peerOptional": 0,
+        "total": 348
+      }
+    },
+    "vulnerabilities": {
+      "@babel/core": {
+        "name": "@babel/core",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1123528,
+            "name": "@babel/core",
+            "dependency": "@babel/core",
+            "title": "@babel/core: Arbitrary File Read via sourceMappingURL Comment",
+            "url": "https://github.com/advisories/GHSA-4x5r-pxfx-6jf8",
+            "severity": "low",
+            "cwe": [
+              "CWE-22",
+              "CWE-200"
+            ],
+            "cvss": {
+              "score": 3.2,
+              "vectorString": "CVSS:3.1/AV:L/AC:H/PR:N/UI:N/S:C/C:L/I:N/A:N"
+            },
+            "range": "<=7.29.0"
+          }
+        ],
+        "effects": [],
+        "range": "<=7.29.0",
+        "nodes": [
+          "node_modules/@babel/core"
+        ],
+        "fixAvailable": true
+      },
+      "@cypress/request": {
+        "name": "@cypress/request",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "uuid"
+        ],
+        "effects": [
+          "cypress"
+        ],
+        "range": "<=3.0.10",
+        "nodes": [
+          "node_modules/@cypress/request"
+        ],
+        "fixAvailable": {
+          "name": "cypress",
+          "version": "0.9.0",
+          "isSemVerMajor": true
+        }
+      },
+      "brace-expansion": {
+        "name": "brace-expansion",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1115540,
+            "name": "brace-expansion",
+            "dependency": "brace-expansion",
+            "title": "brace-expansion: Zero-step sequence causes process hang and memory exhaustion",
+            "url": "https://github.com/advisories/GHSA-f886-m6hf-6m8v",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-400"
+            ],
+            "cvss": {
+              "score": 6.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H"
+            },
+            "range": "<1.1.13"
+          },
+          {
+            "source": 1115541,
+            "name": "brace-expansion",
+            "dependency": "brace-expansion",
+            "title": "brace-expansion: Zero-step sequence causes process hang and memory exhaustion",
+            "url": "https://github.com/advisories/GHSA-f886-m6hf-6m8v",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-400"
+            ],
+            "cvss": {
+              "score": 6.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H"
+            },
+            "range": ">=2.0.0 <2.0.3"
+          },
+          {
+            "source": 1123896,
+            "name": "brace-expansion",
+            "dependency": "brace-expansion",
+            "title": "brace-expansion: DoS via exponential-time expansion of consecutive non-expanding {} groups",
+            "url": "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp",
+            "severity": "high",
+            "cwe": [
+              "CWE-400",
+              "CWE-407"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": ">=2.0.0 <2.1.2"
+          },
+          {
+            "source": 1123897,
+            "name": "brace-expansion",
+            "dependency": "brace-expansion",
+            "title": "brace-expansion: DoS via exponential-time expansion of consecutive non-expanding {} groups",
+            "url": "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp",
+            "severity": "high",
+            "cwe": [
+              "CWE-400",
+              "CWE-407"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": "<1.1.16"
+          },
+          {
+            "source": 1130588,
+            "name": "brace-expansion",
+            "dependency": "brace-expansion",
+            "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+            "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+            "severity": "high",
+            "cwe": [
+              "CWE-400",
+              "CWE-770"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<1.1.17"
+          },
+          {
+            "source": 1130589,
+            "name": "brace-expansion",
+            "dependency": "brace-expansion",
+            "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+            "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+            "severity": "high",
+            "cwe": [
+              "CWE-400",
+              "CWE-770"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": ">=2.0.0 <2.1.3"
+          },
+          {
+            "source": 1130736,
+            "name": "brace-expansion",
+            "dependency": "brace-expansion",
+            "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+            "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895",
+            "severity": "high",
+            "cwe": [
+              "CWE-400",
+              "CWE-770"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": ">=2.0.0 <2.1.4"
+          },
+          {
+            "source": 1130737,
+            "name": "brace-expansion",
+            "dependency": "brace-expansion",
+            "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+            "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895",
+            "severity": "high",
+            "cwe": [
+              "CWE-400",
+              "CWE-770"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<1.1.18"
+          }
+        ],
+        "effects": [],
+        "range": "<=1.1.17 || 2.0.0 - 2.1.3",
+        "nodes": [
+          "node_modules/brace-expansion",
+          "node_modules/mochawesome-merge/node_modules/brace-expansion"
+        ],
+        "fixAvailable": true
+      },
+      "browserslist": {
+        "name": "browserslist",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1153171,
+            "name": "browserslist",
+            "dependency": "browserslist",
+            "title": "Browserslist: Unbounded memory growth (no cache eviction) via distinct query results, leading to eventual OOM",
+            "url": "https://github.com/advisories/GHSA-c83g-rgw3-j3cx",
+            "severity": "high",
+            "cwe": [
+              "CWE-770"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<=4.28.6"
+          },
+          {
+            "source": 1153172,
+            "name": "browserslist",
+            "dependency": "browserslist",
+            "title": "Browserslist: Uncaught crash / prototype write via untrusted browserslist-stats.json custom stats (normalizeStats)",
+            "url": "https://github.com/advisories/GHSA-73wf-gq98-2v4g",
+            "severity": "high",
+            "cwe": [
+              "CWE-248",
+              "CWE-1321"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<=4.28.6"
+          }
+        ],
+        "effects": [],
+        "range": "<=4.28.6",
+        "nodes": [
+          "node_modules/browserslist"
+        ],
+        "fixAvailable": true
+      },
+      "cypress": {
+        "name": "cypress",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@cypress/request",
+          "extract-zip"
+        ],
+        "effects": [],
+        "range": "0.9.1 - 15.15.0",
+        "nodes": [
+          "node_modules/cypress"
+        ],
+        "fixAvailable": {
+          "name": "cypress",
+          "version": "0.9.0",
+          "isSemVerMajor": true
+        }
+      },
+      "cypress-mochawesome-reporter": {
+        "name": "cypress-mochawesome-reporter",
+        "severity": "moderate",
+        "isDirect": true,
+        "via": [
+          "mochawesome"
+        ],
+        "effects": [],
+        "range": "<=4.0.2",
+        "nodes": [
+          "node_modules/cypress-mochawesome-reporter"
+        ],
+        "fixAvailable": {
+          "name": "cypress-mochawesome-reporter",
+          "version": "5.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "diff": {
+        "name": "diff",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1112706,
+            "name": "diff",
+            "dependency": "diff",
+            "title": "jsdiff has a Denial of Service vulnerability in parsePatch and applyPatch",
+            "url": "https://github.com/advisories/GHSA-73rr-hh4g-fpgx",
+            "severity": "low",
+            "cwe": [
+              "CWE-400",
+              "CWE-1333"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": ">=6.0.0 <8.0.3"
+          }
+        ],
+        "effects": [
+          "mocha"
+        ],
+        "range": "6.0.0 - 8.0.2",
+        "nodes": [
+          "node_modules/diff"
+        ],
+        "fixAvailable": true
+      },
+      "extract-zip": {
+        "name": "extract-zip",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1139346,
+            "name": "extract-zip",
+            "dependency": "extract-zip",
+            "title": "extract-zip unvalidated symlink path traversal",
+            "url": "https://github.com/advisories/GHSA-jmr9-qjv8-65gv",
+            "severity": "high",
+            "cwe": [
+              "CWE-22"
+            ],
+            "cvss": {
+              "score": 8.1,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N"
+            },
+            "range": "<=2.0.1"
+          }
+        ],
+        "effects": [
+          "cypress"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/extract-zip"
+        ],
+        "fixAvailable": {
+          "name": "cypress",
+          "version": "0.9.0",
+          "isSemVerMajor": true
+        }
+      },
+      "form-data": {
+        "name": "form-data",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1120743,
+            "name": "form-data",
+            "dependency": "form-data",
+            "title": "form-data: CRLF injection in form-data via unescaped multipart field names and filenames",
+            "url": "https://github.com/advisories/GHSA-hmw2-7cc7-3qxx",
+            "severity": "high",
+            "cwe": [
+              "CWE-93"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+            },
+            "range": ">=4.0.0 <4.0.6"
+          }
+        ],
+        "effects": [],
+        "range": "4.0.0 - 4.0.5",
+        "nodes": [
+          "node_modules/form-data"
+        ],
+        "fixAvailable": true
+      },
+      "js-yaml": {
+        "name": "js-yaml",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1121860,
+            "name": "js-yaml",
+            "dependency": "js-yaml",
+            "title": "JS-YAML: Quadratic-complexity DoS in merge key handling via repeated aliases",
+            "url": "https://github.com/advisories/GHSA-h67p-54hq-rp68",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-407"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": ">=4.0.0 <=4.1.1"
+          },
+          {
+            "source": 1123911,
+            "name": "js-yaml",
+            "dependency": "js-yaml",
+            "title": "js-yaml: YAML merge-key chains can force quadratic CPU consumption",
+            "url": "https://github.com/advisories/GHSA-52cp-r559-cp3m",
+            "severity": "high",
+            "cwe": [
+              "CWE-400",
+              "CWE-407"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": ">=4.0.0 <4.3.0"
+          },
+          {
+            "source": 1138115,
+            "name": "js-yaml",
+            "dependency": "js-yaml",
+            "title": "JS-YAML: Quadratic CPU consumption in !!omap resolution (3.x and 4.x) \u2014 CVE-2026-59870 fix not backported",
+            "url": "https://github.com/advisories/GHSA-5p4m-2wfm-xmqj",
+            "severity": "high",
+            "cwe": [
+              "CWE-407"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": ">=4.0.0 <4.3.1"
+          }
+        ],
+        "effects": [],
+        "range": "4.0.0 - 4.3.0",
+        "nodes": [
+          "node_modules/js-yaml"
+        ],
+        "fixAvailable": true
+      },
+      "lodash": {
+        "name": "lodash",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1115806,
+            "name": "lodash",
+            "dependency": "lodash",
+            "title": "lodash vulnerable to Code Injection via `_.template` imports key names",
+            "url": "https://github.com/advisories/GHSA-r5fr-rjxr-66jc",
+            "severity": "high",
+            "cwe": [
+              "CWE-94"
+            ],
+            "cvss": {
+              "score": 8.1,
+              "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+            },
+            "range": ">=4.0.0 <=4.17.23"
+          },
+          {
+            "source": 1115810,
+            "name": "lodash",
+            "dependency": "lodash",
+            "title": "lodash vulnerable to Prototype Pollution via array path bypass in `_.unset` and `_.omit`",
+            "url": "https://github.com/advisories/GHSA-f23m-r3pf-42rh",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-1321"
+            ],
+            "cvss": {
+              "score": 6.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:L"
+            },
+            "range": "<=4.17.23"
+          }
+        ],
+        "effects": [],
+        "range": "<=4.17.23",
+        "nodes": [
+          "node_modules/lodash"
+        ],
+        "fixAvailable": true
+      },
+      "mocha": {
+        "name": "mocha",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "diff",
+          "serialize-javascript"
+        ],
+        "effects": [],
+        "range": "8.2.0 - 11.8.0",
+        "nodes": [
+          "node_modules/mocha"
+        ],
+        "fixAvailable": true
+      },
+      "mochawesome": {
+        "name": "mochawesome",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "uuid"
+        ],
+        "effects": [
+          "cypress-mochawesome-reporter"
+        ],
+        "range": "2.0.0 - 7.1.4",
+        "nodes": [
+          "node_modules/mochawesome"
+        ],
+        "fixAvailable": {
+          "name": "cypress-mochawesome-reporter",
+          "version": "5.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "picomatch": {
+        "name": "picomatch",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1115549,
+            "name": "picomatch",
+            "dependency": "picomatch",
+            "title": "Picomatch: Method Injection in POSIX Character Classes causes incorrect Glob Matching",
+            "url": "https://github.com/advisories/GHSA-3v7f-55p6-f55p",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-1321"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+            },
+            "range": "<2.3.2"
+          },
+          {
+            "source": 1115551,
+            "name": "picomatch",
+            "dependency": "picomatch",
+            "title": "Picomatch: Method Injection in POSIX Character Classes causes incorrect Glob Matching",
+            "url": "https://github.com/advisories/GHSA-3v7f-55p6-f55p",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-1321"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+            },
+            "range": ">=4.0.0 <4.0.4"
+          },
+          {
+            "source": 1115552,
+            "name": "picomatch",
+            "dependency": "picomatch",
+            "title": "Picomatch has a ReDoS vulnerability via extglob quantifiers",
+            "url": "https://github.com/advisories/GHSA-c2c7-rcm5-vvqj",
+            "severity": "high",
+            "cwe": [
+              "CWE-1333"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<2.3.2"
+          },
+          {
+            "source": 1115554,
+            "name": "picomatch",
+            "dependency": "picomatch",
+            "title": "Picomatch has a ReDoS vulnerability via extglob quantifiers",
+            "url": "https://github.com/advisories/GHSA-c2c7-rcm5-vvqj",
+            "severity": "high",
+            "cwe": [
+              "CWE-1333"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": ">=4.0.0 <4.0.4"
+          }
+        ],
+        "effects": [],
+        "range": "<=2.3.1 || 4.0.0 - 4.0.3",
+        "nodes": [
+          "node_modules/picomatch",
+          "node_modules/tinyglobby/node_modules/picomatch"
+        ],
+        "fixAvailable": true
+      },
+      "qs": {
+        "name": "qs",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1119502,
+            "name": "qs",
+            "dependency": "qs",
+            "title": "qs has a remotely triggerable DoS: qs.stringify crashes with TypeError on null/undefined entries in comma-format arrays when encodeValuesOnly is set",
+            "url": "https://github.com/advisories/GHSA-q8mj-m7cp-5q26",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-476"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": ">=6.11.1 <=6.15.1"
+          },
+          {
+            "source": 1158506,
+            "name": "qs",
+            "dependency": "qs",
+            "title": "qs array-limit bypass via bracket-key comma parsing",
+            "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-770"
+            ],
+            "cvss": {
+              "score": 3.7,
+              "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": ">=6.14.2 <=6.15.3"
+          },
+          {
+            "source": 1158507,
+            "name": "qs",
+            "dependency": "qs",
+            "title": "qs: Denial of Service via Attacker Controlled isBuffer",
+            "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-248",
+              "CWE-703"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+            },
+            "range": ">=2.2.5 <6.16.0"
+          }
+        ],
+        "effects": [],
+        "range": "2.2.5 - 6.15.3",
+        "nodes": [
+          "node_modules/qs"
+        ],
+        "fixAvailable": true
+      },
+      "serialize-javascript": {
+        "name": "serialize-javascript",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1113686,
+            "name": "serialize-javascript",
+            "dependency": "serialize-javascript",
+            "title": "Serialize JavaScript is Vulnerable to RCE via RegExp.flags and Date.prototype.toISOString()",
+            "url": "https://github.com/advisories/GHSA-5c6j-r48x-rmvq",
+            "severity": "high",
+            "cwe": [
+              "CWE-96"
+            ],
+            "cvss": {
+              "score": 8.1,
+              "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+            },
+            "range": "<=7.0.2"
+          },
+          {
+            "source": 1119440,
+            "name": "serialize-javascript",
+            "dependency": "serialize-javascript",
+            "title": "Serialize JavaScript has CPU Exhaustion Denial of Service via crafted array-like objects",
+            "url": "https://github.com/advisories/GHSA-qj8w-gfj5-8c6v",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-400",
+              "CWE-834"
+            ],
+            "cvss": {
+              "score": 5.9,
+              "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": ">=5.0.0 <7.0.5"
+          }
+        ],
+        "effects": [
+          "mocha"
+        ],
+        "range": "<=7.0.4",
+        "nodes": [
+          "node_modules/serialize-javascript"
+        ],
+        "fixAvailable": true
+      },
+      "tmp": {
+        "name": "tmp",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1120654,
+            "name": "tmp",
+            "dependency": "tmp",
+            "title": "tmp has Path Traversal via unsanitized prefix/postfix that enables directory escape",
+            "url": "https://github.com/advisories/GHSA-ph9p-34f9-6g65",
+            "severity": "high",
+            "cwe": [
+              "CWE-22"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<0.2.6"
+          }
+        ],
+        "effects": [],
+        "range": "<0.2.6",
+        "nodes": [
+          "node_modules/tmp"
+        ],
+        "fixAvailable": true
+      },
+      "uuid": {
+        "name": "uuid",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1119441,
+            "name": "uuid",
+            "dependency": "uuid",
+            "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+            "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-787",
+              "CWE-1285"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+            },
+            "range": "<11.1.1"
+          }
+        ],
+        "effects": [
+          "@cypress/request",
+          "mochawesome"
+        ],
+        "range": "<11.1.1",
+        "nodes": [
+          "node_modules/uuid"
+        ],
+        "fixAvailable": {
+          "name": "cypress",
+          "version": "0.9.0",
+          "isSemVerMajor": true
+        }
+      }
+    }
+  },
+  "audit_date": "2026-09-08",
+  "pip_audit_version": "2.10.1",
+  "limits": "Advisory matches are not proof of exploitability. Python transitive installed environment is separate from undeclared clean-install resolution; duplicate aliases may overlap."
+}

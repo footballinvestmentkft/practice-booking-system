@@ -1,0 +1,525 @@
+[
+  {
+    "id": "F01",
+    "priority": "P0",
+    "status": "CLOSED",
+    "title": "Submitted passwords printed by API login",
+    "evidence": [
+      "app/api/api_v1/endpoints/auth.py:37"
+    ],
+    "detail": "FACT: login prints the supplied password and a stored hash prefix. Mounted POST /api/v1/auth/login; no DEBUG condition. Actual historical log contents were not opened. Remove logging in a separately approved change and assess log access/retention and credential rotation exposure.",
+    "closure": {
+      "status": "CLOSED",
+      "baseline": "LFA_CANONICAL_BASELINE_P0",
+      "canonical_baseline_sha": "894c43a4a37af4a8a583240a5a2d0b1f31a3fdee",
+      "source_sha": "f341bca5f7a26998e2e63d8b0b542a33f95ba935",
+      "closed_at": "2026-09-08"
+    }
+  },
+  {
+    "id": "F02",
+    "priority": "P0",
+    "status": "CLOSED",
+    "title": "Adaptive session BOLA",
+    "evidence": [
+      "app/api/api_v1/endpoints/adaptive_learning.py:143",
+      "app/services/adaptive_learning.py:102"
+    ],
+    "detail": "FACT: API answer/next/end pass arbitrary session IDs; service filters by ID only. Isolated real-handler probe completed owner 999 session as actor 42. Fill-in answer also mutates foreign session. Live exploitation NOT ATTEMPTED.",
+    "closure": {
+      "status": "CLOSED",
+      "baseline": "LFA_CANONICAL_BASELINE_P0",
+      "canonical_baseline_sha": "894c43a4a37af4a8a583240a5a2d0b1f31a3fdee",
+      "source_sha": "f341bca5f7a26998e2e63d8b0b542a33f95ba935",
+      "closed_at": "2026-09-08"
+    }
+  },
+  {
+    "id": "F03",
+    "priority": "P0",
+    "status": "CLOSED",
+    "title": "Instructor attendance object authorization bypass",
+    "evidence": [
+      "app/api/api_v1/endpoints/attendance.py:27",
+      "app/api/api_v1/endpoints/attendance.py:264",
+      "app/api/web_routes/attendance.py:47"
+    ],
+    "detail": "FACT: API role gate permits every instructor; create/update do not require assignment to the session. Probe changed instructor 999 session as instructor 42. Web mark handler correctly checks session.instructor_id; reuse that policy, preserving legitimate admin override.",
+    "closure": {
+      "status": "CLOSED",
+      "baseline": "LFA_CANONICAL_BASELINE_P0",
+      "canonical_baseline_sha": "894c43a4a37af4a8a583240a5a2d0b1f31a3fdee",
+      "source_sha": "f341bca5f7a26998e2e63d8b0b542a33f95ba935",
+      "closed_at": "2026-09-08"
+    }
+  },
+  {
+    "id": "F04",
+    "priority": "P0",
+    "status": "CLOSED",
+    "title": "Credit deduction is not idempotent",
+    "evidence": [
+      "app/services/credit_service.py:142"
+    ],
+    "detail": "FACT: deduct executes UPDATE before create_transaction checks existing key; ignores created=False. Probe with existing ledger key performed one debit and inserted zero ledger rows. Atomic nonnegative UPDATE is worth preserving, but ledger-plus-balance operation needs one replay-safe transaction.",
+    "closure": {
+      "status": "CLOSED",
+      "baseline": "LFA_CANONICAL_BASELINE_P0",
+      "canonical_baseline_sha": "894c43a4a37af4a8a583240a5a2d0b1f31a3fdee",
+      "source_sha": "f341bca5f7a26998e2e63d8b0b542a33f95ba935",
+      "closed_at": "2026-09-08"
+    }
+  },
+  {
+    "id": "F05",
+    "priority": "P0",
+    "status": "CLOSED",
+    "title": "Unlock and renewal balance concurrency is unsafe",
+    "evidence": [
+      "app/api/web_routes/specialization.py:39",
+      "app/services/license_renewal_service.py:70"
+    ],
+    "detail": "FACT: native unlock checks funds before acquiring user lock and does not recheck funds after it; ORM identity-map refresh is not forced. Renewal reads/modifies balance without a row lock/conditional UPDATE. RISK: concurrent distinct operations can lose debits or overdraw; no PostgreSQL concurrency test was run. Existing unique license constraint protects duplicate identity only.",
+    "closure": {
+      "status": "CLOSED",
+      "baseline": "LFA_CANONICAL_BASELINE_P0",
+      "canonical_baseline_sha": "894c43a4a37af4a8a583240a5a2d0b1f31a3fdee",
+      "source_sha": "f341bca5f7a26998e2e63d8b0b542a33f95ba935",
+      "closed_at": "2026-09-08"
+    }
+  },
+  {
+    "id": "F06",
+    "priority": "P0",
+    "status": "CLOSED",
+    "title": "Cancellation refunds wrong amount and erases debit evidence",
+    "evidence": [
+      "app/api/web_routes/onboarding.py:389",
+      "app/models/credit_transaction.py:49"
+    ],
+    "detail": "FACT: GET onboarding-cancel refunds fixed 100, creates random-key ledger record, deletes incomplete license, and commits without a row lock. Unlock packages cost 100/250/450/800; deletion cascades license-linked unlock debit. Financial history loss and refund mismatch are deterministic from code; concurrent double-refund risk UNVERIFIED.",
+    "closure": {
+      "status": "CLOSED",
+      "baseline": "LFA_CANONICAL_BASELINE_P0",
+      "canonical_baseline_sha": "894c43a4a37af4a8a583240a5a2d0b1f31a3fdee",
+      "source_sha": "f341bca5f7a26998e2e63d8b0b542a33f95ba935",
+      "closed_at": "2026-09-08"
+    }
+  },
+  {
+    "id": "F07",
+    "priority": "P0",
+    "status": "CLOSED",
+    "title": "Production progression API returns invented success",
+    "evidence": [
+      "app/api/api_v1/endpoints/progression.py:165"
+    ],
+    "detail": "FACT: GET /progress returns constant junior/pre_assistant/bamboo for any account; POST /progress/update mutates only a local dict and reports success. Mounted with no environment gate. Native explicitly avoids it; external consumer use UNVERIFIED. Narrow endpoint replacement justified; preserve real skill-profile endpoint in same file.",
+    "closure": {
+      "status": "CLOSED",
+      "baseline": "LFA_CANONICAL_BASELINE_P0",
+      "canonical_baseline_sha": "894c43a4a37af4a8a583240a5a2d0b1f31a3fdee",
+      "source_sha": "f341bca5f7a26998e2e63d8b0b542a33f95ba935",
+      "closed_at": "2026-09-08"
+    }
+  },
+  {
+    "id": "F08",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Refresh replay and logout/password-change revocation absent",
+    "evidence": [
+      "app/core/auth.py:21",
+      "app/api/api_v1/endpoints/auth.py:160",
+      "app/api/api_v1/endpoints/auth.py:205"
+    ],
+    "detail": "FACT: signed token type/expiry checks exist, but no jti/family/version/revocation lookup. Refresh issues another refresh token without invalidating old one; logout is symbolic. Password change does not invalidate issued tokens. Native comments claim rotation but server does not enforce single use."
+  },
+  {
+    "id": "F09",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Adaptive API contract fails independently of DB availability",
+    "evidence": [
+      "app/api/api_v1/endpoints/adaptive_learning.py:169",
+      "app/api/api_v1/endpoints/adaptive_learning.py:203",
+      "app/services/adaptive_learning.py:134"
+    ],
+    "detail": "FACT: QuizAnswerOption is not imported, causing NameError on selected multiple-choice answer. Fill-in branch commits real service then reads nonexistent result[xp_earned], causing KeyError. Both reproduced with fake persistence; latter had one commit. Service returns score_delta/score. API last changed e7b421c8 (2026-03-03), service 80fd38a9 (2026-05-21)."
+  },
+  {
+    "id": "F10",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Curriculum API targets schema absent from active migration chain",
+    "evidence": [
+      "app/api/api_v1/endpoints/curriculum/tracks.py:14",
+      "app/api/api_v1/endpoints/curriculum/modules.py:56",
+      "app/models/track.py:9"
+    ],
+    "detail": "FACT: raw SQL uses curriculum_tracks, lessons, lesson_modules, user_lesson_progress, user_module_progress; active baseline/ORM instead contain tracks/modules/module_components and plural progress tables. Mounted routes are broken against the repository-migrated schema. Legacy DB may contain extra tables: UNVERIFIED. Merely renaming tables would change hierarchy semantics; rewrite this narrow adapter after mapping retained content."
+  },
+  {
+    "id": "F11",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Specialization APIs call missing service methods",
+    "evidence": [
+      "docs/audit/LFA_MISSING_SERVICE_METHODS_2026.json"
+    ],
+    "detail": "FACT: runtime class inspection found 24 call sites across mounted player/coach/GanCuju/internship handlers, including purchase_credits, create_license, promote_level, add_xp. Earlier guards may short-circuit some requests. An endpoint with a service import is not a working feature. Fix contracts incrementally; do not revive separate-wallet tables merely to satisfy stale routes."
+  },
+  {
+    "id": "F12",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Quiz can pass with only one submitted correct answer",
+    "evidence": [
+      "app/services/quiz_service.py:165",
+      "app/schemas/quiz.py"
+    ],
+    "detail": "FACT: denominator sums submitted valid questions rather than all quiz questions; omitted answers are not counted. Probe submitted 1 of 10, persisted score=100 and passed=True. Duplicate submitted question IDs are not rejected in service; races/XP repetition also need DB verification. This is outcome-integrity failure, not an established legal violation."
+  },
+  {
+    "id": "F13",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "iOS Release build fails while Debug builds",
+    "evidence": [
+      "ios/LFAEducationCenter/MultiCamera/GoProConnectionDebugView.swift:6",
+      "ios/LFAEducationCenter/MultiCamera/GoProStreamProbe.swift:22"
+    ],
+    "detail": "FACT: unsigned Release failed on Xcode 27.0/27A5194q: unguarded debug view references DEBUG-only GoProStreamProbe and diagnostic types. Debug build passed on same toolchain. First sandbox macro failure discarded as environment artifact; reported failure is from approved unrestricted rerun."
+  },
+  {
+    "id": "F14",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Three programs unavailable in native navigation",
+    "evidence": [
+      "ios/LFAEducationCenter/App/MainHubView.swift:62",
+      "ios/LFAEducationCenter/App/LFASpecTabView.swift:15"
+    ],
+    "detail": "FACT: GanCuju, Coach, Internship cards hardcode comingSoon with nil action; only Football Player enters scoped tabs. Native EducationView is status/skills/catalog, not a lesson or assessment runner. BUILD remaining flows gradually, preserving working native foundation."
+  },
+  {
+    "id": "F15",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Conflicting license and specialization representations",
+    "evidence": [
+      "app/models/specialization.py:8",
+      "app/models/license.py:14",
+      "app/services/specialization/lfa_player.py:19",
+      "app/api/web_routes/onboarding.py:76"
+    ],
+    "detail": "FACT: canonical four IDs coexist with PLAYER/COACH metadata, service named LFA_PLAYER maps to GANCUJU_PLAYER, progress/license sync models, and a shared enum containing season-only types. Web selection accepts any SpecializationType enum, does not restrict to four licenses or enforce age/consent; unlike native unlock. Canonicalize boundaries after data mapping; preserve historical rows."
+  },
+  {
+    "id": "F16",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Age and season rules disagree in executable code",
+    "evidence": [
+      "app/utils/age_requirements.py:43",
+      "app/services/specs/session_based/lfa_player_service.py:54",
+      "app/services/specialization_validation.py"
+    ],
+    "detail": "FACT: hub/config describe PRE 5-13/YOUTH 14-18; reachable spec factory uses PRE 6-11/YOUTH 12-18 and current age. Model documentation requires July-1 season lock. Do not choose one from comments alone; reconcile requirements, boundary tests and existing enrollments."
+  },
+  {
+    "id": "F17",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Global credit resource still represented as license wallets",
+    "evidence": [
+      "app/models/user.py",
+      "app/models/license.py:244",
+      "app/models/credit_transaction.py:39",
+      "app/api/api_v1/endpoints/lfa_player/credits.py"
+    ],
+    "detail": "FACT: User holds hub balance; license also has credit_balance/purchased/expiry and ledger XOR owner model. Unlock deducts User but records user_license_id. Global transaction-history paths and cascade retention cannot reliably represent one user wallet. User instruction settles global ownership; retain specialization as context only."
+  },
+  {
+    "id": "F18",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Adaptive content hierarchy and program assignment not persisted",
+    "evidence": [
+      "app/services/al_import_service.py:294",
+      "app/models/quiz.py:53",
+      "app/api/web_routes/adaptive_learning.py:200"
+    ],
+    "detail": "FACT: import validates specialization/category but accepts optional topic/module only as description metadata; Quiz/ALSession lack canonical program FK and module hierarchy. Web module selection relies on title/module_prefix conventions. Category/language filters cannot prove program entitlement. Schema/content versions are not immutable assessment provenance."
+  },
+  {
+    "id": "F19",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Import-as-draft can be served as published",
+    "evidence": [
+      "app/services/al_import_service.py:503",
+      "app/services/al_import_service.py:305",
+      "app/models/quiz.py:67",
+      "app/services/adaptive_learning.py:288"
+    ],
+    "detail": "FACT: import_as_draft only changes is_active=False; content_status defaults PUBLISHED and candidate query filters content_status, not is_active. No model hook synchronizes them. Database insert execution UNVERIFIED; constructor/default/query inconsistency proven. Draft content isolation needs a single lifecycle field/policy."
+  },
+  {
+    "id": "F20",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Learner outcome audit evidence is incomplete",
+    "evidence": [
+      "app/services/audit_service.py:28",
+      "app/middleware/audit_middleware.py:139",
+      "app/api/web_routes/adaptive_learning.py:586",
+      "app/models/quiz.py:270"
+    ],
+    "detail": "FACT: request audit records method/path/status, not prior/new outcome values or immutable question text/version. AL log is a second commit with swallowed failure, and presented options are client-provided. API attendance updates omit AttendanceHistory although web has it. AuditService commits caller session. Technical proof gap; education regulatory standard is not documented."
+  },
+  {
+    "id": "F21",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Invitation consumption is check-then-write",
+    "evidence": [
+      "app/api/api_v1/endpoints/auth.py:270",
+      "app/api/web_routes/auth.py:346",
+      "app/models/invitation_code.py"
+    ],
+    "detail": "FACT: both registration paths check unused invitation then create user/bonus and mark used without locking invitation or conditional consumption. Unique user email does not protect concurrent different emails using unrestricted invitation. RISK: multiple bonuses/accounts for one-use invitation; concurrent DB behavior not tested."
+  },
+  {
+    "id": "F22",
+    "priority": "P0",
+    "status": "CLOSED",
+    "title": "Certificate download advertises PDF but returns placeholder bytes",
+    "evidence": [
+      "app/services/certificate_service.py:242",
+      "app/api/api_v1/endpoints/certificates.py:62"
+    ],
+    "detail": "FACT: authenticated authorized download returns b'PDF certificate content placeholder' as application/pdf. Mounted and not feature-gated. Existing ownership/verification/revocation domain should remain; real rendering is missing. Narrow renderer replacement, not certificate-system rewrite.",
+    "closure": {
+      "status": "CLOSED",
+      "baseline": "LFA_CANONICAL_BASELINE_P0",
+      "canonical_baseline_sha": "894c43a4a37af4a8a583240a5a2d0b1f31a3fdee",
+      "source_sha": "f341bca5f7a26998e2e63d8b0b542a33f95ba935",
+      "closed_at": "2026-09-08"
+    }
+  },
+  {
+    "id": "F23",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Adaptive web scoring trusts unbound question submissions",
+    "evidence": [
+      "app/api/web_routes/adaptive_learning.py:504",
+      "app/services/adaptive_learning.py:102"
+    ],
+    "detail": "FACT: web verifies own open session and option-to-question relation, but does not persist/validate a server-issued question attempt, membership in selected module, or one answer per presentation. Client supplies presented_option_ids; service increments each call. RISK: repeated known answers can inflate session score/XP. Separate completed-session lock is useful but insufficient."
+  },
+  {
+    "id": "F24",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Verified curriculum/assessment coverage missing for three domains",
+    "evidence": [
+      "content/adaptive_learning",
+      "scripts/seed_coach_curriculum.py",
+      "scripts/seed_internship_curriculum.py",
+      "scripts/seed_player_curriculum.py"
+    ],
+    "detail": "FACT: 31 content JSON files/375 questions all target LFA_FOOTBALL_PLAYER; other programs only have config/legacy seed material, including COACH/PLAYER IDs and absent schema. Product completion for those programs cannot be claimed. Curriculum subject-matter correctness remains UNVERIFIED for all four."
+  },
+  {
+    "id": "F25",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Biometric mock provider and production guard mismatch",
+    "evidence": [
+      "app/config.py:311",
+      "app/services/biometric/embedding_service.py:104",
+      "app/services/biometric/encryption_service.py:57",
+      "docs/biometric/PRODUCTION_ACTIVATION_CHECKLIST.md"
+    ],
+    "detail": "FACT: default provider=fake; provider choice/test-key flag are not rejected specifically in production Settings validation. Face matching default is off, but local .env enables it in development. Production activation is UNVERIFIED, not alleged. Prevent fake identity outcomes on deployment; existing legal/DPO gate remains unresolved."
+  },
+  {
+    "id": "F26",
+    "priority": "P2",
+    "status": "OPEN",
+    "title": "Native and API failure states hide lost education data",
+    "evidence": [
+      "ios/LFAEducationCenter/Education/EducationViewModel.swift:79",
+      "app/api/api_v1/endpoints/specializations/progress.py:34"
+    ],
+    "detail": "FACT: native maps HTTP/decoding failure to empty loaded state; backend catches all progress exceptions and returns success with empty data. Learner cannot distinguish no progress from broken service/schema. Preserve native views, expose typed empty/error states."
+  },
+  {
+    "id": "F27",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Known vulnerable declared/runtime dependencies",
+    "evidence": [
+      "docs/audit/LFA_SECURITY_SCANS_2026.json",
+      "requirements.txt"
+    ],
+    "detail": "FACT: pip-audit matched 19 unique package/advisory IDs in 5 of 24 exact direct pins; installed environment has additional matches. npm lock has 18 vulnerable packages (10 high). Exploitability/production versions UNVERIFIED; multipart/Jinja/auth libraries are mounted attack surfaces. No package upgraded."
+  },
+  {
+    "id": "F28",
+    "priority": "P2",
+    "status": "OPEN",
+    "title": "Python environment is not reproducible from declared dependencies",
+    "evidence": [
+      "requirements.txt",
+      "requirements-test.txt",
+      "docs/audit/LFA_INSTALLED_PACKAGES_2026.json"
+    ],
+    "detail": "FACT: no hash-locked Python transitive manifest; Pillow/OpenCV lower bounds; local 199 distributions differ from pins; pip check fails cryptography/cffi requirement. Separate Python test libraries live in runtime requirements; browser/ffmpeg/model provisioning not one reproducible release manifest."
+  },
+  {
+    "id": "F29",
+    "priority": "P2",
+    "status": "OPEN",
+    "title": "CI evidence can conceal build errors and misses Release",
+    "evidence": [
+      ".github/workflows/ios-ci.yml:149",
+      ".github/workflows"
+    ],
+    "detail": "FACT: iOS build pipeline ends || true; later test rerun may still fail, so whole job is not automatically green. Only Debug tested, missing this proven Release failure. Actions use mutable major tags; many workflows lack explicit least-privilege permissions. No pull_request_target trigger found; effective repository permissions UNVERIFIED."
+  },
+  {
+    "id": "F30",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "Documented container boot recipes reference removed files",
+    "evidence": [
+      "docker-compose.yml:60",
+      "docker/Dockerfile.test:39",
+      "docker-compose.test.yml"
+    ],
+    "detail": "FACT: main compose build context expects root Dockerfile/target dev but no root Dockerfile exists; test Dockerfile copies absent streamlit_requirements.txt. Decommissioned Streamlit references survive. Do not run these recipes or assume deployed image matches; deployment is not reproducible from this checkout."
+  },
+  {
+    "id": "F31",
+    "priority": "P2",
+    "status": "OPEN",
+    "title": "Startup and worker readiness have incomplete guarantees",
+    "evidence": [
+      "app/main.py:42",
+      "app/background/scheduler.py",
+      "app/core/health.py"
+    ],
+    "detail": "FACT: lifespan creates initial admin then starts in-process scheduler; failures log and continue. Multi-process scheduler duplication and durable job dispatch/restore need verification. Readiness checks DB, worker health can be degraded; feature availability should not be inferred from /health=200. No running environment tested."
+  },
+  {
+    "id": "F32",
+    "priority": "P2",
+    "status": "OPEN",
+    "title": "Privacy lifecycle beyond biometrics is undocumented/unverified",
+    "evidence": [
+      "app/models/user.py",
+      "app/models/juggling.py",
+      "app/models/user_mood_photos.py",
+      "docs/biometric/DPIA_TEMPLATE.md"
+    ],
+    "detail": "FACT: profile/medical/emergency/DOB/photos/device and motion data exist; generic account-wide export/deletion/retention workflow not found in route inventory. Biometric/video partial deletion controls exist; backup erasure and derived-data retention UNVERIFIED. Purpose/retention owner decisions needed; no invented regulatory finding."
+  },
+  {
+    "id": "F33",
+    "priority": "P2",
+    "status": "OPEN",
+    "title": "Rate-limit identity trusts arbitrary forwarding header",
+    "evidence": [
+      "app/middleware/security.py:110"
+    ],
+    "detail": "FACT: X-Forwarded-For first value accepted without trusted-proxy boundary, counters in process dictionaries. RISK: bypass if edge does not strip spoofed header; multiworker limits multiply. Local .env disables limiting; production edge configuration UNVERIFIED. Preserve rate-limit policy while verify/enforce deployment boundary."
+  },
+  {
+    "id": "F34",
+    "priority": "P1",
+    "status": "OPEN",
+    "title": "CSRF exemption contradicts hybrid cookie APIs",
+    "evidence": [
+      "app/middleware/csrf_middleware.py:67",
+      "app/dependencies.py:194"
+    ],
+    "detail": "FACT: all /api/v1/* writes exempt; some admin endpoints accept cookie via hybrid dependencies, and any Bearer-looking header bypasses middleware before validation. SameSite strict helps but does not establish route-level protection, including same-site origins. Browser exploit chain UNVERIFIED; blanket API exemption is false architectural assumption."
+  },
+  {
+    "id": "F35",
+    "priority": "P2",
+    "status": "OPEN",
+    "title": "Public debug/operational surface and exception leakage",
+    "evidence": [
+      "app/api/api_v1/endpoints/debug.py",
+      "app/main.py:199",
+      "app/api/api_v1/endpoints/lfa_player/credits.py:117"
+    ],
+    "detail": "FACT: debug router mounted unconditionally; frontend log endpoint unauthenticated prints arbitrary body; /health/detailed and /metrics public. Several handlers return str(exception) in 500 detail. Requirement for public metrics absent; exposure/rate limits at edge UNVERIFIED."
+  },
+  {
+    "id": "F36",
+    "priority": "P2",
+    "status": "OPEN",
+    "title": "Tests can pass obsolete mock contracts",
+    "evidence": [
+      "tests/unit/services/test_adaptive_learning_endpoint.py:227",
+      "pytest.ini",
+      "tests/unit/conftest.py:39"
+    ],
+    "detail": "FACT: mocked AL service supplies xp_earned that real service omits, and successful multiple-choice test omits selected option. 630 selected tests passed despite isolated defects. Many tests under unit require live DB, and pytest excludes archived/security-XSS directories. Test count/old coverage.xml cannot establish release quality."
+  },
+  {
+    "id": "F37",
+    "priority": "P2",
+    "status": "OPEN",
+    "title": "Large route modules and repeated business rules",
+    "evidence": [
+      "app/api/web_routes/dashboard.py",
+      "app/api/web_routes/virtual_training.py",
+      "app/api/web_routes/vt_challenges.py",
+      "app/api/api_v1/api.py"
+    ],
+    "detail": "FACT: 1990/2452/1963-line web files; 24 missing service call sites; 6 duplicate mounted method/path registrations. Unlock/onboarding/assessment logic is duplicated across web/API. Consolidate only evidenced business rules; avoid speculative service layers."
+  },
+  {
+    "id": "F38",
+    "priority": "P3",
+    "status": "OPEN",
+    "title": "Historical documents overstate current completion",
+    "evidence": [
+      "README.md",
+      "docs/implementation/implementation/MASTER_PROGRESS.md",
+      "docs/SECURITY_AUDIT_REPORT.md",
+      "docs/biometric/PRODUCTION_ACTIVATION_CHECKLIST.md"
+    ],
+    "detail": "FACT: historical all-four-complete claims disagree with present missing methods/content; biometric checklist still leaves implemented code phases unticked. Mark dated evidence, keep provenance, replace stale navigation/status claims after owner review."
+  },
+  {
+    "id": "F39",
+    "priority": "P3",
+    "status": "OPEN",
+    "title": "Archived/test setup scripts have syntax defects",
+    "evidence": [
+      "scripts/create_test_data.py:17",
+      "scripts/setup_tournament_enrollment_test.py:22",
+      "scripts/test_instructor_tournament_ui.py:19",
+      "tests/.archive/test_admin_create_tournament.py:18"
+    ],
+    "detail": "FACT: AST parse failed on four tracked Python files; all active app Python parsed. No runtime reachability demonstrated; cleanup priority only. Do not fix/delete during audit."
+  },
+  {
+    "id": "F40",
+    "priority": "P2",
+    "status": "OPEN",
+    "title": "Stored fixtures and local secrets lack demonstrated lifecycle evidence",
+    "evidence": [
+      "tests/e2e/snapshots",
+      "docs/audit/LFA_SECRETS_SCAN_REDACTED_2026.json"
+    ],
+    "detail": "FACT: three tracked binary DB dumps, ignored local .env/private TLS key, and logs exist. Pattern scan of 3754 text files found zero supported secret patterns; two historical key/env blobs scanned. Dump data provenance, password-literal classification, all-history entropy scan, secret validity/rotation UNVERIFIED. No actual secret values inspected in report or disclosed; no confirmed committed live credential claim."
+  }
+]

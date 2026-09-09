@@ -1,0 +1,53 @@
+{
+  "checkpoint": "LFA_CANONICAL_BASELINE_P0",
+  "status": "CLOSED",
+  "closed_at": "2026-09-08",
+  "target_branch": "feat/mc2-pr3-status-dashboard-mpc-removal",
+  "audit_base_sha": "a14380c7697817c7c75587007839ba319dc39cc6",
+  "remediation_branch": "codex/p0-controlled-remediation",
+  "remediation_sha": "f341bca5f7a26998e2e63d8b0b542a33f95ba935",
+  "merge_commit_sha": "894c43a4a37af4a8a583240a5a2d0b1f31a3fdee",
+  "canonical_baseline_sha": "894c43a4a37af4a8a583240a5a2d0b1f31a3fdee",
+  "git_tag": "LFA_CANONICAL_BASELINE_P0",
+  "merge_conflicts": false,
+  "findings": {
+    "F01": "CLOSED",
+    "F02": "CLOSED",
+    "F03": "CLOSED",
+    "F04": "CLOSED",
+    "F05": "CLOSED",
+    "F06": "CLOSED",
+    "F07": "CLOSED",
+    "F22": "CLOSED"
+  },
+  "post_merge_gate": {
+    "p0_postgresql_regression": {
+      "passed": 32,
+      "failed": 0
+    },
+    "security_and_sensitive_logging": {
+      "passed": 251,
+      "failed": 0
+    },
+    "backend_api_contract_and_affected_smoke": {
+      "passed": 246,
+      "failed": 0
+    },
+    "ios_debug_simulator_build": "PASS",
+    "ios_unit_tests": {
+      "passed": 962,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "open_findings": "All P1, P2 and P3 audit findings remain OPEN and unchanged.",
+  "historical_licenses": {
+    "backfill_performed": false,
+    "data_mutated": false,
+    "business_reinterpretation_performed": false,
+    "uncertain_history_behavior": "FAIL_CLOSED"
+  },
+  "production_deployment_performed": false,
+  "production_database_mutated": false,
+  "p1_implementation_started": false
+}

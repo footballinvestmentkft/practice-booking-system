@@ -1,0 +1,26 @@
+{
+  "debug": {
+    "status": "PASS",
+    "toolchain": "Xcode 27.0 / 27A5194q beta",
+    "command": "/Applications/Xcode-beta.app/Contents/Developer/usr/bin/xcodebuild build -project ios/LFAEducationCenter.xcodeproj -scheme LFAEducationCenter -configuration Debug -sdk iphoneos -destination generic/platform=iOS -derivedDataPath /tmp/lfa-audit-derived CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO",
+    "compiler_errors": [],
+    "raw_log_sha256": "7b6acb8037c2b2ec6299ae76ce0f88a94b0ce462ac416c3140c0ee506a9d92cd",
+    "scope": "Unsigned generic iOS build only, no simulator/device/signing/test execution"
+  },
+  "release": {
+    "status": "FAIL",
+    "toolchain": "Xcode 27.0 / 27A5194q beta",
+    "command": "/Applications/Xcode-beta.app/Contents/Developer/usr/bin/xcodebuild build -project ios/LFAEducationCenter.xcodeproj -scheme LFAEducationCenter -configuration Release -sdk iphoneos -destination generic/platform=iOS -derivedDataPath /tmp/lfa-audit-derived CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO",
+    "compiler_errors": [
+      "ios/LFAEducationCenter/MultiCamera/GoProConnectionDebugView.swift:6:47: error: cannot find 'GoProStreamProbe' in scope",
+      "ios/LFAEducationCenter/MultiCamera/GoProConnectionDebugView.swift:119:25: error: cannot find 'GoProStreamDiagWriter' in scope",
+      "ios/LFAEducationCenter/MultiCamera/GoProConnectionDebugView.swift:126:42: error: cannot find 'GoProCameraStateProbe' in scope",
+      "ios/LFAEducationCenter/MultiCamera/GoProConnectionDebugView.swift:127:25: error: cannot find 'GoProCameraStateDiagWriter' in scope",
+      "ios/LFAEducationCenter/MultiCamera/GoProConnectionDebugView.swift:89:9: error: return type of property 'actionsSection' requires that 'TableHeaderRowContent<(some View).TableRowValue, Text>' conform to 'View'",
+      "ios/LFAEducationCenter/MultiCamera/GoProConnectionDebugView.swift:89:9: error: return type of property 'actionsSection' requires that 'EmptyTableRowContent<(some View).TableRowValue>' conform to 'View'",
+      "ios/LFAEducationCenter/MultiCamera/GoProConnectionDebugView.swift:92:17: error: static method 'buildExpression' requires that 'some View' conform to 'TableRowContent'"
+    ],
+    "raw_log_sha256": "404363289595d694b039dd828c384edfd4e070987e096f3ce3e16dcac3098ec5",
+    "scope": "Unsigned generic iOS build only, no simulator/device/signing/test execution"
+  }
+}

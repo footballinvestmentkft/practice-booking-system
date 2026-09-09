@@ -1,0 +1,160 @@
+{
+  "scope": "Pure existing validator; no DB import; pedagogical validity UNVERIFIED",
+  "results": [
+    {
+      "file": "content/adaptive_learning/_shared/sports_physiology/conditioning_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/_shared/sports_physiology/conditioning_hard.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/_shared/sports_physiology/conditioning_medium.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_01_physical_culture_background_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_02_civilizational_development_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_03_concept_of_training_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_04_load_and_adaptation_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_05_training_load_components_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_06_structure_of_training_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_07_training_principles_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_08_motor_abilities_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/general/football_awareness_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/general/football_awareness_hard.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/general/football_awareness_medium.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_01_testkulturalis_elozmenyek_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_02_bevezetes_civilizacios_problemak_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_03_edzes_fogalma_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_04_terheles_adaptacio_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_05_edzesterheles_osszetevoi_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_06_edzes_felepitese_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_07_edzeselvek_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_08_motoros_kepessegek_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/lesson/rules_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/lesson/rules_hard.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/lesson/rules_medium.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/lesson/tactics_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/lesson/tactics_hard.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/lesson/tactics_medium.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/nutrition/athlete_nutrition_easy.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/nutrition/athlete_nutrition_hard.json",
+      "status": "PASS",
+      "error": null
+    },
+    {
+      "file": "content/adaptive_learning/lfa_football_player/nutrition/athlete_nutrition_medium.json",
+      "status": "PASS",
+      "error": null
+    }
+  ]
+}

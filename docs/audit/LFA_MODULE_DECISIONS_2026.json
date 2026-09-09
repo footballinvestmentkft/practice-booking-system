@@ -1,0 +1,2323 @@
+[
+  {
+    "id": "M01",
+    "area": "Configuration and environment",
+    "paths": [
+      "app/config.py",
+      ".env.example"
+    ],
+    "canonical_domain": "global",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F25"
+      },
+      {
+        "finding": "F28"
+      },
+      {
+        "finding": "F31"
+      },
+      {
+        "path": "app/config.py"
+      },
+      {
+        "path": ".env.example"
+      }
+    ],
+    "dependencies": [
+      "Environment/build configuration and repository consumers"
+    ],
+    "notes": "Enforce actual environment/test/mock boundaries, preserve settings architecture.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M02",
+    "area": "Database session and connection adapter",
+    "paths": [
+      "app/database.py"
+    ],
+    "canonical_domain": "global",
+    "status": "UNVERIFIED",
+    "decision": "KEEP",
+    "priority": "P2",
+    "confidence": "MEDIUM",
+    "evidence": [
+      {
+        "path": "app/database.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep pooled SQLAlchemy boundary; runtime connectivity/restore unverified, no replacement justified.",
+    "tests": "Database connection/startup/restore NOT RUNNABLE under audit isolation",
+    "security_status": "No defect established within named component; integration/production UNVERIFIED",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M03",
+    "area": "Active schema migrations",
+    "paths": [
+      "alembic/versions",
+      "alembic/env.py"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "CLEAN",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F10"
+      },
+      {
+        "finding": "F17"
+      },
+      {
+        "path": "alembic/versions"
+      },
+      {
+        "path": "alembic/env.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "One connected 121-revision DAG; preserve every applied migration, verify DB drift on isolated restore.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M04",
+    "area": "Historical migration archive",
+    "paths": [
+      "alembic/versions_legacy"
+    ],
+    "canonical_domain": "legacy",
+    "status": "LEGACY",
+    "decision": "CLEAN",
+    "priority": "P3",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F38"
+      },
+      {
+        "path": "alembic/versions_legacy"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "143 files outside active version path; valuable reconstruction evidence, not deletion-safe data migrations.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M05",
+    "area": "API identity and password/session lifecycle",
+    "paths": [
+      "app/api/api_v1/endpoints/auth.py",
+      "app/core/auth.py",
+      "app/core/security.py"
+    ],
+    "canonical_domain": "global",
+    "status": "BROKEN",
+    "decision": "REFACTOR",
+    "priority": "P0",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F01"
+      },
+      {
+        "finding": "F08"
+      },
+      {
+        "finding": "F21"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/auth.py"
+      },
+      {
+        "path": "app/core/auth.py"
+      },
+      {
+        "path": "app/core/security.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Preserve bcrypt and signed typed JWT; remove disclosure and implement replay/revocation boundaries.",
+    "tests": "Auth unit suites PASS; token revocation integration MISSING",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M06",
+    "area": "Web registration/login/logout",
+    "paths": [
+      "app/api/web_routes/auth.py",
+      "app/templates/login.html",
+      "app/templates/register.html"
+    ],
+    "canonical_domain": "global",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F08"
+      },
+      {
+        "finding": "F21"
+      },
+      {
+        "path": "app/api/web_routes/auth.py"
+      },
+      {
+        "path": "app/templates/login.html"
+      },
+      {
+        "path": "app/templates/register.html"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Shared account use case needed; preserve safe-next, cookie flags and student role assignment.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M07",
+    "area": "Authentication and role dependencies",
+    "paths": [
+      "app/dependencies.py",
+      "app/api/deps.py"
+    ],
+    "canonical_domain": "global",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F03"
+      },
+      {
+        "finding": "F34"
+      },
+      {
+        "path": "app/dependencies.py"
+      },
+      {
+        "path": "app/api/deps.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep central role gates; consolidate explicit bearer/cookie context and object policy.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M08",
+    "area": "Web middleware/security/logging",
+    "paths": [
+      "app/middleware",
+      "app/core/csrf.py"
+    ],
+    "canonical_domain": "global",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F01"
+      },
+      {
+        "finding": "F33"
+      },
+      {
+        "finding": "F34"
+      },
+      {
+        "finding": "F35"
+      },
+      {
+        "path": "app/middleware"
+      },
+      {
+        "path": "app/core/csrf.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Retain CSRF/cookie/header concepts; enforce actual auth mode, trusted proxy and safe logs.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M09",
+    "area": "Global user/profile/admin CRUD",
+    "paths": [
+      "app/api/api_v1/endpoints/users",
+      "app/models/user.py",
+      "app/api/web_routes/profile.py"
+    ],
+    "canonical_domain": "global",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F17"
+      },
+      {
+        "finding": "F32"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/users"
+      },
+      {
+        "path": "app/models/user.py"
+      },
+      {
+        "path": "app/api/web_routes/profile.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Global profile remains global; instructor-wide student fields/purpose require privacy review.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M10",
+    "area": "Global hub and web navigation",
+    "paths": [
+      "app/api/web_routes/dashboard.py",
+      "app/templates/hub_specializations.html"
+    ],
+    "canonical_domain": "global",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F15"
+      },
+      {
+        "finding": "F16"
+      },
+      {
+        "finding": "F37"
+      },
+      {
+        "path": "app/api/web_routes/dashboard.py"
+      },
+      {
+        "path": "app/templates/hub_specializations.html"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep four-card hub; split presentation from onboarding/card business policies only after contracts agree.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M11",
+    "area": "Canonical program configuration loader",
+    "paths": [
+      "app/services/specialization_config_loader.py"
+    ],
+    "canonical_domain": "all",
+    "status": "WORKING",
+    "decision": "KEEP",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "path": "app/services/specialization_config_loader.py"
+      }
+    ],
+    "dependencies": [
+      "Python runtime; callers listed in static inventory"
+    ],
+    "notes": "Existing loader validation/cache passed selected unit suite; keep mechanism, reconcile config semantics separately.",
+    "tests": "tests/unit/services/test_specialization_config_loader.py \u2014 selected suite PASS",
+    "security_status": "No defect established within named component; integration/production UNVERIFIED",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M12",
+    "area": "Program definitions and age policy",
+    "paths": [
+      "config/specializations",
+      "app/models/specialization.py",
+      "app/utils/age_requirements.py",
+      "app/services/specialization_validation.py"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F15"
+      },
+      {
+        "finding": "F16"
+      },
+      {
+        "path": "config/specializations"
+      },
+      {
+        "path": "app/models/specialization.py"
+      },
+      {
+        "path": "app/utils/age_requirements.py"
+      },
+      {
+        "path": "app/services/specialization_validation.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Four IDs established; season-only IDs and age boundaries need single policy.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M13",
+    "area": "Unlock/onboarding/cancellation",
+    "paths": [
+      "app/api/web_routes/onboarding.py",
+      "app/api/web_routes/specialization.py"
+    ],
+    "canonical_domain": "all",
+    "status": "BROKEN",
+    "decision": "REFACTOR",
+    "priority": "P0",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F05"
+      },
+      {
+        "finding": "F06"
+      },
+      {
+        "finding": "F15"
+      },
+      {
+        "path": "app/api/web_routes/onboarding.py"
+      },
+      {
+        "path": "app/api/web_routes/specialization.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Preserve native/web flows and package logic; one transactional entitlement command.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M14",
+    "area": "Global credit ledger and balance",
+    "paths": [
+      "app/services/credit_service.py",
+      "app/models/credit_transaction.py"
+    ],
+    "canonical_domain": "global",
+    "status": "BROKEN",
+    "decision": "REFACTOR",
+    "priority": "P0",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F04"
+      },
+      {
+        "finding": "F05"
+      },
+      {
+        "finding": "F06"
+      },
+      {
+        "finding": "F17"
+      },
+      {
+        "path": "app/services/credit_service.py"
+      },
+      {
+        "path": "app/models/credit_transaction.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "One user ledger, atomic idempotent balance mutations, durable contextual references.",
+    "tests": "Credit unit suite PASS; real deduct replay probe REPRODUCED defect",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M15",
+    "area": "Invoice/coupon/invitation/payment operations",
+    "paths": [
+      "app/api/api_v1/endpoints/invoices",
+      "app/api/api_v1/endpoints/coupons.py",
+      "app/api/api_v1/endpoints/invitation_codes.py",
+      "app/api/api_v1/endpoints/payment_verification.py"
+    ],
+    "canonical_domain": "global",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F21"
+      },
+      {
+        "finding": "F28"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/invoices"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/coupons.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/invitation_codes.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/payment_verification.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Retain existing manual verification/payment approach; verify credit and registration transactions, do not add payment provider.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M16",
+    "area": "License models/renewal/authorization",
+    "paths": [
+      "app/models/license.py",
+      "app/services/license_service.py",
+      "app/services/license_renewal_service.py",
+      "app/services/license_authorization_service.py"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P0",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F05"
+      },
+      {
+        "finding": "F15"
+      },
+      {
+        "finding": "F17"
+      },
+      {
+        "path": "app/models/license.py"
+      },
+      {
+        "path": "app/services/license_service.py"
+      },
+      {
+        "path": "app/services/license_renewal_service.py"
+      },
+      {
+        "path": "app/services/license_authorization_service.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep licenses/progression history; stop independent wallet/level drift.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M17",
+    "area": "Specialization progress and sync layers",
+    "paths": [
+      "app/services/specialization",
+      "app/services/specialization_service.py",
+      "app/services/progress_license_sync_service.py",
+      "app/services/progress_license_coupling.py",
+      "app/models/user_progress.py"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F15"
+      },
+      {
+        "finding": "F26"
+      },
+      {
+        "path": "app/services/specialization"
+      },
+      {
+        "path": "app/services/specialization_service.py"
+      },
+      {
+        "path": "app/services/progress_license_sync_service.py"
+      },
+      {
+        "path": "app/services/progress_license_coupling.py"
+      },
+      {
+        "path": "app/models/user_progress.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Compatibility facades can survive temporarily; choose level authority and explicit projections, no dual writes without transaction.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M18",
+    "area": "Football Player service/API",
+    "paths": [
+      "app/services/specs/session_based/lfa_player_service.py",
+      "app/api/api_v1/endpoints/lfa_player"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F11"
+      },
+      {
+        "finding": "F16"
+      },
+      {
+        "finding": "F17"
+      },
+      {
+        "path": "app/services/specs/session_based/lfa_player_service.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/lfa_player"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Real skill/license APIs survive; retire broken license-wallet contract only after consumer inventory.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M19",
+    "area": "Coach service/API",
+    "paths": [
+      "app/services/specs/semester_based/lfa_coach_service.py",
+      "app/api/api_v1/endpoints/coach"
+    ],
+    "canonical_domain": "LFA_COACH",
+    "status": "BROKEN",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F11"
+      },
+      {
+        "finding": "F15"
+      },
+      {
+        "path": "app/services/specs/semester_based/lfa_coach_service.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/coach"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Config/qualification rules survive; missing hours/promotion methods and outcome chain require repair, not whole rewrite.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M20",
+    "area": "GanCuju service/API",
+    "paths": [
+      "app/services/specs/semester_based/gancuju_player_service.py",
+      "app/api/api_v1/endpoints/gancuju",
+      "app/services/gancuju_belt_service.py"
+    ],
+    "canonical_domain": "GANCUJU_PLAYER",
+    "status": "BROKEN",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F11"
+      },
+      {
+        "finding": "F15"
+      },
+      {
+        "path": "app/services/specs/semester_based/gancuju_player_service.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/gancuju"
+      },
+      {
+        "path": "app/services/gancuju_belt_service.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Preserve belt domain and history; repair service adapters and canonical IDs.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M21",
+    "area": "Internship service/API",
+    "paths": [
+      "app/services/specs/semester_based/lfa_internship_service.py",
+      "app/api/api_v1/endpoints/internship",
+      "app/services/intern_progression_service.py"
+    ],
+    "canonical_domain": "INTERNSHIP",
+    "status": "BROKEN",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F11"
+      },
+      {
+        "finding": "F15"
+      },
+      {
+        "path": "app/services/specs/semester_based/lfa_internship_service.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/internship"
+      },
+      {
+        "path": "app/services/intern_progression_service.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Three-level config and five-semester narrative need product mapping; repair known adapters.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M22",
+    "area": "Old raw-SQL curriculum adapter",
+    "paths": [
+      "app/api/api_v1/endpoints/curriculum",
+      "app/services/adaptive_learning_service.py"
+    ],
+    "canonical_domain": "legacy/all",
+    "status": "BROKEN",
+    "decision": "REWRITE",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F10"
+      },
+      {
+        "finding": "F18"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/curriculum"
+      },
+      {
+        "path": "app/services/adaptive_learning_service.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Narrow rewrite justified: queries and hierarchy based on absent tables, no working current-schema behavior to preserve. Retain content for migration review.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M23",
+    "area": "Tracks/modules/certificates domain",
+    "paths": [
+      "app/models/track.py",
+      "app/services/track_service.py",
+      "app/services/certificate_service.py",
+      "app/api/api_v1/endpoints/tracks.py",
+      "app/api/api_v1/endpoints/certificates.py"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P0",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F10"
+      },
+      {
+        "finding": "F22"
+      },
+      {
+        "path": "app/models/track.py"
+      },
+      {
+        "path": "app/services/track_service.py"
+      },
+      {
+        "path": "app/services/certificate_service.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/tracks.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/certificates.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Existing ORM, ownership/verification/revocation survive; replace placeholder renderer and prove completion flow.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M24",
+    "area": "Mock cross-program progression handlers",
+    "paths": [
+      "app/api/api_v1/endpoints/progression.py"
+    ],
+    "canonical_domain": "all",
+    "status": "MOCK",
+    "decision": "REWRITE",
+    "priority": "P0",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F07"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/progression.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Narrow replacement justified: fabricated reads and nonpersistent writes cannot be refactored into truthful behavior. Preserve skill-profile portions.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M25",
+    "area": "Quiz selection/scoring/submission",
+    "paths": [
+      "app/models/quiz.py",
+      "app/services/quiz_service.py",
+      "app/api/api_v1/endpoints/quiz"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F12"
+      },
+      {
+        "finding": "F20"
+      },
+      {
+        "path": "app/models/quiz.py"
+      },
+      {
+        "path": "app/services/quiz_service.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/quiz"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep question/option/attempt records and server scoring; repair denominator, replay constraints, versioned evidence.",
+    "tests": "Quiz unit suite PASS; real partial-answer probe REPRODUCED defect",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M26",
+    "area": "Adaptive session engine and routes",
+    "paths": [
+      "app/services/adaptive_learning.py",
+      "app/api/api_v1/endpoints/adaptive_learning.py",
+      "app/api/web_routes/adaptive_learning.py"
+    ],
+    "canonical_domain": "all/intended; player/current",
+    "status": "BROKEN",
+    "decision": "REFACTOR",
+    "priority": "P0",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F02"
+      },
+      {
+        "finding": "F09"
+      },
+      {
+        "finding": "F18"
+      },
+      {
+        "finding": "F23"
+      },
+      {
+        "path": "app/services/adaptive_learning.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/adaptive_learning.py"
+      },
+      {
+        "path": "app/api/web_routes/adaptive_learning.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep selection/randomization math; one authorized attempt/scoring/session lifecycle used by both clients.",
+    "tests": "AL suites PASS; real handler/service probes REPRODUCED BOLA and response defects",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M27",
+    "area": "Adaptive content import/editor/quality/admin",
+    "paths": [
+      "app/services/al_import_service.py",
+      "app/services/al_editor_service.py",
+      "app/services/al_quality_service.py",
+      "app/services/al_analytics_service.py",
+      "app/api/web_routes/admin/adaptive_learning.py"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F18"
+      },
+      {
+        "finding": "F19"
+      },
+      {
+        "finding": "F20"
+      },
+      {
+        "path": "app/services/al_import_service.py"
+      },
+      {
+        "path": "app/services/al_editor_service.py"
+      },
+      {
+        "path": "app/services/al_quality_service.py"
+      },
+      {
+        "path": "app/services/al_analytics_service.py"
+      },
+      {
+        "path": "app/api/web_routes/admin/adaptive_learning.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep schema validators, typed distractor pool and import log; persist topology/version/lifecycle, reconcile partial imports.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M28",
+    "area": "Current adaptive content corpus",
+    "paths": [
+      "content/adaptive_learning"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER",
+    "status": "PARTIAL",
+    "decision": "CLEAN",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F18"
+      },
+      {
+        "finding": "F24"
+      },
+      {
+        "path": "content/adaptive_learning"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "375 questions, 31 files; do not rewrite educational content without subject-matter review.",
+    "tests": "31 files PASS pure _validate_file; pedagogy and DB import UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M29",
+    "area": "Semesters/seasons/program enrollment",
+    "paths": [
+      "app/models/semester.py",
+      "app/models/semester_enrollment.py",
+      "app/api/api_v1/endpoints/semesters",
+      "app/api/api_v1/endpoints/semester_enrollments",
+      "app/api/web_routes/programs.py"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F15"
+      },
+      {
+        "finding": "F16"
+      },
+      {
+        "finding": "F17"
+      },
+      {
+        "path": "app/models/semester.py"
+      },
+      {
+        "path": "app/models/semester_enrollment.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/semesters"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/semester_enrollments"
+      },
+      {
+        "path": "app/api/web_routes/programs.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Preserve mini/academy/tournament distinctions, uniqueness and scheduling guards; verify exact all-four eligibility.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M30",
+    "area": "Session/booking/attendance lifecycle",
+    "paths": [
+      "app/api/api_v1/endpoints/sessions",
+      "app/api/api_v1/endpoints/bookings",
+      "app/api/api_v1/endpoints/attendance.py",
+      "app/api/web_routes/attendance.py",
+      "app/models/booking.py",
+      "app/models/attendance.py"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P0",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F03"
+      },
+      {
+        "finding": "F20"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/sessions"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/bookings"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/attendance.py"
+      },
+      {
+        "path": "app/api/web_routes/attendance.py"
+      },
+      {
+        "path": "app/models/booking.py"
+      },
+      {
+        "path": "app/models/attendance.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep booking partial uniqueness and attendance history; unify API/web assignment and confirmation policy.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M31",
+    "area": "Instructor qualification/assignment/admin",
+    "paths": [
+      "app/api/api_v1/endpoints/instructor_management",
+      "app/api/api_v1/endpoints/instructor_assignments",
+      "app/api/web_routes/instructor.py",
+      "app/api/web_routes/instructor_dashboard.py"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F03"
+      },
+      {
+        "finding": "F15"
+      },
+      {
+        "finding": "F20"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/instructor_management"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/instructor_assignments"
+      },
+      {
+        "path": "app/api/web_routes/instructor.py"
+      },
+      {
+        "path": "app/api/web_routes/instructor_dashboard.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Preserve qualifications/availability; prove scoped assessment and history across API/web.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M32",
+    "area": "Tournament engine/results/reward orchestration",
+    "paths": [
+      "app/services/tournament",
+      "app/api/api_v1/endpoints/tournaments",
+      "app/api/web_routes/tournaments",
+      "app/models/event_reward_log.py"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER/others configurable",
+    "status": "PARTIAL",
+    "decision": "CLEAN",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F37"
+      },
+      {
+        "path": "app/services/tournament"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/tournaments"
+      },
+      {
+        "path": "app/api/web_routes/tournaments"
+      },
+      {
+        "path": "app/models/event_reward_log.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Retain state machines, ranking/reward services and guards; deduplicate router mounting. Full DB concurrency/regression unverified.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M33",
+    "area": "XP/gamification/achievements",
+    "paths": [
+      "app/services/gamification",
+      "app/models/gamification.py",
+      "app/api/api_v1/endpoints/gamification.py"
+    ],
+    "canonical_domain": "global aggregation/scoped context",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F12"
+      },
+      {
+        "finding": "F20"
+      },
+      {
+        "finding": "F23"
+      },
+      {
+        "path": "app/services/gamification"
+      },
+      {
+        "path": "app/models/gamification.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/gamification.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep XP ledger and badge rules; one immutable event key per outcome, reconcile bypass writes.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M34",
+    "area": "Football skill progression and assessment",
+    "paths": [
+      "app/services/skill_progression",
+      "app/services/skill_progression_service.py",
+      "app/services/football_skill_service.py",
+      "app/models/football_skill_assessment.py",
+      "app/skills_config.py"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER",
+    "status": "PARTIAL",
+    "decision": "CLEAN",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F16"
+      },
+      {
+        "finding": "F20"
+      },
+      {
+        "path": "app/services/skill_progression"
+      },
+      {
+        "path": "app/services/skill_progression_service.py"
+      },
+      {
+        "path": "app/services/football_skill_service.py"
+      },
+      {
+        "path": "app/models/football_skill_assessment.py"
+      },
+      {
+        "path": "app/skills_config.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep deterministic EMA/laterality decomposition and central skill keys; provenance and domain-specific qualification checks remain.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M35",
+    "area": "Project/exercise/competency learning",
+    "paths": [
+      "app/models/project.py",
+      "app/api/api_v1/endpoints/projects",
+      "app/api/api_v1/endpoints/competency.py"
+    ],
+    "canonical_domain": "all/intended",
+    "status": "UNVERIFIED",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F10"
+      },
+      {
+        "finding": "F20"
+      },
+      {
+        "finding": "F24"
+      },
+      {
+        "path": "app/models/project.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/projects"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/competency.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Routes/services exist, but cannot prove end-to-end mapped curriculum; preserve project model pending mapping.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M36",
+    "area": "Global communications/calendar/events",
+    "paths": [
+      "app/api/api_v1/endpoints/notifications.py",
+      "app/api/api_v1/endpoints/messages.py",
+      "app/api/web_routes/communications.py",
+      "app/api/web_routes/events.py"
+    ],
+    "canonical_domain": "global with program/session filters",
+    "status": "UNVERIFIED",
+    "decision": "CLEAN",
+    "priority": "P2",
+    "confidence": "MEDIUM",
+    "evidence": [
+      {
+        "path": "app/api/api_v1/endpoints/notifications.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/messages.py"
+      },
+      {
+        "path": "app/api/web_routes/communications.py"
+      },
+      {
+        "path": "app/api/web_routes/events.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Retain notification/message/calendar boundaries; full delivery/read-authority and per-program journeys unverified.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "UNVERIFIED",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M37",
+    "area": "Organization/locations/campuses/teams/pitches",
+    "paths": [
+      "app/models/location.py",
+      "app/models/campus.py",
+      "app/models/team.py",
+      "app/models/pitch.py",
+      "app/api/api_v1/endpoints/teams.py",
+      "app/api/api_v1/endpoints/pitches.py"
+    ],
+    "canonical_domain": "global/session context",
+    "status": "PARTIAL",
+    "decision": "CLEAN",
+    "priority": "P2",
+    "confidence": "MEDIUM",
+    "evidence": [
+      {
+        "path": "app/models/location.py"
+      },
+      {
+        "path": "app/models/campus.py"
+      },
+      {
+        "path": "app/models/team.py"
+      },
+      {
+        "path": "app/models/pitch.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/teams.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/pitches.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Retain operational domain and FKs; do not collapse academy location capabilities or team cost sharing.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "UNVERIFIED",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M38",
+    "area": "Sponsors/campaigns/public profiles/cards",
+    "paths": [
+      "app/services/card_system",
+      "app/api/web_routes/card_studio.py",
+      "app/api/web_routes/public_player.py",
+      "app/api/web_routes/admin/sponsors.py",
+      "app/models/sponsor.py"
+    ],
+    "canonical_domain": "global/player context",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F17"
+      },
+      {
+        "finding": "F32"
+      },
+      {
+        "finding": "F37"
+      },
+      {
+        "path": "app/services/card_system"
+      },
+      {
+        "path": "app/api/web_routes/card_studio.py"
+      },
+      {
+        "path": "app/api/web_routes/public_player.py"
+      },
+      {
+        "path": "app/api/web_routes/admin/sponsors.py"
+      },
+      {
+        "path": "app/models/sponsor.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Retain existing product behavior; extract repeated entitlement/publish rules and review public-data purpose.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M39",
+    "area": "Virtual training/challenges/friendship",
+    "paths": [
+      "app/services/virtual_training_service.py",
+      "app/api/web_routes/virtual_training.py",
+      "app/api/web_routes/vt_challenges.py",
+      "app/api/web_routes/friends.py",
+      "app/models/virtual_training.py"
+    ],
+    "canonical_domain": "player/global social context",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F37"
+      },
+      {
+        "path": "app/services/virtual_training_service.py"
+      },
+      {
+        "path": "app/api/web_routes/virtual_training.py"
+      },
+      {
+        "path": "app/api/web_routes/vt_challenges.py"
+      },
+      {
+        "path": "app/api/web_routes/friends.py"
+      },
+      {
+        "path": "app/models/virtual_training.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Preserve game/challenge contracts; large adapters need bounded consolidation, native migration later.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M40",
+    "area": "Outcome audit and system events",
+    "paths": [
+      "app/models/audit_log.py",
+      "app/services/audit_service.py",
+      "app/middleware/audit_middleware.py",
+      "app/api/api_v1/endpoints/audit.py",
+      "app/core/structured_log.py"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F20"
+      },
+      {
+        "finding": "F35"
+      },
+      {
+        "path": "app/models/audit_log.py"
+      },
+      {
+        "path": "app/services/audit_service.py"
+      },
+      {
+        "path": "app/middleware/audit_middleware.py"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/audit.py"
+      },
+      {
+        "path": "app/core/structured_log.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Keep audit tables/request context; transactionally persist actor/before/after/context for outcome changes.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M41",
+    "area": "Juggling/media pipeline and retention",
+    "paths": [
+      "app/services/juggling",
+      "app/api/api_v1/endpoints/users",
+      "app/models/juggling.py",
+      "app/tasks/juggling_tasks.py",
+      "app/tasks/juggling_retention_task.py"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F31"
+      },
+      {
+        "finding": "F32"
+      },
+      {
+        "path": "app/services/juggling"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/users"
+      },
+      {
+        "path": "app/models/juggling.py"
+      },
+      {
+        "path": "app/tasks/juggling_tasks.py"
+      },
+      {
+        "path": "app/tasks/juggling_retention_task.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Preserve safe media serving/transcode; test delete/derivative retention and worker reliability without resetting POC state.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M42",
+    "area": "Media path safety",
+    "paths": [
+      "app/services/juggling/media_service.py"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER",
+    "status": "WORKING",
+    "decision": "KEEP",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "path": "app/services/juggling/media_service.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Containment and state checks verified by selected pure unit suite; keep service.",
+    "tests": "tests/unit/juggling/test_media_service.py \u2014 selected suite PASS",
+    "security_status": "No defect established within named component; integration/production UNVERIFIED",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M43",
+    "area": "Ball trajectory computation",
+    "paths": [
+      "app/services/juggling/kalman_ball_tracker.py"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER",
+    "status": "WORKING",
+    "decision": "KEEP",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "path": "app/services/juggling/kalman_ball_tracker.py"
+      }
+    ],
+    "dependencies": [
+      "Python runtime; callers listed in static inventory"
+    ],
+    "notes": "Selected Kalman tests passed; keep algorithm, no speculative model replacement.",
+    "tests": "tests/unit/juggling/test_kalman_tracker.py \u2014 selected suite PASS",
+    "security_status": "No defect established within named component; integration/production UNVERIFIED",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M44",
+    "area": "Multicamera backend and device session domain",
+    "paths": [
+      "app/services/multicamera",
+      "app/api/api_v1/endpoints/multicamera",
+      "app/models/juggling.py"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER",
+    "status": "PARTIAL",
+    "decision": "CLEAN",
+    "priority": "P2",
+    "confidence": "MEDIUM",
+    "evidence": [
+      {
+        "path": "app/services/multicamera"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/multicamera"
+      },
+      {
+        "path": "app/models/juggling.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Current HEAD preserves backend polling/session/cycle contracts; DB/device regression not runnable without dedicated environment.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "UNVERIFIED",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M45",
+    "area": "Biometric encryption primitive",
+    "paths": [
+      "app/services/biometric/encryption_service.py"
+    ],
+    "canonical_domain": "global identity",
+    "status": "WORKING",
+    "decision": "KEEP",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F25"
+      },
+      {
+        "path": "app/services/biometric/encryption_service.py"
+      }
+    ],
+    "dependencies": [
+      "Python runtime; callers listed in static inventory"
+    ],
+    "notes": "AES-GCM tamper/nonce/key validation tests passed; production test-key gating belongs to configuration work.",
+    "tests": "tests/biometric/test_encryption_service.py \u2014 selected suite PASS",
+    "security_status": "No defect established within named component; integration/production UNVERIFIED",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M46",
+    "area": "Liveness metadata sanitizer",
+    "paths": [
+      "app/services/biometric/liveness_metadata_sanitizer.py"
+    ],
+    "canonical_domain": "global identity",
+    "status": "WORKING",
+    "decision": "KEEP",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "path": "app/services/biometric/liveness_metadata_sanitizer.py"
+      }
+    ],
+    "dependencies": [
+      "Python runtime; callers listed in static inventory"
+    ],
+    "notes": "Allowlist/minimization tests passed; preserve sanitizer and bounded DTOs.",
+    "tests": "tests/biometric/test_liveness_metadata_sanitizer.py \u2014 selected suite PASS",
+    "security_status": "No defect established within named component; integration/production UNVERIFIED",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M47",
+    "area": "Biometric consent/liveness/matching/review",
+    "paths": [
+      "app/services/biometric",
+      "app/models/biometric.py",
+      "app/tasks/biometric_tasks.py",
+      "docs/biometric"
+    ],
+    "canonical_domain": "global identity",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F25"
+      },
+      {
+        "finding": "F32"
+      },
+      {
+        "path": "app/services/biometric"
+      },
+      {
+        "path": "app/models/biometric.py"
+      },
+      {
+        "path": "app/tasks/biometric_tasks.py"
+      },
+      {
+        "path": "docs/biometric"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Preserve consent/review controls and feature flags; no production activation, fake provider allowed only deliberate test use.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M48",
+    "area": "Native auth/networking/keychain",
+    "paths": [
+      "ios/LFAEducationCenter/Auth",
+      "ios/LFAEducationCenter/Networking"
+    ],
+    "canonical_domain": "global",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F08"
+      },
+      {
+        "finding": "F13"
+      },
+      {
+        "finding": "F26"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Auth"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Networking"
+      }
+    ],
+    "dependencies": [
+      "Backend API"
+    ],
+    "notes": "Keep native AuthManager single-flight refresh/APIClient/Keychain; align lifecycle and error contracts, restrict release transport.",
+    "tests": "Unsigned Debug build PASS; Release FAIL; native tests NOT RUN",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M49",
+    "area": "Native hub/profile/credits/onboarding",
+    "paths": [
+      "ios/LFAEducationCenter/App",
+      "ios/LFAEducationCenter/Profile",
+      "ios/LFAEducationCenter/Credits",
+      "ios/LFAEducationCenter/Onboarding",
+      "ios/LFAEducationCenter/Unlock"
+    ],
+    "canonical_domain": "global/player",
+    "status": "PARTIAL",
+    "decision": "CLEAN",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F14"
+      },
+      {
+        "path": "ios/LFAEducationCenter/App"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Profile"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Credits"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Onboarding"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Unlock"
+      }
+    ],
+    "dependencies": [
+      "Backend API"
+    ],
+    "notes": "Native-canonical foundation survives; reuse for other three programs rather than WebView redesign.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M50",
+    "area": "Native Education/skill dashboard",
+    "paths": [
+      "ios/LFAEducationCenter/Education",
+      "ios/LFAEducationCenter/Dashboard",
+      "ios/LFAEducationCenter/Models"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F14"
+      },
+      {
+        "finding": "F26"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Education"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Dashboard"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Models"
+      }
+    ],
+    "dependencies": [
+      "Backend API"
+    ],
+    "notes": "Keep native status UI; typed failures and actual curriculum navigation needed.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M51",
+    "area": "Native Vision/Skeleton/annotation/video",
+    "paths": [
+      "ios/LFAEducationCenter/Skeleton",
+      "ios/LFAEducationCenter/Skeleton3D",
+      "ios/LFAEducationCenter/Juggling",
+      "ios/LFAEducationCenter/Training",
+      "ios/LFAEducationCenter/WebBridge"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER",
+    "status": "PARTIAL",
+    "decision": "CLEAN",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F32"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Skeleton"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Skeleton3D"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Juggling"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Training"
+      },
+      {
+        "path": "ios/LFAEducationCenter/WebBridge"
+      }
+    ],
+    "dependencies": [
+      "Backend API"
+    ],
+    "notes": "Preserve native capture/mapping/upload/sync; bundled JS skeleton bridge is POC compatibility, not Education fallback browser.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M52",
+    "area": "Native multicamera/GoPro diagnostics",
+    "paths": [
+      "ios/LFAEducationCenter/MultiCamera"
+    ],
+    "canonical_domain": "LFA_FOOTBALL_PLAYER",
+    "status": "BROKEN",
+    "decision": "CLEAN",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F13"
+      },
+      {
+        "path": "ios/LFAEducationCenter/MultiCamera"
+      }
+    ],
+    "dependencies": [
+      "Backend API"
+    ],
+    "notes": "Debug builds; Release-only symbol guards fail. Keep current no-MPC design and validated POC evidence, narrow build cleanup.",
+    "tests": "Unsigned Debug build PASS; Release FAIL (F13)",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M53",
+    "area": "Native biometric screens",
+    "paths": [
+      "ios/LFAEducationCenter/Biometric"
+    ],
+    "canonical_domain": "global identity",
+    "status": "PARTIAL",
+    "decision": "CLEAN",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F25"
+      },
+      {
+        "finding": "F32"
+      },
+      {
+        "path": "ios/LFAEducationCenter/Biometric"
+      }
+    ],
+    "dependencies": [
+      "Backend API"
+    ],
+    "notes": "Native screens present; R&D/consent legal gate remains. Do not claim production verification.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M54",
+    "area": "CI/test harness and baseline evidence",
+    "paths": [
+      ".github/workflows",
+      "tests",
+      "app/tests",
+      "cypress",
+      "pytest.ini"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P2",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F29"
+      },
+      {
+        "finding": "F36"
+      },
+      {
+        "path": ".github/workflows"
+      },
+      {
+        "path": "tests"
+      },
+      {
+        "path": "app/tests"
+      },
+      {
+        "path": "cypress"
+      },
+      {
+        "path": "pytest.ini"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Retain meaningful suites; isolate database fixtures, run actual contract/security/Release gates, stop mocked historical contracts.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M55",
+    "area": "Dependency/build manifests",
+    "paths": [
+      "requirements.txt",
+      "requirements-test.txt",
+      "cypress/package.json",
+      "cypress/package-lock.json",
+      "ios/LFAEducationCenter.xcodeproj"
+    ],
+    "canonical_domain": "all",
+    "status": "PARTIAL",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F13"
+      },
+      {
+        "finding": "F27"
+      },
+      {
+        "finding": "F28"
+      },
+      {
+        "path": "requirements.txt"
+      },
+      {
+        "path": "requirements-test.txt"
+      },
+      {
+        "path": "cypress/package.json"
+      },
+      {
+        "path": "cypress/package-lock.json"
+      },
+      {
+        "path": "ios/LFAEducationCenter.xcodeproj"
+      }
+    ],
+    "dependencies": [
+      "Environment/build configuration and repository consumers"
+    ],
+    "notes": "Inventory/update in approved phase; no upgrades during audit.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M56",
+    "area": "Deployment/health/scheduler/worker ops",
+    "paths": [
+      "docker-compose.yml",
+      "docker-compose.test.yml",
+      "docker/Dockerfile.test",
+      "app/main.py",
+      "app/background",
+      "app/tasks",
+      "app/celery_app.py"
+    ],
+    "canonical_domain": "global",
+    "status": "BROKEN",
+    "decision": "REFACTOR",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F30"
+      },
+      {
+        "finding": "F31"
+      },
+      {
+        "path": "docker-compose.yml"
+      },
+      {
+        "path": "docker-compose.test.yml"
+      },
+      {
+        "path": "docker/Dockerfile.test"
+      },
+      {
+        "path": "app/main.py"
+      },
+      {
+        "path": "app/background"
+      },
+      {
+        "path": "app/tasks"
+      },
+      {
+        "path": "app/celery_app.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Retain FastAPI/PostgreSQL/Redis/Celery; restore reproducible boot and environment-specific readiness.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M57",
+    "area": "Docs/scripts/old seed/demo fixtures",
+    "paths": [
+      "docs",
+      "scripts",
+      "datasets",
+      "tests/e2e/snapshots"
+    ],
+    "canonical_domain": "legacy/support",
+    "status": "PARTIAL",
+    "decision": "CLEAN",
+    "priority": "P3",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F38"
+      },
+      {
+        "finding": "F39"
+      },
+      {
+        "finding": "F40"
+      },
+      {
+        "path": "docs"
+      },
+      {
+        "path": "scripts"
+      },
+      {
+        "path": "datasets"
+      },
+      {
+        "path": "tests/e2e/snapshots"
+      }
+    ],
+    "dependencies": [
+      "Environment/build configuration and repository consumers"
+    ],
+    "notes": "Preserve history and prove references/data origin before deleting anything. Four syntax failures are outside application code.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M58",
+    "area": "Native remaining three program journeys",
+    "paths": [
+      "ios/LFAEducationCenter/App/MainHubView.swift"
+    ],
+    "canonical_domain": "LFA_COACH,GANCUJU_PLAYER,INTERNSHIP",
+    "status": "MISSING",
+    "decision": "BUILD",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F14"
+      },
+      {
+        "path": "ios/LFAEducationCenter/App/MainHubView.swift"
+      }
+    ],
+    "dependencies": [
+      "Backend API"
+    ],
+    "notes": "Canonical programs have disabled cards, need staged native access/curriculum/assessment after backend truth established.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M59",
+    "area": "Verified complete content and assessment coverage",
+    "paths": [
+      "content/adaptive_learning",
+      "config/specializations"
+    ],
+    "canonical_domain": "all",
+    "status": "MISSING",
+    "decision": "BUILD",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F24"
+      },
+      {
+        "path": "content/adaptive_learning"
+      },
+      {
+        "path": "config/specializations"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Build missing approved program materials/mapping; Football Player also needs completeness review, not automatic duplication.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M60",
+    "area": "Secure account recovery lifecycle",
+    "paths": [
+      "app/api/api_v1/endpoints/auth.py",
+      "app/api/web_routes/auth.py"
+    ],
+    "canonical_domain": "global",
+    "status": "MISSING",
+    "decision": "BUILD",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F08"
+      },
+      {
+        "path": "app/api/api_v1/endpoints/auth.py"
+      },
+      {
+        "path": "app/api/web_routes/auth.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "No password-reset/recovery route in mounted inventory; implement verified single-use recovery and invalidation when approved.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  },
+  {
+    "id": "M61",
+    "area": "Immutable assessment version/provenance",
+    "paths": [
+      "app/models/quiz.py",
+      "app/models/al_import_log.py"
+    ],
+    "canonical_domain": "all",
+    "status": "MISSING",
+    "decision": "BUILD",
+    "priority": "P1",
+    "confidence": "HIGH",
+    "evidence": [
+      {
+        "finding": "F20"
+      },
+      {
+        "path": "app/models/quiz.py"
+      },
+      {
+        "path": "app/models/al_import_log.py"
+      }
+    ],
+    "dependencies": [
+      "PostgreSQL"
+    ],
+    "notes": "Store issued question/option/content/scoring version and outcome revision evidence; minimal addition to existing DB, no event platform.",
+    "tests": "See LFA_TEST_EVIDENCE_2026.json; whole subsystem integration UNVERIFIED",
+    "security_status": "FINDINGS",
+    "path_validation_missing": []
+  }
+]

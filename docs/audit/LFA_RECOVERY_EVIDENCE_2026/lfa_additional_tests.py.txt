@@ -1,0 +1,12 @@
+import pathlib,sys,os
+exec(pathlib.Path('/tmp/lfa_runtime_inventory.py').read_text().split('from app.main import app')[0])
+os.environ['PYTEST_DISABLE_PLUGIN_AUTOLOAD']='1'
+import pytest
+class SafetyPlugin:
+ def pytest_collection_modifyitems(self,items):
+  for item in items:
+   if any(x in item.fixturenames for x in ('postgres_db','test_db')) or ('tests/biometric' in str(item.path) and 'db' in item.fixturenames):
+    item.add_marker(pytest.mark.skip(reason='AUDIT: live DB disabled'))
+paths=['tests/biometric/test_encryption_service.py','tests/biometric/test_liveness_metadata_sanitizer.py','tests/biometric/test_feature_flag.py','tests/unit/juggling/test_kalman_tracker.py','tests/unit/juggling/test_media_service.py','tests/unit/juggling/test_ball_annotation_reward.py','tests/unit/multicamera/test_session_contract.py','tests/unit/multicamera/test_capture_cycles.py','tests/unit/multicamera/test_device_uuid.py','tests/unit/api/web_routes/test_adaptive_learning_web.py','tests/unit/api/web_routes/test_specialization_web.py','tests/unit/api/web_routes/test_auth_web.py']
+paths=[p for p in paths if not any(s in p for s in ('test_ball_annotation_reward.py','test_session_contract.py','test_capture_cycles.py','test_device_uuid.py'))]
+sys.exit(pytest.main(paths+['-q','-o','addopts=','-o','log_cli=false','-p','no:cacheprovider','-p','pytest_asyncio.plugin','-p','pytest_mock','--junitxml=/tmp/lfa-audit-additional.xml','--tb=short'],plugins=[SafetyPlugin()]))

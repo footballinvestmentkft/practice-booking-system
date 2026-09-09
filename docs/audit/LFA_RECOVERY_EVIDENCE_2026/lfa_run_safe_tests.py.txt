@@ -1,0 +1,28 @@
+import pathlib,sys,os
+exec(pathlib.Path('/tmp/lfa_runtime_inventory.py').read_text().split('from app.main import app')[0])
+os.environ['PYTEST_DISABLE_PLUGIN_AUTOLOAD']='1'
+import pytest
+paths=[
+'tests/unit/services/test_credit_service_unit.py',
+'tests/unit/services/test_specialization_validation.py',
+'tests/unit/services/test_specialization_config_loader.py',
+'tests/unit/services/test_license_authorization_service.py',
+'tests/unit/services/test_license_renewal_service.py',
+'tests/unit/services/test_al_import_service.py',
+'tests/unit/services/test_adaptive_learning_service.py',
+'tests/unit/services/test_adaptive_learning_distractor_pool.py',
+'tests/unit/services/test_adaptive_learning_endpoint.py',
+'tests/unit/services/test_quiz_service.py',
+'tests/unit/services/test_progress_license_coupling.py',
+'tests/unit/services/test_auth_endpoint.py',
+'tests/unit/services/test_specialization_common.py',
+'tests/unit/middleware/test_security_middleware.py',
+'tests/unit/test_al_difficulty_progression.py',
+]
+class SafetyPlugin:
+ def pytest_collection_modifyitems(self,items):
+  for item in items:
+   if 'postgres_db' in item.fixturenames or 'test_db' in item.fixturenames:
+    item.add_marker(pytest.mark.skip(reason='AUDIT: database-backed test not run against configured database'))
+code=pytest.main(paths+['-q','-o','addopts=','-o','log_cli=false','-p','no:cacheprovider','-p','pytest_asyncio.plugin','-p','pytest_mock','--junitxml=/tmp/lfa-audit-unit.xml','--tb=short'],plugins=[SafetyPlugin()])
+sys.exit(code)

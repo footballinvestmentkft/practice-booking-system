@@ -1,0 +1,865 @@
+{
+  "scope": "Source-declared native views/subviews and explicit missing destinations. Ownership classification is not screen completion certification. Web families classified in report L.",
+  "entries": [
+    {
+      "path": "ios/LFAEducationCenter/App/LFASpecTabView.swift",
+      "symbol": "LFASpecTabView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/App/LFASpecTabView.swift",
+      "symbol": "LFAProfileTab",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/App/MainHubView.swift",
+      "symbol": "MainHubView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/App/MainHubView.swift",
+      "symbol": "SpecCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/App/RootView.swift",
+      "symbol": "RootView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/App/RootView.swift",
+      "symbol": "PlaceholderScreen",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/App/SplashView.swift",
+      "symbol": "SplashView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/App/WelcomeSuccessView.swift",
+      "symbol": "WelcomeSuccessView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/AcademyIDCardPreviewView.swift",
+      "symbol": "ShimmerOverlay",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/AcademyIDCardPreviewView.swift",
+      "symbol": "URLPhotoViewP",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/AcademyIDCardPreviewView.swift",
+      "symbol": "AcademyIDPreviewFrontFaceView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/AcademyIDCardPreviewView.swift",
+      "symbol": "AcademyIDBackFaceView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/AcademyIDCardPreviewView.swift",
+      "symbol": "AcademyIDCardPreviewView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/AcademyIDCardView.swift",
+      "symbol": "AcademyIDCardView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/AcademyIDCardView.swift",
+      "symbol": "URLPhotoView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/AcademyIDColorPickerView.swift",
+      "symbol": "AcademyIDColorPickerView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/AcademyIDFullScreenView.swift",
+      "symbol": "AcademyIDFullScreenView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/LoginView.swift",
+      "symbol": "LoginView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/RegisterView.swift",
+      "symbol": "RegisterView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Auth/RegisterView.swift",
+      "symbol": "PhotoPicker",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Biometric/BiometricDisclosureView.swift",
+      "symbol": "BiometricDisclosureView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Biometric/BiometricLivenessView.swift",
+      "symbol": "BiometricLivenessView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Biometric/BiometricVerifyView.swift",
+      "symbol": "BiometricVerifyView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Biometric/Spike/ARFaceTrackingView.swift",
+      "symbol": "ARFaceTrackingView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Biometric/Spike/SpikeLivenessView.swift",
+      "symbol": "SpikeLivenessView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Credits/CreditsView.swift",
+      "symbol": "CreditsView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Credits/InvoiceRequestView.swift",
+      "symbol": "InvoiceRequestView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Credits/RedeemCodeView.swift",
+      "symbol": "RedeemCodeView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Credits/RedeemCodeView.swift",
+      "symbol": "SuccessRewardView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Dashboard/DashboardView.swift",
+      "symbol": "DashboardView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Dashboard/DashboardView.swift",
+      "symbol": "ProfileCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Dashboard/DashboardView.swift",
+      "symbol": "CreditCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Dashboard/DashboardView.swift",
+      "symbol": "LFALicenseCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Dashboard/DashboardView.swift",
+      "symbol": "DashboardProgressCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Dashboard/DashboardView.swift",
+      "symbol": "PlaceholderInfoCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Education/EducationView.swift",
+      "symbol": "EducationView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Education/EducationView.swift",
+      "symbol": "SpecializationHeaderCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Education/EducationView.swift",
+      "symbol": "NoSpecializationCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Education/EducationView.swift",
+      "symbol": "LicenseStatusCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Education/EducationView.swift",
+      "symbol": "ProgressCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Education/EducationView.swift",
+      "symbol": "StatCell",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Education/EducationView.swift",
+      "symbol": "SkillSummaryCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Education/EducationView.swift",
+      "symbol": "SkillRow",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Education/EducationView.swift",
+      "symbol": "AvailableSpecializationsSection",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Education/EducationView.swift",
+      "symbol": "PlaceholderEduCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/AnnotationDebugOverlay.swift",
+      "symbol": "AnnotationDebugOverlay",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/BallFeedbackOverlayView.swift",
+      "symbol": "BallFeedbackOverlayView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/BallFeedbackPanel.swift",
+      "symbol": "BallFeedbackPanel",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/BallOverlayView.swift",
+      "symbol": "BallOverlayView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/BallTrajectoryOverlayView.swift",
+      "symbol": "BallTrajectoryOverlayView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/BallVideoOverlayView.swift",
+      "symbol": "BallVideoOverlayView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/BodyZonePickerView.swift",
+      "symbol": "BodyZonePickerView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/ContinuousSkeletonOverlayView.swift",
+      "symbol": "ContinuousSkeletonOverlayView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/EmojiBodyZonePickerView.swift",
+      "symbol": "EmojiBodyZonePickerView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/EventLabelDetailView.swift",
+      "symbol": "EventLabelDetailView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/EventTimelineView.swift",
+      "symbol": "EventTimelineView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/JugglingAnnotationScreen.swift",
+      "symbol": "JugglingAnnotationScreen",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/LabelingOverviewView.swift",
+      "symbol": "LabelingOverviewView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/LabelingOverviewView.swift",
+      "symbol": "EventOverviewCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Annotation/Screen/PoseSnapshotOverlayView.swift",
+      "symbol": "PoseSnapshotOverlayView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/JugglingPlayerView.swift",
+      "symbol": "JugglingPlayerView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/JugglingVideoListView.swift",
+      "symbol": "JugglingVideoListView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/JugglingVideoListView.swift",
+      "symbol": "JugglingVideoRow",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/JugglingVideoListView.swift",
+      "symbol": "AnnotationUserUnavailableView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Playback/AVPlayerLayerView.swift",
+      "symbol": "AVPlayerLayerView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Playback/PlaybackControlBar.swift",
+      "symbol": "PlaybackControlBar",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Upload/JugglingVideoPHPicker.swift",
+      "symbol": "JugglingVideoPHPicker",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Juggling/Upload/JugglingVideoUploadView.swift",
+      "symbol": "JugglingVideoUploadView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/MultiCamera/CapturePreviewLayer.swift",
+      "symbol": "CapturePreviewLayer",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/MultiCamera/GoProConnectionDebugView.swift",
+      "symbol": "GoProConnectionDebugView",
+      "classification": "BROKEN",
+      "functional_status": "BROKEN Release; Debug builds",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/MultiCamera/InstructorCaptureView.swift",
+      "symbol": "InstructorCaptureView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/MultiCamera/InstructorDashboardView.swift",
+      "symbol": "InstructorDashboardView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/MultiCamera/MultiCameraLobbyView.swift",
+      "symbol": "MultiCameraLobbyView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/MultiCamera/MultiCameraLobbyView.swift",
+      "symbol": "LabeledRow",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/MultiCamera/PlayerCaptureView.swift",
+      "symbol": "PlayerCaptureView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/MultiCamera/QRScannerView.swift",
+      "symbol": "QRScannerView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/MultiCamera/RecordingOverlay.swift",
+      "symbol": "RecordingOverlay",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/MultiCamera/SessionCaptureDebugView.swift",
+      "symbol": "SessionCaptureDebugView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Onboarding/LFAOnboardingView.swift",
+      "symbol": "LFAOnboardingView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Onboarding/PitchSelectorView.swift",
+      "symbol": "PitchSelectorView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Onboarding/PitchSelectorView.swift",
+      "symbol": "PitchBackground",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Onboarding/PitchSelectorView.swift",
+      "symbol": "PitchNodeButton",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/BaselineSelfRatingView.swift",
+      "symbol": "BaselineSelfRatingView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/MoodPhotoPreviewSheet.swift",
+      "symbol": "MoodPhotoPreviewSheet",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/MoodPhotoPreviewSheet.swift",
+      "symbol": "PreviewImageLoader",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/MoodPhotoSlotCard.swift",
+      "symbol": "MoodPhotoThumbnail",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/MoodPhotoSlotCard.swift",
+      "symbol": "MoodPhotoSlotCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/MoodPhotoSlotCard.swift",
+      "symbol": "MoodPhotoSlotComingSoonCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/MoodPhotosView.swift",
+      "symbol": "MoodPhotosView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/PhotoPicker.swift",
+      "symbol": "ProfilePhotoPicker",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/PhotoPicker.swift",
+      "symbol": "CameraImagePicker",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/ProfileCompletionCard.swift",
+      "symbol": "ProfileCompletionCard",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/ProfileCompletionCard.swift",
+      "symbol": "ProfileCompletionSection",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/ProfileCompletionCelebrationView.swift",
+      "symbol": "ProfileCompletionCelebrationView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/ProfilePhotoUploadView.swift",
+      "symbol": "ProfilePhotoUploadView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/ProfileView.swift",
+      "symbol": "ProfileView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Profile/ProfileView.swift",
+      "symbol": "ProfileURLPhotoView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Shared/BrandLogoView.swift",
+      "symbol": "BrandLogoView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Skeleton/CameraManager.swift",
+      "symbol": "CameraPreview",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Training/BallTrainingFrameView.swift",
+      "symbol": "BallTrainingFrameView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Training/BallTrainingHubView.swift",
+      "symbol": "BallTrainingHubView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Training/DailyProgressView.swift",
+      "symbol": "DailyProgressView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Training/RewardBadgeView.swift",
+      "symbol": "RewardBadgeView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/Unlock/UnlockConfirmView.swift",
+      "symbol": "UnlockConfirmView",
+      "classification": "NATIVE-CANONICAL",
+      "functional_status": "UNVERIFIED end-to-end; native ownership classification only",
+      "evidence": "Swift view declaration; source family reviewed in report L",
+      "navigation_reachability": "UNVERIFIED individually; includes reusable subviews and POC views"
+    },
+    {
+      "path": "ios/LFAEducationCenter/WebBridge/SkeletonBridge.swift",
+      "symbol": "SkeletonBridge",
+      "classification": "TEMPORARY-WEBVIEW",
+      "functional_status": "PARTIAL; local bundled receiver, device runtime UNVERIFIED",
+      "evidence": "WKWebView created and bundled skeleton_receiver.html loaded"
+    },
+    {
+      "path": "ios/LFAEducationCenter/App/MainHubView.swift",
+      "symbol": "LFA_COACH destination",
+      "classification": "NOT-IMPLEMENTED",
+      "functional_status": "MISSING",
+      "evidence": "comingSoon=true / nil action"
+    },
+    {
+      "path": "ios/LFAEducationCenter/App/MainHubView.swift",
+      "symbol": "GANCUJU_PLAYER destination",
+      "classification": "NOT-IMPLEMENTED",
+      "functional_status": "MISSING",
+      "evidence": "comingSoon=true / nil action"
+    },
+    {
+      "path": "ios/LFAEducationCenter/App/MainHubView.swift",
+      "symbol": "INTERNSHIP destination",
+      "classification": "NOT-IMPLEMENTED",
+      "functional_status": "MISSING",
+      "evidence": "comingSoon=true / nil action"
+    }
+  ]
+}

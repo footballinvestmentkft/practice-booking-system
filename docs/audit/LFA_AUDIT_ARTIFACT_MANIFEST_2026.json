@@ -1,0 +1,179 @@
+{
+  "audit_date": "2026-09-08",
+  "git_sha": "a14380c7697817c7c75587007839ba319dc39cc6",
+  "scope": "Audit artifacts only; manifest excludes itself",
+  "validation_issues": [],
+  "findings": {
+    "P0": 8,
+    "P1": 20,
+    "P2": 10,
+    "P3": 2
+  },
+  "decisions": {
+    "KEEP": 6,
+    "CLEAN": 13,
+    "REFACTOR": 36,
+    "REWRITE": 2,
+    "DELETE": 0,
+    "BUILD": 4
+  },
+  "api_method_rows": 1061,
+  "tracked_worktree_and_index_unchanged": true,
+  "artifacts": [
+    {
+      "path": "docs/audit/LFA_API_CONTRACT_MATRIX_2026.csv",
+      "bytes": 1574950,
+      "sha256": "9839854892b0ebc43c6e46f9d1abe968d38a312009249519e4853e8da1a20802"
+    },
+    {
+      "path": "docs/audit/LFA_API_DECLARATIONS_2026.json",
+      "bytes": 1779568,
+      "sha256": "608e903194be591335c103af9477a89e1850faffec957b57e8eb93a4a9bd3340"
+    },
+    {
+      "path": "docs/audit/LFA_AUDIT_PROVENANCE_2026.json",
+      "bytes": 52732,
+      "sha256": "2fa7d0939b770803b114c01f52d136be17e33b54bf372e68a66bff9ba4db9118"
+    },
+    {
+      "path": "docs/audit/LFA_CONTENT_INVENTORY_2026.json",
+      "bytes": 16772,
+      "sha256": "4bb074081871a17e98e8cece4037515d20cd7028ad6ba77e5677cf3b170b4315"
+    },
+    {
+      "path": "docs/audit/LFA_CONTENT_VALIDATION_2026.json",
+      "bytes": 5115,
+      "sha256": "87c1af5d32cfc5e36cc16034703291583640b762c3663399906fa690e41542fb"
+    },
+    {
+      "path": "docs/audit/LFA_FINDINGS_2026.json",
+      "bytes": 23901,
+      "sha256": "845a6be9c5c110187ba8cba89a5f5b9cc5b3c44d87cee8dd0a1c158769f866d4"
+    },
+    {
+      "path": "docs/audit/LFA_INSTALLED_PACKAGES_2026.json",
+      "bytes": 7615,
+      "sha256": "356ede35ec1e971b0eb2a5f5f93784b550890598f66fb08da771002804cb6da3"
+    },
+    {
+      "path": "docs/audit/LFA_ISOLATED_PROBES_2026.json",
+      "bytes": 1844,
+      "sha256": "b6a591964cb09d7ec2e8ebde658995c9f47f0af7825fa0409a2d93e55adfba9a"
+    },
+    {
+      "path": "docs/audit/LFA_LEGACY_CANDIDATES_2026.json",
+      "bytes": 92268,
+      "sha256": "1501656d854e3554b08415206e35bc0bbf80547746228c0c7f773533ec5d3229"
+    },
+    {
+      "path": "docs/audit/LFA_MIGRATION_GRAPH_2026.json",
+      "bytes": 18738,
+      "sha256": "c30af519185e8041bb89a3af9375b8f8cdd107d3aa07767f286a609423554d20"
+    },
+    {
+      "path": "docs/audit/LFA_MISSING_SERVICE_METHODS_2026.json",
+      "bytes": 5914,
+      "sha256": "7643368b286f9ce05a519b527f5d5823a61333ac09b86b4f29547c71cb8c39fc"
+    },
+    {
+      "path": "docs/audit/LFA_MODULE_DECISIONS_2026.json",
+      "bytes": 61271,
+      "sha256": "17ecd3171ff324cef629b59ffd68b5f23f3ae5e9da74746a95936f2c84810f55"
+    },
+    {
+      "path": "docs/audit/LFA_NATIVE_BUILD_EVIDENCE_2026.json",
+      "bytes": 2392,
+      "sha256": "cfbde3f8d2c73da1539013dd50ea6f79ed315ef10eb7deb2cf50078523ff9a05"
+    },
+    {
+      "path": "docs/audit/LFA_NATIVE_SCREEN_INVENTORY_2026.json",
+      "bytes": 47202,
+      "sha256": "31dd5b04c797131f95ae3a65887418f00d05d4eacb0665786067af11422c7745"
+    },
+    {
+      "path": "docs/audit/LFA_OPENAPI_SNAPSHOT_2026.json",
+      "bytes": 2159465,
+      "sha256": "72ce10476e0fb6875392305924d410786fc44b47a823ebb4bdf7c3a18c571288"
+    },
+    {
+      "path": "docs/audit/LFA_ORM_SCHEMA_2026.json",
+      "bytes": 608082,
+      "sha256": "ee12003ef4c9cbfb1f460dca9950f4064362f3625368b02c035372316df8431a"
+    },
+    {
+      "path": "docs/audit/LFA_RECOVERY_EVIDENCE_2026/README.md",
+      "bytes": 3672,
+      "sha256": "014c3be972f8354823c97f9d6f46a4586bd4ffd0a4fe4a72697f6e8121727dfe"
+    },
+    {
+      "path": "docs/audit/LFA_RECOVERY_EVIDENCE_2026/additional-test-summary.txt",
+      "bytes": 31,
+      "sha256": "050a9f3369b92b71a93c69f0f29b37bd4c208ee9e12723b1be092d4284b9e713"
+    },
+    {
+      "path": "docs/audit/LFA_RECOVERY_EVIDENCE_2026/core-test-summary.txt",
+      "bytes": 45,
+      "sha256": "e3228becf527c537a00a8e398b648d3635815ab4058ab6130212ba5da6d277ec"
+    },
+    {
+      "path": "docs/audit/LFA_RECOVERY_EVIDENCE_2026/lfa_additional_tests.py.txt",
+      "bytes": 1465,
+      "sha256": "be56af8bdbacfece5d9a2bb8305ad71864871765010f0b0a9004da91f0aca3ce"
+    },
+    {
+      "path": "docs/audit/LFA_RECOVERY_EVIDENCE_2026/lfa_evidence_probes.py.txt",
+      "bytes": 7571,
+      "sha256": "7f0926ecb6b6e688a3073c99ca9e909604aebb15ee15497b27d742033974a110"
+    },
+    {
+      "path": "docs/audit/LFA_RECOVERY_EVIDENCE_2026/lfa_run_safe_tests.py.txt",
+      "bytes": 1516,
+      "sha256": "205b1b587775101f9e28f9d00eaa2f7aa4b63558cb5c90553f1ad56dce2799dd"
+    },
+    {
+      "path": "docs/audit/LFA_RECOVERY_EVIDENCE_2026/lfa_runtime_inventory.py.txt",
+      "bytes": 3573,
+      "sha256": "da7c61bcd9db7b657c9ebef3cd0309e8a58118e2f70d0d03af9a946ab20768bb"
+    },
+    {
+      "path": "docs/audit/LFA_RECOVERY_EVIDENCE_2026/lfa_static_audit.py.txt",
+      "bytes": 3960,
+      "sha256": "de1a206df0a295603df04795e77cce2a1ca11833c696c589e1e51646dc3047e7"
+    },
+    {
+      "path": "docs/audit/LFA_REPOSITORY_RECOVERY_AUDIT_2026.md",
+      "bytes": 116807,
+      "sha256": "b45e65f74bbbdb6baa6f3c49e4fb2adb5f3635d47e40634465d7d4c1f393f2d0"
+    },
+    {
+      "path": "docs/audit/LFA_RUNTIME_ROUTES_2026.json",
+      "bytes": 911562,
+      "sha256": "07f21af690a95f824f218d9177b55571eb17974b70a4917dd3c7dbbc380b98d6"
+    },
+    {
+      "path": "docs/audit/LFA_SECRETS_SCAN_REDACTED_2026.json",
+      "bytes": 5499,
+      "sha256": "b8002a11a7099d9b8ea4cd8352b47bc2d92cc7c3bcd40f659b1bf6c67dccc0c5"
+    },
+    {
+      "path": "docs/audit/LFA_SECURITY_SCANS_2026.json",
+      "bytes": 131959,
+      "sha256": "718f098693cefeda29b58ff63125332578b763f228f64d89643482f79f36aae2"
+    },
+    {
+      "path": "docs/audit/LFA_STATIC_INVENTORY_2026.json",
+      "bytes": 457960,
+      "sha256": "55b5966d938e05de969dd96a4d88625af6463c75f831839dd97461a0ddc78dcd"
+    },
+    {
+      "path": "docs/audit/LFA_TEMPLATE_REFERENCES_2026.json",
+      "bytes": 76494,
+      "sha256": "0de1df1c68b318e118b525f506654648950d2a8bb8e524c09f7cb1c2083ce09a"
+    },
+    {
+      "path": "docs/audit/LFA_TEST_EVIDENCE_2026.json",
+      "bytes": 150121,
+      "sha256": "4f1bf7c23f4d02746a1efc78b0b02db1d4e9282c11cc780c5e8fd6eba8bd73eb"
+    }
+  ]
+}
