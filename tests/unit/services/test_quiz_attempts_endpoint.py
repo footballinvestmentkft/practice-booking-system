@@ -402,28 +402,36 @@ class TestSubmitQuizAttempt:
         session_quiz = MagicMock()
         session = MagicMock()
         session.title = "Virtual Session"
-        existing_attendance = MagicMock()
-
         q_sessionquiz = _q(first=session_quiz)
         q_session = _q(first=session)
-        q_attendance = _q(first=existing_attendance)
         db = MagicMock()
-        db.query.side_effect = [q_sessionquiz, q_session, q_attendance]
+        db.query.side_effect = [q_sessionquiz, q_session]
 
-        with _patch_missing() as mocks:
+        with _patch_missing() as mocks, patch(
+            f"{_BASE}.complete_virtual_session_participation"
+        ) as completion:
             mocks["GamificationService"].return_value.check_and_unlock_achievements.return_value = []
+            completion.return_value.attendance.id = 17
             # Make session.session_type look like 'virtual'
             session.session_type = "virtual"
+            player = _student()
             result = submit_quiz_attempt(
                 submission=self._submission(),
-                current_user=_student(),
+                current_user=player,
                 quiz_service=quiz_service,
                 db=db,
             )
         assert result is mock_attempt
-        # Existing attendance was updated
-        assert existing_attendance.status is not None
-        db.commit.assert_called()
+        completion.assert_called_once_with(
+            db,
+            player=player,
+            session_id=session.id,
+            notes="Auto-marked: Quiz completed with 90.0%",
+            source="API_QUIZ",
+        )
+        mocks["GamificationService"].return_value.award_attendance_xp.assert_called_once_with(
+            attendance_id=17, quiz_score_percent=90.0
+        )
 
     def test_auto_attendance_exception_caught_allows_result(self):
         quiz_service = MagicMock()

@@ -18,6 +18,8 @@ from app.models.semester import Semester
 from app.models.session import Session as SessionModel, EventCategory
 from app.models.booking import Booking, BookingStatus
 from app.models.attendance import Attendance, AttendanceStatus
+from app.models.license import UserLicense
+from app.models.specialization import SpecializationType
 
 
 # ============================================================================
@@ -192,7 +194,8 @@ class TestRegularSessionAttendanceAPI:
             start_date=date.today() + timedelta(days=7),
             end_date=date.today() + timedelta(days=90),
             status=SemesterStatus.ONGOING,
-            specialization_type=SpecializationType.LFA_PLAYER_YOUTH.value,
+            specialization_type=SpecializationType.LFA_FOOTBALL_PLAYER.value,
+            age_group="AMATEUR",
             master_instructor_id=instructor_user.id
         )
         test_db.add(semester)
@@ -200,7 +203,7 @@ class TestRegularSessionAttendanceAPI:
         test_db.refresh(semester)
 
         # Create regular session (is_tournament_game=False)
-        session_start = datetime.now() + timedelta(days=7, hours=10)
+        session_start = datetime.now() - timedelta(minutes=5)
         session = SessionModel(
             title="Regular Training",
             description="Normal training session",
@@ -210,9 +213,20 @@ class TestRegularSessionAttendanceAPI:
             capacity=20,
             instructor_id=instructor_user.id,
             semester_id=semester.id,
+            target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
             event_category=EventCategory.TRAINING  # NOT a tournament
         )
         test_db.add(session)
+        instructor_user.specialization = SpecializationType.LFA_COACH
+        test_db.add(UserLicense(
+            user_id=instructor_user.id,
+            specialization_type="LFA_COACH",
+            canonical_program_id="LFA_COACH",
+            current_level=5,
+            max_achieved_level=5,
+            started_at=datetime.now(),
+            is_active=True,
+        ))
         test_db.commit()
         test_db.refresh(session)
 

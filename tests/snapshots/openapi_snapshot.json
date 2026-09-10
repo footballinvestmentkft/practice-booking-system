@@ -4754,6 +4754,37 @@
         ]
       }
     },
+    "/api/v1/sessions/player/available": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Get Player Available Sessions",
+        "description": "List sessions that pass the same canonical policy used by booking commands.",
+        "operationId": "get_player_available_sessions_api_v1_sessions_player_available_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlayerSessionAvailability"
+                  },
+                  "type": "array",
+                  "title": "Response Get Player Available Sessions Api V1 Sessions Player Available Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/sessions/availability": {
       "get": {
         "tags": [
@@ -33986,7 +34017,7 @@
           "web"
         ],
         "summary": "Mark Attendance",
-        "description": "Mark attendance for a student (instructor only)",
+        "description": "Mark attendance through the canonical participation authority.",
         "operationId": "mark_attendance_sessions__session_id__attendance_mark_post",
         "parameters": [
           {
@@ -34037,7 +34068,7 @@
           "web"
         ],
         "summary": "Confirm Attendance",
-        "description": "Student confirms or disputes attendance marked by instructor",
+        "description": "Player confirms or disputes attendance through the canonical authority.",
         "operationId": "confirm_attendance_sessions__session_id__attendance_confirm_post",
         "parameters": [
           {
@@ -34088,7 +34119,7 @@
           "web"
         ],
         "summary": "Handle Change Request",
-        "description": "Student approves or rejects instructor's change request",
+        "description": "Player resolves an instructor change request through the canonical authority.",
         "operationId": "handle_change_request_sessions__session_id__attendance_change_request_post",
         "parameters": [
           {
@@ -64286,6 +64317,89 @@
         ],
         "title": "PlayerRewardDetail",
         "description": "Individual player reward details"
+      },
+      "PlayerSessionAvailability": {
+        "properties": {
+          "session_id": {
+            "type": "integer",
+            "title": "Session Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "date_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Date Start"
+          },
+          "date_end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Date End"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "confirmed": {
+            "type": "integer",
+            "title": "Confirmed"
+          },
+          "available": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available"
+          },
+          "waitlisted": {
+            "type": "integer",
+            "title": "Waitlisted"
+          },
+          "booking_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Booking Id"
+          },
+          "participation_status": {
+            "type": "string",
+            "title": "Participation Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "title",
+          "date_start",
+          "date_end",
+          "category",
+          "confirmed",
+          "waitlisted",
+          "participation_status"
+        ],
+        "title": "PlayerSessionAvailability"
       },
       "PoseSnapshotCreateRequest": {
         "properties": {

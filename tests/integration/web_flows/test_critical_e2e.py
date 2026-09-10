@@ -44,7 +44,7 @@ from app.models.license import UserLicense, LicenseProgression
 from app.models.semester import Semester, SemesterStatus, SemesterCategory
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from app.models.tournament_configuration import TournamentConfiguration
-from app.models.session import Session as SessionModel, SessionType
+from app.models.session import EventCategory, Session as SessionModel, SessionType
 from app.models.booking import Booking, BookingStatus
 from app.models.quiz import (
     Quiz,
@@ -66,6 +66,10 @@ from app.models.tournament_achievement import TournamentParticipation
 from app.models.team import Team, TeamMember, TournamentTeamEnrollment, TeamInvite, TeamInviteStatus, TournamentPlayerCheckin
 from app.models.attendance import Attendance, AttendanceStatus
 from app.models.performance_review import InstructorSessionReview, StudentPerformanceReview
+from app.services.player_identity_service import (
+    issue_football_player_entitlement,
+    prepare_football_player_enrollment,
+)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -98,6 +102,8 @@ def _make_license(db: Session, user: User) -> UserLicense:
     lic = UserLicense(
         user_id=user.id,
         specialization_type="LFA_FOOTBALL_PLAYER",
+        canonical_program_id="LFA_FOOTBALL_PLAYER",
+        payment_verified=True,
         is_active=True,
         onboarding_completed=True,
         started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
@@ -115,11 +121,11 @@ def _make_tournament(db: Session, enrollment_cost: int = 0) -> Semester:
         start_date=date.today(),
         end_date=date.today() + timedelta(days=30),
         status=SemesterStatus.ONGOING,
+        specialization_type="LFA_FOOTBALL_PLAYER",
+        age_group="AMATEUR",
         semester_category=SemesterCategory.TOURNAMENT,
         tournament_status="ENROLLMENT_OPEN",
         enrollment_cost=enrollment_cost,
-        specialization_type="LFA_FOOTBALL_PLAYER",
-        age_group="AMATEUR",
     )
     db.add(sem)
     db.flush()
@@ -1753,21 +1759,25 @@ def test_session_capacity_waitlist(test_db: Session, client: TestClient):
         start_date=date.today(),
         end_date=date.today() + timedelta(days=60),
         status=SemesterStatus.ONGOING,
+        specialization_type="LFA_FOOTBALL_PLAYER",
+        age_group="AMATEUR",
     )
     test_db.add(sem)
     test_db.flush()
 
     instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
-    # Session: capacity=1, far-future date (> 24h deadline), accessible to all (no target_specialization)
+    # Session: capacity=1, far-future date (> 24h deadline), canonical Football target.
+    session_start = datetime.utcnow() + timedelta(days=30)
     sess = SessionModel(
         title=f"GAP-07 Session {_uid()}",
         session_type=SessionType.on_site,
-        date_start=datetime(2026, 12, 31, 10, 0),
-        date_end=datetime(2026, 12, 31, 12, 0),
+        date_start=session_start,
+        date_end=session_start + timedelta(hours=2),
         capacity=1,
         semester_id=sem.id,
         instructor_id=instructor.id,
-        # target_specialization = None → is_accessible_to_all = True
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(sess)
     test_db.flush()
@@ -1775,6 +1785,21 @@ def test_session_capacity_waitlist(test_db: Session, client: TestClient):
     # Student1 has CONFIRMED booking → fills the 1 slot
     booking1 = Booking(user_id=student1.id, session_id=sess.id, status=BookingStatus.CONFIRMED)
     test_db.add(booking1)
+    test_db.flush()
+
+    entitlement = issue_football_player_entitlement(
+        test_db, user=student2, payment_verified=True, on_date=sess.date_start.date()
+    )
+    test_db.add(SemesterEnrollment(
+        user_id=student2.id,
+        semester_id=sem.id,
+        user_license_id=entitlement.license.id,
+        football_category_assignment_id=entitlement.assignment.id,
+        request_status=EnrollmentStatus.APPROVED,
+        payment_verified=True,
+        is_active=True,
+        age_category=entitlement.assignment.effective_category,
+    ))
     test_db.flush()
 
     # ── HTTP: student2 books → WAITLISTED ─────────────────────────────────────
@@ -2089,6 +2114,8 @@ def test_instructor_session_start_stop(test_db: Session, client: TestClient):
         start_date=date_type.today(),
         end_date=date_type.today() + timedelta(days=30),
         status=SemesterStatus.ONGOING,
+        specialization_type="LFA_FOOTBALL_PLAYER",
+        age_group="AMATEUR",
     )
     test_db.add(sem)
     test_db.flush()
@@ -2099,6 +2126,8 @@ def test_instructor_session_start_stop(test_db: Session, client: TestClient):
         date_end=datetime(2026, 12, 31, 12, 0),
         semester_id=sem.id,
         instructor_id=instructor.id,
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(sess)
     test_db.flush()
@@ -2175,6 +2204,8 @@ def test_attendance_mark_creates_record(test_db: Session, client: TestClient):
         start_date=date_type.today(),
         end_date=date_type.today() + timedelta(days=30),
         status=SemesterStatus.ONGOING,
+        specialization_type="LFA_FOOTBALL_PLAYER",
+        age_group="AMATEUR",
     )
     test_db.add(sem)
     test_db.flush()
@@ -2188,6 +2219,8 @@ def test_attendance_mark_creates_record(test_db: Session, client: TestClient):
         date_end=now_naive + timedelta(hours=3),
         semester_id=sem.id,
         instructor_id=instructor.id,
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(sess)
     test_db.flush()
@@ -2198,6 +2231,16 @@ def test_attendance_mark_creates_record(test_db: Session, client: TestClient):
         status=BookingStatus.CONFIRMED,
     )
     test_db.add(booking)
+    instructor.specialization = SpecializationType.LFA_COACH
+    test_db.add(UserLicense(
+        user_id=instructor.id,
+        specialization_type="LFA_COACH",
+        canonical_program_id="LFA_COACH",
+        current_level=5,
+        max_achieved_level=5,
+        started_at=datetime.now(timezone.utc),
+        is_active=True,
+    ))
     test_db.flush()
 
     app.dependency_overrides[get_current_user_web] = lambda: instructor
@@ -4320,6 +4363,7 @@ def _make_mini_season_with_config(
         location_id=loc.id,
         campus_id=campus.id,
         enrollment_cost=2000,
+        age_group="AMATEUR",
     )
     db.add(semester)
     db.flush()
@@ -4699,7 +4743,7 @@ def test_semester_enroll_browse_page(test_db: Session, client: TestClient):
 def test_semester_auto_enroll(test_db: Session, client: TestClient):
     """SCHED_G3-02: POST /semesters/request-enrollment → APPROVED + credits deducted + sessions booked."""
     semester, campus, pitch = _make_mini_season_with_config(
-        test_db, start_date=date(2026, 8, 4), weeks=4, day_of_week=1
+        test_db, start_date=date(2026, 10, 1), weeks=4, day_of_week=1
     )
     # Seed 4 auto_generated sessions for the semester
     for i in range(4):
@@ -4708,11 +4752,13 @@ def test_semester_auto_enroll(test_db: Session, client: TestClient):
             semester_id=semester.id,
             campus_id=campus.id,
             pitch_id=pitch.id,
-            date_start=datetime(2026, 8, 5 + i * 7, 17, 0),
-            date_end=datetime(2026, 8, 5 + i * 7, 18, 30),
+            date_start=datetime(2026, 10, 2 + i * 7, 17, 0),
+            date_end=datetime(2026, 10, 2 + i * 7, 18, 30),
             session_status="scheduled",
             auto_generated=True,
             rounds_data={},
+            target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+            event_category=EventCategory.TRAINING,
         )
         test_db.add(s)
     test_db.flush()
@@ -4761,18 +4807,20 @@ def test_semester_auto_enroll(test_db: Session, client: TestClient):
 def test_semester_session_visibility_after_enroll(test_db: Session, client: TestClient):
     """SCHED_G3-03: After APPROVED enrollment, student sees sessions at GET /sessions."""
     semester, campus, pitch = _make_mini_season_with_config(
-        test_db, start_date=date(2026, 8, 4), weeks=2, day_of_week=1
+        test_db, start_date=date(2026, 10, 1), weeks=2, day_of_week=1
     )
     s1 = SessionModel(
         title="G3 Visible Session",
         semester_id=semester.id,
         campus_id=campus.id,
         pitch_id=pitch.id,
-        date_start=datetime(2026, 8, 5, 17, 0),
-        date_end=datetime(2026, 8, 5, 18, 30),
+        date_start=datetime(2026, 10, 2, 17, 0),
+        date_end=datetime(2026, 10, 2, 18, 30),
         session_status="scheduled",
         auto_generated=True,
         rounds_data={},
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(s1)
     test_db.flush()
@@ -4780,6 +4828,9 @@ def test_semester_session_visibility_after_enroll(test_db: Session, client: Test
     student = _make_user(test_db, role=UserRole.STUDENT, credit_balance=0)
     student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
     license_ = _make_license(test_db, student)
+    identity = prepare_football_player_enrollment(
+        test_db, user=student, user_license=license_, on_date=s1.date_start.date()
+    )
     semester.enrollment_cost = 0
     test_db.flush()
 
@@ -4789,8 +4840,11 @@ def test_semester_session_visibility_after_enroll(test_db: Session, client: Test
         user_id=student.id,
         semester_id=semester.id,
         user_license_id=license_.id,
+        football_category_assignment_id=identity.assignment.id,
         request_status=EnrollmentStatus.APPROVED,
+        payment_verified=True,
         is_active=True,
+        age_category=identity.assignment.effective_category,
         requested_at=now,
         approved_at=now,
         enrolled_at=now,
@@ -4808,14 +4862,17 @@ def test_semester_session_visibility_after_enroll(test_db: Session, client: Test
 
 @pytest.mark.sched
 def test_semester_withdraw_enrollment(test_db: Session, client: TestClient):
-    """SCHED_G3-04: POST /semesters/withdraw-enrollment → 50% refund + bookings deleted + WITHDRAWN."""
+    """SCHED_G3-04: Withdrawal refunds once and retains cancelled booking history."""
     semester, campus, pitch = _make_mini_season_with_config(
-        test_db, start_date=date(2026, 8, 4), weeks=4, day_of_week=2
+        test_db, start_date=date(2026, 10, 1), weeks=4, day_of_week=2
     )
     # enrollment_cost=2000 from helper; student has 3000 (simulating post-enrollment state)
     student = _make_user(test_db, role=UserRole.STUDENT, credit_balance=3000)
     student.specialization = SpecializationType.LFA_FOOTBALL_PLAYER
     license_ = _make_license(test_db, student)
+    identity = prepare_football_player_enrollment(
+        test_db, user=student, user_license=license_, on_date=date(2026, 10, 2)
+    )
     test_db.flush()
 
     now = datetime.utcnow()
@@ -4823,8 +4880,11 @@ def test_semester_withdraw_enrollment(test_db: Session, client: TestClient):
         user_id=student.id,
         semester_id=semester.id,
         user_license_id=license_.id,
+        football_category_assignment_id=identity.assignment.id,
         request_status=EnrollmentStatus.APPROVED,
+        payment_verified=True,
         is_active=True,
+        age_category=identity.assignment.effective_category,
         requested_at=now,
         approved_at=now,
         enrolled_at=now,
@@ -4838,11 +4898,13 @@ def test_semester_withdraw_enrollment(test_db: Session, client: TestClient):
         semester_id=semester.id,
         campus_id=campus.id,
         pitch_id=pitch.id,
-        date_start=datetime(2026, 8, 5, 17, 0),
-        date_end=datetime(2026, 8, 5, 18, 30),
+        date_start=datetime(2026, 10, 2, 17, 0),
+        date_end=datetime(2026, 10, 2, 18, 30),
         session_status="scheduled",
         auto_generated=True,
         rounds_data={},
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(session_obj)
     test_db.flush()
@@ -4879,14 +4941,17 @@ def test_semester_withdraw_enrollment(test_db: Session, client: TestClient):
     remaining = (
         test_db.query(Booking).filter_by(enrollment_id=enrollment.id).count()
     )
-    assert remaining == 0, f"Expected 0 bookings after withdrawal, got {remaining}"
+    assert remaining == 1, f"Expected retained booking history after withdrawal, got {remaining}"
+    assert test_db.query(Booking).filter_by(
+        enrollment_id=enrollment.id, status=BookingStatus.CANCELLED
+    ).count() == 1
 
 
 @pytest.mark.sched
 def test_auto_booking_capacity_enforced(test_db: Session, client: TestClient):
     """SCHED_G3-05: Session full at enrollment time → auto-booking creates WAITLISTED booking."""
     semester, campus, pitch = _make_mini_season_with_config(
-        test_db, start_date=date(2026, 9, 1), weeks=2, day_of_week=1
+        test_db, start_date=date(2026, 10, 1), weeks=2, day_of_week=1
     )
     # 1 session, capacity=1
     s = SessionModel(
@@ -4894,12 +4959,14 @@ def test_auto_booking_capacity_enforced(test_db: Session, client: TestClient):
         semester_id=semester.id,
         campus_id=campus.id,
         pitch_id=pitch.id,
-        date_start=datetime(2026, 9, 8, 17, 0),
-        date_end=datetime(2026, 9, 8, 18, 30),
+        date_start=datetime(2026, 10, 8, 17, 0),
+        date_end=datetime(2026, 10, 8, 18, 30),
         session_status="scheduled",
         auto_generated=True,
         rounds_data={},
         capacity=1,
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(s)
     test_db.flush()
@@ -5018,6 +5085,8 @@ def test_waitlist_auto_promote_on_withdraw(test_db: Session, client: TestClient)
         auto_generated=True,
         rounds_data={},
         capacity=1,
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(s)
     semester.enrollment_cost = 0
@@ -5252,6 +5321,8 @@ def _make_inv_session(
         auto_generated=True,
         rounds_data={},
         capacity=capacity,
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     db.add(s)
     db.flush()
@@ -5276,7 +5347,7 @@ def test_credit_balance_invariant(test_db: Session, client: TestClient):
       balance_after_withdraw == initial - cost + cost // 2
       CreditTransaction(SEMESTER_ENROLLMENT).amount == -cost
       CreditTransaction(SEMESTER_UNENROLL_REFUND).amount == cost // 2
-      booking count == 0 after withdraw (no orphans)
+      booking history is retained as CANCELLED after withdraw
     """
     INITIAL = 1000
     COST = 400
@@ -5344,8 +5415,12 @@ def test_credit_balance_invariant(test_db: Session, client: TestClient):
     assert tx_refund.amount == REFUND, (
         f"INV-01: refund tx.amount must be {REFUND}, got {tx_refund.amount}"
     )
-    assert test_db.query(Booking).filter_by(enrollment_id=enrollment.id).count() == 0, (
-        "INV-01: all bookings must be cleaned up after withdraw"
+    withdrawn_bookings = test_db.query(Booking).filter_by(enrollment_id=enrollment.id).all()
+    assert len(withdrawn_bookings) == 1, (
+        f"INV-01: exactly 1 historical booking must remain, got {len(withdrawn_bookings)}"
+    )
+    assert withdrawn_bookings[0].status == BookingStatus.CANCELLED, (
+        f"INV-01: retained booking must be CANCELLED, got {withdrawn_bookings[0].status}"
     )
 
 
@@ -5424,9 +5499,10 @@ def test_post_withdraw_capacity_invariant(test_db: Session, client: TestClient):
 
     Asserts:
       before withdraw: 1 CONFIRMED (A), 2 WAITLISTED (B, C)
-      after A withdraws: A has 0 bookings, exactly 1 CONFIRMED, exactly 1 WAITLISTED
+      after A withdraws: A has 1 CANCELLED history row, exactly 1 CONFIRMED,
+      exactly 1 WAITLISTED
       confirmed_count never drops below 1 (capacity=1 maintained)
-      total bookings for session = 2 (no ghost rows, no duplicates)
+      total bookings for session = 3 (including A's cancelled audit history)
     """
     semester, campus, pitch = _make_mini_season_with_config(
         test_db, start_date=date(2027, 3, 1), weeks=2, day_of_week=2
@@ -5480,8 +5556,15 @@ def test_post_withdraw_capacity_invariant(test_db: Session, client: TestClient):
 
     # Post-withdraw invariants
     test_db.expire_all()
-    a_count = test_db.query(Booking).filter_by(user_id=student_a_id, session_id=s.id).count()
-    assert a_count == 0, f"INV-03: student_A must have 0 bookings after withdraw, got {a_count}"
+    a_bookings = test_db.query(Booking).filter_by(
+        user_id=student_a_id, session_id=s.id
+    ).all()
+    assert len(a_bookings) == 1, (
+        f"INV-03: student_A must retain exactly 1 history row, got {len(a_bookings)}"
+    )
+    assert a_bookings[0].status == BookingStatus.CANCELLED, (
+        f"INV-03: student_A history row must be CANCELLED, got {a_bookings[0].status}"
+    )
 
     confirmed_after = test_db.query(Booking).filter_by(
         session_id=s.id, status=BookingStatus.CONFIRMED).count()
@@ -5495,8 +5578,9 @@ def test_post_withdraw_capacity_invariant(test_db: Session, client: TestClient):
         f"INV-03: exactly 1 booking must remain WAITLISTED, got {waitlisted_after}"
     )
     total = test_db.query(Booking).filter_by(session_id=s.id).count()
-    assert total == 2, (
-        f"INV-03: total bookings for session must be 2 (1 confirmed + 1 waitlisted), got {total}"
+    assert total == 3, (
+        "INV-03: total bookings must be 3 "
+        f"(1 cancelled + 1 confirmed + 1 waitlisted), got {total}"
     )
 
 

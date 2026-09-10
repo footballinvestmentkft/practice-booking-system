@@ -58,6 +58,7 @@ from app.api.api_v1.endpoints.attendance import (
 from app.models.attendance import AttendanceStatus
 from app.models.booking import BookingStatus
 from app.models.session import EventCategory
+from app.services.player_participation_service import ParticipationError
 
 _BASE = "app.api.api_v1.endpoints.attendance"
 
@@ -215,121 +216,89 @@ class TestUpdateMilestoneSessionsOnAttendance:
 
 @pytest.mark.unit
 class TestCreateAttendance:
-    def test_regular_no_booking_id_returns_400(self):
-        session = _session(is_tournament=False)
-        db = _seq_db(_fq(first=session))
-        data = _attendance_data(booking_id=None)
-        with pytest.raises(HTTPException) as exc:
-            create_attendance(attendance_data=data, db=db, current_user=_admin())
+    def test_regular_requires_booking_reference(self):
+        db = _seq_db(_fq(first=_session()))
+        with patch(f"{_BASE}._require_attendance_manager"):
+            with pytest.raises(HTTPException) as exc:
+                create_attendance(
+                    attendance_data=_attendance_data(booking_id=None),
+                    db=db, current_user=_admin()
+                )
         assert exc.value.status_code == 400
         assert "booking_id is required" in exc.value.detail
 
-    def test_regular_booking_not_found_returns_404(self):
-        session = _session(is_tournament=False)
-        db = _seq_db(
-            _fq(first=session),          # session lookup
-            _fq(first=None),             # booking not found
-        )
-        data = _attendance_data(booking_id=1)
-        with pytest.raises(HTTPException) as exc:
-            create_attendance(attendance_data=data, db=db, current_user=_admin())
-        assert exc.value.status_code == 404
-
-    def test_regular_booking_not_confirmed_returns_400(self):
-        session = _session(is_tournament=False)
-        booking = _booking(status=BookingStatus.WAITLISTED)
-        db = _seq_db(
-            _fq(first=session),
-            _fq(first=booking),
-        )
-        data = _attendance_data(booking_id=1)
-        with pytest.raises(HTTPException) as exc:
-            create_attendance(attendance_data=data, db=db, current_user=_admin())
+    def test_regular_rejects_booking_identity_mismatch(self):
+        db = _seq_db(_fq(first=_session()), _fq(first=_booking(user_id=88)))
+        with patch(f"{_BASE}._require_attendance_manager"):
+            with pytest.raises(HTTPException) as exc:
+                create_attendance(
+                    attendance_data=_attendance_data(booking_id=1, user_id=99),
+                    db=db, current_user=_admin()
+                )
         assert exc.value.status_code == 400
-        assert "confirmed" in exc.value.detail
+        assert "does not match" in exc.value.detail
 
-    def test_regular_existing_attendance_updates_with_notes(self):
-        session = _session(is_tournament=False)
-        booking = _booking(status=BookingStatus.CONFIRMED)
-        existing = MagicMock()
-        existing.status = AttendanceStatus.absent
-        existing.user_id = 99; existing.session_id = 1
+    @pytest.mark.parametrize(("code", "status_code"), [
+        ("BOOKING_NOT_FOUND", 404),
+        ("INSTRUCTOR_NOT_ASSIGNED", 403),
+        ("ATTENDANCE_CONCURRENCY_CONFLICT", 409),
+    ])
+    def test_regular_maps_canonical_command_errors(self, code, status_code):
+        booking = _booking()
+        db = _seq_db(_fq(first=_session()), _fq(first=booking))
+        with patch(f"{_BASE}._require_attendance_manager"), \
+             patch(f"{_BASE}.record_attendance", side_effect=ParticipationError(code)):
+            with pytest.raises(HTTPException) as exc:
+                create_attendance(
+                    attendance_data=_attendance_data(booking_id=1),
+                    db=db, current_user=_admin()
+                )
+        assert exc.value.status_code == status_code
+        assert exc.value.detail == code
 
-        db = _seq_db(
-            _fq(first=session),
-            _fq(first=booking),
-            _fq(first=existing),   # existing_attendance by booking_id
+    def test_regular_delegates_and_preserves_existing_present_rewards(self):
+        booking = _booking(); attendance = MagicMock()
+        attendance.status = AttendanceStatus.present
+        attendance.user_id = 99; attendance.session_id = 1; attendance.id = 5
+        result = MagicMock(attendance=attendance, replayed=False)
+        db = _seq_db(_fq(first=_session()), _fq(first=booking))
+        actor = _admin(); data = _attendance_data(booking_id=1, notes="note")
+        with patch(f"{_BASE}._require_attendance_manager"), \
+             patch(f"{_BASE}.record_attendance", return_value=result) as command, \
+             patch(f"{_BASE}._update_milestone_sessions_on_attendance") as milestone, \
+             patch(f"{_BASE}.segment_reward_service") as reward:
+            response = create_attendance(data, db=db, current_user=actor)
+        assert response is attendance
+        command.assert_called_once_with(
+            db, actor=actor, booking_id=1, status=AttendanceStatus.present,
+            notes="note", source="API"
         )
-        data = _attendance_data(booking_id=1, status=AttendanceStatus.present, notes="Updated")
-        create_attendance(attendance_data=data, db=db, current_user=_admin())
+        milestone.assert_called_once_with(db, 99, 1)
+        reward.award_session_segments.assert_called_once_with(db, 1, 5)
 
-        assert existing.status == AttendanceStatus.present
-        assert existing.notes == "Updated"
-        db.commit.assert_called()
+    def test_regular_replay_does_not_duplicate_rewards(self):
+        booking = _booking(); attendance = MagicMock(status=AttendanceStatus.present)
+        result = MagicMock(attendance=attendance, replayed=True)
+        db = _seq_db(_fq(first=_session()), _fq(first=booking))
+        with patch(f"{_BASE}._require_attendance_manager"), \
+             patch(f"{_BASE}.record_attendance", return_value=result), \
+             patch(f"{_BASE}._update_milestone_sessions_on_attendance") as milestone, \
+             patch(f"{_BASE}.segment_reward_service") as reward:
+            create_attendance(_attendance_data(booking_id=1), db=db, current_user=_admin())
+        milestone.assert_not_called()
+        reward.award_session_segments.assert_not_called()
 
-    def test_regular_existing_absent_no_milestone_call(self):
-        session = _session(is_tournament=False)
-        booking = _booking(status=BookingStatus.CONFIRMED)
-        existing = MagicMock()
-        existing.status = AttendanceStatus.absent
-        existing.user_id = 99; existing.session_id = 1
-
-        db = _seq_db(
-            _fq(first=session),
-            _fq(first=booking),
-            _fq(first=existing),
-        )
-        data = _attendance_data(booking_id=1, status=AttendanceStatus.absent, notes=None)
-        create_attendance(attendance_data=data, db=db, current_user=_admin())
-        # absent → no milestone update, only 3 queries
-        assert db.query.call_count == 3
-
-    def test_regular_no_existing_creates_new_absent(self):
-        """No existing → create new; absent → milestone NOT called."""
-        session = _session(is_tournament=False)
-        booking = _booking(status=BookingStatus.CONFIRMED)
-
-        db = _seq_db(
-            _fq(first=session),
-            _fq(first=booking),
-            _fq(first=None),       # no existing attendance
-        )
-        data = _attendance_data(booking_id=1, status=AttendanceStatus.absent)
-        result = create_attendance(attendance_data=data, db=db, current_user=_admin())
-        db.add.assert_called_once()
-        db.commit.assert_called_once()
-        # only 3 queries (no milestone update for absent)
-        assert db.query.call_count == 3
-
-    def test_regular_no_existing_creates_new_present_triggers_milestone(self):
-        """No existing → create present → _update_milestone_sessions_on_attendance called."""
-        session = _session(is_tournament=False)
-        booking = _booking(status=BookingStatus.CONFIRMED)
-
-        db = _seq_db(
-            _fq(first=session),
-            _fq(first=booking),
-            _fq(first=None),       # no existing
-            _fq(all_=[]),          # _update_milestone: no active enrollments → early return
-        )
-        data = _attendance_data(booking_id=1, status=AttendanceStatus.present)
-        create_attendance(attendance_data=data, db=db, current_user=_admin())
-        db.add.assert_called_once()
-        # 4th query = ProjectEnrollment lookup in milestone helper
-        assert db.query.call_count >= 4
-
-    def test_tournament_existing_attendance_updates_status(self):
+    def test_tournament_path_remains_legacy_compatible(self):
         session = _session(is_tournament=True)
-        existing = MagicMock()
-        existing.status = AttendanceStatus.absent
-        existing.user_id = 99; existing.session_id = 1
-
-        db = _seq_db(
-            _fq(first=session),
-            _fq(first=existing),   # existing by user_id+session_id
-        )
-        data = _attendance_data(status=AttendanceStatus.present, notes=None)
-        result = create_attendance(attendance_data=data, db=db, current_user=_admin())
+        existing = MagicMock(status=AttendanceStatus.absent, user_id=99, session_id=1)
+        db = _seq_db(_fq(first=session), _fq(first=existing))
+        with patch(f"{_BASE}._require_attendance_manager"), \
+             patch(f"{_BASE}._update_milestone_sessions_on_attendance"), \
+             patch(f"{_BASE}.segment_reward_service"):
+            response = create_attendance(
+                _attendance_data(status=AttendanceStatus.present), db=db, current_user=_admin()
+            )
+        assert response is existing
         assert existing.status == AttendanceStatus.present
 
 
@@ -407,83 +376,34 @@ class TestCheckin:
         d = MagicMock(); d.notes = notes
         return d
 
-    def test_booking_not_found_returns_404(self):
-        db = _seq_db(_fq(first=None))
-        with pytest.raises(HTTPException) as exc:
-            checkin(booking_id=1, checkin_data=self._checkin_data(), db=db, current_user=_student())
-        assert exc.value.status_code == 404
-
-    def test_wrong_user_returns_403(self):
-        booking = _booking(user_id=88)   # owned by user 88, not 99
-        db = _seq_db(_fq(first=booking))
-        user = _student(); user.id = 99
-        with pytest.raises(HTTPException) as exc:
-            checkin(booking_id=1, checkin_data=self._checkin_data(), db=db, current_user=user)
-        assert exc.value.status_code == 403
-
-    def test_booking_not_confirmed_returns_400(self):
-        booking = _booking(status=BookingStatus.WAITLISTED, user_id=99)
-        db = _seq_db(_fq(first=booking))
-        user = _student(); user.id = 99
-        with pytest.raises(HTTPException) as exc:
-            checkin(booking_id=1, checkin_data=self._checkin_data(), db=db, current_user=user)
-        assert exc.value.status_code == 400
-
-    def test_too_early_returns_400(self):
-        booking = _booking(user_id=99)
-        # session starts at 10:00; window opens at 09:45; now = 09:00 (too early)
-        db = _seq_db(_fq(first=booking))
-        user = _student(); user.id = 99
-
-        with patch(f"{_BASE}.time_provider") as tp:
-            tp.now.return_value = datetime(2024, 6, 1, 9, 0, 0)
+    @pytest.mark.parametrize(("code", "status_code"), [
+        ("BOOKING_NOT_FOUND", 404),
+        ("NOT_BOOKING_OWNER", 403),
+        ("CONFIRMED_BOOKING_REQUIRED", 400),
+        ("ATTENDANCE_WINDOW_NOT_OPEN", 400),
+        ("CHECKIN_WINDOW_CLOSED", 400),
+    ])
+    def test_canonical_checkin_error_mapping(self, code, status_code):
+        with patch(f"{_BASE}.player_checkin", side_effect=ParticipationError(code)):
             with pytest.raises(HTTPException) as exc:
-                checkin(booking_id=1, checkin_data=self._checkin_data(), db=db, current_user=user)
-        assert exc.value.status_code == 400
-        assert "15 minutes" in exc.value.detail
+                checkin(
+                    booking_id=1, checkin_data=self._checkin_data(),
+                    db=MagicMock(), current_user=_student()
+                )
+        assert exc.value.status_code == status_code
+        assert exc.value.detail == code
 
-    def test_session_ended_returns_400(self):
-        booking = _booking(user_id=99)
-        # session ends at 12:00; now = 13:00 (too late)
-        db = _seq_db(_fq(first=booking))
-        user = _student(); user.id = 99
-
-        with patch(f"{_BASE}.time_provider") as tp:
-            tp.now.return_value = datetime(2024, 6, 1, 13, 0, 0)
-            with pytest.raises(HTTPException) as exc:
-                checkin(booking_id=1, checkin_data=self._checkin_data(), db=db, current_user=user)
-        assert exc.value.status_code == 400
-        assert "ended" in exc.value.detail
-
-    def test_valid_checkin_no_existing_creates_attendance(self):
-        booking = _booking(user_id=99)
-        db = _seq_db(
-            _fq(first=booking),    # booking lookup
-            _fq(first=None),       # no existing attendance
+    def test_delegates_and_returns_attendance(self):
+        attendance = MagicMock(); result = MagicMock(attendance=attendance)
+        db=MagicMock(); player=_student(); data=self._checkin_data("arrived")
+        with patch(f"{_BASE}.player_checkin", return_value=result) as command, \
+             patch(f"{_BASE}.time_provider.now", return_value=datetime(2026, 1, 1)):
+            response = checkin(1, data, db=db, current_user=player)
+        assert response is attendance
+        command.assert_called_once_with(
+            db, player=player, booking_id=1, notes="arrived",
+            now=datetime(2026, 1, 1), source="API"
         )
-        user = _student(); user.id = 99
-
-        with patch(f"{_BASE}.time_provider") as tp:
-            tp.now.return_value = datetime(2024, 6, 1, 10, 30, 0)  # during session
-            result = checkin(booking_id=1, checkin_data=self._checkin_data(notes="Hi"), db=db, current_user=user)
-        db.add.assert_called_once()
-        db.commit.assert_called_once()
-
-    def test_valid_checkin_existing_updates_attendance(self):
-        booking = _booking(user_id=99)
-        existing = MagicMock()
-        existing.status = AttendanceStatus.absent
-        db = _seq_db(
-            _fq(first=booking),
-            _fq(first=existing),   # existing attendance found
-        )
-        user = _student(); user.id = 99
-
-        with patch(f"{_BASE}.time_provider") as tp:
-            tp.now.return_value = datetime(2024, 6, 1, 10, 30, 0)
-            checkin(booking_id=1, checkin_data=self._checkin_data(), db=db, current_user=user)
-        assert existing.status == AttendanceStatus.present
-        db.commit.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -494,58 +414,48 @@ class TestCheckin:
 class TestUpdateAttendance:
     def test_not_found_returns_404(self):
         db = _seq_db(_fq(first=None))
-        update_data = MagicMock(); update_data.model_dump.return_value = {}
         with pytest.raises(HTTPException) as exc:
-            update_attendance(attendance_id=99, attendance_update=update_data, db=db, current_user=_admin())
+            update_attendance(1, MagicMock(), db=db, current_user=_admin())
         assert exc.value.status_code == 404
 
+    def test_regular_delegates_to_canonical_command(self):
+        attendance = MagicMock(id=4, session_id=1, booking_id=9, status=AttendanceStatus.absent)
+        session = _session(); updated = MagicMock(status=AttendanceStatus.late)
+        result = MagicMock(attendance=updated, replayed=False)
+        payload = MagicMock()
+        payload.model_dump.return_value = {"status": AttendanceStatus.late, "notes": "late bus"}
+        db = _seq_db(_fq(first=attendance), _fq(first=session))
+        actor = _admin()
+        with patch(f"{_BASE}._require_attendance_manager"), \
+             patch(f"{_BASE}.record_attendance", return_value=result) as command:
+            response = update_attendance(4, payload, db=db, current_user=actor)
+        assert response is updated
+        command.assert_called_once_with(
+            db, actor=actor, booking_id=9, status=AttendanceStatus.late,
+            notes="late bus", source="API"
+        )
+
     def test_tournament_invalid_status_returns_400(self):
+        attendance = MagicMock(session_id=1)
         session = _session(is_tournament=True)
-        attendance = MagicMock(); attendance.id = 1; attendance.session_id = 1
-
-        db = _seq_db(
-            _fq(first=attendance),   # attendance lookup
-            _fq(first=session),      # session lookup
-        )
-        update_data = MagicMock()
-        update_data.status = AttendanceStatus.late    # invalid for tournament
-        update_data.model_dump.return_value = {'status': AttendanceStatus.late}
-
-        with pytest.raises(HTTPException) as exc:
-            update_attendance(attendance_id=1, attendance_update=update_data, db=db, current_user=_admin())
+        payload = MagicMock(status=AttendanceStatus.late)
+        payload.model_dump.return_value = {"status": AttendanceStatus.late}
+        db = _seq_db(_fq(first=attendance), _fq(first=session))
+        with patch(f"{_BASE}._require_attendance_manager"):
+            with pytest.raises(HTTPException) as exc:
+                update_attendance(1, payload, db=db, current_user=_admin())
         assert exc.value.status_code == 400
-        assert "present" in exc.value.detail or "absent" in exc.value.detail
 
-    def test_tournament_valid_status_updates_ok(self):
+    def test_tournament_update_remains_legacy_compatible(self):
+        attendance = MagicMock(session_id=1)
         session = _session(is_tournament=True)
-        attendance = MagicMock(); attendance.id = 1; attendance.session_id = 1
-
-        db = _seq_db(
-            _fq(first=attendance),
-            _fq(first=session),
-        )
-        update_data = MagicMock()
-        update_data.status = AttendanceStatus.present
-        update_data.model_dump.return_value = {'status': AttendanceStatus.present}
-
-        result = update_attendance(attendance_id=1, attendance_update=update_data, db=db, current_user=_admin())
-        db.commit.assert_called_once()
-
-    def test_non_tournament_updates_fields(self):
-        session = _session(is_tournament=False)
-        attendance = MagicMock(); attendance.id = 1; attendance.session_id = 1
-
-        db = _seq_db(
-            _fq(first=attendance),
-            _fq(first=session),
-        )
-        update_data = MagicMock()
-        update_data.status = AttendanceStatus.late
-        update_data.model_dump.return_value = {'status': AttendanceStatus.late, 'notes': 'Arrived late'}
-
-        update_attendance(attendance_id=1, attendance_update=update_data, db=db, current_user=_admin())
-        assert attendance.status == AttendanceStatus.late
-        assert attendance.notes == 'Arrived late'
+        payload = MagicMock(status=AttendanceStatus.absent)
+        payload.model_dump.return_value = {"status": AttendanceStatus.absent}
+        db = _seq_db(_fq(first=attendance), _fq(first=session))
+        with patch(f"{_BASE}._require_attendance_manager"):
+            response = update_attendance(1, payload, db=db, current_user=_admin())
+        assert response is attendance
+        assert attendance.status == AttendanceStatus.absent
         db.commit.assert_called_once()
 
 

@@ -99,6 +99,7 @@ class TestConfirmAttendance:
         self,
         student_client,
         active_session,
+        active_booking,
         student_user,
         instructor_user,
         test_db,
@@ -108,6 +109,7 @@ class TestConfirmAttendance:
         att = Attendance(
             user_id=student_user.id,
             session_id=active_session.id,
+            booking_id=active_booking.id,
             status=AttendanceStatus.present,
             confirmation_status=ConfirmationStatus.pending_confirmation,
             marked_by=instructor_user.id,
@@ -136,6 +138,7 @@ class TestConfirmAttendance:
         self,
         student_client,
         active_session,
+        active_booking,
         student_user,
         instructor_user,
         test_db,
@@ -144,6 +147,7 @@ class TestConfirmAttendance:
         att = Attendance(
             user_id=student_user.id,
             session_id=active_session.id,
+            booking_id=active_booking.id,
             status=AttendanceStatus.absent,
             confirmation_status=ConfirmationStatus.pending_confirmation,
             marked_by=instructor_user.id,
@@ -184,7 +188,7 @@ class TestNegativeAttendanceFlows:
         )
 
         assert resp.status_code == 303
-        assert "unauthorized" in resp.headers["location"]
+        assert "player_role_required" in resp.headers["location"]
 
     def test_student_confirm_with_no_attendance_record_returns_error(
         self,
@@ -202,7 +206,7 @@ class TestNegativeAttendanceFlows:
         )
 
         assert resp.status_code == 303
-        assert "no_attendance" in resp.headers["location"]
+        assert "attendance_not_found" in resp.headers["location"]
 
         # DB unchanged — still no Attendance row
         att = (

@@ -26,6 +26,7 @@ from app.api.api_v1.endpoints.bookings.admin import (
 )
 from app.models.booking import BookingStatus
 from app.models.user import UserRole
+from app.services.player_participation_service import ParticipationError
 
 _BASE = "app.api.api_v1.endpoints.bookings.admin"
 
@@ -140,45 +141,25 @@ class TestGetAllBookings:
 
 class TestConfirmBooking:
 
-    def test_booking_not_found_raises_404(self):
-        user = _admin_user()
-        db, q = _mock_db()
-        q.first.return_value = None
-        with pytest.raises(HTTPException) as exc_info:
-            confirm_booking(booking_id=999, db=db, current_user=user)
-        assert exc_info.value.status_code == 404
+    @pytest.mark.parametrize(("code", "status_code"), [
+        ("BOOKING_NOT_FOUND", 404),
+        ("SESSION_AT_CAPACITY", 409),
+        ("CANCELLED_BOOKING_CANNOT_CONFIRM", 400),
+    ])
+    def test_canonical_confirmation_error_mapping(self, code, status_code):
+        with patch(f"{_BASE}.confirm_waitlisted_booking", side_effect=ParticipationError(code)):
+            with pytest.raises(HTTPException) as exc:
+                confirm_booking(booking_id=3, db=MagicMock(), current_user=_admin_user())
+        assert exc.value.status_code == status_code
+        assert exc.value.detail == code
 
-    def test_session_at_capacity_raises_409(self):
-        user = _admin_user()
-        booking = _booking_mock(bid=1, session_id=10)
-        session_mock = MagicMock()
-        session_mock.capacity = 2
-        session_mock.id = 10
-
-        q = _mock_q()
-        # Sequential .first() calls: booking, booking (2nd redundant query), session_obj
-        q.first.side_effect = [booking, booking, session_mock]
-        q.scalar.return_value = 2  # confirmed_count == capacity → 409
-
-        db = MagicMock()
-        db.query.return_value = q
-
-        with pytest.raises(HTTPException) as exc_info:
-            confirm_booking(booking_id=1, db=db, current_user=user)
-        assert exc_info.value.status_code == 409
-
-    def test_success_sets_confirmed_and_commits(self):
-        user = _admin_user()
-        booking = _booking_mock(bid=1, session_id=10)
-        db, q = _mock_db()
-        # first call: booking found, second: booking found again, third: session_obj (None → skip capacity check)
-        q.first.side_effect = [booking, booking, None]
-        q.scalar.return_value = 0  # no confirmed bookings
-
-        result = confirm_booking(booking_id=1, db=db, current_user=user)
-        assert booking.status == BookingStatus.CONFIRMED
-        db.commit.assert_called_once()
-        assert result["message"] == "Booking confirmed successfully"
+    def test_delegates_and_reports_replay(self):
+        result = MagicMock(replayed=True)
+        db=MagicMock(); admin=_admin_user()
+        with patch(f"{_BASE}.confirm_waitlisted_booking", return_value=result) as command:
+            response = confirm_booking(booking_id=3, db=db, current_user=admin)
+        command.assert_called_once_with(db, actor=admin, booking_id=3, source="API")
+        assert response == {"message": "Booking confirmed successfully", "replayed": True}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -187,55 +168,34 @@ class TestConfirmBooking:
 
 class TestAdminCancelBooking:
 
-    def _cancel_data(self, reason="Admin override"):
-        d = MagicMock()
-        d.reason = reason
-        return d
+    @pytest.mark.parametrize(("code", "status_code"), [
+        ("BOOKING_NOT_FOUND", 404),
+        ("NOT_BOOKING_OWNER", 403),
+    ])
+    def test_canonical_cancellation_error_mapping(self, code, status_code):
+        with patch(f"{_BASE}.cancel_player_booking", side_effect=ParticipationError(code)):
+            with pytest.raises(HTTPException) as exc:
+                admin_cancel_booking(
+                    booking_id=3, cancel_data=MagicMock(reason="reason"),
+                    db=MagicMock(), current_user=_admin_user()
+                )
+        assert exc.value.status_code == status_code
 
-    def test_booking_not_found_raises_404(self):
-        user = _admin_user()
-        db = _wfu_mock_db(booking=None)
-        with pytest.raises(HTTPException) as exc_info:
-            admin_cancel_booking(booking_id=999, cancel_data=self._cancel_data(), db=db, current_user=user)
-        assert exc_info.value.status_code == 404
-
-    def test_confirmed_booking_triggers_auto_promote(self):
-        user = _admin_user()
-        booking = _booking_mock(bid=1, status=BookingStatus.CONFIRMED)
-        db = _wfu_mock_db(booking=booking)
-        promoted_user = MagicMock()
-        promoted_user.name = "Alice"
-        promoted_user.email = "alice@test.com"
-        with patch(f"{_BASE}.auto_promote_from_waitlist", return_value=(promoted_user, 5)):
-            result = admin_cancel_booking(
-                booking_id=1, cancel_data=self._cancel_data(), db=db, current_user=user
+    def test_delegates_admin_override_and_reports_promotion(self):
+        result = MagicMock(
+            booking=MagicMock(session_id=10), replayed=False, promoted_booking_id=44
+        )
+        db=MagicMock(); admin=_admin_user(); payload=MagicMock(reason="reason")
+        with patch(f"{_BASE}.cancel_player_booking", return_value=result) as command:
+            response = admin_cancel_booking(
+                booking_id=3, cancel_data=payload, db=db, current_user=admin
             )
-        assert booking.status == BookingStatus.CANCELLED
-        assert "promotion" in result
-        assert result["promotion"]["promoted_user_name"] == "Alice"
-
-    def test_non_confirmed_booking_no_auto_promote(self):
-        user = _admin_user()
-        booking = _booking_mock(bid=1, status=BookingStatus.PENDING)
-        db = _wfu_mock_db(booking=booking)
-        with patch(f"{_BASE}.auto_promote_from_waitlist") as mock_promote:
-            result = admin_cancel_booking(
-                booking_id=1, cancel_data=self._cancel_data(), db=db, current_user=user
-            )
-        mock_promote.assert_not_called()
-        assert booking.status == BookingStatus.CANCELLED
-        assert "promotion" not in result
-
-    def test_cancel_sets_cancelled_at_and_notes(self):
-        user = _admin_user()
-        booking = _booking_mock(bid=1, status=BookingStatus.CONFIRMED)
-        db = _wfu_mock_db(booking=booking)
-        with patch(f"{_BASE}.auto_promote_from_waitlist", return_value=None):
-            admin_cancel_booking(
-                booking_id=1, cancel_data=self._cancel_data("Test reason"), db=db, current_user=user
-            )
-        assert booking.cancelled_at is not None
-        assert booking.notes == "Test reason"
+        command.assert_called_once_with(
+            db, actor=admin, booking_id=3, reason="reason",
+            admin_override=True, source="API"
+        )
+        assert response["promoted_booking_id"] == 44
+        assert response["session_id"] == 10
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -244,82 +204,40 @@ class TestAdminCancelBooking:
 
 class TestUpdateBookingAttendance:
 
-    def test_booking_not_found_raises_404(self):
-        user = _admin_user()
-        db = _wfu_mock_db(booking=None)
-        with pytest.raises(HTTPException) as exc_info:
-            update_booking_attendance(
-                booking_id=999, attendance_data={"status": "present"}, db=db, current_user=user
-            )
-        assert exc_info.value.status_code == 404
-
     def test_invalid_attendance_status_raises_400(self):
-        user = _admin_user()
+        with patch(f"{_BASE}.record_attendance", side_effect=ValueError("invalid")):
+            with pytest.raises(HTTPException) as exc:
+                update_booking_attendance(
+                    booking_id=1, attendance_data={"status": "flying"},
+                    db=MagicMock(), current_user=_admin_user()
+                )
+        assert exc.value.status_code == 400
+        assert exc.value.detail == "INVALID_ATTENDANCE_STATUS"
+
+    @pytest.mark.parametrize(("code", "status_code"), [
+        ("BOOKING_NOT_FOUND", 404),
+        ("INSTRUCTOR_NOT_ASSIGNED", 403),
+        ("ATTENDANCE_CONCURRENCY_CONFLICT", 409),
+    ])
+    def test_canonical_attendance_error_mapping(self, code, status_code):
+        with patch(f"{_BASE}.record_attendance", side_effect=ParticipationError(code)):
+            with pytest.raises(HTTPException) as exc:
+                update_booking_attendance(
+                    booking_id=1, attendance_data={"status": "present"},
+                    db=MagicMock(), current_user=_admin_user()
+                )
+        assert exc.value.status_code == status_code
+
+    def test_delegates_and_returns_updated_booking_contract(self):
         booking = _booking_mock()
-        db = _wfu_mock_db(booking=booking)
-        with pytest.raises(HTTPException) as exc_info:
-            update_booking_attendance(
-                booking_id=1, attendance_data={"status": "flying"}, db=db, current_user=user
+        db, q = _mock_db(); q.first.return_value = booking
+        actor = _admin_user()
+        with patch(f"{_BASE}.record_attendance", return_value=MagicMock()) as command:
+            response = update_booking_attendance(
+                booking_id=1, attendance_data={"status": "late", "notes": "traffic"},
+                db=db, current_user=actor
             )
-        assert exc_info.value.status_code == 400
-
-    def test_existing_attendance_updates_status(self):
-        user = _admin_user()
-        booking = _booking_mock()
-        booking.attendance = MagicMock()  # Has existing attendance
-        db = _wfu_mock_db(booking=booking)
-        update_booking_attendance(
-            booking_id=1, attendance_data={"status": "present"}, db=db, current_user=user
+        command.assert_called_once_with(
+            db, actor=actor, booking_id=1, status="late", notes="traffic", source="API"
         )
-        # Existing attendance.status should be updated
-        assert booking.attendance.status is not None
-        db.commit.assert_called_once()
-
-    def test_no_attendance_creates_new_record(self):
-        user = _admin_user()
-        booking = _booking_mock()
-        booking.attendance = None
-        db = _wfu_mock_db(booking=booking)
-        with patch(f"{_BASE}.Attendance") as mock_att_cls:
-            mock_att = MagicMock()
-            mock_att_cls.return_value = mock_att
-            with patch(f"{_BASE}.AttendanceStatus"):
-                update_booking_attendance(
-                    booking_id=1, attendance_data={"status": "absent"}, db=db, current_user=user
-                )
-        db.add.assert_called_once()
-        db.commit.assert_called_once()
-
-    def test_integrity_error_uq_booking_raises_409(self):
-        user = _admin_user()
-        booking = _booking_mock()
-        booking.attendance = None
-        db = _wfu_mock_db(booking=booking)
-        orig = Exception("uq_booking_attendance constraint")
-        err = IntegrityError(None, None, orig)
-        err.orig = orig
-        db.commit.side_effect = err
-        with patch(f"{_BASE}.Attendance"), \
-             patch(f"{_BASE}.AttendanceStatus"):
-            with pytest.raises(HTTPException) as exc_info:
-                update_booking_attendance(
-                    booking_id=1, attendance_data={"status": "present"}, db=db, current_user=user
-                )
-        assert exc_info.value.status_code == 409
-
-    def test_integrity_error_other_raises_409(self):
-        user = _admin_user()
-        booking = _booking_mock()
-        booking.attendance = None
-        db = _wfu_mock_db(booking=booking)
-        orig = Exception("some other constraint violation")
-        err = IntegrityError(None, None, orig)
-        err.orig = orig
-        db.commit.side_effect = err
-        with patch(f"{_BASE}.Attendance"), \
-             patch(f"{_BASE}.AttendanceStatus"):
-            with pytest.raises(HTTPException) as exc_info:
-                update_booking_attendance(
-                    booking_id=1, attendance_data={"status": "late"}, db=db, current_user=user
-                )
-        assert exc_info.value.status_code == 409
+        assert response is booking

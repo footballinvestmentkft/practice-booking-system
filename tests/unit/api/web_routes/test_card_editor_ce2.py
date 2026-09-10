@@ -439,6 +439,6 @@ class TestCE217RouteCount:
         """
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 933, (
-            f"Expected 933 routes, got {len(paths)}"
+        assert len(paths) == 934, (
+            f"Expected 934 routes, got {len(paths)}"
         )

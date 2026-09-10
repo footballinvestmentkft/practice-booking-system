@@ -909,8 +909,8 @@ class TestSmoke18BookingsAdvanced:
         err_msg = resp.json().get("error", {}).get("message", resp.json().get("detail", ""))
         assert "capacity" in err_msg.lower()
 
-    def test_18b_double_confirm_returns_400(self, admin_client, test_db, session_obj, student_user):
-        """Confirming an already-CONFIRMED booking → 400."""
+    def test_18b_double_confirm_is_idempotent(self, admin_client, test_db, session_obj, student_user):
+        """Confirming an already-CONFIRMED booking returns an explicit replay."""
         from app.models.booking import Booking, BookingStatus
 
         b = Booking(
@@ -923,12 +923,11 @@ class TestSmoke18BookingsAdvanced:
         test_db.refresh(b)
 
         resp = admin_client.post(f"/admin/bookings/{b.id}/confirm")
-        assert resp.status_code == 400
-        err_msg = resp.json().get("error", {}).get("message", resp.json().get("detail", ""))
-        assert "already confirmed" in err_msg.lower()
+        assert resp.status_code == 200
+        assert resp.json()["replayed"] is True
 
-    def test_18c_double_cancel_returns_400(self, admin_client, test_db, session_obj, student_user):
-        """Cancelling an already-CANCELLED booking → 400."""
+    def test_18c_double_cancel_is_idempotent(self, admin_client, test_db, session_obj, student_user):
+        """Cancelling an already-CANCELLED booking returns an explicit replay."""
         from app.models.booking import Booking, BookingStatus
 
         b = Booking(
@@ -944,9 +943,8 @@ class TestSmoke18BookingsAdvanced:
             f"/admin/bookings/{b.id}/cancel",
             data={"reason": "double cancel test"},
         )
-        assert resp.status_code == 400
-        err_msg = resp.json().get("error", {}).get("message", resp.json().get("detail", ""))
-        assert "already cancelled" in err_msg.lower()
+        assert resp.status_code == 200
+        assert resp.json()["replayed"] is True
 
     def test_18d_update_existing_attendance(self, admin_client, test_db, session_obj, student_user):
         """Marking attendance twice updates existing record rather than creating a new one."""

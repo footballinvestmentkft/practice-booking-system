@@ -6,7 +6,13 @@ fields, types, and defaults. Breaks immediately on any field rename or removal
 in app/schemas/booking.py without requiring a DB or server.
 """
 
-from app.schemas.booking import Booking, BookingList, BookingWithRelations
+from app.main import app
+from app.schemas.booking import (
+    Booking,
+    BookingList,
+    BookingWithRelations,
+    PlayerSessionAvailability,
+)
 
 
 class TestBookingContract:
@@ -93,3 +99,18 @@ class TestBookingListContract:
 
     def test_booking_list_size_is_required(self):
         assert BookingList.model_fields["size"].is_required()
+
+
+class TestPlayerParticipationContract:
+    def test_availability_projection_has_canonical_lifecycle_fields(self):
+        assert set(PlayerSessionAvailability.model_fields) == {
+            "session_id", "title", "date_start", "date_end", "category",
+            "capacity", "confirmed", "available", "waitlisted", "booking_id",
+            "participation_status",
+        }
+
+    def test_openapi_exposes_shared_player_participation_routes(self):
+        paths = app.openapi()["paths"]
+        assert "get" in paths["/api/v1/sessions/player/available"]
+        assert "post" in paths["/api/v1/bookings/"]
+        assert "delete" in paths["/api/v1/bookings/{booking_id}"]

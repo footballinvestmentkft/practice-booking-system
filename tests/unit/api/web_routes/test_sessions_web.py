@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 
 from zoneinfo import ZoneInfo
 from fastapi.responses import RedirectResponse
+import pytest
 
 from app.api.web_routes.sessions import (
     calendar_page,
@@ -29,6 +30,7 @@ from app.models.user import UserRole
 from app.models.session import SessionType
 from app.models.booking import BookingStatus
 from app.models.semester_enrollment import EnrollmentStatus
+from app.services.player_participation_service import ParticipationError
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -432,43 +434,30 @@ class TestSessionsPage:
 
 class TestBookSession:
 
-    def test_session_not_found_redirects(self):
-        db = _mock_db(None)
-        result = _run(book_session(request=_req(), session_id=1, db=db, user=_student()))
+    def test_policy_error_redirects_with_canonical_code(self):
+        with patch(f"{_BASE}.book_player_session", side_effect=ParticipationError("SESSION_CATEGORY_MISMATCH")):
+            result = _run(book_session(
+                request=_req(), session_id=1, db=MagicMock(), user=_student()
+            ))
         assert isinstance(result, RedirectResponse)
-        assert "session_not_found" in result.headers["location"]
+        assert "session_category_mismatch" in result.headers["location"]
 
-    def test_booking_deadline_passed_redirects(self):
-        user = _student()
-        s = MagicMock()
-        # Session starts in 1 hour Budapest time — within 12-hour deadline
-        s.date_start = _now_budapest() + timedelta(hours=1)
-        db = _mock_db(s)
-        result = _run(book_session(request=_req(), session_id=1, db=db, user=user))
-        assert "booking_deadline_passed" in result.headers["location"]
+    def test_booking_delegates_to_canonical_service(self):
+        result_obj = MagicMock(replayed=False)
+        result_obj.booking.status = BookingStatus.CONFIRMED
+        db=MagicMock(); player=_student()
+        with patch(f"{_BASE}.book_player_session", return_value=result_obj) as command:
+            result = _run(book_session(request=_req(), session_id=1, db=db, user=player))
+        command.assert_called_once_with(db, player=player, session_id=1, source="WEB")
+        assert "success=confirmed" in result.headers["location"]
 
-    def test_already_booked_redirects(self):
-        user = _student()
-        s = _future_session()
-        existing_booking = MagicMock()
-
-        db = MagicMock()
-        db.query.return_value.filter.return_value.first.side_effect = [s, existing_booking]
-
-        result = _run(book_session(request=_req(), session_id=1, db=db, user=user))
-        assert "already_booked" in result.headers["location"]
-
-    def test_book_session_success(self):
-        user = _student()
-        s = _future_session()
-
-        db = MagicMock()
-        db.query.return_value.filter.return_value.first.side_effect = [s, None]
-
-        result = _run(book_session(request=_req(), session_id=1, db=db, user=user))
-        assert "success=booked" in result.headers["location"]
-        db.add.assert_called_once()
-        db.commit.assert_called_once()
+    def test_duplicate_booking_is_idempotent(self):
+        result_obj = MagicMock(replayed=True)
+        with patch(f"{_BASE}.book_player_session", return_value=result_obj):
+            result = _run(book_session(
+                request=_req(), session_id=1, db=MagicMock(), user=_student()
+            ))
+        assert "success=already_booked" in result.headers["location"]
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -477,103 +466,31 @@ class TestBookSession:
 
 class TestCancelBooking:
 
-    def test_booking_not_found_redirects(self):
-        db = _mock_db(None)
-        result = _run(cancel_booking(request=_req(), session_id=1, db=db, user=_student()))
-        assert "booking_not_found" in result.headers["location"]
+    @pytest.mark.parametrize("code", [
+        "BOOKING_NOT_FOUND", "CANCELLATION_DEADLINE_PASSED",
+        "ATTENDANCE_ALREADY_RECORDED", "NOT_BOOKING_OWNER",
+    ])
+    def test_policy_error_redirects_with_canonical_code(self, code):
+        with patch(f"{_BASE}.cancel_player_booking", side_effect=ParticipationError(code)):
+            result = _run(cancel_booking(
+                request=_req(), session_id=1, db=MagicMock(), user=_student()
+            ))
+        assert code.lower() in result.headers["location"]
 
-    def test_session_not_found_redirects(self):
-        booking = MagicMock()
-        db = MagicMock()
-        db.query.return_value.filter.return_value.first.side_effect = [booking, None]
-        result = _run(cancel_booking(request=_req(), session_id=1, db=db, user=_student()))
-        assert "session_not_found" in result.headers["location"]
-
-    def test_session_already_ended_redirects(self):
-        booking = MagicMock()
-        s = _past_session()  # actual_end_time is set
-
-        db = MagicMock()
-        db.query.return_value.filter.return_value.first.side_effect = [booking, s]
-
-        result = _run(cancel_booking(request=_req(), session_id=1, db=db, user=_student()))
-        assert "session_already_ended" in result.headers["location"]
-
-    def test_cancellation_deadline_passed_redirects(self):
-        booking = MagicMock()
-        # Session starts in 1 hour Budapest time → within 12h deadline
-        s = MagicMock()
-        s.actual_end_time = None
-        s.date_start = _now_budapest() + timedelta(hours=1)
-
-        db = MagicMock()
-        db.query.return_value.filter.return_value.first.side_effect = [booking, s]
-
-        result = _run(cancel_booking(request=_req(), session_id=1, db=db, user=_student()))
-        assert "cancellation_deadline_passed" in result.headers["location"]
-
-    def test_attendance_already_marked_redirects(self):
-        user = _student()
-        booking = MagicMock()
-        booking.id = 7
-        s = _future_session()
-        s.actual_end_time = None
-        attendance = MagicMock()  # attendance exists for this booking
-
-        db = MagicMock()
-        db.query.return_value.filter.return_value.first.side_effect = [booking, s, attendance]
-
-        result = _run(cancel_booking(request=_req(), session_id=1, db=db, user=user))
-        assert "attendance_already_marked" in result.headers["location"]
-
-    def test_evaluation_already_submitted_redirects(self):
-        user = _student()
-        booking = MagicMock()
-        booking.id = 7
-        s = _future_session()
-        s.actual_end_time = None
-        instructor_review = MagicMock()
-
-        db = MagicMock()
-        # booking, session, no attendance, instructor_review exists
-        db.query.return_value.filter.return_value.first.side_effect = [booking, s, None, instructor_review]
-
-        result = _run(cancel_booking(request=_req(), session_id=1, db=db, user=user))
-        assert "evaluation_already_submitted" in result.headers["location"]
-
-    def test_cancel_booking_success(self):
-        user = _student()
-        booking = MagicMock()
-        booking.id = 7
-        s = _future_session()
-        s.actual_end_time = None
-
-        db = MagicMock()
-        # booking, session, no attendance, no review
-        db.query.return_value.filter.return_value.first.side_effect = [booking, s, None, None]
-
-        result = _run(cancel_booking(request=_req(), session_id=1, db=db, user=user))
+    def test_cancellation_delegates_to_canonical_service(self):
+        result_obj = MagicMock(replayed=False)
+        db=MagicMock(); player=_student()
+        with patch(f"{_BASE}.cancel_player_booking", return_value=result_obj) as command:
+            result = _run(cancel_booking(request=_req(), session_id=1, db=db, user=player))
+        command.assert_called_once_with(db, actor=player, session_id=1, source="WEB")
         assert "success=cancelled" in result.headers["location"]
-        db.delete.assert_called_once_with(booking)
-        db.commit.assert_called_once()
 
-    def test_cancel_booking_session_start_aware_datetime_skips_tz_replace(self):
-        """cancel_booking: session_start already has tzinfo → False branch 288→292."""
-        user = _student()
-        booking = MagicMock()
-        booking.id = 7
-
-        s = MagicMock()
-        s.actual_end_time = None
-        # Aware datetime in future (> 12h) → no cancellation deadline error
-        s.date_start = datetime.now(_BUD) + timedelta(hours=14)  # tz-aware
-
-        db = MagicMock()
-        # booking, session, attendance=None, review=None → success
-        db.query.return_value.filter.return_value.first.side_effect = [booking, s, None, None]
-
-        result = _run(cancel_booking(request=_req(), session_id=1, db=db, user=user))
-        assert "success=cancelled" in result.headers["location"]
+    def test_repeated_cancellation_is_idempotent(self):
+        with patch(f"{_BASE}.cancel_player_booking", return_value=MagicMock(replayed=True)):
+            result = _run(cancel_booking(
+                request=_req(), session_id=1, db=MagicMock(), user=_student()
+            ))
+        assert "success=already_cancelled" in result.headers["location"]
 
 
 # ──────────────────────────────────────────────────────────────────────────────

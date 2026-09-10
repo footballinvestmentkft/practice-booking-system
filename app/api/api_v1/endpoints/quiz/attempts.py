@@ -14,6 +14,9 @@ from .....schemas.quiz import (
 from .....services.quiz_service import QuizService
 from .....services.competency_service import CompetencyService
 from .....services.adaptive_learning_service import AdaptiveLearningService
+from .....services.player_participation_service import (
+    complete_virtual_session_participation,
+)
 from .helpers import get_quiz_service
 
 router = APIRouter()
@@ -225,50 +228,17 @@ def submit_quiz_attempt(
 
                 # If VIRTUAL session → automatic attendance
                 if session and str(session.session_type).lower() == 'virtual':
-                    # Check if attendance already exists
-                    existing_attendance = db.query(Attendance).filter(
-                        Attendance.user_id == current_user.id,
-                        Attendance.session_id == session.id
-                    ).first()
-
-                    if existing_attendance:
-                        # Update to present + auto-confirm (VIRTUAL sessions don't need manual confirmation)
-                        existing_attendance.status = AttendanceStatus.present
-                        existing_attendance.check_in_time = datetime.now(timezone.utc)
-                        existing_attendance.confirmation_status = ConfirmationStatus.confirmed
-                        existing_attendance.student_confirmed_at = datetime.now(timezone.utc)
-                        existing_attendance.notes = f"Auto-marked: Quiz completed with {attempt.score}%"
-                        db.commit()
-
-                        # Award XP
-                        gamification_service.award_attendance_xp(
-                            attendance_id=existing_attendance.id,
-                            quiz_score_percent=attempt.score
-                        )
-
-                        print(f"✅ AUTO-ATTENDANCE: {current_user.email} marked present + auto-confirmed for VIRTUAL session: {session.title}")
-                    else:
-                        # Create new attendance record with auto-confirmation
-                        new_attendance = Attendance(
-                            user_id=current_user.id,
-                            session_id=session.id,
-                            status=AttendanceStatus.present,
-                            check_in_time=datetime.now(timezone.utc),
-                            confirmation_status=ConfirmationStatus.confirmed,
-                            student_confirmed_at=datetime.now(timezone.utc),
-                            notes=f"Auto-marked: Quiz completed with {attempt.score}%"
-                        )
-                        db.add(new_attendance)
-                        db.commit()
-                        db.refresh(new_attendance)
-
-                        # Award XP
-                        gamification_service.award_attendance_xp(
-                            attendance_id=new_attendance.id,
-                            quiz_score_percent=attempt.score
-                        )
-
-                        print(f"✅ AUTO-ATTENDANCE: Created + auto-confirmed attendance for {current_user.email} for VIRTUAL session: {session.title}")
+                    attendance_result = complete_virtual_session_participation(
+                        db,
+                        player=current_user,
+                        session_id=session.id,
+                        notes=f"Auto-marked: Quiz completed with {attempt.score}%",
+                        source="API_QUIZ",
+                    )
+                    gamification_service.award_attendance_xp(
+                        attendance_id=attendance_result.attendance.id,
+                        quiz_score_percent=attempt.score
+                    )
 
         except Exception as e:
             # Don't fail quiz submission if auto-attendance fails

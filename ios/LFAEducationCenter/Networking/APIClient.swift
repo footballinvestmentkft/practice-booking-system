@@ -168,6 +168,13 @@ enum APIClient {
         }
     }
 
+    // MARK: — DELETE (JSON response)
+
+    static func delete<T: Decodable>(path: String, token: String? = nil) async throws -> T {
+        let request = try buildRequest(path: path, method: "DELETE", token: token)
+        return try await execute(request)
+    }
+
     // MARK: — GET (JSON)
 
     static func get<T: Decodable>(

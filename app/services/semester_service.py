@@ -18,7 +18,12 @@ from ..models.booking import Booking, BookingStatus
 from ..models.credit_transaction import CreditTransaction
 from ..models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from ..models.session import Session as SessionModel
+from ..models.user import User
 from ..api.api_v1.endpoints.bookings.helpers import auto_promote_from_waitlist
+from .player_participation_service import (
+    stage_player_booking_cancellation,
+    stage_player_enrollment_booking,
+)
 
 
 # ── Private query helpers ──────────────────────────────────────────────────────
@@ -97,6 +102,7 @@ def create_enrollment_with_bookings(
         withdrawn.enrolled_at = now
         withdrawn.football_category_assignment_id = football_category_assignment_id
         withdrawn.age_category = age_category
+        withdrawn.payment_verified = True
         enrollment = withdrawn
         db.flush()
     else:
@@ -107,6 +113,7 @@ def create_enrollment_with_bookings(
             football_category_assignment_id=football_category_assignment_id,
             age_category=age_category,
             request_status=EnrollmentStatus.APPROVED,
+            payment_verified=True,
             is_active=True,
             requested_at=now,
             approved_at=now,
@@ -142,8 +149,21 @@ def create_enrollment_with_bookings(
     already_booked = _get_already_booked_ids(db, user_id, [s.id for s in sessions])
 
     new_bookings = []
+    legacy_new_bookings = []
+    player = db.get(User, user_id) if football_category_assignment_id is not None else None
     for s in sessions:
         if s.id in already_booked:
+            continue
+        if player is not None:
+            staged = stage_player_enrollment_booking(
+                db,
+                player=player,
+                session_id=s.id,
+                now=now,
+                source="WEB_ENROLLMENT",
+            )
+            if staged is not None and not staged.replayed:
+                new_bookings.append(staged.booking)
             continue
         s = db.query(SessionModel).filter(SessionModel.id == s.id).with_for_update().one()
         confirmed_count = (
@@ -155,18 +175,20 @@ def create_enrollment_with_bookings(
             BookingStatus.CONFIRMED if confirmed_count < s.capacity
             else BookingStatus.WAITLISTED
         )
-        new_bookings.append(Booking(
+        booking = Booking(
             user_id=user_id,
             session_id=s.id,
             enrollment_id=enrollment.id,
             status=status,
             created_at=now,
-        ))
+        )
+        new_bookings.append(booking)
+        legacy_new_bookings.append(booking)
 
     n_confirmed = sum(1 for b in new_bookings if b.status == BookingStatus.CONFIRMED)
     n_waitlisted = sum(1 for b in new_bookings if b.status == BookingStatus.WAITLISTED)
-    if new_bookings:
-        db.bulk_save_objects(new_bookings)
+    if legacy_new_bookings:
+        db.bulk_save_objects(legacy_new_bookings)
 
     return enrollment.id, n_confirmed, n_waitlisted
 
@@ -177,12 +199,37 @@ def withdraw_enrollment_bookings(
     user_id: int,
 ) -> int:
     """
-    Delete all bookings for the enrollment; auto-promote the first WAITLISTED
-    booking for each freed CONFIRMED session.
+    Cancel canonical Player bookings; preserve legacy deletion for other programs.
 
     Returns: number of sessions that triggered auto-promotion (promoted_count).
     No commit.
     """
+    enrollment = db.get(SemesterEnrollment, enrollment_id)
+    if enrollment is not None and enrollment.football_category_assignment_id is not None:
+        player = db.get(User, user_id)
+        bookings = (
+            db.query(Booking)
+            .filter(
+                Booking.enrollment_id == enrollment_id,
+                Booking.user_id == user_id,
+                Booking.status != BookingStatus.CANCELLED,
+            )
+            .with_for_update()
+            .all()
+        )
+        promoted_count = 0
+        for booking in bookings:
+            result = stage_player_booking_cancellation(
+                db,
+                actor=player,
+                booking=booking,
+                reason="Canonical Player enrollment withdrawn",
+                source="WEB_ENROLLMENT_WITHDRAWAL",
+                override_reason="ENROLLMENT_WITHDRAWAL",
+            )
+            promoted_count += int(result.promoted_booking_id is not None)
+        return promoted_count
+
     confirmed_session_ids = _get_confirmed_session_ids(db, enrollment_id, user_id)
     db.query(Booking).filter(
         Booking.enrollment_id == enrollment_id,
