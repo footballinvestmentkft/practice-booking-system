@@ -15,7 +15,7 @@ struct RefreshRequest: Encodable {
 }
 
 // Request body for POST /api/v1/auth/register-with-invitation.
-// All fields required by backend — no Optional fields.
+// Core identity fields are required; guardian evidence applies to minors.
 // date_of_birth: ISO 8601 string "yyyy-MM-dd'T'HH:mm:ss" (backend accepts datetime).
 struct RegisterRequest: Encodable {
     let email:          String
@@ -33,6 +33,8 @@ struct RegisterRequest: Encodable {
     let postalCode:     String
     let country:        String
     let invitationCode: String
+    let guardianConsent: Bool
+    let guardianName:    String?
 
     enum CodingKeys: String, CodingKey {
         case email, password, name, nickname, phone, gender, city, country, nationality
@@ -42,6 +44,8 @@ struct RegisterRequest: Encodable {
         case streetAddress  = "street_address"
         case postalCode     = "postal_code"
         case invitationCode = "invitation_code"
+        case guardianConsent = "guardian_consent"
+        case guardianName    = "guardian_name"
     }
 }
 

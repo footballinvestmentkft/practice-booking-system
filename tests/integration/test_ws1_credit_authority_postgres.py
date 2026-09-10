@@ -20,7 +20,7 @@ def _user_and_license():
     db = SessionLocal()
     user = User(
         name="WS1 Credit",
-        email=f"ws1-credit-{uuid4().hex}@example.test",
+        email=f"ws1-credit-{uuid4().hex}@ws1.example.com",
         password_hash="test-only-hash",
         role=UserRole.STUDENT,
         is_active=True,
@@ -127,7 +127,7 @@ def test_new_legacy_wallet_balance_and_direct_balance_change_are_rejected():
     db = SessionLocal()
     user = User(
         name="WS1 Wallet Guard",
-        email=f"ws1-wallet-{uuid4().hex}@example.test",
+        email=f"ws1-wallet-{uuid4().hex}@ws1.example.com",
         password_hash="test-only-hash",
         role=UserRole.STUDENT,
         is_active=True,

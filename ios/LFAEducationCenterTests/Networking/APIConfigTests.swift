@@ -187,3 +187,51 @@ final class APIConfigTests: XCTestCase {
         }
     }
 }
+
+final class RegisterRequestContractTests: XCTestCase {
+    private func makeRequest(
+        guardianConsent: Bool = false,
+        guardianName: String? = nil
+    ) -> RegisterRequest {
+        RegisterRequest(
+            email: "player@example.com",
+            password: "test-only-password",
+            name: "Test Player",
+            firstName: "Test",
+            lastName: "Player",
+            nickname: "Tester",
+            phone: "+3612345678",
+            dateOfBirth: "2012-05-15T00:00:00",
+            nationality: "HU",
+            gender: "Other",
+            streetAddress: "Test Street 1",
+            city: "Budapest",
+            postalCode: "1000",
+            country: "Hungary",
+            invitationCode: "TESTCODE",
+            guardianConsent: guardianConsent,
+            guardianName: guardianName
+        )
+    }
+
+    func test_WS1_registerRequestCarriesGuardianConsentContract() throws {
+        let data = try JSONEncoder().encode(makeRequest())
+        let json = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: data) as? [String: Any]
+        )
+
+        XCTAssertEqual(json["guardian_consent"] as? Bool, false)
+    }
+
+    func test_WS1_minorRegistrationEncodesGuardianEvidence() throws {
+        let data = try JSONEncoder().encode(
+            makeRequest(guardianConsent: true, guardianName: "Test Guardian")
+        )
+        let json = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: data) as? [String: Any]
+        )
+
+        XCTAssertEqual(json["guardian_consent"] as? Bool, true)
+        XCTAssertEqual(json["guardian_name"] as? String, "Test Guardian")
+    }
+}

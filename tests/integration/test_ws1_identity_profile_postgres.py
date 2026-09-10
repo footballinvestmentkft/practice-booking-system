@@ -22,7 +22,7 @@ pytestmark = pytest.mark.postgres
 def _user(db, dob: date) -> User:
     user = User(
         name="WS1 Identity",
-        email=f"ws1-identity-{uuid4().hex}@example.test",
+        email=f"ws1-identity-{uuid4().hex}@ws1.example.com",
         password_hash="test-only-hash",
         role=UserRole.STUDENT,
         is_active=True,

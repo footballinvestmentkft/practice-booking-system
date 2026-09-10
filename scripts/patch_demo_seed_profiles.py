@@ -1,7 +1,7 @@
 """
 scripts/patch_demo_seed_profiles.py
 =====================================
-Demo seed profile completion for seed.player.1-9@promo-seed.test.
+Demo seed profile completion for seed.player.1-9@promo-seed.example.com.
 
 Usage:
     python scripts/patch_demo_seed_profiles.py              # dry-run (no DB writes)
@@ -42,7 +42,7 @@ if _PROJECT_ROOT not in sys.path:
 
 SEED_PROFILES: List[Dict[str, Any]] = [
     {
-        "email":          "seed.player.1@promo-seed.test",
+        "email":          "seed.player.1@promo-seed.example.com",
         "position":       "STRIKER",
         "nationality":    "HU",
         "gender":         "Male",
@@ -54,7 +54,7 @@ SEED_PROFILES: List[Dict[str, Any]] = [
         "preferred_foot": "right",   # |75-35|=40 > 10, right > left
     },
     {
-        "email":          "seed.player.2@promo-seed.test",
+        "email":          "seed.player.2@promo-seed.example.com",
         "position":       "STRIKER",
         "nationality":    "DE",
         "gender":         "Male",
@@ -66,7 +66,7 @@ SEED_PROFILES: List[Dict[str, Any]] = [
         "preferred_foot": "left",    # |30-78|=48 > 10, left > right
     },
     {
-        "email":          "seed.player.3@promo-seed.test",
+        "email":          "seed.player.3@promo-seed.example.com",
         "position":       "STRIKER",
         "nationality":    "AT",
         "gender":         "Male",
@@ -78,7 +78,7 @@ SEED_PROFILES: List[Dict[str, Any]] = [
         "preferred_foot": "both",    # |65-60|=5 <= 10
     },
     {
-        "email":          "seed.player.4@promo-seed.test",
+        "email":          "seed.player.4@promo-seed.example.com",
         "position":       "MIDFIELDER",
         "nationality":    "HR",
         "gender":         "Female",
@@ -90,7 +90,7 @@ SEED_PROFILES: List[Dict[str, Any]] = [
         "preferred_foot": "right",   # |72-38|=34 > 10, right > left
     },
     {
-        "email":          "seed.player.5@promo-seed.test",
+        "email":          "seed.player.5@promo-seed.example.com",
         "position":       "MIDFIELDER",
         "nationality":    "SK",
         "gender":         "Male",
@@ -102,7 +102,7 @@ SEED_PROFILES: List[Dict[str, Any]] = [
         "preferred_foot": "both",    # |62-58|=4 <= 10
     },
     {
-        "email":          "seed.player.6@promo-seed.test",
+        "email":          "seed.player.6@promo-seed.example.com",
         "position":       "MIDFIELDER",
         "nationality":    "RO",
         "gender":         "Male",
@@ -114,7 +114,7 @@ SEED_PROFILES: List[Dict[str, Any]] = [
         "preferred_foot": "right",   # |80-28|=52 > 10, right > left
     },
     {
-        "email":          "seed.player.7@promo-seed.test",
+        "email":          "seed.player.7@promo-seed.example.com",
         "position":       "DEFENDER",
         "nationality":    "CZ",
         "gender":         "Female",
@@ -126,7 +126,7 @@ SEED_PROFILES: List[Dict[str, Any]] = [
         "preferred_foot": "right",   # |70-42|=28 > 10, right > left
     },
     {
-        "email":          "seed.player.8@promo-seed.test",
+        "email":          "seed.player.8@promo-seed.example.com",
         "position":       "DEFENDER",
         "nationality":    "PL",
         "gender":         "Male",
@@ -138,7 +138,7 @@ SEED_PROFILES: List[Dict[str, Any]] = [
         "preferred_foot": "right",   # |68-30|=38 > 10, right > left
     },
     {
-        "email":          "seed.player.9@promo-seed.test",
+        "email":          "seed.player.9@promo-seed.example.com",
         "position":       "GOALKEEPER",
         "nationality":    "SI",
         "gender":         "Male",
@@ -151,7 +151,7 @@ SEED_PROFILES: List[Dict[str, Any]] = [
     },
 ]
 
-EMAIL_PATTERN = "seed.player.%@promo-seed.test"
+EMAIL_PATTERN = "seed.player.%@promo-seed.example.com"
 
 
 # ---------------------------------------------------------------------------

@@ -51,7 +51,7 @@ patch_license_fields = _mod.patch_license_fields
 # ── fixtures / factories ─────────────────────────────────────────────────────
 
 def _profile(
-    email="seed.player.1@promo-seed.test",
+    email="seed.player.1@promo-seed.example.com",
     position="STRIKER",
     nationality="HU",
     gender="Male",
@@ -72,7 +72,7 @@ def _profile(
 
 def _user(
     uid=9,
-    email="seed.player.1@promo-seed.test",
+    email="seed.player.1@promo-seed.example.com",
     nationality=None,
     gender=None,
     nickname=None,

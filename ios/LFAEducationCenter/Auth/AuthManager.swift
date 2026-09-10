@@ -149,7 +149,9 @@ final class AuthManager: ObservableObject {
         nationality: String, gender: String,
         streetAddress: String, city: String,
         postalCode: String, country: String,
-        invitationCode: String
+        invitationCode: String,
+        guardianConsent: Bool = false,
+        guardianName: String? = nil
     ) async {
         isLoading    = true
         errorMessage = nil
@@ -170,7 +172,9 @@ final class AuthManager: ObservableObject {
             city: city,
             postalCode: postalCode,
             country: country,
-            invitationCode: invitationCode
+            invitationCode: invitationCode,
+            guardianConsent: guardianConsent,
+            guardianName: guardianName
         )
 
         do {

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 import importlib.util
+import json
 import pathlib
 import sys
 import types
@@ -62,11 +63,47 @@ _validate_sc04 = _seed._validate_sc04
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
 
+@pytest.fixture(autouse=True)
+def group_knockout_tournament_type(test_db: Session) -> TournamentType:
+    """Load canonical seed prerequisites inside the test's SAVEPOINT."""
+    config_path = pathlib.Path(__file__).parents[2] / "app" / "tournament_types" / "group_knockout.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    tournament_type = test_db.query(TournamentType).filter(
+        TournamentType.code == config["code"]
+    ).first()
+    if tournament_type is None:
+        tournament_type = TournamentType(code=config["code"])
+        test_db.add(tournament_type)
+
+    tournament_type.display_name = config["display_name"]
+    tournament_type.description = config.get("description")
+    tournament_type.format = config.get("format", "HEAD_TO_HEAD")
+    tournament_type.min_players = config.get("min_players", 4)
+    tournament_type.max_players = config.get("max_players")
+    tournament_type.requires_power_of_two = config.get("requires_power_of_two", False)
+    tournament_type.session_duration_minutes = config.get("session_duration_minutes", 90)
+    tournament_type.break_between_sessions_minutes = config.get(
+        "break_between_sessions_minutes", 15
+    )
+    tournament_type.config = config
+    test_db.flush()
+    _seed._bootstrap_missing_prereqs(test_db, campus_id=1)
+    return tournament_type
+
+
 @pytest.fixture()
 def admin_user(test_db: Session) -> User:
     user = test_db.query(User).filter(User.email == "admin@lfa.com").first()
-    if not user:
-        pytest.skip("admin@lfa.com not found — run bootstrap first")
+    if user is None:
+        user = User(
+            email="admin@lfa.com",
+            name="Promotion Seed Test Admin",
+            password_hash=get_password_hash("test-only-admin-password"),
+            role=UserRole.ADMIN,
+            is_active=True,
+        )
+        test_db.add(user)
+        test_db.flush()
     return user
 
 
@@ -108,8 +145,7 @@ class TestPreflight:
         tt = test_db.query(TournamentType).filter(
             TournamentType.code == "group_knockout"
         ).first()
-        if not tt:
-            pytest.skip("group_knockout TournamentType not in DB")
+        assert tt is not None
 
         original_config = tt.config
 

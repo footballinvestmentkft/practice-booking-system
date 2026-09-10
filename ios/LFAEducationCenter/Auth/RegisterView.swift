@@ -8,7 +8,7 @@ import PhotosUI
 //         → Step 2 (Profile) → Step 3 (Contact) → Step 4 (Location)
 //         → Join the Academy → WelcomeSuccessView
 //
-// RegisterRequest and POST /api/v1/auth/register-with-invitation are unchanged.
+// Registration includes guardian consent evidence when the applicant is a minor.
 // profileImage is local preview only — never sent to the backend.
 struct RegisterView: View {
     @EnvironmentObject private var authManager: AuthManager
@@ -38,6 +38,8 @@ struct RegisterView: View {
     ) ?? Date()
     @State private var nationality = "HU"
     @State private var gender      = "Male"
+    @State private var guardianConsentConfirmed = false
+    @State private var guardianName = ""
 
     // Step 3 — Contact
     @State private var phone    = ""
@@ -434,6 +436,16 @@ struct RegisterView: View {
                 .background(Theme.Color.surface)
                 .cornerRadius(Theme.Radius.sm)
             }
+            if isMinor {
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    Toggle("Guardian consent confirmed", isOn: $guardianConsentConfirmed)
+                        .font(.subheadline)
+                    regField("Guardian full name", text: $guardianName)
+                    Text("A guardian must confirm enrollment for applicants under 18.")
+                        .font(.caption2)
+                        .foregroundColor(Theme.Color.muted)
+                }
+            }
         }
     }
 
@@ -501,7 +513,11 @@ struct RegisterView: View {
         switch step {
         case 0: return isAccessVerified
         case 1: return isStep1Valid
-        case 2: return true
+        case 2:
+            return !isMinor || (
+                guardianConsentConfirmed &&
+                !guardianName.trimmingCharacters(in: .whitespaces).isEmpty
+            )
         case 3: return isStep3Valid
         case 4: return isStep4Valid && !authManager.isLoading
         default: return false
@@ -587,7 +603,7 @@ struct RegisterView: View {
               )
     }
 
-    // MARK: — Submit (RegisterRequest unchanged)
+    // MARK: — Submit
 
     private func submitRegistration() {
         dismissKeyboard()
@@ -607,7 +623,11 @@ struct RegisterView: View {
                 city:          city.trimmingCharacters(in: .whitespaces),
                 postalCode:    postalCode.trimmingCharacters(in: .whitespaces),
                 country:       country.trimmingCharacters(in: .whitespaces),
-                invitationCode: invitationCode.trimmingCharacters(in: .whitespaces).uppercased()
+                invitationCode: invitationCode.trimmingCharacters(in: .whitespaces).uppercased(),
+                guardianConsent: isMinor && guardianConsentConfirmed,
+                guardianName: isMinor
+                    ? guardianName.trimmingCharacters(in: .whitespaces)
+                    : nil
             )
         }
     }
@@ -616,6 +636,11 @@ struct RegisterView: View {
 
     private var computedAge: Int? {
         Calendar.current.dateComponents([.year], from: dateOfBirth, to: Date()).year
+    }
+
+    private var isMinor: Bool {
+        guard let age = computedAge else { return false }
+        return age < 18
     }
 
     private func opt(_ s: String) -> String? {

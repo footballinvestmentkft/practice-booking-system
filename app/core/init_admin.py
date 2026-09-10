@@ -1,7 +1,12 @@
+import logging
+
 from ..database import SessionLocal
 from ..models.user import User, UserRole
 from ..core.security import get_password_hash
 from ..config import settings
+
+
+logger = logging.getLogger(__name__)
 
 
 def create_initial_admin():
@@ -11,7 +16,7 @@ def create_initial_admin():
         # Check if admin already exists
         admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
         if admin:
-            print(f"Admin user already exists: {settings.ADMIN_EMAIL}")
+            logger.info("Initial admin user already exists")
             return
         
         # Create admin user
@@ -25,11 +30,10 @@ def create_initial_admin():
         db.add(admin_user)
         db.commit()
         db.refresh(admin_user)
-        print(f"Initial admin user created: {settings.ADMIN_EMAIL}")
-        print(f"Admin password: {settings.ADMIN_PASSWORD}")
-    except Exception as e:
+        logger.info("Initial admin user created")
+    except Exception:
         db.rollback()
-        print(f"Error creating admin user: {e}")
+        logger.error("Initial admin user creation failed")
     finally:
         db.close()
 
