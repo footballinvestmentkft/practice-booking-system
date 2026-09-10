@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING
 from sqlalchemy.orm import Session
 
 from app.models.user import User, UserRole
-from app.models.license import UserLicense
 from app.models.credit_transaction import CreditTransaction, TransactionType
 from app.models.club import CsvImportLog
 from app.models.team import Team, TeamMember
@@ -30,6 +29,10 @@ from app.services.club_service import get_or_create_club
 from app.services.tournament.team_service import add_team_member
 from app.services.canonical_policy import evaluate_profile_age_policy
 from app.services.program_eligibility_service import record_guardian_consent
+from app.services.player_identity_service import (
+    issue_football_player_entitlement,
+    update_identity_profile,
+)
 
 if TYPE_CHECKING:
     from app.models.club import Club
@@ -237,7 +240,7 @@ def _upsert_user(db: Session, row: dict, admin_user: User) -> tuple[User, str]:
         existing.first_name = first
         existing.last_name = last
         if dob:
-            existing.date_of_birth = dob
+            update_identity_profile(db, user=existing, date_of_birth=dob)
         if position:
             existing.position = position
         db.flush()
@@ -255,7 +258,7 @@ def _upsert_user(db: Session, row: dict, admin_user: User) -> tuple[User, str]:
         is_active=True,
         onboarding_completed=False,
         payment_verified=False,
-        date_of_birth=dob,
+        date_of_birth=None,
         position=position,
         created_by=admin_user.id,
     )
@@ -270,20 +273,13 @@ def _upsert_user(db: Session, row: dict, admin_user: User) -> tuple[User, str]:
             granted_by_user_id=admin_user.id,
             evidence_reference="CSV_PLAYER_IMPORT",
         )
+    update_identity_profile(db, user=user, date_of_birth=dob)
 
-    # Auto-issue LFA_FOOTBALL_PLAYER license
-    lic = UserLicense(
-        user_id=user.id,
-        specialization_type="LFA_FOOTBALL_PLAYER",
-        current_level=1,
-        max_achieved_level=1,
-        started_at=datetime.now(timezone.utc),
-        is_active=True,
-        onboarding_completed=False,
-        credit_balance=0,
+    issue_football_player_entitlement(
+        db,
+        user=user,
+        payment_verified=False,
     )
-    db.add(lic)
-    db.flush()
 
     return user, "created"
 

@@ -12,6 +12,10 @@ from ....models.user import User, UserRole
 from ....models.license import UserLicense, LicenseProgression
 from ....models.specialization import SpecializationType
 from ....models.credit_transaction import CreditTransaction, TransactionType
+from ....services.player_identity_service import (
+    PlayerIdentityError,
+    issue_football_player_entitlement,
+)
 
 from . import _admin_guard
 
@@ -139,16 +143,29 @@ async def admin_grant_license(
 
     now = datetime.now(timezone.utc)
     now_naive = now.replace(tzinfo=None)
-    new_license = UserLicense(
-        user_id=user_id,
-        specialization_type=spec.value,
-        started_at=now_naive,
-        issued_at=now_naive,
-        is_active=True,
-        expires_at=expires_at_dt,
-    )
-    db.add(new_license)
-    db.flush()  # get new_license.id
+    if spec is SpecializationType.LFA_FOOTBALL_PLAYER:
+        try:
+            new_license = issue_football_player_entitlement(
+                db,
+                user=target,
+                payment_verified=False,
+            ).license
+        except PlayerIdentityError as exc:
+            db.rollback()
+            raise HTTPException(status_code=409, detail=exc.code) from exc
+        new_license.issued_at = now_naive
+        new_license.expires_at = expires_at_dt
+    else:
+        new_license = UserLicense(
+            user_id=user_id,
+            specialization_type=spec.value,
+            started_at=now_naive,
+            issued_at=now_naive,
+            is_active=True,
+            expires_at=expires_at_dt,
+        )
+        db.add(new_license)
+        db.flush()  # get new_license.id
 
     progression = LicenseProgression(
         user_license_id=new_license.id,

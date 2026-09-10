@@ -29,6 +29,7 @@ from sqlalchemy import select
 
 from app.models.user_progress import SpecializationProgress
 from app.models.license import UserLicense, LicenseProgression
+from app.services.canonical_policy import CanonicalProgram, resolve_program_id
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +75,13 @@ class ProgressLicenseCoupler:
                 )
                 .with_for_update()  # Pessimistic lock
             ).scalar_one_or_none()
+
+            resolution = resolve_program_id(specialization)
+            if (
+                license is None
+                and resolution.canonical_program is CanonicalProgram.LFA_FOOTBALL_PLAYER
+            ):
+                raise ValueError("FOOTBALL_ENTITLEMENT_REQUIRES_CANONICAL_COMMAND")
 
             # Create Progress if missing
             if not progress:

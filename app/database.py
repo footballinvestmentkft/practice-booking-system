@@ -1,9 +1,21 @@
 import logging
+import os
+import sys
 import time
 
 from sqlalchemy import create_engine, event as sa_event, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 from .config import settings
+
+if settings.TESTING or "pytest" in sys.modules:
+    from .core.test_database_safety import assert_safe_test_database_url
+
+    assert_safe_test_database_url(
+        settings.DATABASE_URL,
+        explicitly_configured="DATABASE_URL" in os.environ,
+        disposable_confirmed=os.getenv("LFA_TEST_DATABASE_DISPOSABLE", "").lower()
+        in {"1", "true", "yes"},
+    )
 
 # ── Connection arguments ───────────────────────────────────────────────────────
 # Passed to the underlying psycopg2 driver on every new connection.

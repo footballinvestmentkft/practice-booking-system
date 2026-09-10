@@ -10,11 +10,17 @@ struct LFAPlayerLicense: Decodable {
     let id:                  Int
     let userId:              Int
     let specializationType:  String   // "LFA_FOOTBALL_PLAYER"
+    let canonicalProgramId:   String
     let currentLevel:        Int
     let isActive:            Bool
     let onboardingCompleted: Bool
     let startedAt:           String?
     let expiresAt:           String?  // ISO 8601 — nil means perpetual (no expiry set)
+    let seasonStart:          String?
+    let seasonEnd:            String?
+    let seasonBaseCategory:   String?
+    let effectiveCategory:    String?
+    let baseParticipationRetained: Bool?
 
     // True when expiresAt is set and that date is in the past.
     // nil expiresAt is treated as perpetual — never expired.
@@ -59,10 +65,16 @@ struct LFAPlayerLicense: Decodable {
         case id
         case userId              = "user_id"
         case specializationType  = "specialization_type"
+        case canonicalProgramId  = "canonical_program_id"
         case currentLevel        = "current_level"
         case isActive            = "is_active"
         case onboardingCompleted = "onboarding_completed"
         case startedAt           = "started_at"
         case expiresAt           = "expires_at"
+        case seasonStart          = "season_start"
+        case seasonEnd            = "season_end"
+        case seasonBaseCategory   = "season_base_category"
+        case effectiveCategory    = "effective_category"
+        case baseParticipationRetained = "base_participation_retained"
     }
 }

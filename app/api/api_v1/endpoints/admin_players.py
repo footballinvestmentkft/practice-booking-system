@@ -31,8 +31,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_admin_user
 from app.models.user import User, UserRole
-from app.models.license import UserLicense
 from app.core.security import get_password_hash
+from app.services.player_identity_service import issue_football_player_entitlement
+from app.services.player_identity_service import update_identity_profile
 from app.services.canonical_policy import (
     CanonicalProgram,
     evaluate_profile_age_policy,
@@ -213,7 +214,7 @@ def _commit_chunk(
                 last_name=parts[-1] if len(parts) > 1 else "Test",
                 role=UserRole.STUDENT,
                 is_active=True,
-                date_of_birth=dob,
+                date_of_birth=None,
                 created_at=now,
             )
             db.add(user)
@@ -226,17 +227,13 @@ def _commit_chunk(
                     granted_by_user_id=admin_user_id,
                     evidence_reference="ADMIN_BATCH_PLAYER_CREATE",
                 )
+            update_identity_profile(db, user=user, date_of_birth=dob)
 
-            db.add(UserLicense(
-                user_id=user.id,
-                specialization_type=specialization,
-                current_level=1,
-                max_achieved_level=1,
-                started_at=now,
+            issue_football_player_entitlement(
+                db,
+                user=user,
                 payment_verified=True,
-                payment_verified_at=now,
-                is_active=True,
-            ))
+            )
 
             # Update lookup so later chunks in the same call don't re-insert
             existing[entry.email] = user.id

@@ -27,7 +27,6 @@ Notes:
 """
 
 import pytest
-from datetime import datetime, timezone
 from typing import Optional
 
 
@@ -50,21 +49,19 @@ def wf_user_license_id(test_db, student_token) -> Optional[int]:
 
     # Prefer an existing canonical football-player license.
     lic = test_db.query(UserLicense).filter(
-        UserLicense.user_id == student.id
+        UserLicense.user_id == student.id,
+        UserLicense.canonical_program_id == "LFA_FOOTBALL_PLAYER",
     ).first()
     if lic:
         return lic.id
 
-    # Create a minimal license
-    lic = UserLicense(
-        user_id=student.id,
-        specialization_type="LFA_FOOTBALL_PLAYER",
-        current_level=1,
-        max_achieved_level=1,
-        started_at=datetime.now(timezone.utc),
-        is_active=True,
-    )
-    test_db.add(lic)
+    # Provision through the canonical Player entitlement boundary.
+    from app.services.player_identity_service import issue_football_player_entitlement
+    lic = issue_football_player_entitlement(
+        test_db,
+        user=student,
+        payment_verified=False,
+    ).license
     test_db.commit()
     test_db.refresh(lic)
     return lic.id
@@ -108,7 +105,9 @@ class TestLicenseAdvancementWorkflow:
 
     # ── WF03 — Advancement request ────────────────────────────────────────────
 
-    def test_wf03_student_requests_advancement(self, api_client, student_token):
+    def test_wf03_student_requests_advancement(
+        self, api_client, student_token, wf_user_license_id
+    ):
         """
         Step 3: Student requests license level advancement.
         Endpoint: POST /api/v1/licenses/advance
@@ -120,6 +119,7 @@ class TestLicenseAdvancementWorkflow:
           403  — permission denied
           404  — user has no license for this specialization
         """
+        assert wf_user_license_id is not None
         headers = {"Authorization": f"Bearer {student_token}"}
         payload = {
             "specialization": "LFA_FOOTBALL_PLAYER",

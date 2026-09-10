@@ -34,6 +34,11 @@ from ...models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from ...models.session import Session as SessionModel
 from ...models.user import User, UserRole
 from ...services.runtime_guards import guard_post_enroll, guard_post_withdraw
+from ...services.canonical_policy import CanonicalProgram, resolve_license_program
+from ...services.player_identity_service import (
+    PlayerIdentityError,
+    prepare_football_player_enrollment,
+)
 from ...services.semester_service import (
     create_enrollment_with_bookings,
     withdraw_enrollment_bookings,
@@ -190,6 +195,24 @@ async def semester_request_enrollment(
     if not license_:
         return _err("No+active+license+for+this+specialization")
 
+    football_assignment = None
+    program_resolution = resolve_license_program(
+        license_.canonical_program_id,
+        license_.specialization_type,
+    )
+    if not program_resolution.usable:
+        return _err("Program+identity+requires+manual+review")
+    if program_resolution.canonical_program is CanonicalProgram.LFA_FOOTBALL_PLAYER:
+        try:
+            football_assignment = prepare_football_player_enrollment(
+                db,
+                user=user,
+                user_license=license_,
+            ).assignment
+        except PlayerIdentityError as exc:
+            db.rollback()
+            return _err(exc.code)
+
     existing = (
         db.query(SemesterEnrollment)
         .filter(
@@ -231,6 +254,12 @@ async def semester_request_enrollment(
             semester_code=semester.code,
             user_credit_balance=user.credit_balance,
             now=now,
+            football_category_assignment_id=(
+                football_assignment.id if football_assignment else None
+            ),
+            age_category=(
+                football_assignment.effective_category if football_assignment else None
+            ),
         )
         db.commit()
     except IntegrityError:

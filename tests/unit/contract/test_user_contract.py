@@ -65,6 +65,10 @@ class TestUserCreateContract:
     def test_user_create_has_name_field(self):
         assert "name" in UserCreate.model_fields
 
+    def test_user_create_date_of_birth_is_required(self):
+        assert "date_of_birth" in UserCreate.model_fields
+        assert UserCreate.model_fields["date_of_birth"].is_required()
+
 
 class TestUserLicenseSimpleContract:
     """Contract: UserLicense embedded in User response (UserLicenseSimple schema)."""

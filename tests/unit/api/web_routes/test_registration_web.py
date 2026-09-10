@@ -262,11 +262,13 @@ class TestRegisterSubmitSuccess:
 
         with patch(f"{_BASE}.get_password_hash", return_value="hashed_pw"), \
              patch(f"{_BASE}.User", return_value=new_user), \
+             patch(f"{_BASE}.update_identity_profile") as update_identity, \
              patch(f"{_BASE}.create_access_token", return_value="tok123"), \
              patch(f"{_BASE}.settings", _settings_patch()):
             result = _run(register_submit(request=_req(), db=db, **_valid_form()))
 
         assert isinstance(result, RedirectResponse)
+        update_identity.assert_called_once()
         assert "/dashboard" in result.headers["location"]
         # Cookie must be set
         assert "access_token" in result.headers.get("set-cookie", "")

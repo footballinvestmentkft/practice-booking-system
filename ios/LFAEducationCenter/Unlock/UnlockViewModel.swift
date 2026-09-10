@@ -9,6 +9,12 @@ private struct UnlockResponse: Decodable {
     let durationMonths: Int?
     let cost:           Int?
     let expiresAt:      String?   // ISO 8601 — nil only on legacy/error paths
+    let canonicalProgramId: String?
+    let seasonStart: String?
+    let seasonEnd: String?
+    let seasonBaseCategory: String?
+    let effectiveCategory: String?
+    let baseParticipationRetained: Bool?
 
     enum CodingKeys: String, CodingKey {
         case success, message
@@ -17,6 +23,12 @@ private struct UnlockResponse: Decodable {
         case durationMonths = "duration_months"
         case cost
         case expiresAt      = "expires_at"
+        case canonicalProgramId = "canonical_program_id"
+        case seasonStart = "season_start"
+        case seasonEnd = "season_end"
+        case seasonBaseCategory = "season_base_category"
+        case effectiveCategory = "effective_category"
+        case baseParticipationRetained = "base_participation_retained"
     }
 }
 

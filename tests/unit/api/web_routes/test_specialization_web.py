@@ -13,6 +13,7 @@ Note: lfa_player_onboarding_page and lfa_player_onboarding_cancel are now exclus
   Coverage for those routes is in test_onboarding_web.py.
 """
 import asyncio
+from datetime import date, datetime, timezone
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -27,6 +28,11 @@ from app.api.web_routes.specialization import (
 )
 from app.models.user import UserRole
 from app.models.specialization import SpecializationType
+from app.services.credit_service import InsufficientCreditsError
+from app.services.player_identity_service import (
+    PlayerEntitlementExistsError,
+    PlayerIdentityPolicyError,
+)
 
 _BASE = "app.api.web_routes.specialization"
 
@@ -90,6 +96,23 @@ def _mock_db(first_return=None, user_return=None):
     return db
 
 
+def _player_result(user, *, cost=100):
+    user.credit_balance -= cost
+    license_row = MagicMock(
+        id=1,
+        canonical_program_id="LFA_FOOTBALL_PLAYER",
+        expires_at=datetime(2026, 10, 10, tzinfo=timezone.utc),
+    )
+    assignment = MagicMock(
+        season_start=date(2026, 7, 1),
+        season_end=date(2027, 6, 30),
+        season_base_category="AMATEUR",
+        effective_category="AMATEUR",
+        base_participation_retained=False,
+    )
+    return MagicMock(license=license_row, assignment=assignment, cost=cost)
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # specialization_unlock (POST /specialization/unlock)
 # ──────────────────────────────────────────────────────────────────────────────
@@ -98,8 +121,10 @@ class TestSpecializationUnlock:
 
     def test_insufficient_credits_raises_400(self):
         user = _user(credit_balance=50)
-        import pytest
-        with pytest.raises(HTTPException) as exc_info:
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=InsufficientCreditsError(required=100, available=50),
+        ), pytest.raises(HTTPException) as exc_info:
             _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=_mock_db(user_return=user), current_user=user))
         assert exc_info.value.status_code == 400
         assert "credits" in exc_info.value.detail.lower()
@@ -113,8 +138,10 @@ class TestSpecializationUnlock:
 
     def test_age_requirement_not_met_raises_403(self):
         user = _user(credit_balance=500, age=3)
-        import pytest
-        with patch(f"{_BASE}.is_user_eligible_for_program", return_value=(False, "MINIMUM_ACCOUNT_AGE")):
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=PlayerIdentityPolicyError("MINIMUM_ACCOUNT_AGE"),
+        ):
             with pytest.raises(HTTPException) as exc_info:
                 _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=_mock_db(), current_user=user))
         assert exc_info.value.status_code == 403
@@ -122,49 +149,38 @@ class TestSpecializationUnlock:
     def test_success_creates_license_and_deducts_credits(self):
         user = _user(credit_balance=200)
         db = MagicMock()
-        # SELECT FOR UPDATE re-query returns the user mock
-        db.query.return_value.with_for_update.return_value.filter.return_value.first.return_value = user
-        # License check (no with_for_update) returns None → no existing license
-        db.query.return_value.filter.return_value.first.return_value = None
-        license_mock = MagicMock()
-        license_mock.id = 1
-
-        with patch(f"{_BASE}.UserLicense", return_value=license_mock):
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=lambda *args, **kwargs: _player_result(user),
+        ) as unlock:
             result = _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=db, current_user=user))
         assert result["success"] is True
         assert user.credit_balance == 100  # 200 - 100
-        db.add.assert_called()
+        unlock.assert_called_once_with(db, user=user, duration_months=1)
         db.commit.assert_called_once()
 
     def test_existing_license_raises_409(self):
         """Race condition: license already exists AFTER SELECT FOR UPDATE → 409 Conflict."""
         user = _user(credit_balance=200)
         db = MagicMock()
-        db.query.return_value.with_for_update.return_value.filter.return_value.first.return_value = user
-        # License check returns an existing license → 409
-        existing_license = MagicMock()
-        existing_license.canonical_program_id = "LFA_FOOTBALL_PLAYER"
-        existing_license.specialization_type = "LFA_FOOTBALL_PLAYER"
-        db.query.return_value.filter.return_value.all.return_value = [existing_license]
-
-        with pytest.raises(HTTPException) as exc_info:
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=PlayerEntitlementExistsError(),
+        ), pytest.raises(HTTPException) as exc_info:
             _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=db, current_user=user))
 
         assert exc_info.value.status_code == 409
-        assert "already have a license" in exc_info.value.detail.lower()
+        assert exc_info.value.detail == "FOOTBALL_ENTITLEMENT_ALREADY_EXISTS"
 
     def test_integrity_error_during_commit_raises_409(self):
         """IntegrityError on db.commit (ultra-rare race) → 409 Conflict."""
         from sqlalchemy.exc import IntegrityError
         user = _user(credit_balance=200)
         db = MagicMock()
-        db.query.return_value.with_for_update.return_value.filter.return_value.first.return_value = user
-        db.query.return_value.filter.return_value.first.return_value = None
-        db.commit.side_effect = IntegrityError("duplicate key", {}, Exception())
-        license_mock = MagicMock()
-        license_mock.id = 1
-
-        with patch(f"{_BASE}.UserLicense", return_value=license_mock), \
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=IntegrityError("duplicate key", {}, Exception()),
+        ), \
              pytest.raises(HTTPException) as exc_info:
             _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=db, current_user=user))
 
@@ -174,7 +190,10 @@ class TestSpecializationUnlock:
     def test_credit_boundary_99_is_rejected(self):
         """credit_balance=99 < 100 → 400 Bad Request."""
         user = _user(credit_balance=99)
-        with pytest.raises(HTTPException) as exc_info:
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=InsufficientCreditsError(required=100, available=99),
+        ), pytest.raises(HTTPException) as exc_info:
             _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=_mock_db(user_return=user), current_user=user))
         assert exc_info.value.status_code == 400
         assert "credits" in exc_info.value.detail.lower()
@@ -183,12 +202,10 @@ class TestSpecializationUnlock:
         """credit_balance=100 == 100 → exactly enough → success."""
         user = _user(credit_balance=100)
         db = MagicMock()
-        db.query.return_value.with_for_update.return_value.filter.return_value.first.return_value = user
-        db.query.return_value.filter.return_value.first.return_value = None
-        license_mock = MagicMock()
-        license_mock.id = 1
-
-        with patch(f"{_BASE}.UserLicense", return_value=license_mock):
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=lambda *args, **kwargs: _player_result(user),
+        ):
             result = _run(specialization_unlock(specialization="LFA_FOOTBALL_PLAYER", duration_months=1, db=db, current_user=user))
 
         assert result["success"] is True
@@ -286,15 +303,18 @@ class TestMotivationQuestionnaireSubmit:
         db.commit.assert_called_once()
         assert license_mock.onboarding_completed is True
 
-    def test_valid_submit_creates_license_if_not_found(self):
+    def test_valid_player_submit_without_entitlement_fails_closed(self):
         db = _mock_db(first_return=None)  # No existing license
         user = _user()
-        with patch(f"{_BASE}.UserLicense", return_value=MagicMock()):
+        with patch(f"{_BASE}.templates") as mock_templates:
+            mock_templates.TemplateResponse.return_value = MagicMock()
             result = _run(student_motivation_questionnaire_submit(
                 request=self._valid_form(), db=db, user=user
             ))
-        assert isinstance(result, RedirectResponse)
-        db.add.assert_called()
+        assert not isinstance(result, RedirectResponse)
+        context = mock_templates.TemplateResponse.call_args.args[1]
+        assert context["error"] == "ACTIVE_FOOTBALL_ENTITLEMENT_REQUIRED"
+        db.add.assert_not_called()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -322,19 +342,22 @@ class TestSpecializationSwitch:
         license_mock = MagicMock()
         user = _user()
         db = _mock_db(first_return=license_mock)
-        result = _run(specialization_switch(
-            request=_req(), specialization="LFA_FOOTBALL_PLAYER", db=db, user=user
-        ))
+        with patch(f"{_BASE}.activate_football_player") as activate:
+            result = _run(specialization_switch(
+                request=_req(), specialization="LFA_FOOTBALL_PLAYER", db=db, user=user
+            ))
         assert isinstance(result, RedirectResponse)
+        activate.assert_called_once_with(db, user=user)
         db.commit.assert_called_once()
 
     def test_return_url_is_honoured(self):
         license_mock = MagicMock()
         user = _user()
         db = _mock_db(first_return=license_mock)
-        result = _run(specialization_switch(
-            request=_req(), specialization="LFA_FOOTBALL_PLAYER",
-            return_url="/profile", db=db, user=user
-        ))
+        with patch(f"{_BASE}.activate_football_player"):
+            result = _run(specialization_switch(
+                request=_req(), specialization="LFA_FOOTBALL_PLAYER",
+                return_url="/profile", db=db, user=user
+            ))
         assert isinstance(result, RedirectResponse)
         assert "/profile" in result.headers["location"]

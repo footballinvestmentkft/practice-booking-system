@@ -49,6 +49,7 @@ from app.api.api_v1.endpoints.public_profile import (
 )
 
 _SKILL_PROFILE_PATH = "app.services.skill_progression_service.get_skill_profile"
+_ASSIGNMENT_PATH = "app.api.api_v1.endpoints.public_profile.get_current_player_assignment"
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -181,7 +182,7 @@ class TestGetLfaPlayerProfile:
         assert "passing" in result["skills"]
         assert result["total_tournaments"] == 4
 
-    def test_age_group_pre_for_child_under_7(self):
+    def test_age_group_pre_from_ws1_assignment(self):
         today = datetime.today()
         dob = MagicMock()
         dob.year = today.year - 5
@@ -191,10 +192,11 @@ class TestGetLfaPlayerProfile:
         user = _user_row(dob=dob)
         lic = _lfa_license(onboarding=False)
         db = _db_lfa_profile(user, lic)
-        result = get_lfa_player_profile(user_id=10, db=db)
+        with patch(_ASSIGNMENT_PATH, return_value=MagicMock(effective_category="PRE")):
+            result = get_lfa_player_profile(user_id=10, db=db)
         assert result["age_group"] == "PRE"
 
-    def test_age_group_youth_for_child_7_to_14(self):
+    def test_age_group_youth_from_ws1_assignment(self):
         today = datetime.today()
         dob = MagicMock()
         dob.year = today.year - 10
@@ -204,10 +206,11 @@ class TestGetLfaPlayerProfile:
         user = _user_row(dob=dob)
         lic = _lfa_license(onboarding=False)
         db = _db_lfa_profile(user, lic)
-        result = get_lfa_player_profile(user_id=10, db=db)
+        with patch(_ASSIGNMENT_PATH, return_value=MagicMock(effective_category="YOUTH")):
+            result = get_lfa_player_profile(user_id=10, db=db)
         assert result["age_group"] == "YOUTH"
 
-    def test_age_group_amateur_for_adult(self):
+    def test_age_group_amateur_from_ws1_assignment(self):
         today = datetime.today()
         dob = MagicMock()
         dob.year = today.year - 20
@@ -217,15 +220,17 @@ class TestGetLfaPlayerProfile:
         user = _user_row(dob=dob)
         lic = _lfa_license(onboarding=False)
         db = _db_lfa_profile(user, lic)
-        result = get_lfa_player_profile(user_id=10, db=db)
+        with patch(_ASSIGNMENT_PATH, return_value=MagicMock(effective_category="AMATEUR")):
+            result = get_lfa_player_profile(user_id=10, db=db)
         assert result["age_group"] == "AMATEUR"
 
-    def test_no_dob_defaults_to_amateur(self):
+    def test_missing_assignment_does_not_invent_amateur(self):
         user = _user_row(dob=None)
         lic = _lfa_license(onboarding=False)
         db = _db_lfa_profile(user, lic)
-        result = get_lfa_player_profile(user_id=10, db=db)
-        assert result["age_group"] == "AMATEUR"
+        with patch(_ASSIGNMENT_PATH, return_value=None):
+            result = get_lfa_player_profile(user_id=10, db=db)
+        assert result["age_group"] is None
 
     def test_position_from_motivation_scores(self):
         motivation = {"position": "Striker"}

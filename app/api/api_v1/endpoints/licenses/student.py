@@ -10,7 +10,10 @@ from .....database import get_db
 from .....dependencies import get_current_user
 from .....models.user import User
 from .....models.audit_log import AuditAction
-from .....services.license_service import LicenseService
+from .....services.license_service import (
+    FootballEntitlementRequiresCanonicalCommand,
+    LicenseService,
+)
 from .....services.audit_service import AuditService
 
 router = APIRouter()
@@ -91,14 +94,20 @@ async def advance_license(
     
     # For now, allow self-advancement for testing
     # In production, this would create an advancement request
-    result = license_service.advance_license(
-        user_id=current_user.id,
-        specialization=data['specialization'],
-        target_level=data['target_level'],
-        advanced_by=current_user.id,  # Would be instructor in production
-        reason=data.get('reason', 'Self-advancement request'),
-        requirements_met=data.get('requirements_met', 'Auto-approved for testing')
-    )
+    try:
+        result = license_service.advance_license(
+            user_id=current_user.id,
+            specialization=data['specialization'],
+            target_level=data['target_level'],
+            advanced_by=current_user.id,  # Would be instructor in production
+            reason=data.get('reason', 'Self-advancement request'),
+            requirements_met=data.get('requirements_met', 'Auto-approved for testing')
+        )
+    except FootballEntitlementRequiresCanonicalCommand as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="ACTIVE_FOOTBALL_ENTITLEMENT_REQUIRED",
+        ) from exc
 
     # 🔍 AUDIT: Log license advancement
     audit_service = AuditService(db)
@@ -182,5 +191,3 @@ async def get_marketing_content(
     """
     license_service = LicenseService(db)
     return license_service.get_marketing_content(specialization, level)
-
-

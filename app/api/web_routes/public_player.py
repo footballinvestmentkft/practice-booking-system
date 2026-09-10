@@ -5,7 +5,6 @@ Public player card web routes.
   GET /players/{user_id}/card/export   — auth required, returns PNG
 """
 import asyncio
-from datetime import date
 import logging
 import os
 from typing import Optional
@@ -23,6 +22,7 @@ from app.models.license import UserLicense
 from app.models.team import Team, TeamMember
 from app.models.club import Club
 from app.services import card_export_service as _export_svc
+from app.services.player_identity_service import get_current_player_assignment
 from app.skills_config import SKILL_CATEGORIES
 from app.utils.dominant_foot import calculate_dominant_badge
 from app.utils.country_codes import register_filters as _register_country_filters
@@ -333,16 +333,10 @@ def public_player_card(
     primary_pos_label = _position_label(position) if position != "Unknown" else None
     secondary_pos_labels = [_position_label(p) for p in player_positions if p != position]
 
-    # Age group from date_of_birth
-    age_group = "AMATEUR"
-    if user.date_of_birth:
-        dob = user.date_of_birth if hasattr(user.date_of_birth, "year") else user.date_of_birth
-        today = date.today()
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        if age < 7:
-            age_group = "PRE"
-        elif age < 15:
-            age_group = "YOUTH"
+    category_assignment = get_current_player_assignment(db, user_id=user.id)
+    age_group = (
+        category_assignment.effective_category if category_assignment else None
+    )
 
     # Tier
     if overall >= 90:

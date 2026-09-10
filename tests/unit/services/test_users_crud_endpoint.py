@@ -314,6 +314,8 @@ class TestUpdateUser:
         """UU-03: email unchanged → no uniqueness check."""
         existing = MagicMock()
         existing.email = "same@example.com"
+        existing.role = UserRole.INSTRUCTOR
+        existing.date_of_birth = None
         db = _seq_db(existing)
 
         update = MagicMock()
@@ -328,6 +330,8 @@ class TestUpdateUser:
         """UU-04: valid update → setattr called for each field."""
         existing = MagicMock()
         existing.email = "old@example.com"
+        existing.role = UserRole.INSTRUCTOR
+        existing.date_of_birth = None
         db = _seq_db(existing)
 
         update = MagicMock()
@@ -342,6 +346,8 @@ class TestUpdateUser:
     def test_no_email_in_update(self):
         """UU-05: email=None in update → no uniqueness check."""
         existing = MagicMock()
+        existing.role = UserRole.INSTRUCTOR
+        existing.date_of_birth = None
         db = _seq_db(existing)
 
         update = MagicMock()

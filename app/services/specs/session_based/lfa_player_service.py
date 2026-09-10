@@ -40,6 +40,11 @@ from app.services.canonical_policy import (
     resolve_license_program,
 )
 from app.services.program_eligibility_service import is_user_eligible_for_program
+from app.services.player_identity_service import (
+    PlayerEntitlementConflictError,
+    get_active_football_entitlement,
+    get_current_player_assignment,
+)
 from app.skills_config import get_all_skill_keys
 from app.services.canonical_policy import football_base_category, football_season
 
@@ -118,6 +123,16 @@ class LFAPlayerService(BaseSpecializationService):
     def get_specialization_name(self) -> str:
         """Human-readable name"""
         return "LFA Football Player"
+
+    def validate_user_has_license(self, user, db: Session) -> Tuple[bool, Optional[str]]:
+        """Require the canonical Player entitlement rather than any active license."""
+        try:
+            license_row = get_active_football_entitlement(db, user_id=user.id)
+        except PlayerEntitlementConflictError:
+            return False, "Player entitlement identity requires manual review"
+        if license_row is None:
+            return False, "No active license found for LFA Football Player"
+        return True, None
 
     # ========================================================================
     # AGE GROUP CALCULATION & VALIDATION
@@ -257,10 +272,12 @@ class LFAPlayerService(BaseSpecializationService):
             return False, error
 
         # Get user's license
-        license = db.query(UserLicense).filter(
-            UserLicense.user_id == user.id,
-            UserLicense.is_active == True
-        ).first()
+        try:
+            license = get_active_football_entitlement(db, user_id=user.id)
+        except PlayerEntitlementConflictError:
+            return False, "Player entitlement identity requires manual review"
+        if license is None:
+            return False, "No active license found for LFA Football Player"
 
         # ✅ CHECK SEASON ENROLLMENT (payment verified)
         season_enrollment = None
@@ -378,14 +395,14 @@ class LFAPlayerService(BaseSpecializationService):
         # Check license
         has_license, license_error = self.validate_user_has_license(user, db)
         if has_license:
-            license = db.query(UserLicense).filter(
-                UserLicense.user_id == user.id,
-                UserLicense.is_active == True
-            ).first()
+            license = get_active_football_entitlement(db, user_id=user.id)
+            assignment = get_current_player_assignment(db, user_id=user.id)
 
             status["has_license"] = True
             status["license_active"] = license.is_active
-            status["age_group"] = self.get_age_group_from_specialization(license.specialization_type)
+            status["age_group"] = assignment.effective_category if assignment else None
+            if assignment is None:
+                missing.append("Canonical football season assignment required")
         else:
             missing.append(f"Active license: {license_error}")
 
@@ -417,8 +434,8 @@ class LFAPlayerService(BaseSpecializationService):
                 "achievements": List[Dict] (completed milestones)
             }
         """
-        # Get age group from license
-        age_group = self.get_age_group_from_specialization(user_license.specialization_type)
+        assignment = get_current_player_assignment(db, user_id=user_license.user_id)
+        age_group = assignment.effective_category if assignment else None
 
         # Fetch all skill assessments for this license
         assessments = db.query(FootballSkillAssessment).filter(

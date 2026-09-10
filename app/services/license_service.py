@@ -14,6 +14,10 @@ from .progress_license_sync_service import ProgressLicenseSyncService
 from .canonical_policy import CanonicalProgram, resolve_program_id
 
 
+class FootballEntitlementRequiresCanonicalCommand(ValueError):
+    """Generic progression code may not create a Football entitlement."""
+
+
 class LicenseService:
     """Service for managing GānCuju™️©️ license system"""
 
@@ -101,6 +105,10 @@ class LicenseService:
 
         user_license = matches[0] if matches else None
         if user_license is None:
+            if resolution.canonical_program is CanonicalProgram.LFA_FOOTBALL_PLAYER:
+                raise FootballEntitlementRequiresCanonicalCommand(
+                    "Football Player entitlements require the canonical Player command"
+                )
             user_license = UserLicense(
                 user_id=user_id,
                 specialization_type=canonical,

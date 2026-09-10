@@ -16,7 +16,11 @@ from ....models.semester import Semester, SemesterStatus, SemesterCategory
 from ....models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from ....models.session import Session as SessionModel
 from ....models.user import User, UserRole
-from . import templates, _get_player_age_category
+from ....services.player_identity_service import (
+    PlayerIdentityError,
+    prepare_football_player_enrollment,
+)
+from . import templates
 
 router = APIRouter()
 
@@ -119,6 +123,16 @@ async def camp_enroll(
     if not effective_onboarding:
         return _err("Complete+your+LFA+Football+Player+onboarding+before+enrolling")
 
+    try:
+        player_assignment = prepare_football_player_enrollment(
+            db,
+            user=user,
+            user_license=license,
+        ).assignment
+    except PlayerIdentityError as exc:
+        db.rollback()
+        return _err(exc.code)
+
     # 5. Not already enrolled
     existing = db.query(SemesterEnrollment).filter(
         SemesterEnrollment.semester_id == camp_id,
@@ -136,12 +150,12 @@ async def camp_enroll(
         return _err(f"Insufficient+credits+(need+{cost}%2C+have+{user.credit_balance})")
 
     # 7. Create enrollment (auto-approved, no capacity limit for camps)
-    age_category = _get_player_age_category(user)
     enrollment = SemesterEnrollment(
         user_id=user.id,
         semester_id=camp_id,
         user_license_id=license.id,
-        age_category=age_category,
+        age_category=player_assignment.effective_category,
+        football_category_assignment_id=player_assignment.id,
         request_status=EnrollmentStatus.APPROVED,
         approved_at=datetime.utcnow(),
         approved_by=user.id,

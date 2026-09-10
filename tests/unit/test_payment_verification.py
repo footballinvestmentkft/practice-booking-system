@@ -150,10 +150,14 @@ class TestVerifyStudentPaymentHappyPath:
 
         db = _make_db(student=s, license_first=existing_license)
         req = PaymentVerificationRequest(specializations=["LFA_FOOTBALL_PLAYER"])
-        result = _run(verify_student_payment(
-            request=MagicMock(), student_id=42,
-            payment_request=req, db=db, current_user=_admin(),
-        ))
+        with patch(
+            "app.api.api_v1.endpoints.payment_verification.issue_football_player_entitlement"
+        ) as canonical_issue:
+            result = _run(verify_student_payment(
+                request=MagicMock(), student_id=42,
+                payment_request=req, db=db, current_user=_admin(),
+            ))
+        db.canonical_issue = canonical_issue
         return result, db, s
 
     def test_returns_student_id(self):
@@ -168,14 +172,16 @@ class TestVerifyStudentPaymentHappyPath:
         result, _, _ = self._run_verify()
         assert result["primary_specialization"] == "LFA_FOOTBALL_PLAYER"
 
-    def test_db_add_called_when_no_existing_license(self):
+    def test_canonical_issue_called_when_no_existing_license(self):
         _, db, _ = self._run_verify(existing_license=None)
-        db.add.assert_called_once()
+        db.canonical_issue.assert_called_once()
+        db.add.assert_not_called()
 
     def test_db_add_not_called_when_license_exists(self):
         existing = MagicMock()
         existing.specialization_type = "LFA_FOOTBALL_PLAYER"
         _, db, _ = self._run_verify(existing_license=existing)
+        db.canonical_issue.assert_not_called()
         db.add.assert_not_called()
 
     def test_db_commit_called(self):

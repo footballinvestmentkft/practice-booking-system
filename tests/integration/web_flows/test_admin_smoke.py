@@ -1896,6 +1896,7 @@ class TestSmoke17UserEditExtended:
             password_hash=get_password_hash("oldpassword"),
             role=UserRole.STUDENT,
             is_active=True,
+            date_of_birth=date(2000, 1, 1),
             credit_balance=500,
             credit_purchased=500,
         )

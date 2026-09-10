@@ -24849,7 +24849,7 @@
           "tournaments"
         ],
         "summary": "Enroll In Tournament",
-        "description": "Enroll current student in a tournament\n\n**Authorization:** Student role only\n\n**Validations:**\n1. Tournament exists and tournament_status is ENROLLMENT_OPEN or IN_PROGRESS\n2. Student has LFA_FOOTBALL_PLAYER license\n3. Age category enrollment rules (UPWARD ENROLLMENT - no instructor approval needed):\n   - PRE (5-13): Can enroll in PRE, YOUTH, AMATEUR, PRO (all above)\n   - YOUTH (14-18): Can enroll in YOUTH, AMATEUR, PRO (all above)\n   - AMATEUR (18+): Can enroll in AMATEUR, PRO (all above)\n   - PRO (18+): Can enroll in PRO only (already at top)\n4. Student not already enrolled\n5. Sufficient credit balance\n6. Conflict check (WARNING only, non-blocking)\n\n**Creates:**\n- SemesterEnrollment record (AUTO-APPROVED, is_active=True)\n- Deducts enrollment_cost from credit balance (INSTANT payment)\n- Assigns age_category based on age at season start (July 1)\n\n**Returns:**\n- Enrollment details\n- Conflict warnings (if any)\n- Credits remaining after enrollment",
+        "description": "Enroll current student in a tournament\n\n**Authorization:** Student role only\n\n**Validations:**\n1. Tournament exists and tournament_status is ENROLLMENT_OPEN or IN_PROGRESS\n2. Student has LFA_FOOTBALL_PLAYER license\n3. Age category enrollment rules (UPWARD ENROLLMENT - no instructor approval needed):\n   - PRE (5-13): Can enroll in PRE, YOUTH, AMATEUR, PRO (all above)\n   - YOUTH (14-18): Can enroll in YOUTH, AMATEUR, PRO (all above)\n   - AMATEUR (18+): Can enroll in AMATEUR, PRO (all above)\n   - PRO (18+): Can enroll in PRO only (already at top)\n4. Student not already enrolled\n5. Sufficient credit balance\n6. Conflict check (WARNING only, non-blocking)\n\n**Creates:**\n- SemesterEnrollment record (AUTO-APPROVED, is_active=True)\n- Deducts enrollment_cost from credit balance (INSTANT payment)\n- Binds age_category to the current WS1 effective category assignment\n\n**Returns:**\n- Enrollment details\n- Conflict warnings (if any)\n- Credits remaining after enrollment",
         "operationId": "enroll_in_tournament_api_v1_tournaments__tournament_id__enroll_post",
         "security": [
           {
@@ -29144,7 +29144,7 @@
           "admin-enrollment"
         ],
         "summary": "Admin Batch Enroll Players",
-        "description": "Admin-only endpoint to batch enroll multiple players in a tournament\n\n**Authorization:** Admin role only\n\n**Use Case:** Testing, tournament setup, admin-managed tournaments\n\n**Business Rules:**\n1. Admin can enroll players regardless of tournament status\n2. Auto-creates enrollments with APPROVED status\n3. Skips credit deduction (admin privilege)\n4. Auto-assigns age_category = 'PRO' for testing\n5. Requires players to have LFA_FOOTBALL_PLAYER license\n\n**Returns:**\n- Total enrolled count\n- List of failed player IDs",
+        "description": "Admin-only endpoint to batch enroll multiple players in a tournament\n\n**Authorization:** Admin role only\n\n**Use Case:** Testing, tournament setup, admin-managed tournaments\n\n**Business Rules:**\n1. Admin can enroll players regardless of tournament status\n2. Auto-creates enrollments with APPROVED status\n3. Skips credit deduction (admin privilege)\n4. Uses the player's canonical WS1 effective category assignment\n5. Requires players to have LFA_FOOTBALL_PLAYER license\n\n**Returns:**\n- Total enrolled count\n- List of failed player IDs",
         "operationId": "admin_batch_enroll_players_api_v1_tournaments__tournament_id__admin_batch_enroll_post",
         "security": [
           {
@@ -73503,15 +73503,8 @@
             "title": "Emergency Phone"
           },
           "date_of_birth": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Date Of Birth"
           },
           "medical_notes": {
@@ -73599,7 +73592,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "date_of_birth"
         ],
         "title": "UserCreate"
       },
@@ -74215,17 +74209,6 @@
             ],
             "title": "Email"
           },
-          "onboarding_completed": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Onboarding Completed"
-          },
           "phone": {
             "anyOf": [
               {
@@ -74304,17 +74287,6 @@
             ],
             "title": "Position"
           },
-          "specialization": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Specialization"
-          },
           "nda_accepted": {
             "anyOf": [
               {
@@ -74336,28 +74308,6 @@
               }
             ],
             "title": "Nda Ip Address"
-          },
-          "parental_consent": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Parental Consent"
-          },
-          "parental_consent_by": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Parental Consent By"
           }
         },
         "type": "object",
@@ -76365,6 +76315,10 @@
             "type": "string",
             "title": "Specialization Type"
           },
+          "canonical_program_id": {
+            "type": "string",
+            "title": "Canonical Program Id"
+          },
           "current_level": {
             "type": "integer",
             "title": "Current Level"
@@ -76398,6 +76352,61 @@
               }
             ],
             "title": "Expires At"
+          },
+          "season_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Season Start"
+          },
+          "season_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Season End"
+          },
+          "season_base_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Season Base Category"
+          },
+          "effective_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Category"
+          },
+          "base_participation_retained": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Participation Retained"
           }
         },
         "type": "object",
@@ -76405,6 +76414,7 @@
           "id",
           "user_id",
           "specialization_type",
+          "canonical_program_id",
           "current_level",
           "is_active",
           "onboarding_completed"

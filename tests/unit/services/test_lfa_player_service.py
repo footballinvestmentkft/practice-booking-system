@@ -55,6 +55,18 @@ def _db_with_license(spec_type: str = "LFA_PLAYER_YOUTH"):
     return db, lic
 
 
+def _canonical_entitlement_and_assignment(category: str):
+    license_row = MagicMock(
+        specialization_type="LFA_FOOTBALL_PLAYER",
+        canonical_program_id="LFA_FOOTBALL_PLAYER",
+        is_active=True,
+        user_id=1,
+        id=42,
+    )
+    assignment = MagicMock(effective_category=category)
+    return license_row, assignment
+
+
 def _db_no_license():
     db = MagicMock()
     db.query.return_value.filter.return_value.first.return_value = None
@@ -419,28 +431,75 @@ class TestGetEnrollmentRequirements:
 
     def test_has_license_can_participate(self):
         user = _mock_user(years_old=15)
-        db, _ = _db_with_license("LFA_PLAYER_YOUTH")
-        result = _service().get_enrollment_requirements(user, db)
+        db = MagicMock()
+        license_row, assignment = _canonical_entitlement_and_assignment("YOUTH")
+        with patch(
+            "app.services.specs.session_based.lfa_player_service.get_active_football_entitlement",
+            return_value=license_row,
+        ), patch(
+            "app.services.specs.session_based.lfa_player_service.get_current_player_assignment",
+            return_value=assignment,
+        ):
+            result = _service().get_enrollment_requirements(user, db)
         assert result['can_participate'] is True
         assert result['missing_requirements'] == []
 
     def test_status_has_license_true(self):
         user = _mock_user(years_old=15)
-        db, _ = _db_with_license("LFA_PLAYER_YOUTH")
-        result = _service().get_enrollment_requirements(user, db)
+        db = MagicMock()
+        license_row, assignment = _canonical_entitlement_and_assignment("YOUTH")
+        with patch(
+            "app.services.specs.session_based.lfa_player_service.get_active_football_entitlement",
+            return_value=license_row,
+        ), patch(
+            "app.services.specs.session_based.lfa_player_service.get_current_player_assignment",
+            return_value=assignment,
+        ):
+            result = _service().get_enrollment_requirements(user, db)
         assert result['current_status']['has_license'] is True
         assert result['current_status']['license_active'] is True
 
-    def test_status_age_group_extracted_from_license(self):
+    def test_status_age_group_comes_from_ws1_assignment(self):
         user = _mock_user(years_old=25)
-        db, _ = _db_with_license("LFA_PLAYER_AMATEUR")
-        result = _service().get_enrollment_requirements(user, db)
+        db = MagicMock()
+        license_row, assignment = _canonical_entitlement_and_assignment("AMATEUR")
+        with patch(
+            "app.services.specs.session_based.lfa_player_service.get_active_football_entitlement",
+            return_value=license_row,
+        ), patch(
+            "app.services.specs.session_based.lfa_player_service.get_current_player_assignment",
+            return_value=assignment,
+        ):
+            result = _service().get_enrollment_requirements(user, db)
         assert result['current_status']['age_group'] == 'AMATEUR'
+
+    def test_missing_ws1_assignment_fails_closed(self):
+        user = _mock_user(years_old=25)
+        db = MagicMock()
+        license_row, _ = _canonical_entitlement_and_assignment("AMATEUR")
+        with patch(
+            "app.services.specs.session_based.lfa_player_service.get_active_football_entitlement",
+            return_value=license_row,
+        ), patch(
+            "app.services.specs.session_based.lfa_player_service.get_current_player_assignment",
+            return_value=None,
+        ):
+            result = _service().get_enrollment_requirements(user, db)
+        assert result['can_participate'] is False
+        assert "Canonical football season assignment required" in result['missing_requirements']
 
     def test_status_natural_age_group_youth_for_15(self):
         user = _mock_user(years_old=15)
-        db, _ = _db_with_license("LFA_PLAYER_YOUTH")
-        result = _service().get_enrollment_requirements(user, db)
+        db = MagicMock()
+        license_row, assignment = _canonical_entitlement_and_assignment("YOUTH")
+        with patch(
+            "app.services.specs.session_based.lfa_player_service.get_active_football_entitlement",
+            return_value=license_row,
+        ), patch(
+            "app.services.specs.session_based.lfa_player_service.get_current_player_assignment",
+            return_value=assignment,
+        ):
+            result = _service().get_enrollment_requirements(user, db)
         assert result['current_status']['natural_age_group'] == 'YOUTH'
 
     def test_can_self_enroll_true_for_amateur(self):
@@ -455,6 +514,15 @@ class TestGetEnrollmentRequirements:
 # ===========================================================================
 
 class TestGetProgressionStatus:
+
+    @pytest.fixture(autouse=True)
+    def canonical_assignment(self):
+        assignment = MagicMock(effective_category="YOUTH")
+        with patch(
+            "app.services.specs.session_based.lfa_player_service.get_current_player_assignment",
+            return_value=assignment,
+        ):
+            yield
 
     def test_no_assessments_zero_progress(self):
         lic = MagicMock()
@@ -527,7 +595,11 @@ class TestGetProgressionStatus:
         lic.specialization_type = "LFA_PLAYER_INVALID"
         lic.id = 1
         db = _db_with_assessments([])
-        result = _service().get_progression_status(lic, db)
+        with patch(
+            "app.services.specs.session_based.lfa_player_service.get_current_player_assignment",
+            return_value=None,
+        ):
+            result = _service().get_progression_status(lic, db)
         assert result['current_level'] == 'Unknown'
 
 

@@ -70,6 +70,8 @@ def create_enrollment_with_bookings(
     semester_code: str,
     user_credit_balance: int,
     now: datetime,
+    football_category_assignment_id: int | None = None,
+    age_category: str | None = None,
 ) -> tuple:
     """
     Create or reactivate a semester enrollment; attach CreditTransaction + AuditLog;
@@ -93,6 +95,8 @@ def create_enrollment_with_bookings(
         withdrawn.is_active = True
         withdrawn.approved_at = now
         withdrawn.enrolled_at = now
+        withdrawn.football_category_assignment_id = football_category_assignment_id
+        withdrawn.age_category = age_category
         enrollment = withdrawn
         db.flush()
     else:
@@ -100,6 +104,8 @@ def create_enrollment_with_bookings(
             user_id=user_id,
             semester_id=semester_id,
             user_license_id=license_id,
+            football_category_assignment_id=football_category_assignment_id,
+            age_category=age_category,
             request_status=EnrollmentStatus.APPROVED,
             is_active=True,
             requested_at=now,

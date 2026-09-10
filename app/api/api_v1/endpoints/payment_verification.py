@@ -9,6 +9,10 @@ from ....dependencies import get_current_admin_user_web, get_current_admin_user
 from ....models.user import User, UserRole
 from ....models.specialization import SpecializationType
 from ....models.license import UserLicense
+from ....services.player_identity_service import (
+    PlayerIdentityError,
+    issue_football_player_entitlement,
+)
 
 router = APIRouter()
 
@@ -112,7 +116,21 @@ async def verify_student_payment(
             UserLicense.specialization_type == spec.value
         ).first()
 
-        if not existing_license:
+        if not existing_license and spec is SpecializationType.LFA_FOOTBALL_PLAYER:
+            try:
+                issue_football_player_entitlement(
+                    db,
+                    user=student,
+                    payment_verified=True,
+                )
+            except PlayerIdentityError as exc:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=exc.code,
+                ) from exc
+            created_licenses.append(spec.value)
+        elif not existing_license:
             # Create new license — student must still complete onboarding form
             new_license = UserLicense(
                 user_id=student.id,
@@ -262,15 +280,29 @@ async def add_student_specialization(
             detail=f"Student already has {spec.value} specialization"
         )
 
-    # Create new license — student must still complete onboarding form
-    new_license = UserLicense(
-        user_id=student.id,
-        specialization_type=spec.value,
-        current_level=1,
-        max_achieved_level=1,
-        started_at=datetime.now(timezone.utc),
-    )
-    db.add(new_license)
+    if spec is SpecializationType.LFA_FOOTBALL_PLAYER:
+        try:
+            issue_football_player_entitlement(
+                db,
+                user=student,
+                payment_verified=True,
+            )
+        except PlayerIdentityError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=exc.code,
+            ) from exc
+    else:
+        # Non-Player programs retain their existing provisioning path.
+        new_license = UserLicense(
+            user_id=student.id,
+            specialization_type=spec.value,
+            current_level=1,
+            max_achieved_level=1,
+            started_at=datetime.now(timezone.utc),
+        )
+        db.add(new_license)
 
     # If student has no primary specialization, set this as primary
     if not student.specialization:

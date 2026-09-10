@@ -30,6 +30,7 @@ from ....services.player_photo_service import (
 )
 from ....services.canonical_policy import evaluate_profile_age_policy
 from ....services.program_eligibility_service import record_guardian_consent
+from ....services.player_identity_service import update_identity_profile
 
 from . import templates, _admin_guard
 
@@ -160,7 +161,7 @@ async def admin_create_user(
         credit_balance=max(0, credit_balance),
         credit_purchased=max(0, credit_balance),
         onboarding_completed=False,
-        date_of_birth=dob,
+        date_of_birth=None,
         payment_verified=(credit_balance > 0),
     )
     db.add(new_user)
@@ -174,6 +175,7 @@ async def admin_create_user(
             granted_by_user_id=user.id,
             evidence_reference="WEB_ADMIN_USER_CREATE",
         )
+    update_identity_profile(db, user=new_user, date_of_birth=dob)
 
     if credit_balance > 0:
         db.add(CreditTransaction(

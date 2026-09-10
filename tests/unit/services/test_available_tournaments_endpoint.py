@@ -23,12 +23,14 @@ Covers list_available_tournaments:
 """
 
 import pytest
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
 from datetime import date, datetime
 
 from app.api.api_v1.endpoints.tournaments.available import list_available_tournaments
 from app.models.user import UserRole
+from app.services.player_identity_service import PlayerIdentityPolicyError
 
 _BASE = "app.api.api_v1.endpoints.tournaments.available"
 _AGE_SVC = "app.services.age_category_service"
@@ -123,16 +125,15 @@ _VALIDATION_BASE = "app.services.tournament.validation"
 
 
 def _patch_age_svc(category="YOUTH"):
-    """Patch all age_category_service functions.
-
-    get_visible_tournament_age_groups is a lazy import inside the function body
-    (line 107: from app.services.tournament.validation import ...), so it must
-    be patched at the source module, not at _BASE.
-    """
+    """Patch the canonical assignment read and visibility policy."""
+    context = SimpleNamespace(
+        assignment=SimpleNamespace(effective_category=category)
+    )
     return [
-        patch(f"{_BASE}.get_current_season_year", return_value=2026),
-        patch(f"{_BASE}.calculate_age_at_season_start", return_value=16),
-        patch(f"{_BASE}.get_automatic_age_category", return_value=category),
+        patch(
+            f"{_BASE}.get_authorized_football_player_context",
+            return_value=context,
+        ),
         patch(f"{_VALIDATION_BASE}.get_visible_tournament_age_groups",
               return_value=["PRE", "YOUTH", "AMATEUR", "PRO"]),
     ]
@@ -172,7 +173,7 @@ class TestAuthorization:
                 db=_db_empty(), current_user=_student(has_dob=False)
             )
         assert exc.value.status_code == 400
-        assert "date of birth" in exc.value.detail.lower()
+        assert exc.value.detail == "DATE_OF_BIRTH_REQUIRED"
 
 
 # ============================================================================
@@ -182,99 +183,47 @@ class TestAuthorization:
 class TestAgeCategoryDetermination:
 
     def test_category_determined_directly(self):
-        """ACD-01: get_automatic_age_category returns value → use it directly."""
+        """ACD-01: the canonical effective assignment drives visibility."""
         patches = _patch_age_svc(category="YOUTH")
-        with patches[0], patches[1], patches[2], patches[3]:
+        with patches[0], patches[1]:
             result = _call(_student(), _db_empty())
         assert result == []
 
     def test_category_none_recent_enrollment_has_category(self):
-        """ACD-02: age_category=None + recent enrollment with age_category → uses it."""
-        enrollment = MagicMock()
-        enrollment.age_category = "AMATEUR"
-
-        db = MagicMock()
-        # First query = SemesterEnrollment (for age category), then tournament query
-        call_n = [0]
-        def qside(*args):
-            q = MagicMock()
-            q.filter.return_value = q
-            q.options.return_value = q
-            q.order_by.return_value = q
-            q.all.return_value = []
-            q.count.return_value = 0
-            if call_n[0] == 0:
-                q.first.return_value = enrollment
-            else:
-                q.first.return_value = None
-            call_n[0] += 1
-            return q
-        db.query.side_effect = qside
-
-        with patch(f"{_BASE}.get_current_season_year", return_value=2026):
-            with patch(f"{_BASE}.calculate_age_at_season_start", return_value=20):
-                with patch(f"{_BASE}.get_automatic_age_category", return_value=None):
-                    with patch(f"{_VALIDATION_BASE}.get_visible_tournament_age_groups",
-                               return_value=["AMATEUR", "PRO"]) as mock_vis:
-                        result = _call(_student(), db)
-        # visible_age_groups was called with AMATEUR (from enrollment)
+        """ACD-02: assignment truth is used without consulting enrollment history."""
+        context = SimpleNamespace(
+            assignment=SimpleNamespace(effective_category="AMATEUR")
+        )
+        with patch(
+            f"{_BASE}.get_authorized_football_player_context",
+            return_value=context,
+        ), patch(
+            f"{_VALIDATION_BASE}.get_visible_tournament_age_groups",
+            return_value=["AMATEUR", "PRO"],
+        ) as mock_vis:
+            result = _call(_student(), _db_empty())
         mock_vis.assert_called_once_with("AMATEUR")
         assert result == []
 
     def test_category_none_no_enrollment_defaults_amateur(self):
-        """ACD-03: age_category=None + no enrollment → default AMATEUR."""
-        db = MagicMock()
-        call_n = [0]
-        def qside(*args):
-            q = MagicMock()
-            q.filter.return_value = q
-            q.options.return_value = q
-            q.order_by.return_value = q
-            q.all.return_value = []
-            q.count.return_value = 0
-            q.first.return_value = None  # No enrollment, no tournament
-            call_n[0] += 1
-            return q
-        db.query.side_effect = qside
-
-        with patch(f"{_BASE}.get_current_season_year", return_value=2026):
-            with patch(f"{_BASE}.calculate_age_at_season_start", return_value=25):
-                with patch(f"{_BASE}.get_automatic_age_category", return_value=None):
-                    with patch(f"{_VALIDATION_BASE}.get_visible_tournament_age_groups",
-                               return_value=["AMATEUR", "PRO"]) as mock_vis:
-                        result = _call(_student(), db)
-        # Default AMATEUR used
-        mock_vis.assert_called_once_with("AMATEUR")
+        """ACD-03: missing canonical assignment fails closed; no adult default."""
+        with patch(
+            f"{_BASE}.get_authorized_football_player_context",
+            side_effect=PlayerIdentityPolicyError(
+                "CURRENT_SEASON_ASSIGNMENT_REQUIRED"
+            ),
+        ):
+            with pytest.raises(HTTPException) as exc:
+                _call(_student(), _db_empty())
+        assert exc.value.status_code == 400
+        assert exc.value.detail == "CURRENT_SEASON_ASSIGNMENT_REQUIRED"
 
     def test_category_none_enrollment_no_age_category_defaults_amateur(self):
-        """ACD-04: age_category=None + enrollment.age_category=None → default AMATEUR."""
-        enrollment = MagicMock()
-        enrollment.age_category = None  # No age_category on enrollment
-
-        db = MagicMock()
-        call_n = [0]
-        def qside(*args):
-            q = MagicMock()
-            q.filter.return_value = q
-            q.options.return_value = q
-            q.order_by.return_value = q
-            q.all.return_value = []
-            q.count.return_value = 0
-            if call_n[0] == 0:
-                q.first.return_value = enrollment
-            else:
-                q.first.return_value = None
-            call_n[0] += 1
-            return q
-        db.query.side_effect = qside
-
-        with patch(f"{_BASE}.get_current_season_year", return_value=2026):
-            with patch(f"{_BASE}.calculate_age_at_season_start", return_value=25):
-                with patch(f"{_BASE}.get_automatic_age_category", return_value=None):
-                    with patch(f"{_VALIDATION_BASE}.get_visible_tournament_age_groups",
-                               return_value=["AMATEUR", "PRO"]) as mock_vis:
-                        result = _call(_student(), db)
-        mock_vis.assert_called_once_with("AMATEUR")
+        """ACD-04: a legacy enrollment projection cannot override assignment truth."""
+        patches = _patch_age_svc(category="PRO")
+        with patches[0], patches[1] as mock_vis:
+            _call(_student(), _db_empty())
+        mock_vis.assert_called_once_with("PRO")
 
 
 # ============================================================================
@@ -285,17 +234,22 @@ class TestFilters:
 
     def _run(self, **kwargs):
         patches = _patch_age_svc(category="YOUTH")
-        with patches[0], patches[1], patches[2], patches[3]:
+        with patches[0], patches[1]:
             return _call(_student(), _db_empty(), **kwargs)
 
     def test_age_group_not_in_visible_returns_empty(self):
         """FLT-01: age_group not in visible_age_groups → []."""
-        with patch(f"{_BASE}.get_current_season_year", return_value=2026):
-            with patch(f"{_BASE}.calculate_age_at_season_start", return_value=16):
-                with patch(f"{_BASE}.get_automatic_age_category", return_value="YOUTH"):
-                    with patch(f"{_VALIDATION_BASE}.get_visible_tournament_age_groups",
-                               return_value=["YOUTH", "AMATEUR"]):
-                        result = _call(_student(), _db_empty(), age_group="PRE")
+        context = SimpleNamespace(
+            assignment=SimpleNamespace(effective_category="YOUTH")
+        )
+        with patch(
+            f"{_BASE}.get_authorized_football_player_context",
+            return_value=context,
+        ), patch(
+            f"{_VALIDATION_BASE}.get_visible_tournament_age_groups",
+            return_value=["YOUTH", "AMATEUR"],
+        ):
+            result = _call(_student(), _db_empty(), age_group="PRE")
         assert result == []
 
     def test_age_group_in_visible_applied(self):
@@ -365,7 +319,7 @@ class TestTournamentResultBuilding:
                              has_campus=True, has_instructor=True)
         db = self._setup_db(t)
         patches = _patch_age_svc(category="YOUTH")
-        with patches[0], patches[1], patches[2], patches[3]:
+        with patches[0], patches[1]:
             result = _call(_student(), db)
         assert len(result) == 1
         r = result[0]
@@ -380,7 +334,7 @@ class TestTournamentResultBuilding:
                              has_campus=False, has_instructor=False)
         db = self._setup_db(t)
         patches = _patch_age_svc(category="YOUTH")
-        with patches[0], patches[1], patches[2], patches[3]:
+        with patches[0], patches[1]:
             result = _call(_student(), db)
         assert len(result) == 1
         r = result[0]
@@ -397,7 +351,7 @@ class TestTournamentResultBuilding:
         user_enrollment.request_status.value = "APPROVED"
         db = self._setup_db(t, user_enrollment=user_enrollment)
         patches = _patch_age_svc(category="YOUTH")
-        with patches[0], patches[1], patches[2], patches[3]:
+        with patches[0], patches[1]:
             result = _call(_student(), db)
         assert result[0]["is_enrolled"] is True
         assert result[0]["user_enrollment_status"] == "APPROVED"
@@ -407,7 +361,7 @@ class TestTournamentResultBuilding:
         t = _tournament_mock()
         db = self._setup_db(t, user_enrollment=None)
         patches = _patch_age_svc(category="YOUTH")
-        with patches[0], patches[1], patches[2], patches[3]:
+        with patches[0], patches[1]:
             result = _call(_student(), db)
         assert result[0]["is_enrolled"] is False
         assert result[0]["user_enrollment_status"] is None
@@ -418,6 +372,6 @@ class TestTournamentResultBuilding:
         t.enrollment_cost = None
         db = self._setup_db(t)
         patches = _patch_age_svc(category="YOUTH")
-        with patches[0], patches[1], patches[2], patches[3]:
+        with patches[0], patches[1]:
             result = _call(_student(), db)
         assert result[0]["tournament"]["enrollment_cost"] == 500

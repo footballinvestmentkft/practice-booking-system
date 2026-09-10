@@ -45,6 +45,7 @@ from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from app.models.session import Session as SessionModel, SessionType
 from app.models.user import User, UserRole
 from app.core.security import get_password_hash
+from app.services.player_identity_service import issue_football_player_entitlement
 
 
 # ── SAVEPOINT-isolated DB fixture ─────────────────────────────────────────────
@@ -492,6 +493,7 @@ class TestConcurrentEnrollmentRace:
                 onboarding_completed=True,
                 credit_balance=INITIAL_BALANCE,
                 payment_verified=True,
+                date_of_birth=date(2000, 1, 1),
             )
             setup_db.add(user)
             setup_db.flush()
@@ -509,13 +511,13 @@ class TestConcurrentEnrollmentRace:
             setup_db.add(sem)
             setup_db.flush()
 
-            lic = UserLicense(
-                user_id=user.id,
-                specialization_type="LFA_FOOTBALL_PLAYER",
-                is_active=True,
-                started_at=datetime.now(timezone.utc),
+            entitlement = issue_football_player_entitlement(
+                setup_db,
+                user=user,
+                payment_verified=True,
             )
-            setup_db.add(lic)
+            lic = entitlement.license
+            lic.onboarding_completed = True
             setup_db.commit()  # Real commit — visible to all threads
 
             user_id = user.id

@@ -606,6 +606,7 @@ class TestSlotNaming:
             patch(f"{_BASE}.templates") as mock_tmpl,
             patch(f"{_BASE}._CardDraftService") as mock_cds,
             patch(f"{_BASE}._build_published_grid_state", return_value=None),
+            patch(f"{_BASE}.get_current_player_assignment", return_value=None),
         ):
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             mock_cds.get_player_card_draft.return_value = MagicMock(published_data={})

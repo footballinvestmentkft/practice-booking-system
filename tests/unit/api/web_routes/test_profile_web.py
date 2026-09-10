@@ -180,9 +180,10 @@ class TestProfileEditSubmit:
     def _run_edit(self, user, dob_str, db=None):
         if db is None:
             db = _mock_db()
-        with patch(f"{_BASE}.UserLicense", MagicMock()), \
-             patch(f"{_BASE}.validate_specialization_for_age", MagicMock(return_value=True)), \
-             patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(
+            "app.services.player_identity_service.get_current_player_assignment",
+            return_value=None,
+        ), patch(f"{_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             result = _run(profile_edit_submit(
                 request=_req(),
@@ -208,33 +209,32 @@ class TestProfileEditSubmit:
         dob = date(date.today().year - 2, 1, 1).isoformat()
         _, mock_tmpl = self._run_edit(user, dob)
         _, ctx = mock_tmpl.TemplateResponse.call_args.args
-        assert "5" in ctx.get("error", "")
+        assert ctx.get("error") == "MINIMUM_ACCOUNT_AGE"
 
-    def test_too_old_renders_error(self):
+    def test_no_unapproved_maximum_age_is_invented(self):
         user = _user()
         dob = date(date.today().year - 130, 1, 1).isoformat()
-        _, mock_tmpl = self._run_edit(user, dob)
-        _, ctx = mock_tmpl.TemplateResponse.call_args.args
-        assert "valid" in ctx.get("error", "").lower()
+        result, _ = self._run_edit(user, dob)
+        assert isinstance(result, RedirectResponse)
+        assert "/profile" in result.headers["location"]
 
-    def test_blocked_specialization_on_age_change_renders_error(self):
+    def test_canonical_identity_policy_rejection_is_rendered(self):
         user = _user(has_dob=True)
-        # old_dob=2000-01-01, new dob different year → age_changed=True
-        user.date_of_birth = date(2000, 1, 1)
-        new_dob = "1999-06-01"  # different date → age_changed=True
-        mock_license = MagicMock()
-        mock_license.specialization_type = "LFA_FOOTBALL_PLAYER"
         db = _mock_db()
-        db.query.return_value.filter.return_value.all.return_value = [mock_license]
-        with patch(f"{_BASE}.UserLicense", MagicMock()), \
-             patch(f"{_BASE}.validate_specialization_for_age", return_value=False), \
+        from app.services.player_identity_service import PlayerIdentityPolicyError
+        with patch(
+             f"{_BASE}.update_identity_profile",
+             side_effect=PlayerIdentityPolicyError("SEASON_BASE_CATEGORY_CONFLICT"),
+             ), \
              patch(f"{_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(profile_edit_submit(
-                request=_req(), name="Test", date_of_birth=new_dob, db=db, user=user,
+                request=_req(), name="Test", date_of_birth="1999-06-01",
+                nationality=None, secondary_nationality=None, gender=None,
+                db=db, user=user,
             ))
         _, ctx = mock_tmpl.TemplateResponse.call_args.args
-        assert "error" in ctx
+        assert ctx["error"] == "SEASON_BASE_CATEGORY_CONFLICT"
 
     def test_valid_update_commits_and_redirects(self):
         user = _user(has_dob=True)

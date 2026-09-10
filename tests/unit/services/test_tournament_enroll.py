@@ -32,6 +32,7 @@ Covers:
 """
 
 from datetime import date, datetime, timedelta
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from sqlalchemy.exc import IntegrityError
 
@@ -43,6 +44,7 @@ from app.api.api_v1.endpoints.tournaments.enroll import (
 )
 from app.models.user import UserRole
 from app.models.semester import SemesterCategory
+from app.services.player_identity_service import PlayerIdentityPolicyError
 
 _BASE = "app.api.api_v1.endpoints.tournaments.enroll"
 
@@ -98,6 +100,11 @@ def _tournament(*, status="ENROLLMENT_OPEN", age_group="PRE", cost=500, max_play
 def _license():
     lic = MagicMock()
     lic.id = 5
+    lic.user_id = 42
+    lic.specialization_type = "LFA_FOOTBALL_PLAYER"
+    lic.canonical_program_id = "LFA_FOOTBALL_PLAYER"
+    lic.is_active = True
+    lic.expires_at = None
     return lic
 
 
@@ -128,11 +135,12 @@ def _enrollment():
 
 
 def _patch_helpers(**overrides):
-    """Context manager dict for all age-category + validation helpers."""
+    """Context manager dict for canonical Player + enrollment helpers."""
+    context = SimpleNamespace(
+        assignment=SimpleNamespace(id=77, effective_category="PRE")
+    )
     defaults = {
-        f"{_BASE}.get_current_season_year": dict(return_value=2024),
-        f"{_BASE}.calculate_age_at_season_start": dict(return_value=12),
-        f"{_BASE}.get_automatic_age_category": dict(return_value="PRE"),
+        f"{_BASE}.prepare_football_player_enrollment": dict(return_value=context),
         f"{_BASE}.validate_tournament_enrollment_age": dict(return_value=(True, None)),
         f"{_BASE}.check_duplicate_enrollment": dict(return_value=(True, None)),
     }
@@ -151,6 +159,23 @@ def _apply_patches(patches: dict):
 
 class TestEnrollInTournament:
     TID = 1
+
+    @pytest.fixture(autouse=True)
+    def canonical_player_context(self):
+        context = SimpleNamespace(
+            assignment=SimpleNamespace(id=77, effective_category="PRE")
+        )
+
+        def prepare(_db, *, user, **_kwargs):
+            if user.date_of_birth is None:
+                raise PlayerIdentityPolicyError("DATE_OF_BIRTH_REQUIRED")
+            return context
+
+        with patch(
+            f"{_BASE}.prepare_football_player_enrollment",
+            side_effect=prepare,
+        ):
+            yield
 
     def test_404_tournament_not_found(self):
         db = _seq_db(_q(first=None))
@@ -214,34 +239,40 @@ class TestEnrollInTournament:
         lic = _license()
         u = _student(dob=None)
         u.date_of_birth = None
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic))
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]))
         with pytest.raises(Exception) as exc:
             enroll_in_tournament(self.TID, db=db, current_user=u)
         assert exc.value.status_code == 400
-        assert "date of birth" in exc.value.detail.lower()
+        assert exc.value.detail == "DATE_OF_BIRTH_REQUIRED"
 
     def test_400_18plus_in_pre_tournament_no_auto_category(self):
         """18+ user (age_category=None) in PRE tournament → error."""
         t = _tournament(age_group="PRE")
         lic = _license()
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic))
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=20), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value=None):
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]))
+        context = SimpleNamespace(
+            assignment=SimpleNamespace(id=77, effective_category="AMATEUR")
+        )
+        with patch(
+            f"{_BASE}.prepare_football_player_enrollment",
+            return_value=context,
+        ):
             with pytest.raises(Exception) as exc:
                 enroll_in_tournament(self.TID, db=db, current_user=_student())
         assert exc.value.status_code == 400
-        assert "18" in exc.value.detail or "cannot enroll" in exc.value.detail.lower()
+        assert "AMATEUR" in exc.value.detail
+        assert "PRE" in exc.value.detail
 
     def test_400_18plus_in_amateur_gets_auto_category(self):
         """18+ user in AMATEUR tournament → auto-assigned AMATEUR, proceeds to age validation."""
         t = _tournament(age_group="AMATEUR")
         lic = _license()
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
         db.execute.return_value.rowcount = 1
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=20), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value=None), \
+        context = SimpleNamespace(
+            assignment=SimpleNamespace(id=77, effective_category="AMATEUR")
+        )
+        with patch(f"{_BASE}.prepare_football_player_enrollment", return_value=context), \
              patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)), \
              patch(f"{_BASE}.EnrollmentConflictService") as MockConflict:
@@ -258,12 +289,9 @@ class TestEnrollInTournament:
         """PRE player in PRO-only tournament → 400, detail names both categories."""
         t = _tournament(age_group="PRO")
         lic = _license()
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic))
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=10), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"):
-            with pytest.raises(Exception) as exc:
-                enroll_in_tournament(self.TID, db=db, current_user=_student())
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]))
+        with pytest.raises(Exception) as exc:
+            enroll_in_tournament(self.TID, db=db, current_user=_student())
         assert exc.value.status_code == 400
         # New message: "Your age category (PRE) is not eligible...Eligible: ['PRO']"
         assert "PRE" in exc.value.detail
@@ -273,11 +301,8 @@ class TestEnrollInTournament:
         t = _tournament(max_players=16)
         lic = _license()
         # capacity count = 16 (full)
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t), _q(count=16))
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=12), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t), _q(count=16))
+        with patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)):
             with pytest.raises(Exception) as exc:
                 enroll_in_tournament(self.TID, db=db, current_user=_student())
@@ -288,11 +313,8 @@ class TestEnrollInTournament:
         t = _tournament(cost=1000)
         lic = _license()
         user = _student(balance=500)  # not enough
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t), _q(count=0))
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=12), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t), _q(count=0))
+        with patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)):
             with pytest.raises(Exception) as exc:
                 enroll_in_tournament(self.TID, db=db, current_user=user)
@@ -303,12 +325,9 @@ class TestEnrollInTournament:
         """Atomic UPDATE rowcount=0 → concurrent credit drain detected."""
         t = _tournament()
         lic = _license()
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
         db.execute.return_value.rowcount = 0  # atomic update failed
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=12), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
+        with patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)), \
              patch(f"{_BASE}.EnrollmentConflictService") as MockConflict:
             MockConflict.check_session_time_conflict.return_value = None
@@ -320,15 +339,12 @@ class TestEnrollInTournament:
     def test_409_integrity_error_duplicate_constraint(self):
         t = _tournament()
         lic = _license()
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
         db.execute.return_value.rowcount = 1
         # Simulate IntegrityError with uq_active_enrollment in orig
         ie = IntegrityError("stmt", {}, Exception("uq_active_enrollment violation"))
         db.commit.side_effect = ie
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=12), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
+        with patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)), \
              patch(f"{_BASE}.EnrollmentConflictService") as MockConflict:
             MockConflict.check_session_time_conflict.return_value = None
@@ -340,14 +356,11 @@ class TestEnrollInTournament:
     def test_409_other_integrity_error(self):
         t = _tournament()
         lic = _license()
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
         db.execute.return_value.rowcount = 1
         ie = IntegrityError("stmt", {}, Exception("some_other_constraint"))
         db.commit.side_effect = ie
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=12), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
+        with patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)), \
              patch(f"{_BASE}.EnrollmentConflictService") as MockConflict:
             MockConflict.check_session_time_conflict.return_value = None
@@ -359,13 +372,10 @@ class TestEnrollInTournament:
     def test_500_generic_exception_during_commit(self):
         t = _tournament()
         lic = _license()
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
         db.execute.return_value.rowcount = 1
         db.commit.side_effect = RuntimeError("DB connection lost")
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=12), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
+        with patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)), \
              patch(f"{_BASE}.EnrollmentConflictService") as MockConflict:
             MockConflict.check_session_time_conflict.return_value = None
@@ -377,18 +387,22 @@ class TestEnrollInTournament:
     def test_200_success_no_sessions(self):
         t = _tournament()
         lic = _license()
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
         db.execute.return_value.rowcount = 1
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=12), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
+        with patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)), \
              patch(f"{_BASE}.EnrollmentConflictService") as MockConflict:
             MockConflict.check_session_time_conflict.return_value = None
             result = enroll_in_tournament(self.TID, db=db, current_user=_student())
         assert result["success"] is True
         assert result["conflicts"] == []
+        enrollment = next(
+            call.args[0]
+            for call in db.add.call_args_list
+            if call.args and call.args[0].__class__.__name__ == "SemesterEnrollment"
+        )
+        assert enrollment.football_category_assignment_id == 77
+        assert enrollment.age_category == "PRE"
 
     def test_200_success_with_auto_booking_sessions(self):
         t = _tournament()
@@ -396,14 +410,11 @@ class TestEnrollInTournament:
         session_mock = MagicMock()
         session_mock.id = 7
         db = _seq_db(
-            _q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t),
+            _q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t),
             _q(count=0), _q(all_=[session_mock])  # sessions for auto-booking
         )
         db.execute.return_value.rowcount = 1
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=12), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
+        with patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)), \
              patch(f"{_BASE}.EnrollmentConflictService") as MockConflict:
             MockConflict.check_session_time_conflict.return_value = None
@@ -415,7 +426,7 @@ class TestEnrollInTournament:
     def test_200_success_with_conflicts_and_warnings(self):
         t = _tournament()
         lic = _license()
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
         db.execute.return_value.rowcount = 1
         conflict_data = {
             "has_conflict": True,
@@ -423,10 +434,7 @@ class TestEnrollInTournament:
                            "message": "Session overlap", "session_id": 3, "semester_name": "Other"}],
             "warnings": ["Minor overlap detected"]
         }
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=12), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
+        with patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)), \
              patch(f"{_BASE}.EnrollmentConflictService") as MockConflict:
             MockConflict.check_session_time_conflict.return_value = conflict_data
@@ -441,12 +449,9 @@ class TestEnrollInTournament:
         t.enrollment_cost = None
         lic = _license()
         user = _student(balance=600)
-        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
+        db = _seq_db(_q(first=t), _q(first=None), _q(first=lic, all_=[lic]), _q(first=None), _q(first=t), _q(count=0), _q(all_=[]))
         db.execute.return_value.rowcount = 1
-        with patch(f"{_BASE}.get_current_season_year", return_value=2024), \
-             patch(f"{_BASE}.calculate_age_at_season_start", return_value=12), \
-             patch(f"{_BASE}.get_automatic_age_category", return_value="PRE"), \
-             patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
+        with patch(f"{_BASE}.validate_tournament_enrollment_age", return_value=(True, None)), \
              patch(f"{_BASE}.check_duplicate_enrollment", return_value=(True, None)), \
              patch(f"{_BASE}.EnrollmentConflictService") as MockConflict:
             MockConflict.check_session_time_conflict.return_value = None
