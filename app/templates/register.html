@@ -316,6 +316,16 @@
             </div>
 
             <div class="modern-form-group">
+                <label class="modern-label" for="guardian_name">Parent/guardian name <span style="font-weight:400;color:var(--auth-text-muted);">(required under 18)</span></label>
+                <input type="text" id="guardian_name" name="guardian_name" class="modern-input"
+                    maxlength="200" value="{{ guardian_name or '' }}">
+                <label class="modern-label" style="margin-top:10px;">
+                    <input type="checkbox" name="guardian_consent" value="true" {% if guardian_consent %}checked{% endif %}>
+                    Parent/guardian consent has been provided for this minor profile
+                </label>
+            </div>
+
+            <div class="modern-form-group">
                 <label class="modern-label" for="secondary_nationality">Secondary Nationality <span style="font-weight:400;color:var(--auth-text-muted);">(optional)</span></label>
                 <select id="secondary_nationality" name="secondary_nationality" class="modern-input modern-select">
                     <option value="">No secondary nationality</option>

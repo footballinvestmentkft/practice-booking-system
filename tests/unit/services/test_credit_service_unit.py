@@ -73,12 +73,12 @@ class TestCreditServiceUnit:
 
     def test_neither_user_id_raises_with_exact_message(self):
         """
-        Neither user_id nor user_license_id → ValueError.
+        Missing global user_id → ValueError.
         Assert exact message text to kill the string-literal mutant at line 64.
         """
         svc = CreditService(db=MagicMock())
         with pytest.raises(ValueError,
-                           match="Either user_id or user_license_id must be provided"):
+                           match="Global credit transactions require user_id"):
             svc.create_transaction(
                 user_id=None, user_license_id=None,
                 transaction_type="X", amount=1, balance_after=1,
@@ -87,12 +87,12 @@ class TestCreditServiceUnit:
 
     def test_both_user_ids_raises_with_exact_message(self):
         """
-        Both user_id and user_license_id provided → ValueError.
+        Legacy wallet ownership requested → ValueError.
         Assert exact message text to kill the string-literal mutant at line 67.
         """
         svc = CreditService(db=MagicMock())
         with pytest.raises(ValueError,
-                           match="Only one of user_id or user_license_id can be provided"):
+                           match="Legacy license wallet is read-only"):
             svc.create_transaction(
                 user_id=42, user_license_id=9,
                 transaction_type="X", amount=1, balance_after=1,
@@ -213,10 +213,10 @@ class TestCreditServiceUnit:
                 transaction_type="X", amount=1, balance_after=1,
                 description="x", idempotency_key="x",
             )
-        assert str(exc_info.value) == "Either user_id or user_license_id must be provided"
+        assert str(exc_info.value) == "Global credit transactions require user_id"
 
     def test_both_user_ids_message_is_exact(self):
-        """Exact message check for the 'Only one' validation guard (line 66)."""
+        """Exact message check for the legacy wallet write guard."""
         svc = CreditService(db=MagicMock())
         with pytest.raises(ValueError) as exc_info:
             svc.create_transaction(
@@ -224,7 +224,7 @@ class TestCreditServiceUnit:
                 transaction_type="X", amount=1, balance_after=1,
                 description="x", idempotency_key="x",
             )
-        assert str(exc_info.value) == "Only one of user_id or user_license_id can be provided"
+        assert str(exc_info.value) == "Legacy license wallet is read-only; use context_user_license_id"
 
     def test_race_condition_message_is_exact(self):
         """Exact message check for the race-condition ValueError (line 128)."""

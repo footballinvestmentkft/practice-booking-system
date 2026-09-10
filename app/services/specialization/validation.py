@@ -3,30 +3,23 @@ Specialization Validation & Utilities
 Common validation functions and enum handling for all specializations
 """
 from typing import Optional, Dict, Any, List
-from datetime import datetime
 from sqlalchemy.orm import Session
 import logging
 
 from app.models.specialization import SpecializationType
 from app.models.user_progress import Specialization
 from app.services.specialization_config_loader import get_config_loader
+from app.services.canonical_policy import resolve_program_id
 
 logger = logging.getLogger(__name__)
 
+# Compatibility exports. Alias support is now policy-based and has no time
+# deadline; these names remain for import stability only.
+DEPRECATED_MAPPINGS = {"PLAYER": "GANCUJU_PLAYER", "COACH": "LFA_COACH"}
+DEPRECATION_DEADLINE = None
+DEPRECATION_WARNING = "Legacy specialization alias '{old_id}' maps to '{new_id}'."
+
 # DEPRECATION SYSTEM
-DEPRECATED_MAPPINGS = {
-    "PLAYER": "GANCUJU_PLAYER",
-    "COACH": "LFA_COACH"
-}
-DEPRECATION_DEADLINE = datetime(2026, 5, 18)  # 6 months from now
-DEPRECATION_WARNING = """
-⚠️ DEPRECATED SPECIALIZATION ID: '{old_id}'
-   Use '{new_id}' instead.
-   Support for '{old_id}' will be removed on {deadline}.
-   Please update your code!
-"""
-
-
 def specialization_id_to_enum(specialization_id: str) -> Optional[SpecializationType]:
     """
     Convert string specialization ID to enum value.
@@ -38,20 +31,12 @@ def specialization_id_to_enum(specialization_id: str) -> Optional[Specialization
     Returns:
         SpecializationType enum or None if invalid
     """
-    # Map old names to new enum values for backward compatibility
-    legacy_mapping = {
-        'PLAYER': SpecializationType.GANCUJU_PLAYER,
-        'COACH': SpecializationType.LFA_COACH,
-    }
-
-    # Try legacy mapping first
-    if specialization_id in legacy_mapping:
-        return legacy_mapping[specialization_id]
-
-    # Try direct enum lookup
+    resolution = resolve_program_id(specialization_id)
+    if not resolution.usable:
+        return None
     try:
-        return SpecializationType[specialization_id]
-    except KeyError:
+        return SpecializationType(resolution.canonical_program.value)
+    except ValueError:
         return None
 
 
@@ -68,28 +53,12 @@ def handle_legacy_specialization(spec_id: str) -> str:
     Raises:
         ValueError: If after deprecation deadline
     """
-    if spec_id in DEPRECATED_MAPPINGS:
-        new_id = DEPRECATED_MAPPINGS[spec_id]
-
-        # Check if past deadline
-        if datetime.now() > DEPRECATION_DEADLINE:
-            raise ValueError(
-                f"Specialization ID '{spec_id}' is no longer supported. "
-                f"Use '{new_id}' instead."
-            )
-
-        # Log deprecation warning
-        logger.warning(
-            DEPRECATION_WARNING.format(
-                old_id=spec_id,
-                new_id=new_id,
-                deadline=DEPRECATION_DEADLINE.strftime('%Y-%m-%d')
-            )
-        )
-
-        return new_id
-
-    return spec_id
+    resolution = resolve_program_id(spec_id)
+    if not resolution.usable:
+        raise ValueError(f"Specialization ID '{spec_id}' requires manual review or is invalid")
+    if resolution.status.value == "LEGACY_ALIAS":
+        logger.warning("legacy_specialization_alias", extra={"legacy_id": resolution.source_id})
+    return resolution.canonical_program.value
 
 
 def validate_specialization_exists(db: Session, specialization_id: str) -> bool:

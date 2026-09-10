@@ -19,6 +19,8 @@ from ....config import settings
 from ....services.audit_service import AuditService
 from ....models.audit_log import AuditAction
 from ....utils.validators import validate_phone_number, validate_address, validate_name
+from ....services.canonical_policy import evaluate_profile_age_policy
+from ....services.program_eligibility_service import record_guardian_consent
 
 router = APIRouter()
 
@@ -235,6 +237,8 @@ class RegisterWithInvitation(BaseModel):
     postal_code: str
     country: str
     invitation_code: str
+    guardian_consent: bool = False
+    guardian_name: str | None = None
 
 
 @router.post("/register-with-invitation", response_model=Token)
@@ -257,6 +261,13 @@ def register_with_invitation(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
+
+    profile_decision = evaluate_profile_age_policy(
+        registration_data.date_of_birth,
+        bool(registration_data.guardian_consent and registration_data.guardian_name),
+    )
+    if not profile_decision.usable:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=profile_decision.reason)
 
     # Find and validate invitation code
     invitation_code = db.query(InvitationCode).filter(
@@ -368,6 +379,13 @@ def register_with_invitation(
 
     db.add(new_user)
     db.flush()  # Get user ID without committing
+    if profile_decision.age is not None and profile_decision.age < 18:
+        record_guardian_consent(
+            db,
+            user=new_user,
+            guardian_name=registration_data.guardian_name,
+            evidence_reference="INVITATION_REGISTRATION",
+        )
 
     # Log invitation bonus credit transaction (if any)
     if invitation_code.bonus_credits > 0:

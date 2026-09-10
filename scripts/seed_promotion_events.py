@@ -268,7 +268,7 @@ def run_reset(db: DBSession) -> None:
     from app.models.football_skill_assessment import FootballSkillAssessment as _FSA
     from app.services.skill_progression import get_all_skill_keys, DEFAULT_BASELINE
 
-    seed_users = db.query(User).filter(User.email.like("%@promo-seed.test")).all()
+    seed_users = db.query(User).filter(User.email.like("%@promo-seed.example.com")).all()
     seed_uid_map = {u.id: u.email for u in seed_users}
     if seed_uid_map:
         seed_uids = list(seed_uid_map.keys())
@@ -376,7 +376,7 @@ def _ensure_9_audience_entries(
 
     user_ids: list[int] = []
     for i in range(1, 10):
-        email = f"seed.player.{i}@promo-seed.test"
+        email = f"seed.player.{i}@promo-seed.example.com"
 
         user = db.query(User).filter(User.email == email).first()
         if not user:
@@ -788,7 +788,7 @@ def _run_preflight_audit(db: DBSession, campus_id: int, fail: bool = True) -> li
     if field_instructor_ok < 3:
         issues.append(
             f"Only {field_instructor_ok}/3 FIELD instructor users with active LFA_COACH license found. "
-            "Expected: field.instructor.1/2/3@promo-seed-staff.test. "
+            "Expected: field.instructor.1/2/3@promo-seed-staff.example.com. "
             "Use --bootstrap-missing-prereq to auto-create."
         )
 
@@ -808,9 +808,9 @@ def _run_preflight_audit(db: DBSession, campus_id: int, fail: bool = True) -> li
 # ─── Optional dev-mode bootstrap for missing prerequisites ────────────────────
 
 _FIELD_INSTRUCTOR_EMAILS = [
-    "field.instructor.1@promo-seed-staff.test",
-    "field.instructor.2@promo-seed-staff.test",
-    "field.instructor.3@promo-seed-staff.test",
+    "field.instructor.1@promo-seed-staff.example.com",
+    "field.instructor.2@promo-seed-staff.example.com",
+    "field.instructor.3@promo-seed-staff.example.com",
 ]
 _PITCH_NAMES = ["Pálya A", "Pálya B", "Pálya C"]
 

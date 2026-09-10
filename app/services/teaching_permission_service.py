@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.models.specialization import SpecializationType
 from typing import Optional, Dict
+from app.services.canonical_policy import AgeCategory, CoachRole, coach_can_teach
 
 
 class TeachingPermissionService:
@@ -21,6 +22,14 @@ class TeachingPermissionService:
 
     # Assistant Coach levels (need Master supervision)
     ASSISTANT_COACH_LEVELS = [1, 3, 5, 7]
+
+    @staticmethod
+    def can_teach_scope(current_level: int, age_group: str, role: str) -> bool:
+        """Canonical 8x8 coach authorization decision."""
+        try:
+            return coach_can_teach(current_level, AgeCategory(age_group), CoachRole(role))
+        except ValueError:
+            return False
 
     @staticmethod
     def get_teaching_permissions(user: User, db: Session) -> Dict:
@@ -68,7 +77,11 @@ class TeachingPermissionService:
             UserLicense.is_active == True
         ).first()
 
-        current_level = int(user_license.current_level) if user_license else 1
+        if user_license is None:
+            result["warnings"].append("No active license for specialization")
+            return result
+
+        current_level = int(user_license.current_level)
         result["current_level"] = current_level
 
         # Player licenses (LFA Football Player, GānCuju) do NOT grant teaching permissions

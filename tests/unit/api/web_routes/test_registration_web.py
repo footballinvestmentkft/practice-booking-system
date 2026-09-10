@@ -174,7 +174,7 @@ class TestRegisterSubmitValidation:
         result, mock_tmpl = self._call(date_of_birth=dob)
         _, ctx = mock_tmpl.TemplateResponse.call_args.args
         assert "error" in ctx
-        assert "5" in ctx["error"]
+        assert ctx["error"] == "MINIMUM_ACCOUNT_AGE"
 
     def test_too_old_returns_error(self):
         dob = "1800-01-01"

@@ -57,12 +57,13 @@ def _incomplete_lfa_license(db: Session, user: User) -> UserLicense:
     db.add(lic)
     db.flush()
     db.add(CreditTransaction(
-        user_license_id=lic.id,
+        user_id=user.id,
+        context_user_license_id=lic.id,
         transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
         amount=-100,
         balance_after=user.credit_balance,
         description="Recorded unlock charge",
-        idempotency_key=f"cref-unlock-{lic.id}-{_uid()}",
+        idempotency_key=f"license_unlock_{lic.id}",
     ))
     return lic
 
@@ -130,7 +131,7 @@ def test_cref02_license_and_original_debit_are_retained(
     assert retained_license.is_active is False
 
     original = test_db.query(CreditTransaction).filter(
-        CreditTransaction.user_license_id == license_id,
+        CreditTransaction.context_user_license_id == license_id,
         CreditTransaction.transaction_type == TransactionType.SPECIALIZATION_UNLOCK.value,
     ).one()
     assert original.amount == -100
@@ -151,6 +152,7 @@ def test_cref03_refund_transaction_type_and_amount(
 
     tx = test_db.query(CreditTransaction).filter(
         CreditTransaction.user_id == student.id,
+        CreditTransaction.transaction_type == TransactionType.REFUND.value,
     ).first()
     assert tx is not None
     assert tx.transaction_type == TransactionType.REFUND.value

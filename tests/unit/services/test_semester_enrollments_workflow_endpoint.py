@@ -259,38 +259,39 @@ class TestCreateEnrollment:
     def test_ce04_already_enrolled_400(self):
         """CE-04: enrollment already exists → 400."""
         from fastapi import HTTPException
-        student = MagicMock(); student.date_of_birth = None
+        student = MagicMock(); student.date_of_birth = MagicMock()
         semester = MagicMock()
-        lic = MagicMock(); lic.specialization_type = "LFA_PLAYER_PRE"
+        lic = MagicMock(); lic.specialization_type = "LFA_FOOTBALL_PLAYER"; lic.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         existing = MagicMock()
         db = _model_db(student=student, semester=semester, lic=lic, existing=existing)
-        with pytest.raises(HTTPException) as exc:
-            self._call(db=db)
+        with patch(f"{_BASE_CRUD}.is_user_eligible_for_program", return_value=(True, None)):
+            with pytest.raises(HTTPException) as exc:
+                self._call(db=db)
         assert exc.value.status_code == 400
 
-    def test_ce05_success_no_dob(self):
-        """CE-05: all valid, no date_of_birth → age_category=None."""
+    def test_ce05_missing_dob_is_denied(self):
+        """CE-05: a usable enrollment profile requires date_of_birth."""
         student = MagicMock(); student.date_of_birth = None; student.name = "Alice"
         semester = MagicMock(); semester.code = "2025Q1"; semester.parent_semester_id = None
-        lic = MagicMock(); lic.specialization_type = "LFA_PLAYER_PRE"
+        lic = MagicMock(); lic.specialization_type = "LFA_FOOTBALL_PLAYER"; lic.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = _model_db(student=student, semester=semester, lic=lic, existing=None)
-        result = self._call(db=db)
-        assert result["success"] is True
-        db.commit.assert_called_once()
+        with patch(f"{_BASE_CRUD}.is_user_eligible_for_program", return_value=(False, "DATE_OF_BIRTH_REQUIRED")):
+            with pytest.raises(Exception) as exc:
+                self._call(db=db)
+        assert exc.value.status_code == 403
 
     def test_ce06_success_with_dob_age_category(self):
         """CE-06: student has date_of_birth → age_category auto-assigned."""
         from datetime import date
         student = MagicMock(); student.date_of_birth = date(2010, 3, 1); student.name = "Bob"
         semester = MagicMock(); semester.code = "2025Q1"; semester.parent_semester_id = None
-        lic = MagicMock(); lic.specialization_type = "LFA_PLAYER_PRE"
+        lic = MagicMock(); lic.specialization_type = "LFA_FOOTBALL_PLAYER"; lic.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = _model_db(student=student, semester=semester, lic=lic, existing=None)
-        with patch(f"{_BASE_CRUD}.get_current_season_year", return_value=2025), \
-             patch(f"{_BASE_CRUD}.calculate_age_at_season_start", return_value=15), \
-             patch(f"{_BASE_CRUD}.get_automatic_age_category", return_value="YOUTH") as mock_cat:
+        assignment = MagicMock(id=7, effective_category="YOUTH")
+        with patch(f"{_BASE_CRUD}.is_user_eligible_for_program", return_value=(True, None)), \
+             patch(f"{_BASE_CRUD}.get_or_create_current_football_assignment", return_value=assignment):
             result = self._call(db=db)
         assert result["success"] is True
-        mock_cat.assert_called_once_with(15)
 
 
 # ---------------------------------------------------------------------------

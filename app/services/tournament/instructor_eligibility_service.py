@@ -38,6 +38,13 @@ from sqlalchemy.orm import Session
 
 from app.models.license import UserLicense
 from app.models.user import User, UserRole
+from app.services.canonical_policy import (
+    AgeCategory,
+    CanonicalProgram,
+    CoachRole,
+    coach_can_teach,
+    resolve_license_program,
+)
 
 if TYPE_CHECKING:
     from app.models.semester import Semester
@@ -85,17 +92,40 @@ def _active_coach_license(db: Session, user_id: int) -> UserLicense | None:
     regardless of the local system clock configuration.
     """
     now = _to_utc_aware(datetime.now(timezone.utc))
-    return (
+    candidates = (
         db.query(UserLicense)
         .filter(
             UserLicense.user_id == user_id,
-            UserLicense.specialization_type == "LFA_COACH",
             UserLicense.is_active == True,  # noqa: E712
             or_(UserLicense.expires_at.is_(None), UserLicense.expires_at > now),
         )
         .order_by(UserLicense.current_level.desc())
-        .first()
+        .all()
     )
+    return next(
+        (
+            license_row
+            for license_row in candidates
+            if (
+                (resolution := resolve_license_program(
+                    license_row.canonical_program_id,
+                    license_row.specialization_type,
+                )).usable
+                and resolution.canonical_program is CanonicalProgram.LFA_COACH
+            )
+        ),
+        None,
+    )
+
+
+def _can_cover_all(level: int, age_groups: list[str], role: CoachRole) -> bool:
+    if not age_groups:
+        return False
+    try:
+        categories = [AgeCategory(group) for group in age_groups]
+    except ValueError:
+        return False
+    return all(coach_can_teach(level, category, role) for category in categories)
 
 
 def _get_master_instructor_id(db: Session, tournament_id: int) -> int | None:
@@ -178,11 +208,10 @@ def is_eligible_master_instructor(
     if not lic:
         return False, "No active, valid LFA_COACH license found (license may be missing, inactive, or expired)"
 
-    req = _required_level(age_groups)
-    if lic.current_level < req:
+    if not _can_cover_all(lic.current_level, age_groups, CoachRole.HEAD):
         return False, (
-            f"Coach level {lic.current_level} is insufficient for age groups "
-            f"{age_groups} (minimum required: {req})"
+            f"Coach level {lic.current_level} is not a Head Coach qualified for "
+            f"all requested age groups {age_groups}"
         )
 
     return True, ""
@@ -209,11 +238,10 @@ def is_eligible_field_instructor(
     if not lic:
         return False, "No active, valid LFA_COACH license found (license may be missing, inactive, or expired)"
 
-    req = max(1, _required_level(age_groups) - 1)
-    if lic.current_level < req:
+    if not _can_cover_all(lic.current_level, age_groups, CoachRole.ASSISTANT):
         return False, (
-            f"Coach level {lic.current_level} is insufficient for field role in "
-            f"age groups {age_groups} (minimum required: {req})"
+            f"Coach level {lic.current_level} is not qualified for the field role "
+            f"in all requested age groups {age_groups}"
         )
 
     return True, ""
@@ -261,15 +289,10 @@ def get_eligible_master_instructors(
     now = _to_utc_aware(datetime.now(timezone.utc))
 
     license_conditions = and_(
-        UserLicense.specialization_type == "LFA_COACH",
         UserLicense.is_active == True,  # noqa: E712
         or_(UserLicense.expires_at.is_(None), UserLicense.expires_at > now),
     )
-    if age_groups:
-        req = _required_level(age_groups)
-        license_conditions = and_(license_conditions, UserLicense.current_level >= req)
-
-    return (
+    users = (
         db.query(User)
         .join(UserLicense, and_(UserLicense.user_id == User.id, license_conditions))
         .filter(
@@ -279,6 +302,17 @@ def get_eligible_master_instructors(
         .order_by(User.name)
         .all()
     )
+    result = []
+    for user in users:
+        license_row = _active_coach_license(db, user.id)
+        if license_row is None:
+            continue
+        if age_groups is not None and not _can_cover_all(
+            license_row.current_level, age_groups, CoachRole.HEAD
+        ):
+            continue
+        result.append(user)
+    return result
 
 
 def get_instructor_license_levels(
@@ -296,13 +330,17 @@ def get_instructor_license_levels(
 
     now = _to_utc_aware(datetime.now(timezone.utc))
     rows = (
-        db.query(UserLicense.user_id, UserLicense.current_level)
+        db.query(UserLicense)
         .filter(
             UserLicense.user_id.in_(user_ids),
-            UserLicense.specialization_type == "LFA_COACH",
             UserLicense.is_active == True,  # noqa: E712
             or_(UserLicense.expires_at.is_(None), UserLicense.expires_at > now),
         )
         .all()
     )
-    return {row.user_id: row.current_level for row in rows}
+    levels: dict[int, int] = {}
+    for row in rows:
+        resolution = resolve_license_program(row.canonical_program_id, row.specialization_type)
+        if resolution.usable and resolution.canonical_program is CanonicalProgram.LFA_COACH:
+            levels[row.user_id] = max(levels.get(row.user_id, 0), row.current_level)
+    return levels

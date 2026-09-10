@@ -73,12 +73,12 @@ def create_test_tournament(db: Session, code: str, name: str, enrollment_cost: i
     return tournament
 
 
-def create_test_user_license(db: Session, user_id: int, specialization_type: str = "LFA_PLAYER") -> UserLicense:
+def create_test_user_license(db: Session, user_id: int, specialization_type: str = "LFA_FOOTBALL_PLAYER") -> UserLicense:
     """Helper function to create a test user license"""
     license = UserLicense(
         user_id=user_id,
         specialization_type=specialization_type,
-        credit_balance=1000,  # Give enough credits for testing
+        credit_balance=0,  # Legacy license wallet is read-only under WS1
         onboarding_completed=True,
         started_at=datetime.now()  # Required field
     )

@@ -12,6 +12,7 @@ P3 SponsorCampaign — isolation + guard tests (SPON-CAM-01 through SPON-CAM-07)
 DONE = pytest tests/integration/web_flows/test_sponsor_campaign.py -v
 """
 import uuid
+from datetime import date
 
 import pytest
 from sqlalchemy.orm import Session
@@ -97,6 +98,7 @@ def _make_entry(
         first_name="Test",
         last_name="Player",
         email=email or f"cam+{uuid.uuid4().hex[:8]}@test.com",
+        date_of_birth=date(2000, 1, 1),
         status=status,
         consent_given=consent_given,
         user_id=user_id,

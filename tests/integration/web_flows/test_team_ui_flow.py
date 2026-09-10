@@ -83,6 +83,7 @@ def _make_user(db: Session, role: UserRole = UserRole.STUDENT, *, credit_balance
 
 
 def _make_license(db: Session, user: User, *, credit_balance: int = 200) -> UserLicense:
+    user.credit_balance = credit_balance
     lic = UserLicense(
         user_id=user.id,
         specialization_type="LFA_FOOTBALL_PLAYER",
@@ -92,7 +93,7 @@ def _make_license(db: Session, user: User, *, credit_balance: int = 200) -> User
         is_active=True,
         onboarding_completed=True,
         payment_verified=True,
-        credit_balance=credit_balance,
+        credit_balance=0,
     )
     db.add(lic)
     db.flush()

@@ -80,10 +80,10 @@ def _admin_client(test_db: Session, admin: User) -> TestClient:
 
 def _minimal_csv(rows: list[dict]) -> bytes:
     """Build a minimal CSV bytes from a list of row dicts."""
-    headers = ["first_name", "last_name", "email", "age_group", "team_name", "club_name", "initial_credits"]
+    headers = ["first_name", "last_name", "email", "date_of_birth", "age_group", "team_name", "club_name", "initial_credits"]
     lines = [",".join(headers)]
     for r in rows:
-        lines.append(",".join(r.get(h, "") for h in headers))
+        lines.append(",".join(r.get(h, "2000-01-01" if h == "date_of_birth" else "") for h in headers))
     return "\n".join(lines).encode("utf-8")
 
 
@@ -224,9 +224,9 @@ class TestCsvImport:
 
         ok_email = f"ok.user.csv04.{uuid.uuid4().hex[:6]}@lfa-t.com"
         csv_bytes = (
-            b"first_name,last_name,email,age_group,team_name,club_name\n"
-            b"Valid,User," + ok_email.encode() + b",U15,Alpha Team,FC Test\n"
-            b"Missing,Email,,U15,Alpha Team,FC Test\n"
+            b"first_name,last_name,email,date_of_birth,age_group,team_name,club_name\n"
+            b"Valid,User," + ok_email.encode() + b",2000-01-01,U15,Alpha Team,FC Test\n"
+            b"Missing,Email,,2000-01-01,U15,Alpha Team,FC Test\n"
         )
         rows = csv_import_service.parse_csv(csv_bytes)
         log = _make_log(test_db, club, admin)
@@ -266,8 +266,8 @@ class TestCsvImport:
         test_db.refresh(existing)
 
         csv_bytes = (
-            b"first_name,last_name,email\n"
-            + f"NewFirst,NewLast,{email}\n".encode()
+            b"first_name,last_name,email,date_of_birth\n"
+            + f"NewFirst,NewLast,{email},2000-01-01\n".encode()
         )
         rows = csv_import_service.parse_csv(csv_bytes)
         log = _make_log(test_db, club, admin)
@@ -300,8 +300,8 @@ class TestCsvImport:
         test_db.refresh(club)
 
         csv_bytes = (
-            b"first_name,last_name,email,initial_credits\n"
-            + f"Credit,Player,{email},250\n".encode()
+            b"first_name,last_name,email,date_of_birth,initial_credits\n"
+            + f"Credit,Player,{email},2000-01-01,250\n".encode()
         )
         rows = csv_import_service.parse_csv(csv_bytes)
         log = _make_log(test_db, club, admin)
@@ -333,8 +333,8 @@ class TestCsvImport:
         test_db.refresh(club)
 
         csv_bytes = (
-            b"first_name,last_name,email,initial_credits\n"
-            + f"Idem,Player,{email},100\n".encode()
+            b"first_name,last_name,email,date_of_birth,initial_credits\n"
+            + f"Idem,Player,{email},2000-01-01,100\n".encode()
         )
         rows = csv_import_service.parse_csv(csv_bytes)
 

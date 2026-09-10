@@ -9,6 +9,8 @@ from datetime import datetime, timezone, date
 from ..models.user import User
 from ..models.license import UserLicense
 from ..services.license_service import LicenseService
+from ..services.canonical_policy import PROGRAM_MINIMUM_AGES, calculate_age, resolve_license_program, resolve_program_id
+from ..services.program_eligibility_service import is_user_eligible_for_program
 
 
 class ParallelSpecializationService:
@@ -17,38 +19,33 @@ class ParallelSpecializationService:
     def __init__(self, db: Session):
         self.db = db
         self.license_service = LicenseService(db)
-    # Age requirements for each specialization
-    AGE_REQUIREMENTS = {
-        'PLAYER': 5,    # Player: 5+ years
-        'COACH': 14,    # Coach: 14+ years
-        'INTERNSHIP': 18 # Internship: 18+ years
-    }
-
     # Ordered list of all specialization types offered in every semester
-    _SPEC_TYPES = ['PLAYER', 'COACH', 'INTERNSHIP']
+    _SPEC_TYPES = ['LFA_FOOTBALL_PLAYER', 'LFA_COACH', 'GANCUJU_PLAYER', 'INTERNSHIP']
 
     # Human-readable display name used in failure reason strings
     _SPEC_DISPLAY_NAMES = {
-        'PLAYER': 'Player specializáció',
-        'COACH': 'Coach specializáció',
+        'LFA_FOOTBALL_PLAYER': 'LFA Football Player specializáció',
+        'LFA_COACH': 'LFA Coach specializáció',
+        'GANCUJU_PLAYER': 'GānCuju Player specializáció',
         'INTERNSHIP': 'Gyakornoki program',
     }
 
     # Success reason strings: keyed by (spec_type, sem_key) where
     # sem_key=1 for semester 1 (has extra context) and 0 for semester 2+
     _SUCCESS_REASONS = {
-        ('PLAYER',     1): 'Player specializáció - alapképzés (min. 5 év) - minden követelmény teljesített',
-        ('COACH',      1): 'Coach specializáció - edzői képzés (min. 14 év) - minden követelmény teljesített',
+        ('LFA_FOOTBALL_PLAYER', 1): 'LFA Football Player - alapképzés (min. 5 év) - minden követelmény teljesített',
+        ('LFA_COACH', 1): 'LFA Coach - edzői képzés (min. 14 év) - minden követelmény teljesített',
+        ('GANCUJU_PLAYER', 1): 'GānCuju Player (min. 5 év) - minden követelmény teljesített',
         ('INTERNSHIP', 1): 'Gyakornoki program (min. 18 év) - minden követelmény teljesített',
-        ('PLAYER',     0): 'Player specializáció (min. 5 év) - minden követelmény teljesített',
-        ('COACH',      0): 'Coach specializáció (min. 14 év) - minden követelmény teljesített',
+        ('LFA_FOOTBALL_PLAYER', 0): 'LFA Football Player (min. 5 év) - minden követelmény teljesített',
+        ('LFA_COACH', 0): 'LFA Coach (min. 14 év) - minden követelmény teljesített',
+        ('GANCUJU_PLAYER', 0): 'GānCuju Player (min. 5 év) - minden követelmény teljesített',
         ('INTERNSHIP', 0): 'Gyakornoki program (min. 18 év) - minden követelmény teljesített',
     }
     
     def calculate_age(self, birth_date: date) -> int:
-        """Calculate age from birth date"""
-        today = date.today()
-        return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+        """Compatibility facade for the canonical age calculation."""
+        return calculate_age(birth_date, date.today())
     
     def check_age_requirement(self, user_id: int, specialization: str) -> Dict[str, Any]:
         """Check if user meets age requirement for specialization"""
@@ -57,14 +54,19 @@ class ParallelSpecializationService:
             return {'meets_requirement': False, 'reason': 'User not found'}
         if not user.date_of_birth:
             return {'meets_requirement': False, 'reason': 'Születési dátum hiányzik a profilból'}
+        resolution = resolve_program_id(specialization)
+        if not resolution.usable:
+            return {'meets_requirement': False, 'reason': 'Programazonosító manual review-t igényel'}
         user_age = self.calculate_age(user.date_of_birth.date())
-        required_age = self.AGE_REQUIREMENTS.get(specialization.upper(), 0)
-        meets_requirement = user_age >= required_age
+        required_age = PROGRAM_MINIMUM_AGES[resolution.canonical_program]
+        meets_requirement, denial_reason = is_user_eligible_for_program(
+            self.db, user, resolution.canonical_program
+        )
         return {
             'meets_requirement': meets_requirement,
             'user_age': user_age,
             'required_age': required_age,
-            'reason': f'Minimum életkor: {required_age} év (jelenlegi: {user_age} év)' if not meets_requirement else f'Életkor követelmény teljesítve ({user_age} év)'
+            'reason': denial_reason or f'Életkor követelmény teljesítve ({user_age} év)'
         }
 
     def check_payment_requirement(self, user_id: int, specialization_type: str = None, semester: int = None) -> Dict[str, Any]:
@@ -241,13 +243,17 @@ class ParallelSpecializationService:
 
     def start_new_specialization(self, user_id: int, specialization: str) -> Dict[str, Any]:
         """Start a new specialization for a user"""
-        specialization = specialization.upper()
+        resolution = resolve_program_id(specialization)
+        if not resolution.usable:
+            return {'success': False, 'message': 'Program identity requires manual review'}
+        specialization = resolution.canonical_program.value
         
         # Check if user already has this specialization
-        existing = self.db.query(UserLicense).filter(
-            UserLicense.user_id == user_id,
-            UserLicense.specialization_type == specialization
-        ).first()
+        existing = next((
+            row for row in self.db.query(UserLicense).filter(UserLicense.user_id == user_id).all()
+            if resolve_license_program(row.canonical_program_id, row.specialization_type).canonical_program
+            is resolution.canonical_program
+        ), None)
         
         if existing:
             return {
@@ -276,6 +282,7 @@ class ParallelSpecializationService:
         new_license = UserLicense(
             user_id=user_id,
             specialization_type=specialization,
+            canonical_program_id=specialization,
             current_level=1,
             max_achieved_level=1,
             started_at=datetime.now(timezone.utc)

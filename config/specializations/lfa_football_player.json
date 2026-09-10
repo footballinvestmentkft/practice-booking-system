@@ -79,7 +79,7 @@
       "requirements": {
         "theory_hours": 10,
         "practice_hours": 70,
-        "min_age": 9,
+        "min_age": 5,
         "skills": ["Taktikai alapok", "Pozíciójáték", "Fizikai felkészülés"]
       }
     },
@@ -96,7 +96,7 @@
       "requirements": {
         "theory_hours": 20,
         "practice_hours": 100,
-        "min_age": 9,
+        "min_age": 5,
         "skills": ["Komplex taktikák", "Gyorsaság", "Csapatmunka"]
       }
     },
@@ -113,7 +113,7 @@
       "requirements": {
         "theory_hours": 30,
         "practice_hours": 120,
-        "min_age": 14,
+        "min_age": 5,
         "skills": ["Profi mentalitás", "Versenyzés", "Önfejlesztés"]
       }
     },
@@ -130,7 +130,7 @@
       "requirements": {
         "theory_hours": 40,
         "practice_hours": 150,
-        "min_age": 14,
+        "min_age": 5,
         "skills": ["Vezetés", "Stratégiai játék", "Mentorlás"]
       }
     },
@@ -147,7 +147,7 @@
       "requirements": {
         "theory_hours": 50,
         "practice_hours": 200,
-        "min_age": 14,
+        "min_age": 5,
         "skills": ["Professzionalizmus", "Csapatvezetés", "Élsport"]
       }
     },
@@ -164,7 +164,7 @@
       "requirements": {
         "theory_hours": 60,
         "practice_hours": 250,
-        "min_age": 14,
+        "min_age": 5,
         "skills": ["Elit szint", "Nemzetközi tapasztalat", "Iskola reprezentálás"]
       }
     }

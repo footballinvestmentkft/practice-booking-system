@@ -318,7 +318,8 @@ def enroll_in_tournament(
     idempotency_key = hashlib.sha256(idempotency_data.encode()).hexdigest()[:64]
 
     credit_transaction = CreditTransaction(
-        user_license_id=license.id,
+        user_id=current_user.id,
+        context_user_license_id=license.id,
         transaction_type="TOURNAMENT_ENROLLMENT",
         amount=-enrollment_cost,  # Negative amount for deduction
         balance_after=current_user.credit_balance,
@@ -535,7 +536,8 @@ def unenroll_from_tournament(
     idempotency_key = f"unenroll_{current_user.id}_{tournament_id}_{enrollment.id}_{datetime.utcnow().timestamp()}"
 
     refund_transaction = CreditTransaction(
-        user_license_id=enrollment.user_license_id,
+        user_id=current_user.id,
+        context_user_license_id=enrollment.user_license_id,
         transaction_type="TOURNAMENT_UNENROLL_REFUND",
         amount=refund_amount,  # Positive amount for refund
         balance_after=current_user.credit_balance,

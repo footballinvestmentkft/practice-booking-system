@@ -291,7 +291,8 @@ def test_f06_cancellation_refunds_recorded_amount_once_and_keeps_history():
         license_id = license.id
         db.add(
             CreditTransaction(
-                user_license_id=license_id,
+                user_id=user_id,
+                context_user_license_id=license_id,
                 amount=-250,
                 transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
                 description="Recorded 3-month unlock",
@@ -316,10 +317,11 @@ def test_f06_cancellation_refunds_recorded_amount_once_and_keeps_history():
     assert balance == 250
     assert license is not None
     assert license.is_active is False
-    assert sorted(row.amount for row in ledger) == [250]
+    assert sorted(row.amount for row in ledger) == [-250, 250]
     with SessionFactory() as db:
         original = db.query(CreditTransaction).filter(
-            CreditTransaction.user_license_id == license_id
+            CreditTransaction.context_user_license_id == license_id,
+            CreditTransaction.amount < 0,
         ).one()
         assert original.amount == -250
 
@@ -341,7 +343,8 @@ def test_f06_ambiguous_unlock_history_blocks_refund_without_mutation():
         license_id = license.id
         db.add_all([
             CreditTransaction(
-                user_license_id=license_id,
+                user_id=user_id,
+                context_user_license_id=license_id,
                 transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
                 amount=-100,
                 balance_after=0,
@@ -350,6 +353,7 @@ def test_f06_ambiguous_unlock_history_blocks_refund_without_mutation():
             ),
             CreditTransaction(
                 user_id=user_id,
+                context_user_license_id=license_id,
                 transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
                 amount=-250,
                 balance_after=0,
@@ -375,4 +379,4 @@ def test_f06_ambiguous_unlock_history_blocks_refund_without_mutation():
         license = db.get(UserLicense, license_id)
     assert balance == 0
     assert license.is_active is True
-    assert [row.amount for row in ledger] == [-250]
+    assert sorted(row.amount for row in ledger) == [-250, -100]

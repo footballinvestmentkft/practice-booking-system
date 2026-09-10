@@ -3,6 +3,7 @@
 Handles license progression, advancement, and marketing content delivery
 """
 import logging
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from typing import List, Dict, Optional, Any
@@ -10,6 +11,7 @@ from typing import List, Dict, Optional, Any
 from ..models.license import LicenseMetadata, UserLicense, LicenseProgression, LicenseSystemHelper, LicenseType
 from ..models.user import User
 from .progress_license_sync_service import ProgressLicenseSyncService
+from .canonical_policy import CanonicalProgram, resolve_program_id
 
 
 class LicenseService:
@@ -76,26 +78,42 @@ class LicenseService:
 
     def get_or_create_user_license(self, user_id: int, specialization: str) -> UserLicense:
         """Get or create a user license for a specialization"""
-        specialization = specialization.upper()
-        
-        license = self.db.query(UserLicense).filter(
+        resolution = resolve_program_id(specialization)
+        if not resolution.usable:
+            raise ValueError("License program identity requires manual review")
+        canonical = resolution.canonical_program.value
+        proven_storage_ids = {
+            CanonicalProgram.GANCUJU_PLAYER: ("GANCUJU_PLAYER", "PLAYER"),
+            CanonicalProgram.LFA_COACH: ("LFA_COACH", "COACH"),
+            CanonicalProgram.INTERNSHIP: ("INTERNSHIP",),
+            CanonicalProgram.LFA_FOOTBALL_PLAYER: ("LFA_FOOTBALL_PLAYER",),
+        }[resolution.canonical_program]
+
+        matches = self.db.query(UserLicense).filter(
             UserLicense.user_id == user_id,
-            UserLicense.specialization_type == specialization
-        ).first()
-        
-        if not license:
-            license = UserLicense(
+            or_(
+                UserLicense.canonical_program_id == canonical,
+                UserLicense.specialization_type.in_(proven_storage_ids),
+            ),
+        ).all()
+        if len(matches) > 1:
+            raise ValueError("Conflicting license identities require manual review")
+
+        user_license = matches[0] if matches else None
+        if user_license is None:
+            user_license = UserLicense(
                 user_id=user_id,
-                specialization_type=specialization,
+                specialization_type=canonical,
+                canonical_program_id=canonical,
                 current_level=1,
                 max_achieved_level=1,
                 started_at=datetime.now(timezone.utc)
             )
-            self.db.add(license)
+            self.db.add(user_license)
             self.db.commit()
-            self.db.refresh(license)
+            self.db.refresh(user_license)
         
-        return license
+        return user_license
 
     def advance_license(
         self, 

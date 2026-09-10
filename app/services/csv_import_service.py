@@ -28,6 +28,8 @@ from app.models.team import Team, TeamMember
 from app.core.security import get_password_hash
 from app.services.club_service import get_or_create_club
 from app.services.tournament.team_service import add_team_member
+from app.services.canonical_policy import evaluate_profile_age_policy
+from app.services.program_eligibility_service import record_guardian_consent
 
 if TYPE_CHECKING:
     from app.models.club import Club
@@ -73,11 +75,17 @@ def validate_row(row: dict, row_number: int) -> tuple[bool, str]:
         return False, f"Row {row_number}: invalid email '{email}'"
 
     dob = row.get("date_of_birth", "").strip()
-    if dob:
-        try:
-            datetime.strptime(dob, "%Y-%m-%d")
-        except ValueError:
-            return False, f"Row {row_number}: invalid date_of_birth '{dob}' (expected YYYY-MM-DD)"
+    if not dob:
+        return False, f"Row {row_number}: missing date_of_birth"
+    try:
+        parsed_dob = datetime.strptime(dob, "%Y-%m-%d").date()
+    except ValueError:
+        return False, f"Row {row_number}: invalid date_of_birth '{dob}' (expected YYYY-MM-DD)"
+    profile = evaluate_profile_age_policy(
+        parsed_dob, bool(row.get("guardian_name", "").strip())
+    )
+    if not profile.usable:
+        return False, f"Row {row_number}: {profile.reason}"
 
     position = row.get("position", "").strip().upper()
     if position and position not in VALID_POSITIONS:
@@ -253,6 +261,15 @@ def _upsert_user(db: Session, row: dict, admin_user: User) -> tuple[User, str]:
     )
     db.add(user)
     db.flush()
+    profile = evaluate_profile_age_policy(dob, bool(row.get("guardian_name", "").strip()))
+    if profile.age is not None and profile.age < 18:
+        record_guardian_consent(
+            db,
+            user=user,
+            guardian_name=row["guardian_name"].strip(),
+            granted_by_user_id=admin_user.id,
+            evidence_reference="CSV_PLAYER_IMPORT",
+        )
 
     # Auto-issue LFA_FOOTBALL_PLAYER license
     lic = UserLicense(

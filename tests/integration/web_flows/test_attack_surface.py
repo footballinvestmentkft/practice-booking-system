@@ -303,6 +303,7 @@ class TestPrivilegeEscalation:
                 "email": f"probe-{uuid.uuid4().hex[:6]}@lfa.com",
                 "role": "student",
                 "password": "Test1234!",
+                "date_of_birth": "2000-01-01",
             }),
         ]
 

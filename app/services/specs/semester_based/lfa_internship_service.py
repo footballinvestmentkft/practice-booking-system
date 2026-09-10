@@ -29,6 +29,8 @@ from sqlalchemy.orm import Session
 from app.services.specs.base_spec import BaseSpecializationService
 from app.models.license import UserLicense
 from app.models.semester_enrollment import SemesterEnrollment
+from app.services.canonical_policy import CanonicalProgram
+from app.services.program_eligibility_service import is_user_eligible_for_program
 
 
 class LFAInternshipService(BaseSpecializationService):
@@ -213,18 +215,10 @@ class LFAInternshipService(BaseSpecializationService):
         Returns:
             Tuple of (is_eligible: bool, reason: str)
         """
-        # Check date of birth exists
-        is_valid, error = self.validate_date_of_birth(user)
-        if not is_valid:
-            return False, error
-
-        # Calculate age and check minimum requirement
-        age = self.calculate_age(user.date_of_birth)
-
-        if age < self.MINIMUM_AGE:
-            return False, f"Age {age} is below minimum ({self.MINIMUM_AGE} years) for LFA Internship"
-
-        return True, f"Eligible for LFA Internship (age {age})"
+        eligible, denial = is_user_eligible_for_program(
+            db or self.db, user, CanonicalProgram.INTERNSHIP
+        )
+        return eligible, denial or "Eligible for Internship"
 
     # ========================================================================
     # SESSION BOOKING LOGIC

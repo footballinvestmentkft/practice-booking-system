@@ -3,6 +3,7 @@ Unit tests for app/api/api_v1/endpoints/users/crud.py
 Covers: create_user, list_users, get_user, update_user, delete_user
 """
 import pytest
+from datetime import datetime
 from unittest.mock import MagicMock, patch, call
 
 from app.api.api_v1.endpoints.users.crud import (
@@ -89,7 +90,7 @@ def _user_data(**kwargs):
     d.phone = None
     d.emergency_contact = None
     d.emergency_phone = None
-    d.date_of_birth = None
+    d.date_of_birth = datetime(1990, 1, 1)
     d.medical_notes = None
     d.position = None
     d.specialization = None

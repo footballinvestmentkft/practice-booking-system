@@ -17,6 +17,7 @@ Covers pure-logic methods (no DB) and DB-mocked paths:
 """
 
 import pytest
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 from app.services.specs.semester_based.lfa_internship_service import LFAInternshipService
@@ -283,41 +284,36 @@ class TestSimpleOverrides:
 
 @pytest.mark.unit
 class TestValidateAgeEligibility:
-    def _user(self):
-        return MagicMock()
+    def _user(self, dob=None):
+        user = MagicMock()
+        user.date_of_birth = dob
+        return user
 
     def test_no_dob_returns_false(self):
         svc = _svc()
         u = self._user()
-        with patch.object(svc, "validate_date_of_birth", return_value=(False, "No DOB")):
-            ok, msg = svc.validate_age_eligibility(u)
+        ok, msg = svc.validate_age_eligibility(u)
         assert not ok
-        assert "No DOB" in msg
+        assert msg == "DATE_OF_BIRTH_REQUIRED"
 
     def test_too_young_returns_false(self):
         svc = _svc()
-        u = self._user()
-        with patch.object(svc, "validate_date_of_birth", return_value=(True, "")):
-            with patch.object(svc, "calculate_age", return_value=17):
-                ok, msg = svc.validate_age_eligibility(u)
+        u = self._user(date.today().replace(year=date.today().year - 17))
+        ok, msg = svc.validate_age_eligibility(u)
         assert not ok
-        assert "17" in msg
+        assert msg in {"GUARDIAN_CONSENT_REQUIRED", "PROGRAM_MINIMUM_AGE"}
 
     def test_exactly_18_is_eligible(self):
         svc = _svc()
-        u = self._user()
-        with patch.object(svc, "validate_date_of_birth", return_value=(True, "")):
-            with patch.object(svc, "calculate_age", return_value=18):
-                ok, msg = svc.validate_age_eligibility(u)
+        u = self._user(date.today().replace(year=date.today().year - 18))
+        ok, msg = svc.validate_age_eligibility(u)
         assert ok
-        assert "18" in msg
+        assert "Eligible" in msg
 
     def test_adult_eligible(self):
         svc = _svc()
-        u = self._user()
-        with patch.object(svc, "validate_date_of_birth", return_value=(True, "")):
-            with patch.object(svc, "calculate_age", return_value=30):
-                ok, msg = svc.validate_age_eligibility(u)
+        u = self._user(date.today().replace(year=date.today().year - 30))
+        ok, msg = svc.validate_age_eligibility(u)
         assert ok
 
 

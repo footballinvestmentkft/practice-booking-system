@@ -2,7 +2,7 @@
   "id": "INTERNSHIP",
   "name": "LFA Internship",
   "description": "Gyakornoki program - startup és vállalkozás fókusz, projekt alapú előrehaladás",
-  "min_age": 16,
+  "min_age": 18,
   "color_theme": "#9370DB",
   "icon": "💼",
   "project_based": true,
@@ -19,7 +19,7 @@
       "requirements": {
         "theory_hours": 40,
         "practice_hours": 60,
-        "min_age": 16,
+        "min_age": 18,
         "skills": [
           "Alapvető üzleti ismeretek",
           "Projektmenedzsment alapok",
@@ -50,7 +50,7 @@
       "requirements": {
         "theory_hours": 60,
         "practice_hours": 100,
-        "min_age": 16,
+        "min_age": 18,
         "skills": [
           "Projektvezetés",
           "Innovatív gondolkodás",
@@ -82,7 +82,7 @@
       "requirements": {
         "theory_hours": 80,
         "practice_hours": 150,
-        "min_age": 16,
+        "min_age": 18,
         "skills": [
           "Startup alapítás",
           "Befektetői pitch",

@@ -438,13 +438,15 @@ def delete_tournament(db: Session, semester_id: int) -> bool:
 
             # Create refund transaction record
             refund_transaction = CreditTransaction(
-                user_license_id=enrollment.user_license_id,
+                user_id=user.id,
+                context_user_license_id=enrollment.user_license_id,
                 transaction_type="TOURNAMENT_DELETED_REFUND",
                 amount=enrollment_cost,  # Positive amount (refund)
                 balance_after=user.credit_balance,
                 description=f"Tournament deleted by admin - Full refund: {semester.name} ({semester.code})",
                 semester_id=None,  # Will be deleted
-                enrollment_id=None  # Will be deleted
+                enrollment_id=None,  # Will be deleted
+                idempotency_key=f"tournament-delete-refund-{semester.id}-{enrollment.id}",
             )
             db.add(refund_transaction)
             refunded_users_count += 1

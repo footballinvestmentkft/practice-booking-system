@@ -21,6 +21,7 @@ from ...models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
 from ...models.specialization import SpecializationType
 from ...models.audit_log import AuditAction
 from ...services.audit_service import AuditService
+from ...services.canonical_policy import CanonicalProgram, resolve_license_program
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -29,6 +30,21 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _is_canonical_football_license(license: UserLicense) -> bool:
+    resolution = resolve_license_program(
+        license.canonical_program_id,
+        license.specialization_type,
+    )
+    return (
+        resolution.usable
+        and resolution.canonical_program is CanonicalProgram.LFA_FOOTBALL_PLAYER
+    )
+
+
+def _football_license_display(license: UserLicense) -> str:
+    return "LFA Football Player" if _is_canonical_football_license(license) else license.specialization_type
 
 
 @router.get("/instructor/enrollments", response_class=HTMLResponse)
@@ -117,7 +133,7 @@ async def instructor_edit_student_skills_page(
         raise HTTPException(status_code=404, detail="License not found")
 
     # Check if this is an LFA Player specialization
-    if not license.specialization_type.startswith("LFA_PLAYER_"):
+    if not _is_canonical_football_license(license):
         raise HTTPException(
             status_code=400,
             detail=f"Football skills are only available for LFA Player specializations, not {license.specialization_type}"
@@ -130,7 +146,9 @@ async def instructor_edit_student_skills_page(
         "LFA_PLAYER_AMATEUR": "LFA Player Amateur (Ages 14+)",
         "LFA_PLAYER_PRO": "LFA Player PRO (Ages 14+)"
     }
-    specialization_display = spec_display_map.get(license.specialization_type, license.specialization_type)
+    specialization_display = spec_display_map.get(
+        license.specialization_type, _football_license_display(license)
+    )
 
     # Get color
     specialization_color = "#f1c40f"  # Yellow for all LFA Player specs
@@ -180,7 +198,7 @@ async def instructor_update_student_skills(
         raise HTTPException(status_code=404, detail="License not found")
 
     # Check if this is an LFA Player specialization
-    if not license.specialization_type.startswith("LFA_PLAYER_"):
+    if not _is_canonical_football_license(license):
         raise HTTPException(
             status_code=400,
             detail=f"Football skills are only available for LFA Player specializations"
@@ -205,7 +223,9 @@ async def instructor_update_student_skills(
                 "LFA_PLAYER_AMATEUR": "LFA Player Amateur (Ages 14+)",
                 "LFA_PLAYER_PRO": "LFA Player PRO (Ages 14+)"
             }
-            specialization_display = spec_display_map.get(license.specialization_type, license.specialization_type)
+            specialization_display = spec_display_map.get(
+                license.specialization_type, _football_license_display(license)
+            )
             specialization_color = "#f1c40f"
 
             return templates.TemplateResponse(
@@ -263,7 +283,9 @@ async def instructor_update_student_skills(
         "LFA_PLAYER_AMATEUR": "LFA Player Amateur (Ages 14+)",
         "LFA_PLAYER_PRO": "LFA Player PRO (Ages 14+)"
     }
-    specialization_display = spec_display_map.get(license.specialization_type, license.specialization_type)
+    specialization_display = spec_display_map.get(
+        license.specialization_type, _football_license_display(license)
+    )
     specialization_color = "#f1c40f"
 
     return templates.TemplateResponse(
@@ -296,5 +318,4 @@ async def instructor_update_student_skills(
 # All routes are automatically included via router.include_router() at the
 # end of this file.
 # ============================================================================
-
 

@@ -252,7 +252,8 @@ def test_ct06_specialization_unlock_type_in_db(test_db: Session):
     test_db.flush()
 
     tx = CreditTransaction(
-        user_license_id=license.id,
+        user_id=student.id,
+        context_user_license_id=license.id,
         amount=-100,
         transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
         description="Unlocked specialization: LFA FOOTBALL PLAYER",
@@ -264,7 +265,7 @@ def test_ct06_specialization_unlock_type_in_db(test_db: Session):
     test_db.flush()
 
     fetched = test_db.query(CreditTransaction).filter(
-        CreditTransaction.user_license_id == license.id
+        CreditTransaction.context_user_license_id == license.id
     ).first()
     assert fetched is not None
     assert fetched.transaction_type == "SPECIALIZATION_UNLOCK"
@@ -320,7 +321,8 @@ def test_ct08_credits_page_renders_transaction_rows(
     test_db.flush()
 
     unlock_tx = CreditTransaction(
-        user_license_id=license.id,
+        user_id=student.id,
+        context_user_license_id=license.id,
         amount=-100,
         transaction_type=TransactionType.SPECIALIZATION_UNLOCK.value,
         description="Unlocked specialization: LFA FOOTBALL PLAYER",

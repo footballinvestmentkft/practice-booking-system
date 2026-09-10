@@ -24,6 +24,13 @@ from sqlalchemy import or_
 from typing import Optional
 
 from ...models.license import UserLicense
+from app.services.canonical_policy import (
+    AgeCategory,
+    CanonicalProgram,
+    CoachRole,
+    coach_can_teach,
+    resolve_license_program,
+)
 
 
 class LicenseValidator:
@@ -67,12 +74,21 @@ class LicenseValidator:
             HTTPException(403): If no coach license found and raise_if_missing=True
         """
         now = datetime.now(timezone.utc)
-        coach_license = db.query(UserLicense).filter(
+        candidates = db.query(UserLicense).filter(
             UserLicense.user_id == user_id,
-            UserLicense.specialization_type == "LFA_COACH",
             UserLicense.is_active == True,  # noqa: E712
             or_(UserLicense.expires_at.is_(None), UserLicense.expires_at > now),
-        ).order_by(UserLicense.current_level.desc()).first()
+        ).order_by(UserLicense.current_level.desc()).all()
+        coach_license = next((
+            license_row for license_row in candidates
+            if (
+                (resolution := resolve_license_program(
+                    license_row.canonical_program_id,
+                    license_row.specialization_type,
+                )).usable
+                and resolution.canonical_program is CanonicalProgram.LFA_COACH
+            )
+        ), None)
 
         if not coach_license and raise_if_missing:
             raise HTTPException(
@@ -120,14 +136,16 @@ class LicenseValidator:
         if not age_group:
             return coach_license
 
-        # Validate level for age group
-        required_level = cls.MINIMUM_COACH_LEVELS_STR.get(age_group)
+        try:
+            category = AgeCategory(age_group)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"error": "invalid_age_group", "message": "Unknown football age group"},
+            )
 
-        if required_level is None:
-            # Unknown age group - log warning but allow (backward compatibility)
-            return coach_license
-
-        if coach_license.current_level < required_level:
+        if not coach_can_teach(coach_license.current_level, category, CoachRole.HEAD):
+            required_level = cls.MINIMUM_COACH_LEVELS_STR[age_group] + 1
             # Build detailed error message
             error_detail = {
                 "error": "insufficient_coach_level",
@@ -182,13 +200,10 @@ class LicenseValidator:
         Returns:
             True if level is sufficient, False otherwise
         """
-        required_level = cls.get_minimum_level_for_age_group(age_group)
-
-        if required_level is None:
-            # Unknown age group - assume sufficient (backward compatibility)
-            return True
-
-        return current_level >= required_level
+        try:
+            return coach_can_teach(current_level, AgeCategory(age_group), CoachRole.ASSISTANT)
+        except ValueError:
+            return False
 
 
 # Export main class

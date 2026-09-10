@@ -72,6 +72,24 @@ class TestCreateInitialAdmin:
         db.refresh.assert_called_once_with(mock_admin)
         db.close.assert_called_once()
 
+    def test_admin_password_is_never_written_to_logs_or_console(self, caplog, capsys):
+        """A configured bootstrap credential must never appear in output."""
+        db = self._make_db()
+        settings = self._make_settings()
+        settings.ADMIN_PASSWORD = "Bearer-like-admin-password-DO-NOT-LOG"
+
+        with patch(_PATCH_SL, return_value=db), \
+             patch(_PATCH_SETTINGS, settings), \
+             patch(_PATCH_HASH, return_value="hashed-admin-password-DO-NOT-LOG"), \
+             patch(_PATCH_USER):
+            from app.core.init_admin import create_initial_admin
+            create_initial_admin()
+
+        captured = capsys.readouterr()
+        emitted = "\n".join((captured.out, captured.err, caplog.text))
+        assert settings.ADMIN_PASSWORD not in emitted
+        assert "hashed-admin-password-DO-NOT-LOG" not in emitted
+
     # ------------------------------------------------------------------
     # Branch 3: exception during creation → rollback called
     # ------------------------------------------------------------------

@@ -48,7 +48,7 @@ def wf_user_license_id(test_db, student_token) -> Optional[int]:
     if not student:
         return None
 
-    # Prefer an existing LFA_PLAYER_YOUTH license
+    # Prefer an existing canonical football-player license.
     lic = test_db.query(UserLicense).filter(
         UserLicense.user_id == student.id
     ).first()
@@ -58,7 +58,7 @@ def wf_user_license_id(test_db, student_token) -> Optional[int]:
     # Create a minimal license
     lic = UserLicense(
         user_id=student.id,
-        specialization_type="LFA_PLAYER_YOUTH",
+        specialization_type="LFA_FOOTBALL_PLAYER",
         current_level=1,
         max_achieved_level=1,
         started_at=datetime.now(timezone.utc),
@@ -122,7 +122,7 @@ class TestLicenseAdvancementWorkflow:
         """
         headers = {"Authorization": f"Bearer {student_token}"}
         payload = {
-            "specialization": "LFA_PLAYER_YOUTH",
+            "specialization": "LFA_FOOTBALL_PLAYER",
             "target_level": 2,
             "reason": "E2E workflow test advancement request",
         }
@@ -211,7 +211,7 @@ class TestLicenseAdvancementWorkflow:
         headers = {"Authorization": f"Bearer {instructor_token}"}
         payload = {
             "user_id": 99999,  # Non-existent → expected 404 or 400
-            "specialization": "LFA_PLAYER_YOUTH",
+            "specialization": "LFA_FOOTBALL_PLAYER",
             "target_level": 2,
             "reason": "E2E instructor advancement test",
         }

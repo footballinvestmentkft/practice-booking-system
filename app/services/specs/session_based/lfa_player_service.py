@@ -34,7 +34,14 @@ from app.services.specs.base_spec import BaseSpecializationService
 from app.models.license import UserLicense
 from app.models.football_skill_assessment import FootballSkillAssessment
 from app.models.semester_enrollment import SemesterEnrollment
+from app.services.canonical_policy import (
+    CanonicalProgram,
+    football_participation_categories,
+    resolve_license_program,
+)
+from app.services.program_eligibility_service import is_user_eligible_for_program
 from app.skills_config import get_all_skill_keys
+from app.services.canonical_policy import football_base_category, football_season
 
 
 class LFAPlayerService(BaseSpecializationService):
@@ -53,23 +60,23 @@ class LFAPlayerService(BaseSpecializationService):
 
     AGE_GROUPS = {
         'PRE': {
-            'min_age': 6,
-            'max_age': 11,
-            'display_name': 'Pre (6-11 years)',
+            'min_age': 5,
+            'max_age': 13,
+            'display_name': 'Pre (5-13 season age)',
             'can_self_enroll': True,
             'category': 'UP'  # Children category
         },
         'YOUTH': {
-            'min_age': 12,
+            'min_age': 14,
             'max_age': 18,
-            'display_name': 'Youth (12-18 years)',
+            'display_name': 'Youth (14-18 season age)',
             'can_self_enroll': True,
             'category': 'UP'  # Children category
         },
         'AMATEUR': {
-            'min_age': 14,
+            'min_age': 19,
             'max_age': None,  # No upper limit
-            'display_name': 'Amateur (14+ years)',
+            'display_name': 'Amateur (19+ season base; 14+ by explicit movement)',
             'can_self_enroll': True,
             'category': 'ADULT'  # Adult category (14+ minimum)
         },
@@ -144,17 +151,11 @@ class LFAPlayerService(BaseSpecializationService):
         Raises:
             ValueError: If age is below minimum (6 years)
         """
-        age = self.calculate_age(date_of_birth)
-
-        if age < 6:
-            raise ValueError(f"Age {age} is below minimum (6 years) for LFA Player")
-
-        if 6 <= age <= 11:
-            return 'PRE'
-        elif 12 <= age <= 18:
-            return 'YOUTH'  # Natural UP category (can also enroll in AMATEUR if 14+)
-        else:  # age >= 19
-            return 'AMATEUR'  # Default adult category (PRO requires promotion)
+        season = football_season(date.today())
+        category = football_base_category(date_of_birth, season_start=season.start)
+        if category is None:
+            raise ValueError("Age is below minimum (5 years) for LFA Football Player")
+        return category.value
 
     def get_age_group_from_specialization(self, spec_type: str) -> Optional[str]:
         """
@@ -194,10 +195,11 @@ class LFAPlayerService(BaseSpecializationService):
         Returns:
             Tuple of (is_eligible: bool, reason: str)
         """
-        # Check date of birth exists
-        is_valid, error = self.validate_date_of_birth(user)
-        if not is_valid:
-            return False, error
+        eligible, denial = is_user_eligible_for_program(
+            db or self.db, user, CanonicalProgram.LFA_FOOTBALL_PLAYER
+        )
+        if not eligible:
+            return False, denial or "Football eligibility denied"
 
         # Calculate user's natural age group
         try:
@@ -216,17 +218,9 @@ class LFAPlayerService(BaseSpecializationService):
         if target_group not in self.AGE_GROUPS:
             return False, f"Invalid age group: {target_group}"
 
-        target_config = self.AGE_GROUPS[target_group]
-        age = self.calculate_age(user.date_of_birth)
-
-        # Check if age fits target group range
-        if age < target_config['min_age']:
-            return False, f"Age {age} is below minimum ({target_config['min_age']}) for {target_group}"
-
-        if target_config['max_age'] and age > target_config['max_age']:
-            return False, f"Age {age} is above maximum ({target_config['max_age']}) for {target_group}"
-
-        return True, f"Eligible for {target_group} age group"
+        if target_group != natural_age_group:
+            return False, "Explicit football category movement required"
+        return True, f"Eligible for season base {target_group} category"
 
     # ========================================================================
     # SESSION BOOKING LOGIC
@@ -269,6 +263,7 @@ class LFAPlayerService(BaseSpecializationService):
         ).first()
 
         # ✅ CHECK SEASON ENROLLMENT (payment verified)
+        season_enrollment = None
         if session.semester_id:
             season_enrollment = db.query(SemesterEnrollment).filter(
                 SemesterEnrollment.user_id == user.id,
@@ -281,27 +276,31 @@ class LFAPlayerService(BaseSpecializationService):
 
             if not season_enrollment.payment_verified:
                 return False, "Season payment not verified. Please complete payment to access sessions."
+        else:
+            return False, "Canonical football session requires a semester assignment"
 
-        # Extract age group from license specialization_type
-        user_age_group = self.get_age_group_from_specialization(license.specialization_type)
-        if not user_age_group:
-            return False, "Invalid license specialization type (missing age group)"
+        resolution = resolve_license_program(
+            getattr(license, "canonical_program_id", None), license.specialization_type
+        )
+        if not resolution.usable or resolution.canonical_program is not CanonicalProgram.LFA_FOOTBALL_PLAYER:
+            return False, "License program identity requires manual review"
 
         # Extract age group from session specialization_type
         session_age_group = self.get_age_group_from_specialization(session.specialization_type)
         if not session_age_group:
             return False, "Invalid session specialization type (missing age group)"
 
-        # Check if age groups match
-        if user_age_group == session_age_group:
-            return True, f"Age group matches: {user_age_group}"
-
-        # Check if cross-age-group booking is allowed
-        can_attend, reason = self.can_attend_age_group_session(user_age_group, session_age_group)
-        if can_attend:
-            return True, f"Cross-age-group booking allowed: {reason}"
-
-        return False, f"Age group mismatch: user is {user_age_group}, session is {session_age_group}. {reason}"
+        assignment = getattr(season_enrollment, "football_category_assignment", None)
+        if assignment is None:
+            return False, "Canonical football season assignment required; legacy enrollment needs manual review"
+        permitted = football_participation_categories(
+            assignment.season_base_category,
+            assignment.effective_category,
+            base_participation_retained=assignment.base_participation_retained,
+        )
+        if session_age_group in {category.value for category in permitted}:
+            return True, "Session category is granted by the canonical football assignment"
+        return False, "Session category is not granted by the canonical football assignment"
 
     def can_attend_age_group_session(self, user_age_group: str, session_age_group: str) -> Tuple[bool, str]:
         """
@@ -324,18 +323,7 @@ class LFAPlayerService(BaseSpecializationService):
         if user_age_group == session_age_group:
             return True, "Same age group"
 
-        # Define cross-age-group rules
-        allowed_combinations = {
-            'PRE': ['YOUTH'],  # PRE can attend YOUTH
-            'YOUTH': ['PRE', 'AMATEUR'],  # YOUTH can attend PRE and AMATEUR
-            'AMATEUR': ['YOUTH'],  # AMATEUR can attend YOUTH
-            'PRO': []  # PRO cannot attend other groups
-        }
-
-        if session_age_group in allowed_combinations.get(user_age_group, []):
-            return True, f"{user_age_group} players can attend {session_age_group} sessions"
-
-        return False, f"{user_age_group} players cannot attend {session_age_group} sessions"
+        return False, "Cross-category access requires a canonical season assignment"
 
     # ========================================================================
     # ENROLLMENT REQUIREMENTS
@@ -543,25 +531,4 @@ class LFAPlayerService(BaseSpecializationService):
         Returns:
             Tuple of (success: bool, message: str)
         """
-        # Validate target age group
-        if target_age_group not in self.AGE_GROUPS:
-            return False, f"Invalid target age group: {target_age_group}"
-
-        # Get current age group
-        current_age_group = self.get_age_group_from_specialization(user_license.specialization_type)
-        if not current_age_group:
-            return False, "Invalid current license specialization type"
-
-        # Check if already in target group
-        if current_age_group == target_age_group:
-            return False, f"Player is already in {target_age_group} group"
-
-        # Update license specialization_type
-        new_spec_type = f"LFA_PLAYER_{target_age_group}"
-        user_license.specialization_type = new_spec_type
-
-        # Log promotion (you might want to create an audit log entry here)
-        # For now, just update the license
-        db.commit()
-
-        return True, f"Successfully promoted from {current_age_group} to {target_age_group}"
+        return False, "Use the canonical replay-safe football category movement command"

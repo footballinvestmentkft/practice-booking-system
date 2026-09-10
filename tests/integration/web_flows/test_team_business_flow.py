@@ -95,6 +95,7 @@ def _make_user(db: Session, role: UserRole = UserRole.STUDENT, *, credit_balance
 
 
 def _make_license(db: Session, user: User, *, credit_balance: int = 200) -> UserLicense:
+    user.credit_balance = credit_balance
     lic = UserLicense(
         user_id=user.id,
         specialization_type="LFA_FOOTBALL_PLAYER",
@@ -104,7 +105,7 @@ def _make_license(db: Session, user: User, *, credit_balance: int = 200) -> User
         is_active=True,
         onboarding_completed=True,
         payment_verified=True,
-        credit_balance=credit_balance,
+        credit_balance=0,
     )
     db.add(lic)
     db.flush()
@@ -225,7 +226,7 @@ class TestTeamBusinessFlow:
         test_db: Session,
     ):
         """TEAM-10: Create team with enough credits → team created, credits deducted."""
-        before_balance = captain_license.credit_balance  # 200
+        before_balance = captain_user.credit_balance  # 200
         cost = 100
 
         resp = captain_client.post(
@@ -254,14 +255,14 @@ class TestTeamBusinessFlow:
         assert member.role == "CAPTAIN"
 
         # Credit deducted
-        lic_after = test_db.query(UserLicense).filter(UserLicense.id == captain_license.id).first()
-        assert lic_after.credit_balance == before_balance - cost, (
-            f"Expected balance {before_balance - cost}, got {lic_after.credit_balance}"
+        user_after = test_db.query(User).filter(User.id == captain_user.id).first()
+        assert user_after.credit_balance == before_balance - cost, (
+            f"Expected balance {before_balance - cost}, got {user_after.credit_balance}"
         )
 
         # CreditTransaction recorded
         ct = test_db.query(CreditTransaction).filter(
-            CreditTransaction.user_license_id == captain_license.id,
+            CreditTransaction.context_user_license_id == captain_license.id,
             CreditTransaction.amount == -cost,
         ).first()
         assert ct is not None, "CreditTransaction must exist"
@@ -276,7 +277,7 @@ class TestTeamBusinessFlow:
     ):
         """TEAM-11: Create team with insufficient credits → 402, no team created, balance unchanged."""
         # Set balance too low
-        captain_license.credit_balance = 50  # cost is 100
+        captain_user.credit_balance = 50  # cost is 100
         test_db.flush()
 
         def override_db():
@@ -308,8 +309,8 @@ class TestTeamBusinessFlow:
             assert team is None, "No team should be created on 402"
 
             # Balance unchanged
-            lic_after = test_db.query(UserLicense).filter(UserLicense.id == captain_license.id).first()
-            assert lic_after.credit_balance == 50, "Balance must be unchanged on failure"
+            user_after = test_db.query(User).filter(User.id == captain_user.id).first()
+            assert user_after.credit_balance == 50, "Balance must be unchanged on failure"
         finally:
             app.dependency_overrides.clear()
 
@@ -321,7 +322,7 @@ class TestTeamBusinessFlow:
         test_db: Session,
     ):
         """TEAM-11b: Sequential race — two create requests, only first succeeds, balance correct."""
-        captain_license.credit_balance = 100  # exact cost — second must fail
+        captain_user.credit_balance = 100  # exact cost — second must fail
         test_db.flush()
 
         def override_db():
@@ -345,8 +346,8 @@ class TestTeamBusinessFlow:
 
             test_db.expire_all()
 
-            lic_mid = test_db.query(UserLicense).filter(UserLicense.id == captain_license.id).first()
-            assert lic_mid.credit_balance == 0, "Balance must be 0 after first request"
+            user_mid = test_db.query(User).filter(User.id == captain_user.id).first()
+            assert user_mid.credit_balance == 0, "Balance must be 0 after first request"
 
             # Second request — must fail (balance = 0)
             resp2 = client.post(
@@ -354,19 +355,21 @@ class TestTeamBusinessFlow:
                 data={"name": "Race FC 2"},
                 follow_redirects=False,
             )
-            assert resp2.status_code == 402, f"Second request must fail with 402: {resp2.status_code}"
+            assert resp2.status_code in (303, 402), (
+                f"Second request must be rejected without another debit: {resp2.status_code}"
+            )
 
             test_db.expire_all()
 
             # Final balance still 0, not negative
-            lic_after = test_db.query(UserLicense).filter(UserLicense.id == captain_license.id).first()
-            assert lic_after.credit_balance == 0, (
-                f"Balance must remain 0 after failed second request; got {lic_after.credit_balance}"
+            user_after = test_db.query(User).filter(User.id == captain_user.id).first()
+            assert user_after.credit_balance == 0, (
+                f"Balance must remain 0 after failed second request; got {user_after.credit_balance}"
             )
 
             # Exactly one CreditTransaction
             cts = test_db.query(CreditTransaction).filter(
-                CreditTransaction.user_license_id == captain_license.id,
+                CreditTransaction.context_user_license_id == captain_license.id,
                 CreditTransaction.amount < 0,
             ).all()
             assert len(cts) == 1, f"Must have exactly 1 deduction transaction; got {len(cts)}"

@@ -23,7 +23,7 @@ private struct UnlockResponse: Decodable {
 // Manages the specialization unlock POST flow.
 //
 // Endpoint: POST /specialization/unlock
-//   Body: form-encoded  specialization=LFA_PLAYER&duration_months=<1|3|6|12>
+//   Body: form-encoded  specialization=LFA_FOOTBALL_PLAYER&duration_months=<1|3|6|12>
 //   Auth: Bearer token (same as all API calls)
 //
 // State machine:
@@ -55,7 +55,7 @@ final class UnlockViewModel: ObservableObject {
             let response: UnlockResponse = try await authManager.authenticatedFormPost(
                 path:   "/specialization/unlock",
                 fields: [
-                    "specialization":  "LFA_PLAYER",
+                    "specialization":  "LFA_FOOTBALL_PLAYER",
                     "duration_months": "\(durationMonths)",
                 ]
             )

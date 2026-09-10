@@ -164,6 +164,7 @@ class TestPlayerCreateEntrySchema:
             email="test@example.com",
             password="secure123",
             name="Jane Doe",
+            date_of_birth="2000-06-15",
         )
         assert entry.email == "test@example.com"
 
@@ -172,32 +173,33 @@ class TestPlayerCreateEntrySchema:
             email="  TEST@EXAMPLE.COM  ",
             password="secure123",
             name="Jane Doe",
+            date_of_birth="2000-06-15",
         )
         assert entry.email == "test@example.com"
 
     def test_invalid_email_no_at(self):
         with pytest.raises(Exception):  # Pydantic ValidationError
-            PlayerCreateEntry(email="notanemail", password="secure123", name="Jane Doe")
+            PlayerCreateEntry(email="notanemail", password="secure123", name="Jane Doe", date_of_birth="2000-06-15")
 
     def test_invalid_email_no_dot_after_at(self):
         with pytest.raises(Exception):
-            PlayerCreateEntry(email="test@nodot", password="secure123", name="Jane Doe")
+            PlayerCreateEntry(email="test@nodot", password="secure123", name="Jane Doe", date_of_birth="2000-06-15")
 
     def test_password_min_length_enforced(self):
         with pytest.raises(Exception):
-            PlayerCreateEntry(email="test@example.com", password="abc", name="Jane Doe")
+            PlayerCreateEntry(email="test@example.com", password="abc", name="Jane Doe", date_of_birth="2000-06-15")
 
     def test_name_required(self):
         with pytest.raises(Exception):
-            PlayerCreateEntry(email="test@example.com", password="secure123", name="")
+            PlayerCreateEntry(email="test@example.com", password="secure123", name="", date_of_birth="2000-06-15")
 
-    def test_default_dob(self):
-        entry = PlayerCreateEntry(
-            email="test@example.com",
-            password="secure123",
-            name="Jane Doe",
-        )
-        assert entry.date_of_birth == "2000-06-15"
+    def test_dob_is_required(self):
+        with pytest.raises(Exception):
+            PlayerCreateEntry(
+                email="test@example.com",
+                password="secure123",
+                name="Jane Doe",
+            )
 
     def test_custom_dob(self):
         entry = PlayerCreateEntry(
@@ -218,6 +220,7 @@ class TestBatchCreatePlayersRequestSchema:
             "email": f"player{n}@example.com",
             "password": "secure123",
             "name": f"Player {n}",
+            "date_of_birth": "2000-06-15",
         }
 
     def test_single_player_valid(self):

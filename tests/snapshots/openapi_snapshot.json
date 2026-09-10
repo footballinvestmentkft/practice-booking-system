@@ -13045,33 +13045,37 @@
     },
     "/api/v1/progression/progress": {
       "get": {
+        "tags": [
+          "progression"
+        ],
+        "summary": "Get User Progress",
         "description": "This legacy route has no persisted progression source.",
         "operationId": "get_user_progress_api_v1_progression_progress_get",
         "responses": {
           "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserProgressResponse"
                 }
               }
-            },
-            "description": "Successful Response"
+            }
           }
         },
         "security": [
           {
             "HTTPBearer": []
           }
-        ],
-        "summary": "Get User Progress",
-        "tags": [
-          "progression"
         ]
       }
     },
     "/api/v1/progression/progress/update": {
       "post": {
+        "tags": [
+          "progression"
+        ],
+        "summary": "Update User Progress",
         "description": "This legacy route never persisted updates and is deliberately disabled.",
         "operationId": "update_user_progress_api_v1_progression_progress_update_post",
         "requestBody": {
@@ -13086,32 +13090,28 @@
         },
         "responses": {
           "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
               }
-            },
-            "description": "Successful Response"
+            }
           },
           "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            },
-            "description": "Validation Error"
+            }
           }
         },
         "security": [
           {
             "HTTPBearer": []
           }
-        ],
-        "summary": "Update User Progress",
-        "tags": [
-          "progression"
         ]
       }
     },
@@ -16907,7 +16907,6 @@
           "semester-enrollments"
         ],
         "summary": "Override Age Category",
-        "description": "\ud83c\udfaf Override age category for a student enrollment.\n\n**Permissions**:\n- \ud83e\udd4b Instructor (any instructor)\n- \ud83d\udc51 Admin (can override any, with warnings)\n\n**Business Rules**:\n- \u2705 14+ year-olds can be moved between YOUTH/AMATEUR/PRO anytime (even mid-season)\n- \u274c 5-13 year-olds MUST stay in PRE (cannot override)\n- \ud83d\udd12 Season lock: Category is determined at July 1 and stays fixed\n- \ud83d\udcdd Override is audited (who, when)\n\n**Example**:\n- Student born 2007-12-06, season 2025/26 (July 1, 2025)\n- Age at season start: 17 years\n- Default: YOUTH\n- Instructor can override to: AMATEUR or PRO",
         "operationId": "override_age_category_api_v1_semester_enrollments__enrollment_id__override_category_post",
         "parameters": [
           {
@@ -21448,62 +21447,62 @@
     },
     "/api/v1/license-renewal/renew": {
       "post": {
+        "tags": [
+          "license-renewal"
+        ],
+        "summary": "Renew License",
         "description": "Renew a license for 12 or 24 months (Admin only).\n\nDeducts renewal_cost credits from user's balance and extends license expiration.",
         "operationId": "renew_license_api_v1_license_renewal_renew_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
-            "in": "header",
             "name": "Idempotency-Key",
+            "in": "header",
             "required": true,
             "schema": {
-              "maxLength": 255,
+              "type": "string",
               "minLength": 16,
-              "title": "Idempotency-Key",
-              "type": "string"
+              "maxLength": 255,
+              "title": "Idempotency-Key"
             }
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/LicenseRenewalRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LicenseRenewalResponse"
                 }
               }
-            },
-            "description": "Successful Response"
+            }
           },
           "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            },
-            "description": "Validation Error"
+            }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Renew License",
-        "tags": [
-          "license-renewal"
-        ]
+        }
       }
     },
     "/api/v1/license-renewal/status/{license_id}": {
@@ -31556,22 +31555,22 @@
     },
     "/specialization/lfa-player/onboarding-cancel": {
       "post": {
+        "tags": [
+          "web"
+        ],
+        "summary": "Lfa Player Onboarding Cancel",
         "description": "Cancel LFA Player onboarding and refund credits",
         "operationId": "lfa_player_onboarding_cancel_specialization_lfa_player_onboarding_cancel_post",
         "responses": {
           "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
               }
-            },
-            "description": "Successful Response"
+            }
           }
-        },
-        "summary": "Lfa Player Onboarding Cancel",
-        "tags": [
-          "web"
-        ]
+        }
       }
     },
     "/specialization/lfa-player/onboarding-submit": {
@@ -52640,6 +52639,19 @@
             "type": "string",
             "title": "Password"
           },
+          "date_of_birth": {
+            "type": "string",
+            "title": "Date Of Birth"
+          },
+          "guardian_consent": {
+            "type": "boolean",
+            "title": "Guardian Consent",
+            "default": false
+          },
+          "guardian_name": {
+            "type": "string",
+            "title": "Guardian Name"
+          },
           "credit_balance": {
             "type": "integer",
             "title": "Credit Balance",
@@ -52651,7 +52663,8 @@
           "name",
           "email",
           "role",
-          "password"
+          "password",
+          "date_of_birth"
         ],
         "title": "Body_admin_create_user_admin_users_create_post"
       },
@@ -54276,6 +54289,15 @@
           "invitation_code": {
             "type": "string",
             "title": "Invitation Code"
+          },
+          "guardian_consent": {
+            "type": "boolean",
+            "title": "Guardian Consent",
+            "default": false
+          },
+          "guardian_name": {
+            "type": "string",
+            "title": "Guardian Name"
           }
         },
         "type": "object",
@@ -55938,15 +55960,42 @@
           "age_category": {
             "type": "string",
             "title": "Age Category",
-            "description": "New age category (PRE, YOUTH, AMATEUR, PRO)"
+            "description": "Target effective category (PRE, YOUTH, AMATEUR, PRO)"
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "description": "Current assignment version for optimistic concurrency"
+          },
+          "base_participation_retained": {
+            "type": "boolean",
+            "title": "Base Participation Retained",
+            "description": "Whether the player remains eligible in the season base category",
+            "default": false
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 8,
+            "title": "Idempotency Key"
           }
         },
         "type": "object",
         "required": [
-          "age_category"
+          "age_category",
+          "expected_version",
+          "reason",
+          "idempotency_key"
         ],
         "title": "CategoryOverride",
-        "description": "Request to override age category for a student enrollment"
+        "description": "Explicit, replay-safe football category movement command."
       },
       "CellInstructorInfo": {
         "properties": {
@@ -64162,6 +64211,11 @@
             "description": "Display name"
           },
           "date_of_birth": {
+            "type": "string",
+            "title": "Date Of Birth",
+            "description": "Required ISO date string YYYY-MM-DD"
+          },
+          "guardian_name": {
             "anyOf": [
               {
                 "type": "string"
@@ -64170,16 +64224,16 @@
                 "type": "null"
               }
             ],
-            "title": "Date Of Birth",
-            "description": "ISO date string YYYY-MM-DD (defaults to 2000-06-15)",
-            "default": "2000-06-15"
+            "title": "Guardian Name",
+            "description": "Required guardian consent evidence for players under 18"
           }
         },
         "type": "object",
         "required": [
           "email",
           "password",
-          "name"
+          "name",
+          "date_of_birth"
         ],
         "title": "PlayerCreateEntry"
       },
@@ -66902,6 +66956,22 @@
           "invitation_code": {
             "type": "string",
             "title": "Invitation Code"
+          },
+          "guardian_consent": {
+            "type": "boolean",
+            "title": "Guardian Consent",
+            "default": false
+          },
+          "guardian_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guardian Name"
           }
         },
         "type": "object",

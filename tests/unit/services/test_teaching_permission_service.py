@@ -37,7 +37,7 @@ def _mock_db_with_license(level: int):
 
 
 def _mock_db_no_license():
-    """Return a db mock that returns no license (falls back to level 1)."""
+    """Return a db mock that returns no active license."""
     db = MagicMock()
     db.query.return_value.filter.return_value.first.return_value = None
     return db
@@ -180,18 +180,18 @@ class TestInvalidLevel:
         assert any("invalid" in w.lower() for w in result["warnings"])
 
 
-# ── get_teaching_permissions — no license (fallback to level 1) ───────────────
+# ── get_teaching_permissions — no license ────────────────────────────────────
 
 class TestNoLicense:
 
-    def test_lfa_coach_no_license_falls_back_to_level_1(self):
+    def test_lfa_coach_no_license_is_denied(self):
         user = _mock_user(specialization="LFA_COACH")
         db = _mock_db_no_license()
         result = TeachingPermissionService.get_teaching_permissions(user, db)
-        # Level 1 = assistant
-        assert result["current_level"] == 1
-        assert result["can_teach_with_supervision"] is True
+        assert result["current_level"] is None
+        assert result["can_teach_with_supervision"] is False
         assert result["can_teach_independently"] is False
+        assert any("license" in warning.lower() for warning in result["warnings"])
 
 
 # ── position details ──────────────────────────────────────────────────────────

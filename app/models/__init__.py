@@ -41,6 +41,11 @@ from .performance_review import StudentPerformanceReview, InstructorSessionRevie
 from .football_skill_assessment import FootballSkillAssessment
 from .belt_promotion import BeltPromotion
 from .credit_transaction import CreditTransaction, TransactionType
+from .ws1_domain import (
+    UserGuardianConsent,
+    FootballSeasonCategoryAssignment,
+    FootballCategoryMovementEvent,
+)
 from .xp_transaction import XPTransaction
 from .skill_reward import SkillReward
 from .invoice_request import InvoiceRequest, InvoiceRequestStatus

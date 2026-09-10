@@ -3,7 +3,7 @@ Sponsor Audience P2-D — Baseline Onboarding Tests (SPON-D-01 through SPON-D-07
 
   SPON-D-01  Full tournament-ready promote → 29-key football_skills, onboarding_completed=True
   SPON-D-02  Invalid position on entry → User created, onboarding NOT set
-  SPON-D-03  Missing DOB → User created, onboarding NOT set
+  SPON-D-03  Missing DOB → account creation denied by canonical profile policy
   SPON-D-04  Existing User with onboarding already set → football_skills NOT overwritten
   SPON-D-05  _build_baseline_football_skills() passes effective_onboarding gate (29 keys, correct structure)
   SPON-D-06  CSV parse: invalid position → NULL + warning; valid position → canonical stored
@@ -192,7 +192,7 @@ class TestInvalidPositionNoOnboarding:
 class TestMissingDobNoOnboarding:
     """SPON-D-03: missing DOB → User created, baseline NOT set."""
 
-    def test_spon_d_03_missing_dob_skips_baseline(self, test_db: Session):
+    def test_spon_d_03_missing_dob_denies_account_creation(self, test_db: Session):
         admin = _make_admin(test_db)
         sponsor = _make_sponsor(test_db, admin)
         entry = _make_entry(test_db, sponsor, admin, date_of_birth=None)
@@ -200,13 +200,13 @@ class TestMissingDobNoOnboarding:
 
         result = promote_entries([entry.id], sponsor.id, test_db, admin)
 
-        assert result.promoted == 1
+        assert result.promoted == 0
+        assert result.skipped == 1
         assert result.promoted_with_onboarding == 0
+        assert any("DATE_OF_BIRTH_REQUIRED" in error for error in result.errors)
 
         test_db.expire(entry)
-        lic = test_db.query(UserLicense).filter(UserLicense.user_id == entry.user_id).first()
-        assert lic.onboarding_completed is False
-        assert lic.football_skills is None
+        assert entry.user_id is None
 
 
 # ── SPON-D-04 ─────────────────────────────────────────────────────────────────

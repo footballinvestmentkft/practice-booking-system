@@ -17,7 +17,8 @@ from ...models.user import User
 from ...models.license import UserLicense
 from ...models.credit_transaction import TransactionType
 from ...models.specialization import SpecializationType
-from ...utils.age_requirements import validate_specialization_for_age
+from ...services.canonical_policy import PROGRAM_MINIMUM_AGES, resolve_license_program, resolve_program_id
+from ...services.program_eligibility_service import is_user_eligible_for_program
 from ...services.licence_package import (
     ALLOWED_DURATIONS,
     DEFAULT_DURATION_MONTHS,
@@ -66,35 +67,21 @@ async def specialization_unlock(
 
     cost = cost_for_duration(duration_months)
 
-    # Map specialization enum
-    spec_mapping = {
-        "LFA_PLAYER": SpecializationType.LFA_FOOTBALL_PLAYER,
-        "LFA_COACH": SpecializationType.LFA_COACH,
-        "INTERNSHIP": SpecializationType.INTERNSHIP,
-        "GANCUJU_PLAYER": SpecializationType.GANCUJU_PLAYER,
-    }
-    spec_type = spec_mapping.get(specialization)
-    if not spec_type:
+    resolution = resolve_program_id(specialization)
+    if not resolution.usable:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid specialization: {specialization}",
+            detail="Program identity requires manual review or is invalid",
         )
+    spec_type = SpecializationType(resolution.canonical_program.value)
 
     # Age requirement validation
-    if not validate_specialization_for_age(specialization, current_user.age):
-        age_requirements = {
-            "INTERNSHIP": "18+",
-            "LFA_COACH": "14+",
-            "GANCUJU_PLAYER": "5+",
-            "LFA_PLAYER": "5+",
-        }
-        required_age = age_requirements.get(specialization, "unknown")
+    eligible, denial_reason = is_user_eligible_for_program(db, current_user, spec_type)
+    if not eligible:
+        required_age = PROGRAM_MINIMUM_AGES[resolution.canonical_program]
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=(
-                f"Age requirement not met. This specialization requires age {required_age}. "
-                f"Your current age: {current_user.age or 'not set'}."
-            ),
+            detail=f"{denial_reason}; minimum program age is {required_age}",
         )
 
     # Lock user row to prevent concurrent unlock race conditions
@@ -113,10 +100,14 @@ async def specialization_unlock(
         )
 
     # Re-check after acquiring the lock
-    existing_license = db.query(UserLicense).filter(
-        UserLicense.user_id == current_user.id,
-        UserLicense.specialization_type == spec_type.value,
-    ).first()
+    existing_license = next(
+        (
+            row for row in db.query(UserLicense).filter(UserLicense.user_id == current_user.id).all()
+            if resolve_license_program(row.canonical_program_id, row.specialization_type).canonical_program
+            is resolution.canonical_program
+        ),
+        None,
+    )
     if existing_license:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -130,6 +121,7 @@ async def specialization_unlock(
     new_license = UserLicense(
         user_id=current_user.id,
         specialization_type=spec_type.value,
+        canonical_program_id=spec_type.value,
         current_level=1,
         max_achieved_level=1,
         started_at=now,

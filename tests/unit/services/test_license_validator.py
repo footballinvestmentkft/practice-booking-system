@@ -22,13 +22,17 @@ from app.services.shared.license_validator import LicenseValidator
 def _db(lic=None) -> MagicMock:
     """Mock DB session whose coach-license query returns `lic`."""
     db = MagicMock()
-    db.query.return_value.filter.return_value.order_by.return_value.first.return_value = lic
+    db.query.return_value.filter.return_value.order_by.return_value.all.return_value = (
+        [lic] if lic is not None else []
+    )
     return db
 
 
 def _lic(level: int) -> MagicMock:
     lic = MagicMock()
     lic.current_level = level
+    lic.canonical_program_id = "LFA_COACH"
+    lic.specialization_type = "LFA_COACH"
     return lic
 
 
@@ -80,12 +84,12 @@ class TestValidateCoachLicense:
 
     def test_known_age_group_exact_level_passes(self):
         """Level exactly at minimum is sufficient."""
-        lic = _lic(3)  # YOUTH min = 3
+        lic = _lic(4)  # YOUTH Head = 4
         result = LicenseValidator.validate_coach_license(_db(lic), user_id=42, age_group="YOUTH")
         assert result is lic
 
     def test_known_age_group_above_minimum_passes(self):
-        lic = _lic(7)  # AMATEUR min = 5
+        lic = _lic(8)  # PRO Head inherits AMATEUR Head scope
         result = LicenseValidator.validate_coach_license(_db(lic), user_id=42, age_group="AMATEUR")
         assert result is lic
 
@@ -101,18 +105,19 @@ class TestValidateCoachLicense:
             LicenseValidator.validate_coach_license(_db(lic), user_id=42, age_group="PRO")
         assert exc_info.value.status_code == 403
 
-    def test_pre_age_group_level_1_passes(self):
-        lic = _lic(1)  # PRE min = 1
+    def test_pre_age_group_level_2_head_passes(self):
+        lic = _lic(2)  # PRE Head = 2
         result = LicenseValidator.validate_coach_license(_db(lic), user_id=42, age_group="PRE")
         assert result is lic
 
-    def test_unknown_age_group_returns_license(self):
-        """Unknown age group → backward compatibility, no raise."""
+    def test_unknown_age_group_fails_closed(self):
+        """Unknown age group is never an implicit authorization."""
         lic = _lic(1)
-        result = LicenseValidator.validate_coach_license(
-            _db(lic), user_id=42, age_group="UNKNOWN_GROUP"
-        )
-        assert result is lic
+        with pytest.raises(HTTPException) as exc_info:
+            LicenseValidator.validate_coach_license(
+                _db(lic), user_id=42, age_group="UNKNOWN_GROUP"
+            )
+        assert exc_info.value.detail["error"] == "invalid_age_group"
 
     def test_missing_license_raises_403_regardless_of_age_group(self):
         with pytest.raises(HTTPException) as exc_info:
@@ -124,7 +129,7 @@ class TestValidateCoachLicense:
         with pytest.raises(HTTPException) as exc_info:
             LicenseValidator.validate_coach_license(_db(lic), user_id=42, age_group="PRO")
         detail = exc_info.value.detail
-        assert detail["required_coach_level"] == 7
+        assert detail["required_coach_level"] == 8
         assert detail["current_coach_level"] == 1
 
     def test_error_detail_error_code(self):
@@ -207,9 +212,9 @@ class TestGetMinimumLevelForAgeGroup:
 # ── check_level_sufficient ────────────────────────────────────────────────────
 
 class TestCheckLevelSufficient:
-    def test_unknown_age_group_returns_true(self):
-        """Unknown group → backward compat, assume sufficient."""
-        assert LicenseValidator.check_level_sufficient(1, "INVALID_GROUP") is True
+    def test_unknown_age_group_returns_false(self):
+        """Unknown group fails closed."""
+        assert LicenseValidator.check_level_sufficient(1, "INVALID_GROUP") is False
 
     def test_exact_minimum_is_sufficient(self):
         assert LicenseValidator.check_level_sufficient(5, "AMATEUR") is True

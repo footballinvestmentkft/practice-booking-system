@@ -441,14 +441,14 @@ class TestIsMinorProperty:
 # ===========================================================================
 
 class TestNeedsParentalConsent:
-    def test_non_lfa_coach_false_regardless_of_age(self):
+    def test_non_lfa_coach_minor_still_requires_global_consent(self):
         dob = datetime(2010, 1, 1, tzinfo=timezone.utc)  # minor
         u = _user(specialization=SpecializationType.LFA_FOOTBALL_PLAYER, date_of_birth=dob)
-        assert u.needs_parental_consent is False
+        assert u.needs_parental_consent is True
 
-    def test_no_specialization_false(self):
+    def test_no_specialization_minor_still_requires_global_consent(self):
         dob = datetime(2010, 1, 1, tzinfo=timezone.utc)
-        assert _user(specialization=None, date_of_birth=dob).needs_parental_consent is False
+        assert _user(specialization=None, date_of_birth=dob).needs_parental_consent is True
 
     def test_lfa_coach_adult_false(self):
         dob = datetime(2000, 1, 1, tzinfo=timezone.utc)  # adult

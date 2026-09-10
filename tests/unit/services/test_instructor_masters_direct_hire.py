@@ -170,14 +170,15 @@ class TestCreateDirectHireOffer:
                     MockSemester.location_city = MagicMock()
                     MockSemester.status = MagicMock()
                     MockSemester.status.in_.return_value = MagicMock()
-                    with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
-                        MockTPS.get_teaching_permissions.return_value = _permissions()
-                        with patch(f"{_BASE}.LocationMasterInstructor") as MockMaster:
-                            MockMaster.return_value = MagicMock()
-                            with patch(f"{_BASE}.MasterOfferResponse") as MockResp:
-                                MockResp.return_value = MagicMock()
-                                # Should not raise
-                                self._call(db=db, data=_hire_data(override=True))
+                    with patch(f"{_BASE}.LicenseValidator"):
+                        with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
+                            MockTPS.get_teaching_permissions.return_value = _permissions()
+                            with patch(f"{_BASE}.LocationMasterInstructor") as MockMaster:
+                                MockMaster.return_value = MagicMock()
+                                with patch(f"{_BASE}.MasterOfferResponse") as MockResp:
+                                    MockResp.return_value = MagicMock()
+                                    # Should not raise
+                                    self._call(db=db, data=_hire_data(override=True))
 
     def test_no_specialization_400(self):
         """CDHO-07: instructor has no specialization → 400."""
@@ -232,11 +233,11 @@ class TestCreateDirectHireOffer:
                         MockSem.status = MagicMock()
                         with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
                             MockTPS.get_teaching_permissions.return_value = _permissions(age_group="YOUTH_FOOTBALL")
+                            MockTPS.can_teach_scope.return_value = False
                             with patch(f"{_BASE}.get_semester_age_group", return_value="ADULT_FOOTBALL"):
-                                with patch(f"{_BASE}.can_teach_age_group", return_value=False):
-                                    with patch(f"{_BASE}.get_allowed_age_groups", return_value=["YOUTH_FOOTBALL"]):
-                                        with pytest.raises(HTTPException) as exc:
-                                            self._call(db=db)
+                                with patch(f"{_BASE}.get_allowed_age_groups", return_value=["YOUTH_FOOTBALL"]):
+                                    with pytest.raises(HTTPException) as exc:
+                                        self._call(db=db)
         assert exc.value.status_code == 400
 
     def test_success_no_semesters(self):
@@ -253,12 +254,13 @@ class TestCreateDirectHireOffer:
                 with patch(f"{_BASE}.Semester") as MockSem:
                     MockSem.location_city = MagicMock()
                     MockSem.status = MagicMock()
-                    with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
-                        MockTPS.get_teaching_permissions.return_value = _permissions()
-                        with patch(f"{_BASE}.LocationMasterInstructor", return_value=mock_master):
-                            with patch(f"{_BASE}.MasterOfferResponse") as MockResp:
-                                MockResp.return_value = MagicMock()
-                                result = self._call(db=db)
+                    with patch(f"{_BASE}.LicenseValidator"):
+                        with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
+                            MockTPS.get_teaching_permissions.return_value = _permissions()
+                            with patch(f"{_BASE}.LocationMasterInstructor", return_value=mock_master):
+                                with patch(f"{_BASE}.MasterOfferResponse") as MockResp:
+                                    MockResp.return_value = MagicMock()
+                                    result = self._call(db=db)
         db.add.assert_called_once_with(mock_master)
         db.commit.assert_called_once()
 
@@ -274,10 +276,11 @@ class TestCreateDirectHireOffer:
                 with patch(f"{_BASE}.Semester") as MockSem:
                     MockSem.location_city = MagicMock()
                     MockSem.status = MagicMock()
-                    with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
-                        MockTPS.get_teaching_permissions.return_value = _permissions(age_group="YOUTH_FOOTBALL")
-                        with patch(f"{_BASE}.get_semester_age_group", return_value="YOUTH_FOOTBALL"):
-                            with patch(f"{_BASE}.can_teach_age_group", return_value=True):
+                    with patch(f"{_BASE}.LicenseValidator"):
+                        with patch(f"{_BASE}.TeachingPermissionService") as MockTPS:
+                            MockTPS.get_teaching_permissions.return_value = _permissions(age_group="YOUTH_FOOTBALL")
+                            MockTPS.can_teach_scope.return_value = True
+                            with patch(f"{_BASE}.get_semester_age_group", return_value="YOUTH_FOOTBALL"):
                                 with patch(f"{_BASE}.LocationMasterInstructor", return_value=mock_master):
                                     with patch(f"{_BASE}.MasterOfferResponse") as MockResp:
                                         MockResp.return_value = MagicMock()

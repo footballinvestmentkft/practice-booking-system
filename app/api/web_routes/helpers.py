@@ -6,6 +6,7 @@ from datetime import date
 
 from fastapi.responses import RedirectResponse
 from ...models.user import User, UserRole
+from ...services.canonical_policy import calculate_age, football_base_category, football_season
 
 
 def require_student_onboarding(user: User):
@@ -57,14 +58,15 @@ def get_lfa_age_category(date_of_birth):
         return None, None, None, "Date of birth not set"
 
     today = date.today()
-    age = today.year - date_of_birth.year - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
+    season = football_season(today)
+    age = calculate_age(date_of_birth, season.start)
+    category = football_base_category(date_of_birth, season_start=season.start)
 
-    if 5 <= age <= 13:
+    if category and category.value == "PRE":
         return "PRE", "PRE (Foundation Years)", "5-13 years", f"Age {age} - Monthly training blocks"
-    elif 14 <= age <= 18:
+    elif category and category.value == "YOUTH":
         return "YOUTH", "YOUTH (Technical Development)", "14-18 years", f"Age {age} - Quarterly programs"
-    elif age > 18:
-        # For 18+ students, category must be assigned by instructor (AMATEUR or PRO)
-        return None, None, None, f"Age {age} - Category assigned by instructor (AMATEUR or PRO)"
+    elif category and category.value == "AMATEUR":
+        return "AMATEUR", "AMATEUR (Adult)", "19+ years", f"Age {age} - Adult base category"
     else:
         return None, None, None, f"Age {age} - Below minimum age requirement (5 years)"

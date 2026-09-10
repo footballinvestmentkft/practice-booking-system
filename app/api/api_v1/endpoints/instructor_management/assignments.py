@@ -102,7 +102,15 @@ def create_assignment(
         # Validate age group compatibility
         instructor_age_group = permissions["age_group"]  # e.g., "YOUTH_FOOTBALL"
 
-        if not _can_teach_age_group(instructor_age_group, data.age_group):
+        normalized_age_group = {
+            "Pre Football Coach": "PRE",
+            "Youth Football Coach": "YOUTH",
+            "Amateur Football Coach": "AMATEUR",
+            "Pro Football Coach": "PRO",
+        }.get(data.age_group, data.age_group)
+        if not TeachingPermissionService.can_teach_scope(
+            permissions.get("current_level", 0), normalized_age_group, "HEAD"
+        ):
             allowed_groups = _get_allowed_age_groups(instructor_age_group)
             instructor_level = permissions.get("current_level", 0)
 

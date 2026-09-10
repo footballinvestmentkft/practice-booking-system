@@ -75,6 +75,7 @@ def _make_user(db: Session, role: UserRole = UserRole.STUDENT) -> User:
 
 
 def _make_license(db: Session, user: User, *, credit_balance: int = 500) -> UserLicense:
+    user.credit_balance = credit_balance
     lic = UserLicense(
         user_id=user.id,
         specialization_type="LFA_FOOTBALL_PLAYER",
@@ -84,7 +85,7 @@ def _make_license(db: Session, user: User, *, credit_balance: int = 500) -> User
         is_active=True,
         onboarding_completed=True,
         payment_verified=True,
-        credit_balance=credit_balance,
+        credit_balance=0,
     )
     db.add(lic)
     db.flush()
@@ -191,8 +192,8 @@ class TestCaptainReenroll:
             assert enrollment is not None
 
             # Verify credit deducted
-            test_db.refresh(lic)
-            assert lic.credit_balance == 150  # 200 - 50
+            test_db.refresh(captain)
+            assert captain.credit_balance == 150  # 200 - 50
         finally:
             app.dependency_overrides.clear()
 
@@ -318,7 +319,8 @@ class TestCaptainReenroll:
 
             # Balance unchanged
             test_db.refresh(lic)
-            assert lic.credit_balance == 50
+            test_db.refresh(captain)
+            assert captain.credit_balance == 50
 
             # No enrollment created
             enrollment = test_db.query(TournamentTeamEnrollment).filter(

@@ -52,9 +52,8 @@ class TestCheckCoachLevelSufficient:
         for age_group in ["PRE", "YOUTH", "AMATEUR", "PRO"]:
             assert check_coach_level_sufficient(8, age_group) is True
 
-    def test_unknown_age_group_defaults_to_level_1(self):
-        # Unknown group falls back to required_level=1
-        assert check_coach_level_sufficient(1, "UNKNOWN_GROUP") is True
+    def test_unknown_age_group_fails_closed(self):
+        assert check_coach_level_sufficient(1, "UNKNOWN_GROUP") is False
         assert check_coach_level_sufficient(0, "UNKNOWN_GROUP") is False
 
     def test_exact_boundary_values(self):

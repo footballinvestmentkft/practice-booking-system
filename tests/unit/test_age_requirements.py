@@ -124,10 +124,10 @@ class TestValidateSpecializationForAge:
         assert validate_specialization_for_age("LFA_FOOTBALL_PLAYER", 4) is False
         assert validate_specialization_for_age("LFA_FOOTBALL_PLAYER", 5) is True
 
-    def test_lfa_player_alias_requires_5(self):
-        # LFA_PLAYER is an alias for LFA_FOOTBALL_PLAYER
+    def test_ambiguous_lfa_player_id_fails_closed(self):
+        # LFA_PLAYER is not owner-approved as a deterministic legacy alias.
         assert validate_specialization_for_age("LFA_PLAYER", 4) is False
-        assert validate_specialization_for_age("LFA_PLAYER", 5) is True
+        assert validate_specialization_for_age("LFA_PLAYER", 5) is False
 
     def test_lfa_coach_requires_14(self):
         assert validate_specialization_for_age("LFA_COACH", 13) is False

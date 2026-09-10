@@ -20,10 +20,11 @@ from .....models.semester import Semester
 from .....models.license import UserLicense
 from .....models.semester_enrollment import SemesterEnrollment
 from .schemas import EnrollmentCreate
-from .....services.age_category_service import (
-    calculate_age_at_season_start,
-    get_automatic_age_category,
-    get_current_season_year
+from .....services.canonical_policy import CanonicalProgram, resolve_license_program
+from .....services.program_eligibility_service import is_user_eligible_for_program
+from .....services.football_category_movement_service import (
+    FootballMovementError,
+    get_or_create_current_football_assignment,
 )
 
 router = APIRouter()
@@ -56,6 +57,17 @@ async def create_enrollment(
     ).first()
     if not user_license:
         raise HTTPException(status_code=404, detail="UserLicense not found or does not belong to student")
+
+    program_resolution = resolve_license_program(
+        user_license.canonical_program_id, user_license.specialization_type
+    )
+    if not program_resolution.usable:
+        raise HTTPException(status_code=409, detail="PROGRAM_ID_MANUAL_REVIEW_OR_INVALID")
+    eligible, denial_reason = is_user_eligible_for_program(
+        db, student, program_resolution.canonical_program
+    )
+    if not eligible:
+        raise HTTPException(status_code=403, detail=denial_reason)
 
     # Check if enrollment already exists
     existing = db.query(SemesterEnrollment).filter(
@@ -101,14 +113,6 @@ async def create_enrollment(
             parent_enrollment_id=parent_enrollment.id,
         )
 
-    # 🎯 NEW: Calculate automatic age category based on date_of_birth
-    age_category = None
-    if student.date_of_birth:
-        season_year = get_current_season_year()
-        age_at_season_start = calculate_age_at_season_start(student.date_of_birth, season_year)
-        age_category = get_automatic_age_category(age_at_season_start)
-        # age_category will be "PRE", "YOUTH", or None (if > 18, instructor must assign)
-
     # Create enrollment
     new_enrollment = SemesterEnrollment(
         user_id=enrollment.user_id,
@@ -117,11 +121,22 @@ async def create_enrollment(
         payment_verified=False,
         is_active=True,
         enrolled_at=datetime.utcnow(),
-        age_category=age_category,  # 🎯 NEW: Auto-assign based on age
+        age_category=None,
         age_category_overridden=False  # 🎯 NEW: Not overridden yet
     )
 
     db.add(new_enrollment)
+    db.flush()
+    if program_resolution.canonical_program is CanonicalProgram.LFA_FOOTBALL_PLAYER:
+        try:
+            assignment = get_or_create_current_football_assignment(
+                db, player=student, user_license=user_license
+            )
+        except FootballMovementError as exc:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=exc.code) from exc
+        new_enrollment.football_category_assignment_id = assignment.id
+        new_enrollment.age_category = assignment.effective_category
     db.commit()
     db.refresh(new_enrollment)
 

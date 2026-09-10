@@ -21,6 +21,8 @@ from ...core.auth import create_access_token
 from ...core.security import verify_password, get_password_hash
 from ...config import settings
 from ...utils.country_codes import COUNTRY_CODES, COUNTRY_OPTIONS, register_filters
+from ...services.canonical_policy import evaluate_profile_age_policy
+from ...services.program_eligibility_service import record_guardian_consent
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -278,6 +280,8 @@ async def register_submit(
     postal_code: str = Form(...),
     country: str = Form(...),
     invitation_code: str = Form(...),
+    guardian_consent: bool = Form(False),
+    guardian_name: str = Form(None),
     db: Session = Depends(get_db)
 ):
     """Process registration form"""
@@ -296,6 +300,8 @@ async def register_submit(
         "postal_code": postal_code,
         "country": country,
         "invitation_code": invitation_code,
+        "guardian_consent": guardian_consent,
+        "guardian_name": guardian_name or "",
     }
 
     def error(msg: str):
@@ -332,9 +338,14 @@ async def register_submit(
         today = date.today()
         if dob > today:
             return error("Date of birth cannot be in the future.")
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        if age < 5:
-            return error("You must be at least 5 years old to register.")
+        profile_decision = evaluate_profile_age_policy(
+            dob,
+            bool(guardian_consent and guardian_name),
+            on_date=today,
+        )
+        if not profile_decision.usable:
+            return error(profile_decision.reason)
+        age = profile_decision.age
         if age > 120:
             return error("Please enter a valid date of birth.")
 
@@ -384,6 +395,13 @@ async def register_submit(
         )
         db.add(new_user)
         db.flush()  # get new_user.id
+        if age < 18:
+            record_guardian_consent(
+                db,
+                user=new_user,
+                guardian_name=guardian_name,
+                evidence_reference="WEB_INVITATION_REGISTRATION",
+            )
 
         # Log invitation bonus credit transaction (if any)
         from datetime import timezone as _tz

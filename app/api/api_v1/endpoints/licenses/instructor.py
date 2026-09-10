@@ -9,6 +9,14 @@ from .....database import get_db
 from .....dependencies import get_current_user
 from .....models.user import User, UserRole
 from .....services.license_service import LicenseService
+from .....models.license import UserLicense
+from .....services.canonical_policy import (
+    AgeCategory,
+    CanonicalProgram,
+    CoachRole,
+    coach_can_teach,
+    resolve_license_program,
+)
 
 router = APIRouter()
 
@@ -138,7 +146,6 @@ async def get_instructor_teachable_specializations(
         )
 
     # Get instructor's active licenses
-    from ....models.license import UserLicense
     licenses = db.query(UserLicense).filter(
         UserLicense.user_id == instructor_id,
         UserLicense.is_active == True
@@ -151,21 +158,18 @@ async def get_instructor_teachable_specializations(
     teachable_specs = set()
 
     for license in licenses:
-        if license.specialization_type == "COACH":
-            # COACH license → can teach all LFA_PLAYER_* semesters
-            teachable_specs.add("LFA_PLAYER_PRE")
-            teachable_specs.add("LFA_PLAYER_YOUTH")
-            teachable_specs.add("LFA_PLAYER_AMATEUR")
-            teachable_specs.add("LFA_PLAYER_PRO")
-
-        elif license.specialization_type == "INTERNSHIP":
+        resolution = resolve_license_program(
+            license.canonical_program_id, license.specialization_type
+        )
+        if not resolution.usable:
+            continue
+        if resolution.canonical_program is CanonicalProgram.LFA_COACH:
+            for category in AgeCategory:
+                if coach_can_teach(license.current_level, category, CoachRole.ASSISTANT):
+                    teachable_specs.add(f"LFA_PLAYER_{category.value}")
+        elif resolution.canonical_program is CanonicalProgram.INTERNSHIP:
             # INTERNSHIP license → can teach INTERNSHIP semesters
             teachable_specs.add("INTERNSHIP")
-
-        elif license.specialization_type == "PLAYER":
-            # PLAYER license → can teach GANCUJU_PLAYER semesters (?)
-            # Note: Need to clarify this mapping
-            teachable_specs.add("GANCUJU_PLAYER")
 
     return sorted(list(teachable_specs))
 
