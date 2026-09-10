@@ -29,8 +29,9 @@ from ...models.system_event import SystemEvent
 from ...models.audit_log import AuditLog
 from ...models.coupon import Coupon
 from ...utils.age_requirements import get_available_specializations
-from .helpers import get_lfa_age_category
+from .helpers import get_lfa_age_category  # compatibility export; not a runtime authority
 from ...services.skill_progression import get_all_skill_keys
+from ...services.player_identity_service import get_current_player_assignment
 from ...models.user_mood_photos import MOOD_PHOTO_SLOTS, UserMoodPhoto
 
 # Setup templates
@@ -564,20 +565,25 @@ async def spec_dashboard(
     user_age = None
 
     if spec_enum == 'LFA_FOOTBALL_PLAYER':
-        age_category, age_category_name, age_range, age_description = get_lfa_age_category(user.date_of_birth)
+        category_assignment = get_current_player_assignment(db, user_id=user.id)
+        if category_assignment:
+            age_category = category_assignment.effective_category
+            category_labels = {
+                "PRE": ("PRE (Foundation Years)", "5-13 season age", "Foundation"),
+                "YOUTH": ("YOUTH (Technical Development)", "14-18 season age", "Youth development"),
+                "AMATEUR": ("AMATEUR (Adult)", "19+ season base or assigned", "Adult football"),
+                "PRO": ("PRO", "Explicit assignment", "Professional assignment"),
+            }
+            age_category_name, age_range, age_description = category_labels.get(
+                age_category,
+                (age_category, "", ""),
+            )
 
         # Calculate user_age for template display
         if user.date_of_birth:
             user_age = today.year - user.date_of_birth.year - ((today.month, today.day) < (user.date_of_birth.month, user.date_of_birth.day))
 
         logger.debug("lfa_age_check", extra={"user": user.email, "age_category": age_category, "user_age": user_age})
-
-        if not age_category:
-            # 18+ student — instructor must assign AMATEUR or PRO.
-            # Until assignment is stored, default to AMATEUR so the page renders.
-            age_category = "AMATEUR"
-            age_category_name = "AMATEUR (Adult)"
-            age_range = "18+ years"
 
     # Map specialization to semester code prefix
     semester_code_prefix = {

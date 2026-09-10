@@ -243,7 +243,10 @@ class TestAgeVerificationSubmit:
         """Run age_verification_submit with templates patched for test isolation."""
         if db is None:
             db = _mock_db()
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with patch(
+            "app.services.player_identity_service.get_current_player_assignment",
+            return_value=None,
+        ), patch(f"{_BASE}.templates") as mock_tmpl:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             result = _run(age_verification_submit(
                 request=_req(), date_of_birth=dob_str, db=db, user=user
@@ -269,14 +272,14 @@ class TestAgeVerificationSubmit:
         dob = date(date.today().year - 2, 1, 1).isoformat()
         _, mock_tmpl = self._run_submit(user, dob)
         _, ctx = mock_tmpl.TemplateResponse.call_args.args
-        assert "5" in ctx.get("error", "")
+        assert ctx.get("error") == "MINIMUM_ACCOUNT_AGE"
 
-    def test_too_old_renders_error(self):
+    def test_no_unapproved_maximum_age_is_invented(self):
         user = _user(role=UserRole.STUDENT)
         dob = date(date.today().year - 130, 1, 1).isoformat()
-        _, mock_tmpl = self._run_submit(user, dob)
-        _, ctx = mock_tmpl.TemplateResponse.call_args.args
-        assert "valid" in ctx.get("error", "").lower()
+        result, _ = self._run_submit(user, dob)
+        assert isinstance(result, RedirectResponse)
+        assert "/dashboard" in result.headers["location"]
 
     def test_valid_dob_saves_and_redirects(self):
         user = _user(role=UserRole.STUDENT)

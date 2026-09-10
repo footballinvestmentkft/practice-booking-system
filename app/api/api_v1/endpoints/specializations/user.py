@@ -15,6 +15,12 @@ from .....dependencies import get_current_user
 from .....models.user import User
 from .....models.specialization import SpecializationType
 from .....services.specialization import SpecializationService
+from .....services.player_identity_service import (
+    PlayerEntitlementConflictError,
+    PlayerEntitlementRequiredError,
+    PlayerIdentityPolicyError,
+    activate_football_player,
+)
 
 router = APIRouter()
 
@@ -79,6 +85,50 @@ async def set_user_specialization(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid specialization. Must be one of: {[s.value for s in SpecializationType]}"
         )
+
+    if specialization is SpecializationType.LFA_FOOTBALL_PLAYER:
+        try:
+            result = activate_football_player(db, user=current_user)
+            db.commit()
+        except PlayerEntitlementRequiredError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=exc.code,
+            ) from exc
+        except PlayerIdentityPolicyError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=exc.code,
+            ) from exc
+        except PlayerEntitlementConflictError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=exc.code,
+            ) from exc
+
+        return {
+            "message": "Specialization updated successfully",
+            "user": {
+                "id": current_user.id,
+                "name": current_user.name,
+                "email": current_user.email,
+                "specialization": {
+                    "code": result.license.canonical_program_id,
+                    "name": "LFA Football Player",
+                    "icon": "⚽",
+                },
+            },
+            "football_assignment": {
+                "season_start": result.assignment.season_start.isoformat(),
+                "season_end": result.assignment.season_end.isoformat(),
+                "season_base_category": result.assignment.season_base_category,
+                "effective_category": result.assignment.effective_category,
+                "base_participation_retained": result.assignment.base_participation_retained,
+            },
+        }
 
     # STEP 2-4: Use service to validate and enroll
     service = SpecializationService(db)
@@ -169,4 +219,3 @@ async def clear_user_specialization(
         "message": "Specialization cleared successfully",
         "user_id": current_user.id
     }
-

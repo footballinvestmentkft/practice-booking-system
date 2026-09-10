@@ -13,10 +13,14 @@ import json
 from .....database import get_db
 from .....dependencies import get_current_user, get_current_admin_user
 from .....core.security import get_password_hash
-from .....models.user import User
+from .....models.user import User, UserRole
 from .....models.license import UserLicense
 from .....schemas.user import User as UserSchema, UserUpdateSelf
 from .....schemas.auth import ResetPassword
+from .....services.player_identity_service import (
+    PlayerIdentityPolicyError,
+    update_identity_profile,
+)
 from .....services.profile_photo_service import (
     save_profile_photo,
     delete_profile_photo,
@@ -85,8 +89,23 @@ def update_own_profile(
                 detail="User with this email already exists"
             )
 
-    # Validate that emergency phone is different from user phone
     update_data = user_update.model_dump(exclude_unset=True)
+    candidate_dob = update_data.pop("date_of_birth", current_user.date_of_birth)
+    if current_user.role is UserRole.STUDENT or candidate_dob is not None:
+        try:
+            update_identity_profile(
+                db,
+                user=current_user,
+                date_of_birth=candidate_dob,
+            )
+        except PlayerIdentityPolicyError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=exc.code,
+            ) from exc
+
+    # Validate that emergency phone is different from user phone
     user_phone = update_data.get('phone', current_user.phone)
     emergency_phone = update_data.get('emergency_phone', current_user.emergency_phone)
 

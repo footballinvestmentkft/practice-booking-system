@@ -22,9 +22,9 @@ from .....models.semester_enrollment import SemesterEnrollment
 from .schemas import EnrollmentCreate
 from .....services.canonical_policy import CanonicalProgram, resolve_license_program
 from .....services.program_eligibility_service import is_user_eligible_for_program
-from .....services.football_category_movement_service import (
-    FootballMovementError,
-    get_or_create_current_football_assignment,
+from .....services.player_identity_service import (
+    PlayerIdentityError,
+    prepare_football_player_enrollment,
 )
 
 router = APIRouter()
@@ -63,11 +63,23 @@ async def create_enrollment(
     )
     if not program_resolution.usable:
         raise HTTPException(status_code=409, detail="PROGRAM_ID_MANUAL_REVIEW_OR_INVALID")
-    eligible, denial_reason = is_user_eligible_for_program(
-        db, student, program_resolution.canonical_program
-    )
-    if not eligible:
-        raise HTTPException(status_code=403, detail=denial_reason)
+    player_assignment = None
+    if program_resolution.canonical_program is CanonicalProgram.LFA_FOOTBALL_PLAYER:
+        try:
+            player_assignment = prepare_football_player_enrollment(
+                db,
+                user=student,
+                user_license=user_license,
+            ).assignment
+        except PlayerIdentityError as exc:
+            db.rollback()
+            raise HTTPException(status_code=403, detail=exc.code) from exc
+    else:
+        eligible, denial_reason = is_user_eligible_for_program(
+            db, student, program_resolution.canonical_program
+        )
+        if not eligible:
+            raise HTTPException(status_code=403, detail=denial_reason)
 
     # Check if enrollment already exists
     existing = db.query(SemesterEnrollment).filter(
@@ -128,15 +140,8 @@ async def create_enrollment(
     db.add(new_enrollment)
     db.flush()
     if program_resolution.canonical_program is CanonicalProgram.LFA_FOOTBALL_PLAYER:
-        try:
-            assignment = get_or_create_current_football_assignment(
-                db, player=student, user_license=user_license
-            )
-        except FootballMovementError as exc:
-            db.rollback()
-            raise HTTPException(status_code=400, detail=exc.code) from exc
-        new_enrollment.football_category_assignment_id = assignment.id
-        new_enrollment.age_category = assignment.effective_category
+        new_enrollment.football_category_assignment_id = player_assignment.id
+        new_enrollment.age_category = player_assignment.effective_category
     db.commit()
     db.refresh(new_enrollment)
 

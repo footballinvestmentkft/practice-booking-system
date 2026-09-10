@@ -17,6 +17,7 @@ import logging
 from app.models.user_progress import SpecializationProgress
 from app.models.license import UserLicense
 from app.models.user import User
+from app.services.canonical_policy import CanonicalProgram, resolve_program_id
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,11 @@ class ProgressLicenseSyncService:
         ).first()
 
         if not license:
+            if (
+                resolve_program_id(specialization).canonical_program
+                is CanonicalProgram.LFA_FOOTBALL_PLAYER
+            ):
+                raise ValueError("FOOTBALL_ENTITLEMENT_REQUIRES_CANONICAL_COMMAND")
             # Create new license matching progress
             license = UserLicense(
                 user_id=user_id,

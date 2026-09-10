@@ -22,7 +22,17 @@ from ...utils.football_positions import normalize_position, normalize_positions,
 from ...skills_config import SKILL_CATEGORIES, get_all_skill_keys
 from ...services.skill_progression import SYSTEM_BASELINE
 from ...services.licence_package import DEFAULT_DURATION_MONTHS, cost_for_duration, calculate_expires_at
-from ...services.credit_service import CreditService
+from ...services.credit_service import (
+    CreditService,
+    InsufficientCreditsError as CreditInsufficientCreditsError,
+)
+from ...services.player_identity_service import (
+    PlayerEntitlementExistsError,
+    PlayerIdentityError,
+    activate_football_player,
+    unlock_football_player,
+    update_identity_profile,
+)
 import logging
 
 # Setup templates
@@ -80,6 +90,50 @@ async def specialization_select_submit(
             return templates.TemplateResponse(
                 "specialization_select.html",
                 {"request": request, "user": user, "error": f"Invalid specialization: {specialization}"}
+            )
+
+        if spec_type is SpecializationType.LFA_FOOTBALL_PLAYER:
+            try:
+                try:
+                    unlock_football_player(
+                        db,
+                        user=user,
+                        duration_months=DEFAULT_DURATION_MONTHS,
+                    )
+                except PlayerEntitlementExistsError:
+                    activate_football_player(db, user=user)
+                db.commit()
+            except CreditInsufficientCreditsError as exc:
+                db.rollback()
+                error_msg = (
+                    f"Insufficient credits. You have {exc.available} CR "
+                    f"but need {exc.required} CR."
+                )
+                return RedirectResponse(
+                    url=f"/dashboard?error={error_msg}",
+                    status_code=303,
+                )
+            except PlayerIdentityError as exc:
+                db.rollback()
+                return templates.TemplateResponse(
+                    "specialization_select.html",
+                    {"request": request, "user": user, "error": exc.code},
+                    status_code=403,
+                )
+            except IntegrityError:
+                db.rollback()
+                return templates.TemplateResponse(
+                    "specialization_select.html",
+                    {
+                        "request": request,
+                        "user": user,
+                        "error": "FOOTBALL_ENTITLEMENT_CONCURRENT_CONFLICT",
+                    },
+                    status_code=409,
+                )
+            return RedirectResponse(
+                url="/specialization/lfa-player/onboarding",
+                status_code=303,
             )
 
         # Lock user row to prevent concurrent unlock race conditions
@@ -159,10 +213,10 @@ async def specialization_select_submit(
         db.rollback()
         logger.warning("onboarding_duplicate_license_attempt", extra={"user": user.email})
         return RedirectResponse(url="/dashboard", status_code=303)
-    except Exception as e:
+    except Exception:
         db.rollback()
         logger.error("onboarding_spec_selection_error", extra={"user": user.email}, exc_info=True)
-        return RedirectResponse(url=f"/dashboard?error={str(e)}", status_code=303)
+        return RedirectResponse(url="/dashboard?error=Unable%20to%20select%20program", status_code=303)
 
 
 @router.get("/specialization/lfa-player/onboarding", response_class=HTMLResponse)
@@ -590,7 +644,7 @@ async def lfa_player_onboarding_submit(
     except Exception as e:
         db.rollback()
         logger.error("onboarding_full_error", extra={"user": user.email}, exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Unable to complete onboarding")
 
 
 @router.get("/onboarding/start", response_class=HTMLResponse)
@@ -637,21 +691,16 @@ async def onboarding_set_birthdate(
         # Parse date
         dob = datetime.strptime(date_of_birth, "%Y-%m-%d").date()
 
-        # Validate age (must be at least 5 years old)
-        today = datetime.now().date()
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-
-        if age < 5:
-            raise HTTPException(status_code=400, detail="You must be at least 5 years old to register")
-
-        # Update user
-        user.date_of_birth = dob
+        decision = update_identity_profile(db, user=user, date_of_birth=dob)
         db.commit()
 
-        logger.info("onboarding_dob_set", extra={"user": user.email, "age": age})
+        logger.info("onboarding_dob_set", extra={"user": user.email, "age": decision.age})
 
         # Redirect back to onboarding to show spec selection
         return RedirectResponse(url="/onboarding/start", status_code=303)
 
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format")
+    except PlayerIdentityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=exc.code) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid date format") from exc

@@ -9,7 +9,13 @@ from datetime import datetime, timezone, date
 from ..models.user import User
 from ..models.license import UserLicense
 from ..services.license_service import LicenseService
-from ..services.canonical_policy import PROGRAM_MINIMUM_AGES, calculate_age, resolve_license_program, resolve_program_id
+from ..services.canonical_policy import (
+    CanonicalProgram,
+    PROGRAM_MINIMUM_AGES,
+    calculate_age,
+    resolve_license_program,
+    resolve_program_id,
+)
 from ..services.program_eligibility_service import is_user_eligible_for_program
 
 
@@ -247,6 +253,11 @@ class ParallelSpecializationService:
         if not resolution.usable:
             return {'success': False, 'message': 'Program identity requires manual review'}
         specialization = resolution.canonical_program.value
+        if resolution.canonical_program is CanonicalProgram.LFA_FOOTBALL_PLAYER:
+            return {
+                'success': False,
+                'message': 'FOOTBALL_ENTITLEMENT_REQUIRES_CANONICAL_COMMAND',
+            }
         
         # Check if user already has this specialization
         existing = next((

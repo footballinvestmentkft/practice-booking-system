@@ -144,7 +144,12 @@ class TestSpecializationSelectSubmit:
         user = _user(credit_balance=50)
         # user_return=user: SELECT FOR UPDATE re-query returns the real user mock (50 credits < 100)
         db = _mock_db(first_return=None, user_return=user)
-        result, _ = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
+        from app.services.credit_service import InsufficientCreditsError
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=InsufficientCreditsError(required=100, available=50),
+        ):
+            result, mock_tmpl = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
         assert isinstance(result, RedirectResponse)
         assert "/dashboard" in result.headers["location"]
 
@@ -153,7 +158,12 @@ class TestSpecializationSelectSubmit:
         user = _user(credit_balance=200)
         # user_return=user: SELECT FOR UPDATE returns user; first_return=license_mock: license check returns existing
         db = _mock_db(first_return=license_mock, user_return=user)
-        result, _ = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
+        from app.services.player_identity_service import PlayerEntitlementExistsError
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=PlayerEntitlementExistsError(),
+        ), patch(f"{_BASE}.activate_football_player"):
+            result, _ = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
         assert isinstance(result, RedirectResponse)
         assert user.credit_balance == 200  # Credits NOT deducted (license already exists)
         # Guard: existing license path still redirects to the correct onboarding URL
@@ -164,7 +174,8 @@ class TestSpecializationSelectSubmit:
         # user_return=user: SELECT FOR UPDATE re-query returns the same user (with 200 credits)
         # first_return=None: license check returns None → new unlock path
         db = _mock_db(first_return=None, user_return=user)
-        result, _ = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
+        with patch(f"{_BASE}.unlock_football_player"):
+            result, _ = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
         assert isinstance(result, RedirectResponse)
         assert "lfa-player/onboarding" in result.headers["location"]
 
@@ -179,7 +190,12 @@ class TestSpecializationSelectSubmit:
         """credit_balance=99 < 100 → insufficient credits → /dashboard redirect."""
         user = _user(credit_balance=99)
         db = _mock_db(first_return=None, user_return=user)
-        result, _ = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
+        from app.services.credit_service import InsufficientCreditsError
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=InsufficientCreditsError(required=100, available=99),
+        ):
+            result, _ = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
         assert isinstance(result, RedirectResponse)
         assert "/dashboard" in result.headers["location"]
 
@@ -187,22 +203,26 @@ class TestSpecializationSelectSubmit:
         """credit_balance=100 == 100 → exactly enough → proceed to lfa onboarding redirect."""
         user = _user(credit_balance=100)
         db = _mock_db(first_return=None, user_return=user)
-        result, _ = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
+        with patch(f"{_BASE}.unlock_football_player"):
+            result, _ = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
         assert isinstance(result, RedirectResponse)
         assert "lfa-player/onboarding" in result.headers["location"]
 
-    def test_integrity_error_during_license_creation_redirects_to_dashboard(self):
-        """IntegrityError during DB commit (race condition duplicate) → 303 /dashboard."""
+    def test_integrity_error_during_license_creation_returns_canonical_conflict(self):
+        """A concurrent duplicate returns an explicit canonical conflict."""
         from sqlalchemy.exc import IntegrityError
         user = _user(credit_balance=200)
         db = _mock_db(first_return=None, user_return=user)
-        db.flush.side_effect = IntegrityError("duplicate", {}, Exception())
+        with patch(
+            f"{_BASE}.unlock_football_player",
+            side_effect=IntegrityError("duplicate", {}, Exception()),
+        ):
+            result, mock_tmpl = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
 
-        result, _ = self._run_submit(user, "LFA_FOOTBALL_PLAYER", db=db)
-
-        assert isinstance(result, RedirectResponse)
-        assert result.status_code == 303
-        assert result.headers["location"] == "/dashboard"
+        assert result is mock_tmpl.TemplateResponse.return_value
+        _, context = mock_tmpl.TemplateResponse.call_args.args
+        assert context["error"] == "FOOTBALL_ENTITLEMENT_CONCURRENT_CONFLICT"
+        assert mock_tmpl.TemplateResponse.call_args.kwargs["status_code"] == 409
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -392,14 +412,18 @@ class TestOnboardingSetBirthdate:
                 request=_req(), date_of_birth=dob, db=_mock_db(), user=user
             ))
         assert exc_info.value.status_code == 400
-        assert "5" in exc_info.value.detail
+        assert exc_info.value.detail == "MINIMUM_ACCOUNT_AGE"
 
     def test_valid_dob_saves_and_redirects(self):
         user = _user()
         db = _mock_db()
-        result = _run(onboarding_set_birthdate(
-            request=_req(), date_of_birth="2000-06-15", db=db, user=user
-        ))
+        with patch(
+            "app.services.player_identity_service.get_current_player_assignment",
+            return_value=None,
+        ):
+            result = _run(onboarding_set_birthdate(
+                request=_req(), date_of_birth="2000-06-15", db=db, user=user
+            ))
         assert isinstance(result, RedirectResponse)
         assert "/onboarding/start" in result.headers["location"]
         db.commit.assert_called_once()
@@ -407,9 +431,13 @@ class TestOnboardingSetBirthdate:
     def test_valid_dob_sets_user_date_of_birth(self):
         user = _user()
         db = _mock_db()
-        _run(onboarding_set_birthdate(
-            request=_req(), date_of_birth="1998-03-20", db=db, user=user
-        ))
+        with patch(f"{_BASE}.update_identity_profile") as update_identity:
+            update_identity.side_effect = lambda _db, *, user, date_of_birth: setattr(
+                user, "date_of_birth", date_of_birth
+            ) or MagicMock(age=28)
+            _run(onboarding_set_birthdate(
+                request=_req(), date_of_birth="1998-03-20", db=db, user=user
+            ))
         assert user.date_of_birth == date(1998, 3, 20)
 
 

@@ -24,6 +24,7 @@ from app.models.user import User, UserRole
 from app.models.semester import Semester
 from app.models.license import UserLicense
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
+from app.services.player_identity_service import PlayerIdentityPolicyError
 
 _BASE_WORKFLOW = "app.api.api_v1.endpoints.semester_enrollments.workflow"
 _BASE_CRUD = "app.api.api_v1.endpoints.semester_enrollments.crud"
@@ -264,7 +265,8 @@ class TestCreateEnrollment:
         lic = MagicMock(); lic.specialization_type = "LFA_FOOTBALL_PLAYER"; lic.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         existing = MagicMock()
         db = _model_db(student=student, semester=semester, lic=lic, existing=existing)
-        with patch(f"{_BASE_CRUD}.is_user_eligible_for_program", return_value=(True, None)):
+        prepared = MagicMock(assignment=MagicMock(id=7, effective_category="YOUTH"))
+        with patch(f"{_BASE_CRUD}.prepare_football_player_enrollment", return_value=prepared):
             with pytest.raises(HTTPException) as exc:
                 self._call(db=db)
         assert exc.value.status_code == 400
@@ -275,7 +277,10 @@ class TestCreateEnrollment:
         semester = MagicMock(); semester.code = "2025Q1"; semester.parent_semester_id = None
         lic = MagicMock(); lic.specialization_type = "LFA_FOOTBALL_PLAYER"; lic.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = _model_db(student=student, semester=semester, lic=lic, existing=None)
-        with patch(f"{_BASE_CRUD}.is_user_eligible_for_program", return_value=(False, "DATE_OF_BIRTH_REQUIRED")):
+        with patch(
+            f"{_BASE_CRUD}.prepare_football_player_enrollment",
+            side_effect=PlayerIdentityPolicyError("DATE_OF_BIRTH_REQUIRED"),
+        ):
             with pytest.raises(Exception) as exc:
                 self._call(db=db)
         assert exc.value.status_code == 403
@@ -288,8 +293,10 @@ class TestCreateEnrollment:
         lic = MagicMock(); lic.specialization_type = "LFA_FOOTBALL_PLAYER"; lic.canonical_program_id = "LFA_FOOTBALL_PLAYER"
         db = _model_db(student=student, semester=semester, lic=lic, existing=None)
         assignment = MagicMock(id=7, effective_category="YOUTH")
-        with patch(f"{_BASE_CRUD}.is_user_eligible_for_program", return_value=(True, None)), \
-             patch(f"{_BASE_CRUD}.get_or_create_current_football_assignment", return_value=assignment):
+        with patch(
+            f"{_BASE_CRUD}.prepare_football_player_enrollment",
+            return_value=MagicMock(assignment=assignment),
+        ):
             result = self._call(db=db)
         assert result["success"] is True
 

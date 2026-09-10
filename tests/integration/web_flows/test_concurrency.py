@@ -334,7 +334,9 @@ class TestSpecializationUnlockIdempotency:
     ):
         """SMOKE-CONC-02: POST /specialization/select with < 100 credits → 303 error, no license, balance unchanged."""
         student_user.credit_balance = 50
-        test_db.flush()
+        # Persist the precondition so the request transaction can roll back
+        # independently without also undoing the fixture setup.
+        test_db.commit()
 
         resp = student_client.post(
             "/specialization/select",

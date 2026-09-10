@@ -328,7 +328,8 @@ class TestSpecDashboard:
         db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
         db.query.return_value.filter.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.get_lfa_age_category", return_value=("PRE", "PRE (Foundation Years)", "5-13 years", "Age 10")), \
+        assignment = MagicMock(effective_category="PRE")
+        with patch(f"{_BASE}.get_current_player_assignment", return_value=assignment), \
              patch(f"{_BASE}._CardDraftService") as mock_cds, \
              patch(f"{_BASE}._build_published_grid_state", return_value=None), \
              patch(f"{_BASE}.templates") as mock_tmpl:
@@ -342,8 +343,8 @@ class TestSpecDashboard:
         ctx = mock_tmpl.TemplateResponse.call_args.args[1]
         assert ctx["age_category"] == "PRE"
 
-    def test_lfa_football_player_no_dob_defaults_to_amateur(self):
-        """LFA_FOOTBALL_PLAYER spec with no valid age → defaults to AMATEUR (no exception)."""
+    def test_lfa_football_player_without_assignment_has_no_category(self):
+        """Missing WS1 assignment must not invent a Football category."""
         user = _student()
         license_obj = MagicMock()
         license_obj.id = 1
@@ -352,7 +353,7 @@ class TestSpecDashboard:
         db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
         db.query.return_value.filter.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.get_lfa_age_category", return_value=(None, None, None, "Below minimum age")), \
+        with patch(f"{_BASE}.get_current_player_assignment", return_value=None), \
              patch(f"{_BASE}._CardDraftService") as mock_cds, \
              patch(f"{_BASE}._build_published_grid_state", return_value=None), \
              patch(f"{_BASE}.templates") as mock_tmpl:
@@ -362,7 +363,7 @@ class TestSpecDashboard:
             _run(spec_dashboard(request=_req(), spec_type="lfa-football-player", db=db, user=user))
 
         ctx = mock_tmpl.TemplateResponse.call_args.args[1]
-        assert ctx["age_category"] == "AMATEUR"
+        assert ctx["age_category"] is None
 
     def test_lfa_football_player_with_dob_sets_user_age(self):
         """LFA_FOOTBALL_PLAYER with user.date_of_birth → user_age is int in context."""
@@ -376,7 +377,8 @@ class TestSpecDashboard:
         db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
         db.query.return_value.filter.return_value.all.return_value = []
 
-        with patch(f"{_BASE}.get_lfa_age_category", return_value=("PRE", "PRE", "5-13 years", "Age 13")), \
+        assignment = MagicMock(effective_category="PRE")
+        with patch(f"{_BASE}.get_current_player_assignment", return_value=assignment), \
              patch(f"{_BASE}._CardDraftService") as mock_cds, \
              patch(f"{_BASE}._build_published_grid_state", return_value=None), \
              patch(f"{_BASE}.templates") as mock_tmpl:
@@ -739,7 +741,8 @@ class TestSocialCardCounts:
         db.query.return_value.filter.return_value.all.return_value = []
         db.query.return_value.filter.return_value.scalar.side_effect = [1, 0, 2]
 
-        with patch(f"{_BASE}.get_lfa_age_category", return_value=("PRE", "PRE", "5-13 years", "Age 10")), \
+        assignment = MagicMock(effective_category="PRE")
+        with patch(f"{_BASE}.get_current_player_assignment", return_value=assignment), \
              patch(f"{_BASE}._CardDraftService") as mock_cds, \
              patch(f"{_BASE}._build_published_grid_state", return_value=None), \
              patch(f"{_BASE}.templates") as mock_tmpl:

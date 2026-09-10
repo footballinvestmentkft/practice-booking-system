@@ -489,9 +489,9 @@ class TestWelcomeCardRenderTokenAuth:
         )
 
     def _db_user_then_license(self):
-        """Mock db that returns _user() on first .first() call, _license() on second."""
+        """Mock DB returns token user, entitlement, then no WS1 assignment."""
         db = MagicMock()
-        db.query.return_value.filter.return_value.first.side_effect = [_user(), _license()]
+        db.query.return_value.filter.return_value.first.side_effect = [_user(), _license(), None]
         return db
 
     def test_valid_token_renders_card(self):
@@ -1819,38 +1819,44 @@ class TestLandscapeBugFix:
 
     # ── LS-BUG-04..07: age_group from date_of_birth ───────────────────────────
 
-    def test_ls_bug_04_age_group_amateur_when_no_dob(self):
-        """BUG-3: No DOB → age_group defaults to AMATEUR."""
+    def test_ls_bug_04_age_group_unassigned_without_ws1_assignment(self):
+        """Missing WS1 assignment must not invent an AMATEUR category."""
         user = _user()
         user.date_of_birth = None
         ctx = _build_welcome_card_context(_req(), user, _license(), None, False)
-        assert ctx["player"].age_group == "AMATEUR"
+        assert ctx["player"].age_group is None
 
-    def test_ls_bug_05_age_group_youth_for_age_10(self):
-        """BUG-3: DOB → age 10 → age_group = YOUTH."""
+    def test_ls_bug_05_age_group_comes_from_effective_assignment(self):
+        """The Welcome Card renders the WS1 effective assignment."""
         from datetime import date
         user = _user()
         today = date.today()
         user.date_of_birth = date(today.year - 10, today.month, today.day)
-        ctx = _build_welcome_card_context(_req(), user, _license(), None, False)
+        ctx = _build_welcome_card_context(
+            _req(), user, _license(), None, False, effective_category="YOUTH"
+        )
         assert ctx["player"].age_group == "YOUTH"
 
-    def test_ls_bug_06_age_group_pre_for_age_5(self):
-        """BUG-3: DOB → age 5 → age_group = PRE."""
+    def test_ls_bug_06_pre_assignment_is_preserved(self):
+        """A PRE WS1 assignment is preserved without DOB recalculation."""
         from datetime import date
         user = _user()
         today = date.today()
         user.date_of_birth = date(today.year - 5, today.month, today.day)
-        ctx = _build_welcome_card_context(_req(), user, _license(), None, False)
+        ctx = _build_welcome_card_context(
+            _req(), user, _license(), None, False, effective_category="PRE"
+        )
         assert ctx["player"].age_group == "PRE"
 
-    def test_ls_bug_07_age_group_amateur_for_age_25(self):
-        """BUG-3: DOB → age 25 → age_group = AMATEUR."""
+    def test_ls_bug_07_amateur_assignment_is_preserved(self):
+        """An AMATEUR WS1 assignment is preserved without DOB recalculation."""
         from datetime import date
         user = _user()
         today = date.today()
         user.date_of_birth = date(today.year - 25, today.month, today.day)
-        ctx = _build_welcome_card_context(_req(), user, _license(), None, False)
+        ctx = _build_welcome_card_context(
+            _req(), user, _license(), None, False, effective_category="AMATEUR"
+        )
         assert ctx["player"].age_group == "AMATEUR"
 
     # ── LS-BUG-08: other WC platforms still have welcome_card_mode=True ───────

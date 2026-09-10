@@ -21,6 +21,7 @@ from ....models.audit_log import AuditAction
 from ....utils.validators import validate_phone_number, validate_address, validate_name
 from ....services.canonical_policy import evaluate_profile_age_policy
 from ....services.program_eligibility_service import record_guardian_consent
+from ....services.player_identity_service import update_identity_profile
 
 router = APIRouter()
 
@@ -368,7 +369,7 @@ def register_with_invitation(
         parental_consent=False,
         credit_balance=invitation_code.bonus_credits,  # Add bonus credits immediately
         credit_purchased=0,
-        date_of_birth=registration_data.date_of_birth,
+        date_of_birth=None,
         nationality=registration_data.nationality,
         gender=registration_data.gender,
         street_address=registration_data.street_address,
@@ -386,6 +387,11 @@ def register_with_invitation(
             guardian_name=registration_data.guardian_name,
             evidence_reference="INVITATION_REGISTRATION",
         )
+    update_identity_profile(
+        db,
+        user=new_user,
+        date_of_birth=registration_data.date_of_birth,
+    )
 
     # Log invitation bonus credit transaction (if any)
     if invitation_code.bonus_credits > 0:

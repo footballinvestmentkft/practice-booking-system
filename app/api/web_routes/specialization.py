@@ -30,6 +30,12 @@ from ...services.credit_service import (
     CreditService,
     InsufficientCreditsError as CreditInsufficientCreditsError,
 )
+from ...services.player_identity_service import (
+    PlayerEntitlementExistsError,
+    PlayerIdentityError,
+    activate_football_player,
+    unlock_football_player,
+)
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -74,6 +80,68 @@ async def specialization_unlock(
             detail="Program identity requires manual review or is invalid",
         )
     spec_type = SpecializationType(resolution.canonical_program.value)
+
+    if resolution.canonical_program.value == "LFA_FOOTBALL_PLAYER":
+        try:
+            result = unlock_football_player(
+                db,
+                user=current_user,
+                duration_months=duration_months,
+            )
+            db.commit()
+        except PlayerEntitlementExistsError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=exc.code,
+            ) from exc
+        except CreditInsufficientCreditsError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"Insufficient credits. You have {exc.available} CR "
+                    f"but need {exc.required} CR for a {duration_months}-month licence."
+                ),
+            ) from exc
+        except PlayerIdentityError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=exc.code,
+            ) from exc
+        except IntegrityError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="FOOTBALL_ENTITLEMENT_CONCURRENT_CONFLICT",
+            ) from exc
+
+        logger.info(
+            "specialization_unlocked",
+            extra={
+                "user": current_user.email,
+                "spec": result.license.canonical_program_id,
+                "duration_months": duration_months,
+                "cost": result.cost,
+                "expires_at": result.license.expires_at.isoformat(),
+            },
+        )
+        return {
+            "success": True,
+            "message": "Specialization unlocked successfully",
+            "canonical_program_id": result.license.canonical_program_id,
+            "new_balance": current_user.credit_balance,
+            "license_id": result.license.id,
+            "duration_months": duration_months,
+            "cost": result.cost,
+            "expires_at": result.license.expires_at.isoformat(),
+            "season_start": result.assignment.season_start.isoformat(),
+            "season_end": result.assignment.season_end.isoformat(),
+            "season_base_category": result.assignment.season_base_category,
+            "effective_category": result.assignment.effective_category,
+            "base_participation_retained": result.assignment.base_participation_retained,
+        }
 
     # Age requirement validation
     eligible, denial_reason = is_user_eligible_for_program(db, current_user, spec_type)
@@ -286,7 +354,19 @@ async def student_motivation_questionnaire_submit(
         ).first()
 
         if not license:
-            # Should not happen if admin verified payment properly, but create if missing
+            if spec_type is SpecializationType.LFA_FOOTBALL_PLAYER:
+                return templates.TemplateResponse(
+                    "student_motivation_questionnaire.html",
+                    {
+                        "request": request,
+                        "user": user,
+                        "specialization": spec_type.value,
+                        "specialization_display": spec_type.value.replace('_', ' '),
+                        "error": "ACTIVE_FOOTBALL_ENTITLEMENT_REQUIRED",
+                    },
+                    status_code=409,
+                )
+            # Non-Player legacy onboarding retains its compatibility fallback.
             license = UserLicense(
                 user_id=user.id,
                 specialization_type=spec_type.value,
@@ -316,7 +396,7 @@ async def student_motivation_questionnaire_submit(
         spec_slug = spec_type.value.lower().replace("_", "-")
         return RedirectResponse(url=f"/dashboard/{spec_slug}", status_code=303)
 
-    except Exception as e:
+    except Exception:
         db.rollback()
         logger.error("motivation_questionnaire_error", extra={"user": user.email}, exc_info=True)
         return templates.TemplateResponse(
@@ -326,8 +406,9 @@ async def student_motivation_questionnaire_submit(
                 "user": user,
                 "specialization": specialization if 'specialization' in locals() else "",
                 "specialization_display": "",
-                "error": f"An error occurred: {str(e)}"
-            }
+                "error": "Unable to save motivation questionnaire",
+            },
+            status_code=500,
         )
 
 
@@ -351,6 +432,14 @@ async def specialization_switch(
         try:
             spec_type = SpecializationType(specialization)
         except ValueError:
+            return RedirectResponse(url=redirect_url, status_code=303)
+
+        if spec_type is SpecializationType.LFA_FOOTBALL_PLAYER:
+            try:
+                activate_football_player(db, user=user)
+                db.commit()
+            except PlayerIdentityError:
+                db.rollback()
             return RedirectResponse(url=redirect_url, status_code=303)
 
         # SECURITY: Check if user has a license for this specialization

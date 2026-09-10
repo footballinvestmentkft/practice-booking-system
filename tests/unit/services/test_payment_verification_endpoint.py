@@ -170,14 +170,14 @@ class TestVerifyStudentPayment:
         assert result["payment_verified"] is not None or "message" in result
 
     def test_new_license_created(self):
-        """VSP-05: valid spec, no existing license → license created."""
+        """VSP-05: Player provisioning delegates to the canonical command."""
         s = _student()
         # student query → s; license query → None (no existing)
         db = _seq_db(s, None)
-        with patch(f"{_BASE}.UserLicense") as MockLic:
-            MockLic.return_value = MagicMock()
+        with patch(f"{_BASE}.issue_football_player_entitlement") as issue:
             result = self._call(db=db)
-        db.add.assert_called_once()
+        issue.assert_called_once_with(db, user=s, payment_verified=True)
+        db.add.assert_not_called()
         s.verify_payment.assert_called_once()
 
 
@@ -305,9 +305,9 @@ class TestAddStudentSpecialization:
         """ASS-04: success, no primary spec → primary set."""
         s = _student(); s.specialization = None
         db = _seq_db(s, None)  # no existing license
-        with patch(f"{_BASE}.UserLicense") as MockLic:
-            MockLic.return_value = MagicMock()
+        with patch(f"{_BASE}.issue_football_player_entitlement") as issue:
             result = self._call(db=db)
+        issue.assert_called_once_with(db, user=s, payment_verified=True)
         assert s.specialization is not None
         db.commit.assert_called_once()
         assert result["success"] is True
@@ -316,8 +316,7 @@ class TestAddStudentSpecialization:
         """ASS-05: payment not verified → verify_payment called."""
         s = _student(); s.payment_verified = False; s.specialization = MagicMock()
         db = _seq_db(s, None)
-        with patch(f"{_BASE}.UserLicense") as MockLic:
-            MockLic.return_value = MagicMock()
+        with patch(f"{_BASE}.issue_football_player_entitlement"):
             result = self._call(db=db)
         s.verify_payment.assert_called_once()
 

@@ -11,6 +11,7 @@ from sqlalchemy import text
 from app.dependencies import get_db
 from app.models.user import User
 from app.models.license import UserLicense
+from app.services.player_identity_service import get_current_player_assignment
 
 router = APIRouter()
 
@@ -78,17 +79,11 @@ def get_lfa_player_profile(
         if motivation_scores and isinstance(motivation_scores, dict):
             position_preference = motivation_scores.get("position", "Unknown")
 
-        # 5. Calculate age_group from user's date_of_birth (always up-to-date)
-        from datetime import datetime
-        correct_age_group = "AMATEUR"
-        if user_result[3]:
-            dob = user_result[3]
-            today = datetime.today()
-            age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-            if age < 7:
-                correct_age_group = "PRE"
-            elif age < 15:
-                correct_age_group = "YOUTH"
+        # 5. WS1 assignment is the only runtime Football category authority.
+        category_assignment = get_current_player_assignment(db, user_id=user_id)
+        correct_age_group = (
+            category_assignment.effective_category if category_assignment else None
+        )
 
         # 6. Get recent skill assessments (last 5)
         assessments_results = db.execute(
@@ -156,10 +151,10 @@ def get_lfa_player_profile(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve LFA Player profile: {str(e)}"
+            detail="Failed to retrieve LFA Player profile",
         )
 
 

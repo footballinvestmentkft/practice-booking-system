@@ -16,6 +16,11 @@ from .....schemas.user import (
 from .helpers import calculate_pagination, validate_email_unique, get_user_statistics
 from .....services.canonical_policy import evaluate_profile_age_policy
 from .....services.program_eligibility_service import record_guardian_consent
+from .....services.player_identity_service import (
+    PlayerIdentityPolicyError,
+    issue_football_player_entitlement,
+    update_identity_profile,
+)
 
 router = APIRouter()
 
@@ -68,14 +73,18 @@ def create_user(
         phone=user_data.phone,
         emergency_contact=user_data.emergency_contact,
         emergency_phone=user_data.emergency_phone,
-        date_of_birth=user_data.date_of_birth,
+        date_of_birth=None,
         medical_notes=user_data.medical_notes,
         position=user_data.position,
-        specialization=specialization_enum,
+        specialization=(
+            None
+            if specialization_enum is SpecializationType.LFA_FOOTBALL_PLAYER
+            else specialization_enum
+        ),
         onboarding_completed=user_data.onboarding_completed if hasattr(user_data, 'onboarding_completed') else False,
         payment_verified=user_data.payment_verified if hasattr(user_data, 'payment_verified') else False,
-        parental_consent=user_data.parental_consent if hasattr(user_data, 'parental_consent') else False,
-        parental_consent_by=user_data.parental_consent_by if hasattr(user_data, 'parental_consent_by') else None,
+        parental_consent=False,
+        parental_consent_by=None,
         created_by=current_user.id
     )
 
@@ -88,6 +97,14 @@ def create_user(
             guardian_name=user_data.parental_consent_by,
             granted_by_user_id=current_user.id,
             evidence_reference="ADMIN_USER_CREATE",
+        )
+    update_identity_profile(db, user=user, date_of_birth=user_data.date_of_birth)
+
+    if specialization_enum is SpecializationType.LFA_FOOTBALL_PLAYER:
+        issue_football_player_entitlement(
+            db,
+            user=user,
+            payment_verified=bool(user_data.payment_verified),
         )
     db.commit()
     db.refresh(user)
@@ -206,8 +223,24 @@ def update_user(
                 detail="User with this email already exists"
             )
     
-    # Update fields
     update_data = user_update.model_dump(exclude_unset=True)
+    candidate_dob = update_data.pop("date_of_birth", user.date_of_birth)
+    resulting_role = update_data.get("role", user.role)
+    if resulting_role is UserRole.STUDENT or candidate_dob is not None:
+        try:
+            update_identity_profile(
+                db,
+                user=user,
+                date_of_birth=candidate_dob,
+            )
+        except PlayerIdentityPolicyError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=exc.code,
+            ) from exc
+
+    # Update non-identity fields
     for field, value in update_data.items():
         setattr(user, field, value)
     

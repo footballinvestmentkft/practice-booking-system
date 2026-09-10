@@ -59,26 +59,12 @@ from ....services.tournament import team_service as _team_service
 import app.services.tournament.instructor_planning_service as _ip_service
 import app.services.tournament.attendance_service as _att_service
 import app.services.tournament.enrollment_service as _enroll_service
-from ....services.age_category_service import (
-    calculate_age_at_season_start,
-    get_automatic_age_category,
-    get_current_season_year,
-)
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
-
-def _get_player_age_category(user: User) -> str:
-    """Derive AMATEUR/PRE/YOUTH/PRO age category from user DOB. Defaults to AMATEUR."""
-    if not user.date_of_birth:
-        return "AMATEUR"
-    season_year = get_current_season_year()
-    age_at = calculate_age_at_season_start(user.date_of_birth, season_year)
-    return get_automatic_age_category(age_at) or "AMATEUR"
-
 
 def _admin_only(user: User):
     if user.role != UserRole.ADMIN:

@@ -17,6 +17,8 @@ from pydantic import BaseModel, Field
 from .....database import get_db
 from .....dependencies import get_current_user
 from .....models.user import User, UserRole
+from .....services.player_identity_service import get_current_player_assignment
+from .....services.canonical_policy import CanonicalProgram, resolve_license_program
 
 router = APIRouter()
 
@@ -34,11 +36,51 @@ class LicenseResponse(BaseModel):
     id: int
     user_id: int
     specialization_type: str
+    canonical_program_id: str
     current_level: int
     is_active: bool
     onboarding_completed: bool
     started_at: Optional[str] = None
     expires_at: Optional[str] = None  # ISO 8601 — null means perpetual (no expiry set)
+    season_start: Optional[str] = None
+    season_end: Optional[str] = None
+    season_base_category: Optional[str] = None
+    effective_category: Optional[str] = None
+    base_participation_retained: Optional[bool] = None
+
+
+def _license_response(db: Session, license_row) -> LicenseResponse:
+    resolution = resolve_license_program(
+        license_row.canonical_program_id,
+        license_row.specialization_type,
+    )
+    if (
+        not resolution.usable
+        or resolution.canonical_program is not CanonicalProgram.LFA_FOOTBALL_PLAYER
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="PROGRAM_ID_MANUAL_REVIEW_OR_INVALID",
+        )
+    assignment = get_current_player_assignment(db, user_id=license_row.user_id)
+    return LicenseResponse(
+        id=license_row.id,
+        user_id=license_row.user_id,
+        specialization_type=license_row.specialization_type,
+        canonical_program_id=resolution.canonical_program.value,
+        current_level=license_row.current_level,
+        is_active=license_row.is_active,
+        onboarding_completed=license_row.onboarding_completed,
+        started_at=license_row.started_at.isoformat() if license_row.started_at else None,
+        expires_at=license_row.expires_at.isoformat() if license_row.expires_at else None,
+        season_start=assignment.season_start.isoformat() if assignment else None,
+        season_end=assignment.season_end.isoformat() if assignment else None,
+        season_base_category=assignment.season_base_category if assignment else None,
+        effective_category=assignment.effective_category if assignment else None,
+        base_participation_retained=(
+            assignment.base_participation_retained if assignment else None
+        ),
+    )
 
 
 # ==================== Endpoints ====================
@@ -67,19 +109,7 @@ def list_all_licenses(
         UserLicense.is_active == True,
     ).order_by(UserLicense.id.desc()).all()
 
-    return [
-        LicenseResponse(
-            id=lic.id,
-            user_id=lic.user_id,
-            specialization_type=lic.specialization_type,
-            current_level=lic.current_level,
-            is_active=lic.is_active,
-            onboarding_completed=lic.onboarding_completed,
-            started_at=lic.started_at.isoformat() if lic.started_at else None,
-            expires_at=lic.expires_at.isoformat() if lic.expires_at else None,
-        )
-        for lic in licenses
-    ]
+    return [_license_response(db, lic) for lic in licenses]
 
 
 @router.post("/licenses", status_code=status.HTTP_410_GONE)
@@ -119,13 +149,4 @@ def get_my_license(
             detail="No active LFA Player license found"
         )
 
-    return LicenseResponse(
-        id=lfa_license.id,
-        user_id=lfa_license.user_id,
-        specialization_type=lfa_license.specialization_type,
-        current_level=lfa_license.current_level,
-        is_active=lfa_license.is_active,
-        onboarding_completed=lfa_license.onboarding_completed,
-        started_at=lfa_license.started_at.isoformat() if lfa_license.started_at else None,
-        expires_at=lfa_license.expires_at.isoformat() if lfa_license.expires_at else None,
-    )
+    return _license_response(db, lfa_license)

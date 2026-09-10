@@ -13,15 +13,14 @@ from app.api.deps import get_current_user
 from app.models.user import User, UserRole
 from app.models.semester import Semester, SemesterCategory
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
-from app.models.license import UserLicense
 from app.models.session import Session as SessionModel
 from app.models.booking import Booking, BookingStatus
 from app.models.credit_transaction import CreditTransaction
 from app.schemas.tournament import EnrollmentResponse, EnrollmentConflict
-from app.services.age_category_service import (
-    get_automatic_age_category,
-    get_current_season_year,
-    calculate_age_at_season_start
+from app.services.player_identity_service import (
+    PlayerIdentityError,
+    PlayerIdentityPolicyError,
+    prepare_football_player_enrollment,
 )
 from app.services.enrollment_conflict_service import EnrollmentConflictService
 from app.services.tournament.validation import validate_tournament_enrollment_age, check_duplicate_enrollment, get_allowed_age_groups
@@ -63,7 +62,7 @@ def enroll_in_tournament(
     **Creates:**
     - SemesterEnrollment record (AUTO-APPROVED, is_active=True)
     - Deducts enrollment_cost from credit balance (INSTANT payment)
-    - Assigns age_category based on age at season start (July 1)
+    - Binds age_category to the current WS1 effective category assignment
 
     **Returns:**
     - Enrollment details
@@ -134,13 +133,13 @@ def enroll_in_tournament(
             detail="Only students can enroll in tournaments"
         )
 
-    # 4. Get student's LFA_FOOTBALL_PLAYER license
-    license = db.query(UserLicense).filter(
-        UserLicense.user_id == current_user.id,
-        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER"
-    ).first()
-
-    if not license:
+    try:
+        from app.services.player_identity_service import get_active_football_entitlement
+        license = get_active_football_entitlement(db, user_id=current_user.id)
+    except PlayerIdentityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=exc.code) from exc
+    if license is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="LFA Football Player license not found. Please unlock this specialization first."
@@ -161,37 +160,19 @@ def enroll_in_tournament(
             detail="Complete your LFA Football Player onboarding before enrolling in tournaments."
         )
 
-    # 5. Calculate age category at season start (July 1)
-    if not current_user.date_of_birth:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Date of birth not set. Please set your date of birth in your profile."
+    try:
+        player_context = prepare_football_player_enrollment(
+            db,
+            user=current_user,
+            user_license=license,
         )
-
-    season_year = get_current_season_year()
-    age_at_season_start = calculate_age_at_season_start(current_user.date_of_birth, season_year)
-    player_age_category = get_automatic_age_category(age_at_season_start)
-
-    # For 18+ users, automatically infer category from tournament's allowed age groups
-    if not player_age_category:
-        allowed = get_allowed_age_groups(tournament)
-        upper_allowed = [ag for ag in (allowed or []) if ag in ["AMATEUR", "PRO"]]
-        if len(upper_allowed) == 1:
-            player_age_category = upper_allowed[0]
-            logger.info(f"✅ Auto-assigned age category {player_age_category} to user {current_user.id} based on tournament {tournament.code}")
-        elif len(upper_allowed) > 1:
-            # Multi-age event with multiple adult categories — admin must assign explicitly
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This event spans multiple adult age categories. "
-                       "Please ask an administrator to assign your age category before enrolling."
-            )
-        else:
-            # No upper group (PRE/YOUTH only) — 18+ cannot enroll
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You are over 18 and cannot enroll in this tournament. Please enroll in AMATEUR or PRO tournaments."
-            )
+    except PlayerIdentityPolicyError as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=exc.code) from exc
+    except PlayerIdentityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=403, detail=exc.code) from exc
+    player_age_category = player_context.assignment.effective_category
 
     # 6. Verify age category enrollment rules using get_allowed_age_groups
     allowed = get_allowed_age_groups(tournament)
@@ -279,6 +260,7 @@ def enroll_in_tournament(
         semester_id=tournament_id,
         user_license_id=license.id,
         age_category=player_age_category,
+        football_category_assignment_id=player_context.assignment.id,
         request_status=EnrollmentStatus.APPROVED,  # ✅ AUTO-APPROVE (no manual approval)
         approved_at=datetime.utcnow(),
         approved_by=current_user.id,  # Self-enrollment

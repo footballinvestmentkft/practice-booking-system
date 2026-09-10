@@ -8,7 +8,10 @@ from sqlalchemy.orm import Session
 from .....database import get_db
 from .....dependencies import get_current_user
 from .....models.user import User, UserRole
-from .....services.license_service import LicenseService
+from .....services.license_service import (
+    FootballEntitlementRequiresCanonicalCommand,
+    LicenseService,
+)
 from .....models.license import UserLicense
 from .....services.canonical_policy import (
     AgeCategory,
@@ -50,16 +53,28 @@ async def instructor_advance_license(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Missing required field: {field}"
             )
+
+    if db.query(User.id).filter(User.id == data['user_id']).first() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
     
     license_service = LicenseService(db)
-    result = license_service.advance_license(
-        user_id=data['user_id'],
-        specialization=data['specialization'],
-        target_level=data['target_level'],
-        advanced_by=current_user.id,
-        reason=data.get('reason', 'Instructor approved advancement'),
-        requirements_met=data.get('requirements_met', 'Requirements verified by instructor')
-    )
+    try:
+        result = license_service.advance_license(
+            user_id=data['user_id'],
+            specialization=data['specialization'],
+            target_level=data['target_level'],
+            advanced_by=current_user.id,
+            reason=data.get('reason', 'Instructor approved advancement'),
+            requirements_met=data.get('requirements_met', 'Requirements verified by instructor')
+        )
+    except FootballEntitlementRequiresCanonicalCommand as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="ACTIVE_FOOTBALL_ENTITLEMENT_REQUIRED",
+        ) from exc
     
     return result
 

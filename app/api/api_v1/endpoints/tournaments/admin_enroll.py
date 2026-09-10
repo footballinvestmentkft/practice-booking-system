@@ -17,7 +17,11 @@ from app.api.deps import get_current_user
 from app.models.user import User, UserRole
 from app.models.semester import Semester
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
-from app.models.license import UserLicense
+from app.services.player_identity_service import (
+    PlayerIdentityError,
+    get_active_football_entitlement,
+    prepare_football_player_enrollment,
+)
 import logging
 
 router = APIRouter()
@@ -89,7 +93,7 @@ def admin_batch_enroll_players(
     1. Admin can enroll players regardless of tournament status
     2. Auto-creates enrollments with APPROVED status
     3. Skips credit deduction (admin privilege)
-    4. Auto-assigns age_category = 'PRO' for testing
+    4. Uses the player's canonical WS1 effective category assignment
     5. Requires players to have LFA_FOOTBALL_PLAYER license
 
     **Returns:**
@@ -132,16 +136,17 @@ def admin_batch_enroll_players(
                 failed_players.append(player_id)
                 continue
 
-            # 4. Get player's LFA_FOOTBALL_PLAYER license
-            license = db.query(UserLicense).filter(
-                UserLicense.user_id == player_id,
-                UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER"
-            ).first()
-
+            # 4. Resolve canonical Player entitlement and season assignment.
+            license = get_active_football_entitlement(db, user_id=player_id)
             if not license:
                 logger.warning(f"⚠️ Player {player_id} has no LFA_FOOTBALL_PLAYER license")
                 failed_players.append(player_id)
                 continue
+            player_context = prepare_football_player_enrollment(
+                db,
+                user=player,
+                user_license=license,
+            )
 
             # 5. Check if already enrolled
             existing = db.query(SemesterEnrollment).filter(
@@ -160,8 +165,9 @@ def admin_batch_enroll_players(
                 user_id=player_id,
                 semester_id=tournament_id,
                 user_license_id=license.id,
-                age_category="PRO",  # Default for testing
-                age_category_overridden=False,  # Not overridden (admin default)
+                football_category_assignment_id=player_context.assignment.id,
+                age_category=player_context.assignment.effective_category,
+                age_category_overridden=False,
                 request_status=EnrollmentStatus.APPROVED,
                 approved_at=datetime.utcnow(),
                 approved_by=current_user.id,  # Admin user
@@ -175,6 +181,15 @@ def admin_batch_enroll_players(
             enrolled_count += 1
             logger.info(f"✅ Player {player_id} enrolled successfully")
 
+        except PlayerIdentityError as exc:
+            logger.warning(
+                "Player %s failed canonical enrollment policy: %s",
+                player_id,
+                exc.code,
+            )
+            failed_players.append(player_id)
+            db.rollback()
+            continue
         except Exception as e:
             logger.error(f"❌ Failed to enroll player {player_id}: {str(e)}")
             failed_players.append(player_id)

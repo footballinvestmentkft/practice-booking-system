@@ -32,7 +32,7 @@ class UserCreate(UserBase):
     phone: Optional[str] = None
     emergency_contact: Optional[str] = None
     emergency_phone: Optional[str] = None
-    date_of_birth: Optional[datetime] = None
+    date_of_birth: datetime
     medical_notes: Optional[str] = None
     position: Optional[str] = None
     specialization: Optional[str] = None
@@ -58,7 +58,6 @@ class UserUpdateSelf(BaseModel):
     name: Optional[str] = None
     nickname: Optional[str] = None
     email: Optional[EmailStr] = None
-    onboarding_completed: Optional[bool] = None
     phone: Optional[str] = None
     emergency_contact: Optional[str] = None
     emergency_phone: Optional[str] = None
@@ -66,11 +65,8 @@ class UserUpdateSelf(BaseModel):
     medical_notes: Optional[str] = None
     interests: Optional[str] = None  # JSON string of interests array
     position: Optional[str] = None  # Football position
-    specialization: Optional[str] = None  # Player/Coach/Internship
     nda_accepted: Optional[bool] = None
     nda_ip_address: Optional[str] = None
-    parental_consent: Optional[bool] = None
-    parental_consent_by: Optional[str] = None
 
 
 class User(UserBase):

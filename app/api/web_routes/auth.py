@@ -10,7 +10,6 @@ from pathlib import Path
 from datetime import timedelta, datetime, date, timezone
 import asyncio
 import logging
-import traceback
 
 from ...database import get_db
 from ...dependencies import get_current_user_web, get_current_user_optional
@@ -23,6 +22,10 @@ from ...config import settings
 from ...utils.country_codes import COUNTRY_CODES, COUNTRY_OPTIONS, register_filters
 from ...services.canonical_policy import evaluate_profile_age_policy
 from ...services.program_eligibility_service import record_guardian_consent
+from ...services.player_identity_service import (
+    PlayerIdentityPolicyError,
+    update_identity_profile,
+)
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -183,44 +186,29 @@ async def age_verification_submit(
                 }
             )
 
-        # Calculate age
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-
-        if age < 5:
-            return templates.TemplateResponse(
-                "age_verification.html",
-                {
-                    "request": request,
-                    "user": user,
-                    "today": today.isoformat(),
-                    "error": "You must be at least 5 years old to use this platform",
-                    "date_of_birth": date_of_birth
-                }
-            )
-
-        if age > 120:
-            return templates.TemplateResponse(
-                "age_verification.html",
-                {
-                    "request": request,
-                    "user": user,
-                    "today": today.isoformat(),
-                    "error": "Please enter a valid date of birth",
-                    "date_of_birth": date_of_birth
-                }
-            )
-
-        # Save date of birth
-        user.date_of_birth = dob
+        decision = update_identity_profile(db, user=user, date_of_birth=dob)
         db.commit()
         db.refresh(user)
 
-        logger.info("age_verified", extra={"user": user.email, "age": age})
+        logger.info("age_verified", extra={"user": user.email, "age": decision.age})
 
         # Redirect to dashboard
         return RedirectResponse(url="/dashboard", status_code=303)
 
-    except ValueError as e:
+    except PlayerIdentityPolicyError as exc:
+        db.rollback()
+        return templates.TemplateResponse(
+            "age_verification.html",
+            {
+                "request": request,
+                "user": user,
+                "today": date.today().isoformat(),
+                "error": exc.code,
+                "date_of_birth": date_of_birth,
+            },
+            status_code=400,
+        )
+    except ValueError:
         return templates.TemplateResponse(
             "age_verification.html",
             {
@@ -231,17 +219,17 @@ async def age_verification_submit(
                 "date_of_birth": date_of_birth
             }
         )
-    except Exception as e:
+    except Exception:
         logger.error("age_verification_error", exc_info=True)
-        traceback.print_exc()
         return templates.TemplateResponse(
             "age_verification.html",
             {
                 "request": request,
                 "user": user,
                 "today": date.today().isoformat(),
-                "error": f"An error occurred: {str(e)}"
-            }
+                "error": "Unable to verify age",
+            },
+            status_code=500,
         )
 
 
@@ -346,9 +334,6 @@ async def register_submit(
         if not profile_decision.usable:
             return error(profile_decision.reason)
         age = profile_decision.age
-        if age > 120:
-            return error("Please enter a valid date of birth.")
-
         # Check email uniqueness
         existing = db.query(User).filter(User.email == email.lower().strip()).first()
         if existing:
@@ -381,7 +366,7 @@ async def register_submit(
             email=email.lower().strip(),
             password_hash=get_password_hash(password),
             phone=phone.strip(),
-            date_of_birth=dob,
+            date_of_birth=None,
             nationality=nationality.strip(),
             secondary_nationality=secondary_nationality.strip() if secondary_nationality else None,
             gender=gender,
@@ -402,6 +387,7 @@ async def register_submit(
                 guardian_name=guardian_name,
                 evidence_reference="WEB_INVITATION_REGISTRATION",
             )
+        update_identity_profile(db, user=new_user, date_of_birth=dob)
 
         # Log invitation bonus credit transaction (if any)
         from datetime import timezone as _tz
@@ -428,8 +414,7 @@ async def register_submit(
 
     except Exception as e:
         logger.error("registration_error", exc_info=True)
-        traceback.print_exc()
-        return error(f"Registration failed: {str(e)}")
+        return error("Registration failed. Please try again.")
 
     # Post-commit: user + invite code are now permanently saved.
     # If session creation fails here, send the user to login instead of

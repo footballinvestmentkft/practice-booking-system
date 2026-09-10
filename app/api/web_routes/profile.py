@@ -21,13 +21,17 @@ from ...models.user import User, UserRole
 from ...models.license import UserLicense
 from ...models.semester_enrollment import SemesterEnrollment
 from ...models.semester import Semester, SemesterStatus
-from ...utils.age_requirements import validate_specialization_for_age
 from ...utils.country_codes import COUNTRY_CODES, COUNTRY_OPTIONS, register_filters
 from ...utils.dominant_foot import calculate_dominant_badge
 from ...utils.football_positions import POSITIONS_21, VALID_POSITION_VALUES, positions_grouped
 from ...skills_config import SKILL_CATEGORIES
 from ...services.card_theme_service import get_theme as _get_theme
 from ...services.card_platform_service import get_preset as _get_platform_preset
+from ...services.player_identity_service import (
+    PlayerIdentityPolicyError,
+    get_current_player_assignment,
+    update_identity_profile,
+)
 import app.services.card_export_service as _export_svc
 
 # Setup templates
@@ -507,73 +511,6 @@ async def profile_edit_submit(
                 }
             )
 
-        # Validate age (5-120 years)
-        today = date.today()
-        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-
-        if age < 5:
-            return templates.TemplateResponse(
-                "profile_edit.html",
-                {
-                    "request": request,
-                    "user": user,
-                    "error": "Warning: You must be at least 5 years old to use this platform.",
-                    "spec_header_class": "hdr-hub",
-                    "show_spec_nav": False,
-                }
-            )
-
-        if age > 120:
-            return templates.TemplateResponse(
-                "profile_edit.html",
-                {
-                    "request": request,
-                    "user": user,
-                    "error": "Warning: Please enter a valid date of birth.",
-                    "spec_header_class": "hdr-hub",
-                    "show_spec_nav": False,
-                }
-            )
-
-        # Check if age change affects existing specializations
-        old_dob = user.date_of_birth
-        age_changed = old_dob != dob
-
-        if age_changed:
-            # Check if user has any unlocked specializations that are no longer valid for new age
-            user_licenses = db.query(UserLicense).filter(UserLicense.user_id == user.id).all()
-
-            blocked_specs = []
-            for license in user_licenses:
-                if not validate_specialization_for_age(license.specialization_type, age):
-                    blocked_specs.append(license.specialization_type)
-
-            if blocked_specs:
-                spec_names = []
-                for spec in blocked_specs:
-                    if spec == "INTERNSHIP":
-                        spec_names.append("Internship")
-                    elif spec == "GANCUJU_PLAYER":
-                        spec_names.append("GanCuju Player")
-                    elif spec == "LFA_FOOTBALL_PLAYER":
-                        spec_names.append("LFA Football Player")
-                    elif spec == "LFA_COACH":
-                        spec_names.append("LFA Coach")
-                    else:
-                        spec_names.append(spec.replace('_', ' ').title())
-
-                return templates.TemplateResponse(
-                    "profile_edit.html",
-                    {
-                        "request": request,
-                        "user": user,
-                        "user_age": age,
-                        "error": f"Warning: Cannot change age: You currently have specializations that require a different age. Affected: {', '.join(spec_names)}. Please contact support if you need to update your age.",
-                        "spec_header_class": "hdr-hub",
-                        "show_spec_nav": False,
-                    }
-                )
-
         # Validate gender and nationality
         if gender and gender not in ("Male", "Female", "Non-binary", "Other"):
             return templates.TemplateResponse(
@@ -625,10 +562,30 @@ async def profile_edit_submit(
                     }
                 )
 
-        # Update user profile
+        try:
+            identity_decision = update_identity_profile(
+                db,
+                user=user,
+                date_of_birth=dob,
+            )
+        except PlayerIdentityPolicyError as exc:
+            db.rollback()
+            return templates.TemplateResponse(
+                "profile_edit.html",
+                {
+                    "request": request,
+                    "user": user,
+                    "error": exc.code,
+                    "country_list": COUNTRY_OPTIONS,
+                    "spec_header_class": "hdr-hub",
+                    "show_spec_nav": False,
+                },
+                status_code=400,
+            )
+
+        # Update non-identity profile fields
         user.name = name
         user.nickname = nickname if nickname else None
-        user.date_of_birth = dob
         user.phone = phone if phone else None
         user.nationality = nationality if nationality else None
         user.secondary_nationality = secondary_nationality if secondary_nationality else None
@@ -642,7 +599,10 @@ async def profile_edit_submit(
         db.commit()
         db.refresh(user)
 
-        logger.info("profile_updated", extra={"user": user.email, "age": age})
+        logger.info(
+            "profile_updated",
+            extra={"user": user.email, "age": identity_decision.age},
+        )
 
         # Redirect to profile page with success message
         return RedirectResponse(url="/profile?updated=true", status_code=303)
@@ -656,7 +616,7 @@ async def profile_edit_submit(
             {
                 "request": request,
                 "user": user,
-                "error": f"Failed to update profile: {str(e)}",
+                "error": "Failed to update profile",
                 "country_list": COUNTRY_OPTIONS,
                 "spec_header_class": "hdr-hub",
                 "show_spec_nav": False,
@@ -721,6 +681,7 @@ def _build_welcome_card_context(
     export: bool,
     use_nickname: bool = False,
     theme_id: str = "default",
+    effective_category: str | None = None,
 ) -> dict:
     """
     Build the FClassic template context for the Welcome Card.
@@ -805,16 +766,9 @@ def _build_welcome_card_context(
         license.right_foot_score, license.left_foot_score
     )
 
-    # Age group: same logic as Player Card (derived from date_of_birth)
-    age_group = "AMATEUR"
-    if user.date_of_birth:
-        today = date.today()
-        dob   = user.date_of_birth
-        age   = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        if age < 7:
-            age_group = "PRE"
-        elif age < 15:
-            age_group = "YOUTH"
+    # The caller supplies the effective value read from the WS1 assignment.
+    # Historical records without one remain visibly unassigned.
+    age_group = effective_category
 
     # ── Player namespace: satisfies all `player.*` references in fclassic template ──
     player = types.SimpleNamespace(
@@ -1020,7 +974,17 @@ async def onboarding_welcome_card(
         )
 
     logger.info("welcome_card_rendered", extra={"user": user.email, "platform": platform, "export": export})
-    ctx  = _build_welcome_card_context(request, user, license, platform, export, use_nickname, theme_id=theme)
+    assignment = get_current_player_assignment(db, user_id=user.id)
+    ctx = _build_welcome_card_context(
+        request,
+        user,
+        license,
+        platform,
+        export,
+        use_nickname,
+        theme_id=theme,
+        effective_category=assignment.effective_category if assignment else None,
+    )
     tmpl = _select_welcome_card_template(platform, export)
     return templates.TemplateResponse(tmpl, ctx)
 

@@ -14,10 +14,10 @@ from app.models.user import User, UserRole
 from app.models.semester import Semester
 from app.models.semester_enrollment import SemesterEnrollment
 from app.schemas.tournament import TournamentWithDetails
-from app.services.age_category_service import (
-    get_automatic_age_category,
-    get_current_season_year,
-    calculate_age_at_season_start
+from app.services.player_identity_service import (
+    PlayerIdentityError,
+    PlayerIdentityPolicyError,
+    get_authorized_football_player_context,
 )
 
 
@@ -74,33 +74,16 @@ def list_available_tournaments(
             detail="Only students can browse tournaments"
         )
 
-    # 2. Get player's age category
-    if not current_user.date_of_birth:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Date of birth not set. Please set your date of birth in your profile."
+    try:
+        player_context = get_authorized_football_player_context(
+            db,
+            user=current_user,
         )
-
-    # Calculate age at current season start (July 1)
-    season_year = get_current_season_year()
-    age_at_season_start = calculate_age_at_season_start(current_user.date_of_birth, season_year)
-    player_age_category = get_automatic_age_category(age_at_season_start)
-
-    if not player_age_category:
-        # Player is over 18 - try to get category from their enrollment history
-        recent_enrollment = db.query(SemesterEnrollment).filter(
-            and_(
-                SemesterEnrollment.user_id == current_user.id,
-                SemesterEnrollment.age_category.isnot(None)
-            )
-        ).order_by(SemesterEnrollment.created_at.desc()).first()
-
-        if recent_enrollment and recent_enrollment.age_category:
-            player_age_category = recent_enrollment.age_category
-        else:
-            # No enrollment history - default to AMATEUR for 18+ players
-            # Instructor can override during enrollment if needed
-            player_age_category = "AMATEUR"
+    except PlayerIdentityPolicyError as exc:
+        raise HTTPException(status_code=400, detail=exc.code) from exc
+    except PlayerIdentityError as exc:
+        raise HTTPException(status_code=403, detail=exc.code) from exc
+    player_age_category = player_context.assignment.effective_category
 
     # 3. Determine visible tournament age groups based on player category
     # Use shared validation module to ensure DRY principle
@@ -247,4 +230,3 @@ def list_available_tournaments(
         })
 
     return results
-

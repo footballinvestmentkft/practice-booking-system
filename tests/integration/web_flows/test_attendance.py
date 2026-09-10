@@ -91,6 +91,7 @@ def _admin(db: Session) -> User:
         onboarding_completed=True,
         credit_balance=0,
         payment_verified=True,
+        date_of_birth=date(2000, 1, 1),
     )
     db.add(u)
     db.flush()
@@ -931,12 +932,14 @@ def _lfa_player(db: Session) -> User:
         onboarding_completed=True,
         credit_balance=0,
         payment_verified=True,
+        date_of_birth=date(2000, 1, 1),
     )
     db.add(u)
     db.flush()
     lic = UserLicense(
         user_id=u.id,
         specialization_type=SpecializationType.LFA_FOOTBALL_PLAYER.value,
+        canonical_program_id="LFA_FOOTBALL_PLAYER",
         started_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         is_active=True,
         onboarding_completed=True,
@@ -966,6 +969,8 @@ def test_ENROLL_ADMIN_01_service_enroll_player(test_db: Session):
     assert enr.payment_verified is True
     assert enr.approved_by == admin.id
     assert enr.user_license_id is not None
+    assert enr.football_category_assignment_id is not None
+    assert enr.age_category == enr.football_category_assignment.effective_category
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -37,6 +37,10 @@ from app.models.user import User, UserRole
 from app.services.skill_progression import SYSTEM_BASELINE
 from app.skills_config import get_all_skill_keys
 from app.services.canonical_policy import evaluate_profile_age_policy
+from app.services.player_identity_service import (
+    issue_football_player_entitlement,
+    update_identity_profile,
+)
 
 if TYPE_CHECKING:
     pass
@@ -208,7 +212,7 @@ def promote_entries(
                 name=f"{entry.first_name} {entry.last_name}",
                 first_name=entry.first_name,
                 last_name=entry.last_name,
-                date_of_birth=entry.date_of_birth,
+                date_of_birth=None,
                 password_hash=get_password_hash(uuid.uuid4().hex),
                 role=UserRole.STUDENT,
                 is_active=True,
@@ -218,16 +222,16 @@ def promote_entries(
             )
             db.add(new_user)
             db.flush()
-            license = UserLicense(
-                user_id=new_user.id,
-                specialization_type="LFA_FOOTBALL_PLAYER",
-                current_level=1,
-                max_achieved_level=1,
-                started_at=now,
-                is_active=True,
+            update_identity_profile(
+                db,
+                user=new_user,
+                date_of_birth=entry.date_of_birth,
             )
-            db.add(license)
-            db.flush()
+            license = issue_football_player_entitlement(
+                db,
+                user=new_user,
+                payment_verified=False,
+            ).license
             entry.user_id = new_user.id
 
         # ── Baseline onboarding (P2-D) ────────────────────────────────────────

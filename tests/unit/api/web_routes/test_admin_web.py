@@ -960,16 +960,22 @@ class TestAdminLicenseGrant:
         db = MagicMock()
         db.query.return_value.filter.return_value.first.side_effect = [target, None]  # target found, no existing license
 
-        result = _run(admin_grant_license(
-            user_id=5, request=_req(),
-            specialization_type="LFA_FOOTBALL_PLAYER", reason="Manual",
-            expires_at="",  # blank = perpetual; must pass explicitly (Form default not evaluated in direct calls)
-            db=db, user=user,
-        ))
+        issued_license = MagicMock(id=71)
+        with patch(
+            "app.api.web_routes.admin.credits.issue_football_player_entitlement",
+            return_value=MagicMock(license=issued_license),
+        ) as issue:
+            result = _run(admin_grant_license(
+                user_id=5, request=_req(),
+                specialization_type="LFA_FOOTBALL_PLAYER", reason="Manual",
+                expires_at="",  # blank = perpetual; must pass explicitly (Form default not evaluated in direct calls)
+                db=db, user=user,
+            ))
 
         assert isinstance(result, RedirectResponse)
         assert "/admin/users/5/edit" in result.headers["location"]
-        assert db.add.call_count == 2  # UserLicense + LicenseProgression
+        issue.assert_called_once_with(db, user=target, payment_verified=False)
+        assert db.add.call_count == 1  # LicenseProgression; entitlement is service-owned
         db.commit.assert_called_once()
 
 

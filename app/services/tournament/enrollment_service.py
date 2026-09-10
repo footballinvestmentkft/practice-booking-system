@@ -24,7 +24,11 @@ from app.models.user import User, UserRole
 from app.models.semester import Semester
 from app.models.tournament_configuration import TournamentConfiguration
 from app.models.semester_enrollment import SemesterEnrollment, EnrollmentStatus
-from app.models.license import UserLicense
+from app.services.player_identity_service import (
+    PlayerIdentityError,
+    get_active_football_entitlement,
+    prepare_football_player_enrollment,
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -62,18 +66,27 @@ def enroll_player_admin(
             detail="Use team enrollment for TEAM tournaments",
         )
 
-    # 3. User has active LFA_FOOTBALL_PLAYER license
-    license = db.query(UserLicense).filter(
-        UserLicense.user_id == user_id,
-        UserLicense.specialization_type == "LFA_FOOTBALL_PLAYER",
-        UserLicense.is_active == True,
+    # 3. Canonical Player identity, entitlement and season assignment.
+    player = db.query(User).filter(
+        User.id == user_id,
+        User.role == UserRole.STUDENT,
     ).first()
-    if not license:
-        raise HTTPException(
-            status_code=404,
-            detail=f"User {user_id} does not have an active LFA Football Player license",
+    if player is None:
+        raise HTTPException(status_code=404, detail=f"Player {user_id} not found")
+    try:
+        license = get_active_football_entitlement(db, user_id=user_id)
+        if license is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"User {user_id} does not have an active LFA Football Player license",
+            )
+        player_context = prepare_football_player_enrollment(
+            db,
+            user=player,
+            user_license=license,
         )
-
+    except PlayerIdentityError as exc:
+        raise HTTPException(status_code=403, detail=exc.code) from exc
     # 4. Duplicate guard
     existing = db.query(SemesterEnrollment).filter(
         SemesterEnrollment.semester_id == tournament_id,
@@ -104,6 +117,8 @@ def enroll_player_admin(
         user_id=user_id,
         semester_id=tournament_id,
         user_license_id=license.id,
+        football_category_assignment_id=player_context.assignment.id,
+        age_category=player_context.assignment.effective_category,
         request_status=EnrollmentStatus.APPROVED,
         is_active=True,
         payment_verified=True,   # admin bypass — no credit deduction
