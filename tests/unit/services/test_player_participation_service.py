@@ -60,7 +60,7 @@ def test_player_session_requires_one_explicit_category():
         (BookingStatus.WAITLISTED, None, "waitlisted"),
         (BookingStatus.CANCELLED, None, "cancelled"),
         (BookingStatus.CONFIRMED, AttendanceStatus.present, "completed"),
-        (BookingStatus.CONFIRMED, AttendanceStatus.absent, "completed"),
+        (BookingStatus.CONFIRMED, AttendanceStatus.absent, "no_show"),
     ],
 )
 def test_participation_lifecycle_projection(booking_status, attendance_status, expected):

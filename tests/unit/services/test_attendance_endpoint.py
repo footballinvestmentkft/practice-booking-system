@@ -228,15 +228,18 @@ class TestCreateAttendance:
         assert "booking_id is required" in exc.value.detail
 
     def test_regular_rejects_booking_identity_mismatch(self):
-        db = _seq_db(_fq(first=_session()), _fq(first=_booking(user_id=88)))
-        with patch(f"{_BASE}._require_attendance_manager"):
+        db = _seq_db(_fq(first=_session()))
+        with patch(
+            f"{_BASE}.record_attendance",
+            side_effect=ParticipationError("BOOKING_REFERENCE_MISMATCH"),
+        ):
             with pytest.raises(HTTPException) as exc:
                 create_attendance(
                     attendance_data=_attendance_data(booking_id=1, user_id=99),
                     db=db, current_user=_admin()
                 )
         assert exc.value.status_code == 400
-        assert "does not match" in exc.value.detail
+        assert exc.value.detail == "BOOKING_REFERENCE_MISMATCH"
 
     @pytest.mark.parametrize(("code", "status_code"), [
         ("BOOKING_NOT_FOUND", 404),
@@ -244,8 +247,7 @@ class TestCreateAttendance:
         ("ATTENDANCE_CONCURRENCY_CONFLICT", 409),
     ])
     def test_regular_maps_canonical_command_errors(self, code, status_code):
-        booking = _booking()
-        db = _seq_db(_fq(first=_session()), _fq(first=booking))
+        db = _seq_db(_fq(first=_session()))
         with patch(f"{_BASE}._require_attendance_manager"), \
              patch(f"{_BASE}.record_attendance", side_effect=ParticipationError(code)):
             with pytest.raises(HTTPException) as exc:
@@ -257,11 +259,11 @@ class TestCreateAttendance:
         assert exc.value.detail == code
 
     def test_regular_delegates_and_preserves_existing_present_rewards(self):
-        booking = _booking(); attendance = MagicMock()
+        attendance = MagicMock()
         attendance.status = AttendanceStatus.present
         attendance.user_id = 99; attendance.session_id = 1; attendance.id = 5
-        result = MagicMock(attendance=attendance, replayed=False)
-        db = _seq_db(_fq(first=_session()), _fq(first=booking))
+        result = MagicMock(attendance=attendance, replayed=False, change_requested=False)
+        db = _seq_db(_fq(first=_session()))
         actor = _admin(); data = _attendance_data(booking_id=1, notes="note")
         with patch(f"{_BASE}._require_attendance_manager"), \
              patch(f"{_BASE}.record_attendance", return_value=result) as command, \
@@ -270,16 +272,17 @@ class TestCreateAttendance:
             response = create_attendance(data, db=db, current_user=actor)
         assert response is attendance
         command.assert_called_once_with(
-            db, actor=actor, booking_id=1, status=AttendanceStatus.present,
+            db, actor=actor, booking_id=1, player_id=99, session_id=1,
+            status=AttendanceStatus.present,
             notes="note", source="API"
         )
         milestone.assert_called_once_with(db, 99, 1)
         reward.award_session_segments.assert_called_once_with(db, 1, 5)
 
     def test_regular_replay_does_not_duplicate_rewards(self):
-        booking = _booking(); attendance = MagicMock(status=AttendanceStatus.present)
-        result = MagicMock(attendance=attendance, replayed=True)
-        db = _seq_db(_fq(first=_session()), _fq(first=booking))
+        attendance = MagicMock(status=AttendanceStatus.present)
+        result = MagicMock(attendance=attendance, replayed=True, change_requested=False)
+        db = _seq_db(_fq(first=_session()))
         with patch(f"{_BASE}._require_attendance_manager"), \
              patch(f"{_BASE}.record_attendance", return_value=result), \
              patch(f"{_BASE}._update_milestone_sessions_on_attendance") as milestone, \
@@ -421,7 +424,7 @@ class TestUpdateAttendance:
     def test_regular_delegates_to_canonical_command(self):
         attendance = MagicMock(id=4, session_id=1, booking_id=9, status=AttendanceStatus.absent)
         session = _session(); updated = MagicMock(status=AttendanceStatus.late)
-        result = MagicMock(attendance=updated, replayed=False)
+        result = MagicMock(attendance=updated, replayed=False, change_requested=False)
         payload = MagicMock()
         payload.model_dump.return_value = {"status": AttendanceStatus.late, "notes": "late bus"}
         db = _seq_db(_fq(first=attendance), _fq(first=session))

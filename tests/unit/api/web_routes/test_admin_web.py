@@ -1197,7 +1197,7 @@ class TestAdminBookingConfirm:
         assert exc.value.status_code == 403
 
     @pytest.mark.parametrize(("code", "status_code"), [
-        ("BOOKING_NOT_FOUND", 400),
+        ("BOOKING_NOT_FOUND", 404),
         ("SESSION_AT_CAPACITY", 409),
         ("CANCELLED_BOOKING_CANNOT_CONFIRM", 400),
     ])

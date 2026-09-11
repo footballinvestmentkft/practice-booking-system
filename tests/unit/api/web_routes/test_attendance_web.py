@@ -112,17 +112,15 @@ class TestMarkAttendance:
 
     def test_requires_confirmed_booking(self):
         db = MagicMock()
-        db.query.return_value.filter.return_value.first.return_value = None
-        result = _run(mark_attendance(
-            request=_req(), session_id=1, student_id=99, status="present",
-            notes=None, db=db, user=_instructor()
-        ))
+        with patch(f"{_BASE}.record_attendance", side_effect=ParticipationError("BOOKING_NOT_FOUND")):
+            result = _run(mark_attendance(
+                request=_req(), session_id=1, student_id=99, status="present",
+                notes=None, db=db, user=_instructor()
+            ))
         assert "student_not_enrolled" in result.headers["location"]
 
     def test_policy_error_redirects_with_canonical_code(self):
-        booking = MagicMock(id=7)
         db = MagicMock()
-        db.query.return_value.filter.return_value.first.return_value = booking
         with patch(f"{_BASE}.record_attendance", side_effect=ParticipationError("INSTRUCTOR_NOT_ASSIGNED")):
             result = _run(mark_attendance(
                 request=_req(), session_id=1, student_id=99, status="present",
@@ -131,9 +129,7 @@ class TestMarkAttendance:
         assert "instructor_not_assigned" in result.headers["location"]
 
     def test_invalid_status_redirects(self):
-        booking = MagicMock(id=7)
         db = MagicMock()
-        db.query.return_value.filter.return_value.first.return_value = booking
         with patch(f"{_BASE}.record_attendance", side_effect=ValueError("invalid")):
             result = _run(mark_attendance(
                 request=_req(), session_id=1, student_id=99, status="bad",
@@ -142,27 +138,42 @@ class TestMarkAttendance:
         assert "invalid_status" in result.headers["location"]
 
     def test_delegates_to_canonical_attendance_authority(self):
-        booking = MagicMock(id=7); db=MagicMock(); actor=_instructor()
-        db.query.return_value.filter.return_value.first.return_value = booking
-        with patch(f"{_BASE}.record_attendance", return_value=MagicMock(replayed=False)) as command:
+        db=MagicMock(); actor=_instructor()
+        with patch(
+            f"{_BASE}.record_attendance",
+            return_value=MagicMock(replayed=False, change_requested=False),
+        ) as command:
             result = _run(mark_attendance(
                 request=_req(), session_id=1, student_id=99, status="LATE",
                 notes="traffic", db=db, user=actor
             ))
         command.assert_called_once_with(
-            db, actor=actor, booking_id=7, status="late", notes="traffic", source="WEB"
+            db, actor=actor, player_id=99, session_id=1,
+            status="late", notes="traffic", source="WEB"
         )
         assert "attendance_marked" in result.headers["location"]
 
     def test_replay_is_reported(self):
-        booking = MagicMock(id=7); db=MagicMock()
-        db.query.return_value.filter.return_value.first.return_value = booking
-        with patch(f"{_BASE}.record_attendance", return_value=MagicMock(replayed=True)):
+        db=MagicMock()
+        with patch(
+            f"{_BASE}.record_attendance",
+            return_value=MagicMock(replayed=True, change_requested=False),
+        ):
             result = _run(mark_attendance(
                 request=_req(), session_id=1, student_id=99, status="present",
                 notes=None, db=db, user=_instructor()
             ))
         assert "attendance_unchanged" in result.headers["location"]
+
+    def test_confirmed_attendance_change_is_reported_as_request(self):
+        db = MagicMock()
+        command_result = MagicMock(replayed=False, change_requested=True)
+        with patch(f"{_BASE}.record_attendance", return_value=command_result):
+            result = _run(mark_attendance(
+                request=_req(), session_id=1, student_id=99, status="late",
+                notes="corrected", db=db, user=_instructor()
+            ))
+        assert "change_requested" in result.headers["location"]
 
 
 class TestConfirmAttendance:

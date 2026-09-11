@@ -66,6 +66,7 @@ class BookingCommandResult:
 class AttendanceCommandResult:
     attendance: Attendance
     replayed: bool = False
+    change_requested: bool = False
 
 
 @dataclass(frozen=True)
@@ -136,6 +137,8 @@ def participation_lifecycle_status(booking: Booking, attendance: Attendance | No
     if booking.status == BookingStatus.CANCELLED:
         return "cancelled"
     if attendance is not None:
+        if attendance.status == AttendanceStatus.absent:
+            return "no_show"
         return "completed"
     if booking.status == BookingStatus.CONFIRMED:
         return "confirmed"
@@ -607,7 +610,9 @@ def record_attendance(
     db: Session,
     *,
     actor: User,
-    booking_id: int,
+    booking_id: int | None = None,
+    player_id: int | None = None,
+    session_id: int | None = None,
     status: AttendanceStatus | str,
     notes: str | None = None,
     now: datetime | None = None,
@@ -615,9 +620,26 @@ def record_attendance(
 ) -> AttendanceCommandResult:
     try:
         attendance_status = AttendanceStatus(status)
-        booking = db.query(Booking).filter(Booking.id == booking_id).with_for_update().first()
+        booking_query = db.query(Booking)
+        if booking_id is not None:
+            booking_query = booking_query.filter(Booking.id == booking_id)
+        elif player_id is not None and session_id is not None:
+            booking_query = booking_query.filter(
+                Booking.user_id == player_id,
+                Booking.session_id == session_id,
+            ).order_by(
+                (Booking.status == BookingStatus.CANCELLED).asc(),
+                Booking.id.desc(),
+            )
+        else:
+            raise ParticipationError("BOOKING_REFERENCE_REQUIRED")
+        booking = booking_query.with_for_update().first()
         if booking is None:
             raise ParticipationError("BOOKING_NOT_FOUND")
+        if player_id is not None and booking.user_id != player_id:
+            raise ParticipationError("BOOKING_REFERENCE_MISMATCH")
+        if session_id is not None and booking.session_id != session_id:
+            raise ParticipationError("BOOKING_REFERENCE_MISMATCH")
         if booking.status != BookingStatus.CONFIRMED:
             raise ParticipationError("CONFIRMED_BOOKING_REQUIRED")
         session = _locked_session(db, booking.session_id)
@@ -633,9 +655,48 @@ def record_attendance(
         previous = attendance.status.value if attendance is not None else None
         if attendance is not None and attendance.status == attendance_status and (
             notes is None or notes == attendance.notes
-        ):
+        ) and attendance.pending_change_to is None:
             db.rollback()
             return AttendanceCommandResult(attendance, replayed=True)
+        if attendance is not None and (
+            attendance.confirmation_status == ConfirmationStatus.confirmed
+        ):
+            if (
+                attendance.pending_change_to == attendance_status.value
+                and attendance.change_request_reason == notes
+            ):
+                db.rollback()
+                return AttendanceCommandResult(
+                    attendance, replayed=True, change_requested=True
+                )
+            attendance.pending_change_to = attendance_status.value
+            attendance.change_requested_by = actor.id
+            attendance.change_requested_at = _now(now)
+            attendance.change_request_reason = notes
+            db.add(AttendanceHistory(
+                attendance_id=attendance.id,
+                changed_by=actor.id,
+                change_type="change_requested",
+                old_value=previous,
+                new_value=attendance_status.value,
+                reason=notes,
+            ))
+            _audit(
+                db,
+                action="PLAYER_SESSION_ATTENDANCE_CHANGE_REQUESTED",
+                actor=actor,
+                booking=booking,
+                source=source,
+                previous=previous,
+                current=attendance_status.value,
+                extra={
+                    "authorization_basis": authorization_basis,
+                    "attendance_id": attendance.id,
+                },
+            )
+            db.commit()
+            db.refresh(attendance)
+            return AttendanceCommandResult(attendance, change_requested=True)
         if attendance is None:
             attendance = Attendance(
                 user_id=booking.user_id,

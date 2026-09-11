@@ -28,6 +28,7 @@ from app.schemas.auth import Login
 from app.services.certificate_service import CertificateService
 from app.services.adaptive_learning import AdaptiveLearningService
 from app.services.authorization_policy import AuthorizationPolicy
+from app.services.player_participation_service import ParticipationError
 
 
 def test_f01_login_never_emits_password_or_hash(capsys):
@@ -133,6 +134,7 @@ def test_f03_instructor_cannot_update_unassigned_session_attendance():
     attendance = SimpleNamespace(
         id=10,
         session_id=20,
+        booking_id=30,
         status=AttendanceStatus.absent,
         marked_by=None,
     )
@@ -148,7 +150,13 @@ def test_f03_instructor_cannot_update_unassigned_session_attendance():
     ]
     actor = SimpleNamespace(id=42, role=UserRole.INSTRUCTOR)
 
-    with pytest.raises(HTTPException) as exc:
+    with (
+        patch(
+            "app.api.api_v1.endpoints.attendance.record_attendance",
+            side_effect=ParticipationError("INSTRUCTOR_NOT_ASSIGNED"),
+        ) as canonical_attendance,
+        pytest.raises(HTTPException) as exc,
+    ):
         update_attendance(
             attendance_id=10,
             attendance_update=AttendanceUpdate(status=AttendanceStatus.present),
@@ -158,6 +166,7 @@ def test_f03_instructor_cannot_update_unassigned_session_attendance():
 
     assert exc.value.status_code == 403
     assert attendance.status == AttendanceStatus.absent
+    canonical_attendance.assert_called_once()
     db.commit.assert_not_called()
 
 
@@ -171,7 +180,13 @@ def test_f03_instructor_cannot_create_attendance_for_unassigned_session():
     db.query.return_value.filter.return_value.first.return_value = foreign_session
     actor = SimpleNamespace(id=42, role=UserRole.INSTRUCTOR)
 
-    with pytest.raises(HTTPException) as exc:
+    with (
+        patch(
+            "app.api.api_v1.endpoints.attendance.record_attendance",
+            side_effect=ParticipationError("INSTRUCTOR_NOT_ASSIGNED"),
+        ) as canonical_attendance,
+        pytest.raises(HTTPException) as exc,
+    ):
         create_attendance(
             attendance_data=AttendanceCreate(
                 user_id=5,
@@ -184,6 +199,7 @@ def test_f03_instructor_cannot_create_attendance_for_unassigned_session():
         )
 
     assert exc.value.status_code == 403
+    canonical_attendance.assert_called_once()
     db.commit.assert_not_called()
 
 

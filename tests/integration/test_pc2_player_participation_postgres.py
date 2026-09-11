@@ -166,6 +166,19 @@ def test_wrong_program_and_wrong_category_fail_closed(test_db):
     assert exc.value.code == "SESSION_CATEGORY_MISMATCH"
 
 
+def test_session_outside_canonical_season_fails_closed(test_db):
+    player, _, semester, _, session = _player_context(test_db)
+    semester.end_date = date(2026, 10, 1)
+    test_db.commit()
+
+    with pytest.raises(ParticipationError) as exc:
+        book_player_session(test_db, player=player, session_id=session.id, now=NOW)
+    assert exc.value.code == "SESSION_OUTSIDE_SEASON"
+    assert test_db.query(Booking).filter_by(
+        user_id=player.id, session_id=session.id
+    ).count() == 0
+
+
 def test_duplicate_booking_and_repeated_cancellation_are_idempotent(test_db):
     player, _, _, _, session = _player_context(test_db)
     first = book_player_session(test_db, player=player, session_id=session.id, now=NOW)
@@ -188,6 +201,39 @@ def test_duplicate_booking_and_repeated_cancellation_are_idempotent(test_db):
     assert test_db.query(AuditLog).filter_by(
         action="PLAYER_SESSION_CANCELLED", resource_id=first.booking.id
     ).count() == 1
+
+
+def test_only_owner_or_admin_can_cancel_player_booking(test_db):
+    player, _, _, _, session = _player_context(test_db)
+    booking = book_player_session(
+        test_db, player=player, session_id=session.id, now=NOW
+    ).booking
+    foreign_player = _user(test_db, UserRole.STUDENT, prefix="foreign-player")
+    test_db.commit()
+
+    with pytest.raises(ParticipationError) as exc:
+        cancel_player_booking(
+            test_db, actor=foreign_player, booking_id=booking.id, now=NOW
+        )
+    assert exc.value.code == "NOT_BOOKING_OWNER"
+    assert test_db.get(Booking, booking.id).status == BookingStatus.CONFIRMED
+
+
+def test_cancellation_deadline_boundary_is_fail_closed(test_db):
+    player, _, _, _, session = _player_context(test_db)
+    booking = book_player_session(
+        test_db, player=player, session_id=session.id, now=NOW
+    ).booking
+
+    with pytest.raises(ParticipationError) as exc:
+        cancel_player_booking(
+            test_db,
+            actor=player,
+            booking_id=booking.id,
+            now=session.date_start - participation_service.CANCELLATION_LEAD_TIME,
+        )
+    assert exc.value.code == "CANCELLATION_DEADLINE_PASSED"
+    assert test_db.get(Booking, booking.id).status == BookingStatus.CONFIRMED
 
 
 def test_player_enrollment_autobook_uses_canonical_authority(test_db):
@@ -322,7 +368,12 @@ def test_foreign_instructor_denied_and_admin_override_audited(test_db):
         status="present", now=datetime(2026, 10, 2, 17, 50),
     )
     assert result.attendance.marked_by == admin.id
-    audit = test_db.query(AuditLog).filter_by(action="PLAYER_SESSION_ATTENDANCE_RECORDED").one()
+    audit = test_db.query(AuditLog).filter_by(
+        action="PLAYER_SESSION_ATTENDANCE_RECORDED",
+        user_id=admin.id,
+        resource_type="player_session_participation",
+        resource_id=booking.id,
+    ).one()
     assert audit.details["authorization_basis"] == "ADMIN_OVERRIDE"
 
 
@@ -347,6 +398,68 @@ def test_attendance_update_replay_and_history(test_db):
     assert updated.attendance.status == AttendanceStatus.late
     assert test_db.query(Attendance).filter_by(booking_id=booking.id).count() == 1
     assert test_db.query(AttendanceHistory).filter_by(attendance_id=created.attendance.id).count() == 2
+
+
+def test_attendance_reference_resolution_and_identity_check_are_canonical(test_db):
+    player, _, _, _, session = _player_context(test_db)
+    booking = book_player_session(
+        test_db, player=player, session_id=session.id, now=NOW
+    ).booking
+    admin = _user(test_db, UserRole.ADMIN, prefix="admin")
+    test_db.commit()
+
+    result = record_attendance(
+        test_db,
+        actor=admin,
+        player_id=player.id,
+        session_id=session.id,
+        status="present",
+        now=datetime(2026, 10, 2, 17, 50),
+    )
+    assert result.attendance.booking_id == booking.id
+
+    other_player = _user(test_db, UserRole.STUDENT, prefix="other-player")
+    test_db.commit()
+    with pytest.raises(ParticipationError) as exc:
+        record_attendance(
+            test_db,
+            actor=admin,
+            booking_id=booking.id,
+            player_id=other_player.id,
+            session_id=session.id,
+            status="late",
+            now=datetime(2026, 10, 2, 17, 50),
+        )
+    assert exc.value.code == "BOOKING_REFERENCE_MISMATCH"
+
+
+def test_attendance_audit_failure_rolls_back_status_history_and_projection(
+    test_db, monkeypatch
+):
+    player, _, _, _, session = _player_context(test_db)
+    booking = book_player_session(
+        test_db, player=player, session_id=session.id, now=NOW
+    ).booking
+    booking_id = booking.id
+    admin = _user(test_db, UserRole.ADMIN, prefix="admin")
+    test_db.commit()
+    history_count_before = test_db.query(AttendanceHistory).count()
+
+    def fail_audit(*args, **kwargs):
+        raise RuntimeError("audit unavailable")
+
+    monkeypatch.setattr(participation_service, "_audit", fail_audit)
+    with pytest.raises(RuntimeError, match="audit unavailable"):
+        record_attendance(
+            test_db,
+            actor=admin,
+            booking_id=booking_id,
+            status="present",
+            now=datetime(2026, 10, 2, 17, 50),
+        )
+    assert test_db.query(Attendance).filter_by(booking_id=booking_id).count() == 0
+    assert test_db.query(AttendanceHistory).count() == history_count_before
+    assert test_db.get(Booking, booking_id).attended_status is None
 
 
 def test_player_attendance_response_and_change_resolution_are_audited(test_db):
@@ -389,6 +502,61 @@ def test_player_attendance_response_and_change_resolution_are_audited(test_db):
     ).count() == 1
     assert test_db.query(AuditLog).filter_by(
         action="PLAYER_SESSION_ATTENDANCE_CHANGE_RESOLVED", resource_id=booking.id
+    ).count() == 1
+
+
+def test_confirmed_attendance_change_is_an_idempotent_audited_request(test_db):
+    player, _, _, _, session = _player_context(test_db)
+    booking = book_player_session(
+        test_db, player=player, session_id=session.id, now=NOW
+    ).booking
+    admin = _user(test_db, UserRole.ADMIN, prefix="admin")
+    test_db.commit()
+    attendance = record_attendance(
+        test_db,
+        actor=admin,
+        booking_id=booking.id,
+        status="present",
+        now=datetime(2026, 10, 2, 17, 50),
+    ).attendance
+    respond_to_attendance(
+        test_db,
+        player=player,
+        session_id=session.id,
+        action="confirm",
+        now=datetime(2026, 10, 2, 18, 10),
+    )
+
+    first = record_attendance(
+        test_db,
+        actor=admin,
+        booking_id=booking.id,
+        status="late",
+        notes="Corrected from check-in record",
+        now=datetime(2026, 10, 2, 18, 20),
+    )
+    replay = record_attendance(
+        test_db,
+        actor=admin,
+        booking_id=booking.id,
+        status="late",
+        notes="Corrected from check-in record",
+        now=datetime(2026, 10, 2, 18, 20),
+    )
+
+    test_db.refresh(attendance)
+    test_db.refresh(booking)
+    assert first.change_requested is True
+    assert replay.replayed is True
+    assert replay.change_requested is True
+    assert attendance.status == AttendanceStatus.present
+    assert attendance.pending_change_to == "late"
+    assert booking.attended_status == "present"
+    assert test_db.query(AttendanceHistory).filter_by(
+        attendance_id=attendance.id, change_type="change_requested"
+    ).count() == 1
+    assert test_db.query(AuditLog).filter_by(
+        action="PLAYER_SESSION_ATTENDANCE_CHANGE_REQUESTED", resource_id=booking.id
     ).count() == 1
 
 

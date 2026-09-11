@@ -15,7 +15,6 @@ from ...database import get_db
 from ...dependencies import get_current_user_web
 from ...models.user import User, UserRole
 from ...models.session import Session as SessionModel
-from ...models.booking import Booking, BookingStatus
 from ...models.attendance import Attendance, AttendanceHistory, AttendanceStatus, ConfirmationStatus
 from ...services.player_participation_service import (
     ParticipationError,
@@ -44,29 +43,27 @@ async def mark_attendance(
     user: User = Depends(get_current_user_web)
 ):
     """Mark attendance through the canonical participation authority."""
-    booking = db.query(Booking).filter(
-        Booking.session_id == session_id,
-        Booking.user_id == student_id,
-        Booking.status == BookingStatus.CONFIRMED,
-    ).first()
-    if not booking:
-        return RedirectResponse(url=f"/sessions/{session_id}?error=student_not_enrolled", status_code=303)
     try:
         result = record_attendance(
             db,
             actor=user,
-            booking_id=booking.id,
+            player_id=student_id,
+            session_id=session_id,
             status=status.lower(),
             notes=notes,
             source="WEB",
         )
     except ParticipationError as exc:
+        error = "student_not_enrolled" if exc.code == "BOOKING_NOT_FOUND" else exc.code.lower()
         return RedirectResponse(
-            url=f"/sessions/{session_id}?error={exc.code.lower()}", status_code=303
+            url=f"/sessions/{session_id}?error={error}", status_code=303
         )
     except ValueError:
         return RedirectResponse(url=f"/sessions/{session_id}?error=invalid_status", status_code=303)
-    outcome = "attendance_unchanged" if result.replayed else "attendance_marked"
+    if result.change_requested:
+        outcome = "change_requested"
+    else:
+        outcome = "attendance_unchanged" if result.replayed else "attendance_marked"
     return RedirectResponse(url=f"/sessions/{session_id}?success={outcome}", status_code=303)
 
 
