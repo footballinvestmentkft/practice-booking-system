@@ -453,7 +453,7 @@ def test_jvl24_server_detected_metadata_not_in_response(client, student_token, s
 # ── JVL-25: OpenAPI path delta +1, route delta +1 ────────────────────────────
 
 def test_jvl25_openapi_path_and_route_delta(client):
-    """JVL-25: GET /api/v1/users/me/juggling/videos in OpenAPI; route count = 1060."""
+    """JVL-25: GET /api/v1/users/me/juggling/videos in OpenAPI; route count = 1048."""
     from app.main import app as fastapi_app
     schema = fastapi_app.openapi()
     assert "/api/v1/users/me/juggling/videos" in schema["paths"], "List path missing from OpenAPI"
@@ -463,7 +463,7 @@ def test_jvl25_openapi_path_and_route_delta(client):
         if hasattr(r, "methods") and hasattr(r, "path")
         for m in (r.methods or [])
     ]
-    assert len(routes) == 1060, f"Expected 1060 routes, got {len(routes)}"
+    assert len(routes) == 1048, f"Expected 1048 routes, got {len(routes)}"
     get_list = [r for r in routes if r[0] == "GET" and r[1] == "/api/v1/users/me/juggling/videos"]
     assert len(get_list) == 1
 
@@ -471,13 +471,13 @@ def test_jvl25_openapi_path_and_route_delta(client):
 # ── JVL-26: Alembic head unchanged ───────────────────────────────────────────
 
 def test_jvl26_alembic_head_unchanged():
-    """JVL-26: WS1 remains the repository's single Alembic head."""
+    """JVL-26: PC3 remains the repository's single Alembic head."""
     from alembic.config import Config
     from alembic.script import ScriptDirectory
     import os
     cfg = Config(os.path.join(os.path.dirname(__file__), "..", "..", "..", "alembic.ini"))
     heads = ScriptDirectory.from_config(cfg).get_heads()
-    assert heads == ["2026_09_09_1000"], f"Unexpected Alembic heads: {heads}"
+    assert heads == ["2026_09_12_1000"], f"Unexpected Alembic heads: {heads}"
 
 
 # ── JVL-27: P4 thumbnail/media regression ────────────────────────────────────

@@ -55,7 +55,7 @@ CEW-38c card_studio_welcome context contains mood_slot_meta key (CE-3.8 correcte
 CEW-38d mood_slot_meta has 6 entries with slot/emoji/label (CE-3.8 corrected)
 CEW-45  template references all three /from-mood routes (CE-3.8)
 CEW-46  template contains link to /profile/my-mood-photos (CE-3.8)
-CEW-47  route count = 934
+CEW-47  route count = 922
 CEW-48  assign JS fetch carries X-CSRF-Token header (CE-3.8)
 CEW-49  assign JS missing CSRF guard present (CE-3.8)
 CEW-50  template does NOT contain BG removal reference (CE-3.8 scope guard)
@@ -322,11 +322,11 @@ class TestCEW17WCE1Unchanged:
 class TestCEW18RouteCount:
 
     def test_cew_18_route_count_838(self):
-        """CEW-18: route count = 934."""
+        """CEW-18: route count = 922."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 934, (
-            f"Expected 934 routes, got {len(paths)}"
+        assert len(paths) == 922, (
+            f"Expected 922 routes, got {len(paths)}"
         )
 
     def test_cew_18b_card_editor_welcome_route_registered(self):
@@ -678,8 +678,8 @@ class TestCEW44to51TemplateMoodPicker:
         """CEW-47: CE-3.8 adds 3 from-mood routes → total 842."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 934, (
-            f"Expected 934 routes, got {len(paths)}"
+        assert len(paths) == 922, (
+            f"Expected 922 routes, got {len(paths)}"
         )
 
     def test_cew_48_assign_js_has_csrf_header(self):

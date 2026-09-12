@@ -17,7 +17,7 @@ from typing import Any, Literal
 
 from ..models.quiz import (
     Quiz, QuizCategory, QuizDifficulty, QuizQuestion,
-    QuizAnswerOption, QuestionMetadata, QuestionType, OptionType,
+    QuizAnswerOption, QuestionMetadata, QuestionType, OptionType, ContentStatus,
 )
 
 # ── Constants (also exported for seeder compatibility) ────────────────────────
@@ -312,6 +312,9 @@ def _seed_quiz(db, data: dict[str, Any], is_active: bool = True) -> dict[str, in
         xp_reward=50,
         passing_score=70.0,
         is_active=is_active,
+        content_status=(
+            ContentStatus.PUBLISHED.value if is_active else ContentStatus.DRAFT.value
+        ),
     )
     db.add(quiz)
     db.flush()

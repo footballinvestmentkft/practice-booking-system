@@ -102,4 +102,37 @@ final class PlayerIdentityContractTests: XCTestCase {
         XCTAssertTrue(result.replayed)
         XCTAssertNil(result.promotedBookingId)
     }
+
+    func testCanonicalPlayerEducationContractDecodesReleaseAndAssessment() throws {
+        let json = """
+        {
+          "program_id": "LFA_FOOTBALL_PLAYER",
+          "track_id": "track-1",
+          "release_id": "release-1",
+          "release_version": 3,
+          "locale": "hu",
+          "modules": [{
+            "id": "module-1", "stable_key": "rules", "name": "Szabályok",
+            "lessons": [{
+              "id": "lesson-1", "stable_key": "laws-of-the-game",
+              "title": "Laws of the Game", "topic_key": "football.rules.laws_of_the_game",
+              "components": [],
+              "assessments": [{
+                "id": "assessment-1", "stable_key": "laws-medium",
+                "delivery_mode": "ADAPTIVE", "purpose": "FORMATIVE",
+                "difficulty": "MEDIUM", "variants": [{"quiz_id": 12, "locale": "en"}]
+              }]
+            }]
+          }]
+        }
+        """.data(using: .utf8)!
+
+        let curriculum = try JSONDecoder().decode(EducationCurriculum.self, from: json)
+
+        XCTAssertEqual(curriculum.programId, "LFA_FOOTBALL_PLAYER")
+        XCTAssertEqual(curriculum.releaseVersion, 3)
+        XCTAssertEqual(curriculum.modules.first?.stableKey, "rules")
+        XCTAssertEqual(curriculum.modules.first?.lessons.first?.assessments.first?.variants.first?.quizId, 12)
+        XCTAssertEqual(PlayerEducationAPI.tracksPath, "/api/v1/education/programs/LFA_FOOTBALL_PLAYER/tracks")
+    }
 }

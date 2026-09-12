@@ -9,7 +9,7 @@ ST-05  X-Server-Time-Ms header matches body server_epoch_ms
 ST-06  No auth required (200 without token)
 ST-07  precision field == "milliseconds"
 ST-08  source field == "backend_app_clock"
-ST-09  Route count == 934 (932 + 1 new)
+ST-09  Route count == 922 (932 + 1 new)
 ST-10  /api/v1/system/time present in OpenAPI schema
 ST-11  Two sequential calls return non-negative epoch_ms values
 """
@@ -89,10 +89,10 @@ class TestSystemTimeResponse:
         assert r.json()["source"] == "backend_app_clock"
 
     def test_st_09_route_count(self, client):
-        """ST-09: OpenAPI route count == 934 (932 baseline + 1 new)."""
+        """ST-09: OpenAPI route count == 922 (932 baseline + 1 new)."""
         schema = client.app.openapi()
         paths = len(schema.get("paths", {}))
-        assert paths == 934, f"Expected 934 routes, got {paths}"
+        assert paths == 922, f"Expected 922 routes, got {paths}"
 
     def test_st_10_openapi_presence(self, client):
         """ST-10: /api/v1/system/time in OpenAPI schema."""

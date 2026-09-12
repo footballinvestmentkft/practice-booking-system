@@ -144,6 +144,7 @@ class UserTrackProgress(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Fixed: Integer to match users.id
     track_id = Column(UUID(as_uuid=True), ForeignKey("tracks.id"), nullable=False)
+    track_release_id = Column(UUID(as_uuid=True), ForeignKey("track_releases.id", ondelete="RESTRICT"), nullable=True)
     enrollment_date = Column(DateTime, default=datetime.utcnow)
     current_semester = Column(Integer, default=1)
     status = Column(SQLEnum(TrackProgressStatus), default=TrackProgressStatus.ENROLLED)

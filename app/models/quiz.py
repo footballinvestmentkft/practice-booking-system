@@ -67,12 +67,22 @@ class Quiz(Base):
     is_active = Column(Boolean, default=True)
     # Authoritative lifecycle state (migration 2026_05_20_1300)
     content_status = Column(String(20), nullable=False, default=ContentStatus.PUBLISHED.value)
+    # Stable, versioned content identity for canonical education releases.
+    content_key = Column(String(150), nullable=True)
+    revision = Column(Integer, nullable=False, default=1)
+    source_checksum = Column(String(64), nullable=True)
+    source_schema_version = Column(String(20), nullable=True)
+    supersedes_quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="RESTRICT"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
     questions = relationship("QuizQuestion", back_populates="quiz", cascade="all, delete-orphan")
     attempts = relationship("QuizAttempt", back_populates="quiz")
+
+    __table_args__ = (
+        UniqueConstraint("content_key", "language", "revision", name="uq_quiz_content_locale_revision"),
+    )
 
 class QuizQuestion(Base):
     __tablename__ = "quiz_questions"
@@ -214,6 +224,7 @@ class AdaptiveLearningSession(Base):
     # Module scoping — quiz title prefix (e.g. 'AL — Edzéselmélet')
     # NULL on legacy sessions; required for all new sessions via v2 flow
     module_prefix = Column(String(200), nullable=True)
+    lesson_assessment_id = Column(ForeignKey("lesson_assessments.id", ondelete="RESTRICT"), nullable=True)
 
     # Adaptive algorithm data
     target_difficulty = Column(Float, default=0.5)  # 0.0-1.0

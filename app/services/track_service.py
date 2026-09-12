@@ -37,6 +37,7 @@ class TrackService:
         
         available_tracks = self.db.query(Track)\
             .filter(Track.is_active == True)\
+            .filter(Track.specialization_id.is_(None))\
             .filter(~Track.id.in_(enrolled_track_ids))\
             .order_by(Track.name)\
             .all()
@@ -57,6 +58,21 @@ class TrackService:
                 "eligible": False,
                 "reason": "Already enrolled in this track"
             }
+
+        track = self.db.query(Track).filter(Track.id == track_id).first()
+        if not track:
+            return {
+                "eligible": False,
+                "reason": "Track not found"
+            }
+
+        # PC3 canonical tracks are entitlement-driven and may only be exposed
+        # through EducationContentService's published-release boundary.
+        if isinstance(track.specialization_id, str) and track.specialization_id:
+            return {
+                "eligible": False,
+                "reason": "Canonical education tracks cannot use legacy enrollment"
+            }
         
         # Check semester enrollment limit (max 1 new track per semester)
         current_semester_enrollments = self.db.query(UserTrackProgress)\
@@ -75,13 +91,6 @@ class TrackService:
             }
         
         # Check track prerequisites
-        track = self.db.query(Track).filter(Track.id == track_id).first()
-        if not track:
-            return {
-                "eligible": False,
-                "reason": "Track not found"
-            }
-        
         if track.prerequisites:
             # Check if user has completed prerequisite tracks
             for prereq_track_code in track.prerequisites.get('required_tracks', []):

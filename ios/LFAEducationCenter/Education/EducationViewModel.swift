@@ -1,5 +1,111 @@
 import Foundation
 
+struct EducationTrackSummary: Decodable, Identifiable, Equatable {
+    let id: String
+    let stableKey: String
+    let code: String
+    let name: String
+    let defaultLocale: String
+    let releaseId: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, code, name
+        case stableKey = "stable_key"
+        case defaultLocale = "default_locale"
+        case releaseId = "release_id"
+    }
+}
+
+struct EducationAssessmentVariant: Decodable, Equatable {
+    let quizId: Int
+    let locale: String
+    enum CodingKeys: String, CodingKey { case quizId = "quiz_id"; case locale }
+}
+
+struct EducationLessonAssessment: Decodable, Identifiable, Equatable {
+    let id: String
+    let stableKey: String
+    let deliveryMode: String
+    let purpose: String
+    let difficulty: String?
+    let variants: [EducationAssessmentVariant]
+    enum CodingKeys: String, CodingKey {
+        case id, purpose, difficulty, variants
+        case stableKey = "stable_key"
+        case deliveryMode = "delivery_mode"
+    }
+}
+
+indirect enum EducationJSONValue: Decodable, Equatable {
+    case string(String), number(Double), boolean(Bool)
+    case object([String: EducationJSONValue]), array([EducationJSONValue]), null
+
+    init(from decoder: Decoder) throws {
+        let value = try decoder.singleValueContainer()
+        if value.decodeNil() { self = .null }
+        else if let decoded = try? value.decode(Bool.self) { self = .boolean(decoded) }
+        else if let decoded = try? value.decode(Double.self) { self = .number(decoded) }
+        else if let decoded = try? value.decode(String.self) { self = .string(decoded) }
+        else if let decoded = try? value.decode([String: EducationJSONValue].self) { self = .object(decoded) }
+        else if let decoded = try? value.decode([EducationJSONValue].self) { self = .array(decoded) }
+        else { throw DecodingError.dataCorruptedError(in: value, debugDescription: "Unsupported education payload") }
+    }
+}
+
+struct EducationComponent: Decodable, Identifiable, Equatable {
+    let id: String
+    let stableKey: String
+    let type: String
+    let name: String
+    let payload: [String: EducationJSONValue]
+    enum CodingKeys: String, CodingKey { case id, type, name, payload; case stableKey = "stable_key" }
+}
+
+struct EducationLesson: Decodable, Identifiable, Equatable {
+    let id: String
+    let stableKey: String
+    let title: String
+    let topicKey: String?
+    let components: [EducationComponent]
+    let assessments: [EducationLessonAssessment]
+    enum CodingKeys: String, CodingKey {
+        case id, title, components, assessments
+        case stableKey = "stable_key"
+        case topicKey = "topic_key"
+    }
+}
+
+struct EducationModule: Decodable, Identifiable, Equatable {
+    let id: String
+    let stableKey: String
+    let name: String
+    let lessons: [EducationLesson]
+    enum CodingKeys: String, CodingKey { case id, name, lessons; case stableKey = "stable_key" }
+}
+
+struct EducationCurriculum: Decodable, Equatable {
+    let programId: String
+    let trackId: String
+    let releaseId: String
+    let releaseVersion: Int
+    let locale: String
+    let modules: [EducationModule]
+    enum CodingKeys: String, CodingKey {
+        case locale, modules
+        case programId = "program_id"
+        case trackId = "track_id"
+        case releaseId = "release_id"
+        case releaseVersion = "release_version"
+    }
+}
+
+enum PlayerEducationAPI {
+    static let tracksPath = "/api/v1/education/programs/LFA_FOOTBALL_PLAYER/tracks"
+    static func curriculumPath(trackId: String, locale: String) -> String {
+        "/api/v1/education/tracks/\(trackId)/curriculum?locale=\(locale)"
+    }
+}
+
 // Education Center data layer.
 //
 // Endpoint mapping:
@@ -40,6 +146,8 @@ final class EducationViewModel: ObservableObject {
     @Published private(set) var progressData:   [String: SpecializationProgressData]  = [:]
     @Published private(set) var lfaLicense:     LFAPlayerLicense?                     = nil
     @Published private(set) var skillProfile:   SkillProfile?                          = nil
+    @Published private(set) var educationTracks: [EducationTrackSummary]               = []
+    @Published private(set) var curriculum: EducationCurriculum?                       = nil
 
     // MARK: — Load (initial, guarded)
 
@@ -57,6 +165,8 @@ final class EducationViewModel: ObservableObject {
         progressData   = [:]
         lfaLicense     = nil
         skillProfile   = nil
+        educationTracks = []
+        curriculum = nil
         await fetchData(using: authManager)
     }
 
@@ -69,6 +179,8 @@ final class EducationViewModel: ObservableObject {
         progressData   = [:]
         lfaLicense     = nil
         skillProfile   = nil
+        educationTracks = []
+        curriculum = nil
     }
 
     // MARK: — Private
@@ -113,6 +225,18 @@ final class EducationViewModel: ObservableObject {
         skillProfile = try? await authManager.authenticatedGet(
             path: "/api/v1/progression/skill-profile"
         )
+
+        // 6. Canonical Player education. Draft releases are filtered server-side.
+        if lfaLicense != nil {
+            educationTracks = (try? await authManager.authenticatedGet(
+                path: PlayerEducationAPI.tracksPath
+            )) ?? []
+            if let first = educationTracks.first {
+                curriculum = try? await authManager.authenticatedGet(
+                    path: PlayerEducationAPI.curriculumPath(trackId: first.id, locale: "en")
+                )
+            }
+        }
 
         loadState = .loaded
     }

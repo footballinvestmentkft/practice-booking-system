@@ -46,6 +46,7 @@ from .endpoints import (
     quiz,
     curriculum,
     curriculum_adaptive,
+    education,
     progression,
     tracks,
     certificates,
@@ -153,6 +154,7 @@ api_router.include_router(certificates.router, prefix="/certificates", tags=["ce
 api_router.include_router(students.router, prefix="/students", tags=["students"])
 api_router.include_router(curriculum.router, prefix="/curriculum", tags=["curriculum"])
 api_router.include_router(curriculum_adaptive.router, prefix="/curriculum-adaptive", tags=["curriculum-adaptive-learning"])
+api_router.include_router(education.router, prefix="/education", tags=["education"])
 api_router.include_router(competency.router, prefix="/competency", tags=["competency"])
 
 # ── ADMINISTRATION ────────────────────────────────────────────────────────────
