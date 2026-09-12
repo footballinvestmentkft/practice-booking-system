@@ -268,10 +268,10 @@ class TestSHOP11to13LegacyRoutes:
 class TestSHOP14to15RouteAndSnapshot:
 
     def test_shop_14_route_count_934(self):
-        """SHOP-14: route count = 934."""
+        """SHOP-14: route count = 922."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 934, f"Expected 934 routes, got {len(paths)}"
+        assert len(paths) == 922, f"Expected 922 routes, got {len(paths)}"
 
     def test_shop_15_openapi_snapshot_match(self):
         """SHOP-15: OpenAPI snapshot matches live API."""

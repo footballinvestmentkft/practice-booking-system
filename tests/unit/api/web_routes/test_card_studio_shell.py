@@ -21,7 +21,7 @@ CSS-17  mobile markup: cs-mood-section before cs-preview-panel
 CSS-18  template contains cs-preview-iframe
 CSS-19  template contains X-CSRF-Token in assign JS
 CSS-20  template contains !csrf guard
-CSS-21  route count = 934
+CSS-21  route count = 922
 CSS-22  GET /card-studio route registered
 CSS-23  GET /card-studio/welcome route registered
 """
@@ -326,8 +326,8 @@ class TestCSS21to23RouteConfirmations:
         """CSS-21: adding 2 card-studio routes raises count from 842 to 844."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 934, (
-            f"Expected 934 routes, got {len(paths)}"
+        assert len(paths) == 922, (
+            f"Expected 922 routes, got {len(paths)}"
         )
 
     def test_css_22_card_studio_route_registered(self):

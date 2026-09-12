@@ -90,7 +90,10 @@ from .juggling import (
 )
 
 # 🎓 New Track-Based Modular Education System
-from .track import Track, Module, ModuleComponent
+from .track import (
+    Track, TrackRelease, Module, Lesson, ModuleComponent, LessonAssessment,
+    LessonAssessmentQuiz, EducationProgressEvent,
+)
 from .certificate import CertificateTemplate, IssuedCertificate
 from .user_progress import UserTrackProgress, UserModuleProgress, TrackProgressStatus, ModuleProgressStatus
 

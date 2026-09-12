@@ -13,7 +13,7 @@ CCS-07  owned format rows follow CHALLENGE_CARD_FORMATS order
 CCS-08  owned format row fields: design_id, label, style_tag, dims
 CCS-09  legacy "challenge" CDO shim → both valid formats owned
 CCS-10  CardDraftService is never called
-CCS-11  route count = 934
+CCS-11  route count = 922
 CCS-12  template contains /my-cards/challenge link
 CCS-13  template contains /challenges/results link
 CCS-14  template contains /challenges link
@@ -291,11 +291,11 @@ class TestCCS10NoDraftService:
 class TestCCS11RouteCount:
 
     def test_ccs_11_route_count_839(self):
-        """CCS-11: route count = 934."""
+        """CCS-11: route count = 922."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 934, (
-            f"Expected 934 routes, got {len(paths)}"
+        assert len(paths) == 922, (
+            f"Expected 922 routes, got {len(paths)}"
         )
 
     def test_ccs_11b_card_editor_challenge_route_registered(self):

@@ -13969,7 +13969,6 @@
           "curriculum"
         ],
         "summary": "Get Curriculum Track",
-        "description": "Get curriculum track for a specialization",
         "operationId": "get_curriculum_track_api_v1_curriculum_track__specialization_id__get",
         "security": [
           {
@@ -14015,7 +14014,6 @@
           "curriculum"
         ],
         "summary": "Get Curriculum Lessons",
-        "description": "Get all lessons in a curriculum track",
         "operationId": "get_curriculum_lessons_api_v1_curriculum_track__specialization_id__lessons_get",
         "security": [
           {
@@ -14031,685 +14029,18 @@
               "type": "string",
               "title": "Specialization Id"
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
           },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/progress/{specialization_id}": {
-      "get": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Get User Curriculum Progress",
-        "description": "Get user's progress across all lessons in a curriculum",
-        "operationId": "get_user_curriculum_progress_api_v1_curriculum_progress__specialization_id__get",
-        "security": [
           {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "specialization_id",
-            "in": "path",
-            "required": true,
+            "name": "locale",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string",
-              "title": "Specialization Id"
+              "default": "en",
+              "title": "Locale"
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/lesson/{lesson_id}": {
-      "get": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Get Lesson Details",
-        "description": "Get detailed lesson information",
-        "operationId": "get_lesson_details_api_v1_curriculum_lesson__lesson_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "lesson_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Lesson Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/lesson/{lesson_id}/modules": {
-      "get": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Get Lesson Modules",
-        "description": "Get all modules in a lesson",
-        "operationId": "get_lesson_modules_api_v1_curriculum_lesson__lesson_id__modules_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "lesson_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Lesson Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/lesson/{lesson_id}/quizzes": {
-      "get": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Get Lesson Quizzes",
-        "description": "Get all quizzes linked to a lesson",
-        "operationId": "get_lesson_quizzes_api_v1_curriculum_lesson__lesson_id__quizzes_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "lesson_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Lesson Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/lesson/{lesson_id}/exercises": {
-      "get": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Get Lesson Exercises",
-        "description": "Get all exercises in a lesson",
-        "operationId": "get_lesson_exercises_api_v1_curriculum_lesson__lesson_id__exercises_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "lesson_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Lesson Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/lesson/{lesson_id}/progress": {
-      "get": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Get Lesson Progress",
-        "description": "Get user's detailed progress within a lesson",
-        "operationId": "get_lesson_progress_api_v1_curriculum_lesson__lesson_id__progress_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "lesson_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Lesson Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/module/{module_id}/view": {
-      "post": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Mark Module Viewed",
-        "description": "Mark a module as viewed/in progress",
-        "operationId": "mark_module_viewed_api_v1_curriculum_module__module_id__view_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "module_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Module Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/module/{module_id}/complete": {
-      "post": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Mark Module Complete",
-        "description": "Mark a module as completed",
-        "operationId": "mark_module_complete_api_v1_curriculum_module__module_id__complete_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "module_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Module Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/exercise/{exercise_id}": {
-      "get": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Get Exercise Details",
-        "description": "Get detailed exercise information",
-        "operationId": "get_exercise_details_api_v1_curriculum_exercise__exercise_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "exercise_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Exercise Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/exercise/{exercise_id}/submission": {
-      "get": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Get Exercise Submission",
-        "description": "Get user's submission for an exercise",
-        "operationId": "get_exercise_submission_api_v1_curriculum_exercise__exercise_id__submission_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "exercise_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Exercise Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/exercise/{exercise_id}/submit": {
-      "post": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Submit Exercise",
-        "description": "Create new exercise submission",
-        "operationId": "submit_exercise_api_v1_curriculum_exercise__exercise_id__submit_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "exercise_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Exercise Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "title": "Payload"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/exercise/submission/{submission_id}": {
-      "put": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Update Exercise Submission",
-        "description": "Update existing exercise submission",
-        "operationId": "update_exercise_submission_api_v1_curriculum_exercise_submission__submission_id__put",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "submission_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Submission Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "title": "Payload"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/exercise/submission/{submission_id}/upload": {
-      "post": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Upload Exercise File",
-        "description": "File upload endpoint for exercise submissions.\n\nNOTE: This is a placeholder. In production, integrate with:\n- AWS S3\n- Google Cloud Storage\n- Azure Blob Storage\n- Or local file storage",
-        "operationId": "upload_exercise_file_api_v1_curriculum_exercise_submission__submission_id__upload_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "submission_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Submission Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/curriculum/exercise/submission/{submission_id}/grade": {
-      "post": {
-        "tags": [
-          "curriculum"
-        ],
-        "summary": "Grade Exercise Submission",
-        "description": "Grade an exercise submission (Instructor only)\n\nPayload:\n{\n    \"score\": 85,  // 0-100\n    \"feedback\": \"Good work!\",\n    \"status\": \"APPROVED\"  // APPROVED, NEEDS_REVISION, REJECTED\n}",
-        "operationId": "grade_exercise_submission_api_v1_curriculum_exercise_submission__submission_id__grade_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "submission_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Submission Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "title": "Payload"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -14967,6 +14298,115 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/api/v1/education/programs/{program_id}/tracks": {
+      "get": {
+        "tags": [
+          "education"
+        ],
+        "summary": "List Player Tracks",
+        "operationId": "list_player_tracks_api_v1_education_programs__program_id__tracks_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "program_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Program Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EducationTrackSummary"
+                  },
+                  "title": "Response List Player Tracks Api V1 Education Programs  Program Id  Tracks Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/education/tracks/{track_id}/curriculum": {
+      "get": {
+        "tags": [
+          "education"
+        ],
+        "summary": "Get Player Curriculum",
+        "operationId": "get_player_curriculum_api_v1_education_tracks__track_id__curriculum_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "track_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Track Id"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "en",
+              "title": "Locale"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationCurriculumResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/competency/my-competencies": {
@@ -49738,6 +49178,24 @@
         "title": "AssessmentResponse",
         "description": "Response model for assessment"
       },
+      "AssessmentVariantResponse": {
+        "properties": {
+          "quiz_id": {
+            "type": "integer",
+            "title": "Quiz Id"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quiz_id",
+          "locale"
+        ],
+        "title": "AssessmentVariantResponse"
+      },
       "AssignmentCreate": {
         "properties": {
           "location_id": {
@@ -57706,6 +57164,194 @@
         "title": "DistributeRewardsRequest",
         "description": "Request to distribute rewards for a tournament"
       },
+      "EducationComponentResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "stable_key": {
+            "type": "string",
+            "title": "Stable Key"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "payload": {
+            "type": "object",
+            "title": "Payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "stable_key",
+          "type",
+          "name"
+        ],
+        "title": "EducationComponentResponse"
+      },
+      "EducationCurriculumResponse": {
+        "properties": {
+          "program_id": {
+            "type": "string",
+            "title": "Program Id"
+          },
+          "track_id": {
+            "type": "string",
+            "title": "Track Id"
+          },
+          "release_id": {
+            "type": "string",
+            "title": "Release Id"
+          },
+          "release_version": {
+            "type": "integer",
+            "title": "Release Version"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale"
+          },
+          "modules": {
+            "items": {
+              "$ref": "#/components/schemas/EducationModuleResponse"
+            },
+            "type": "array",
+            "title": "Modules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "program_id",
+          "track_id",
+          "release_id",
+          "release_version",
+          "locale"
+        ],
+        "title": "EducationCurriculumResponse"
+      },
+      "EducationLessonResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "stable_key": {
+            "type": "string",
+            "title": "Stable Key"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "topic_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic Key"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/EducationComponentResponse"
+            },
+            "type": "array",
+            "title": "Components"
+          },
+          "assessments": {
+            "items": {
+              "$ref": "#/components/schemas/LessonAssessmentResponse"
+            },
+            "type": "array",
+            "title": "Assessments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "stable_key",
+          "title"
+        ],
+        "title": "EducationLessonResponse"
+      },
+      "EducationModuleResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "stable_key": {
+            "type": "string",
+            "title": "Stable Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "lessons": {
+            "items": {
+              "$ref": "#/components/schemas/EducationLessonResponse"
+            },
+            "type": "array",
+            "title": "Lessons"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "stable_key",
+          "name"
+        ],
+        "title": "EducationModuleResponse"
+      },
+      "EducationTrackSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "stable_key": {
+            "type": "string",
+            "title": "Stable Key"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "default_locale": {
+            "type": "string",
+            "title": "Default Locale"
+          },
+          "release_id": {
+            "type": "string",
+            "title": "Release Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "stable_key",
+          "code",
+          "name",
+          "default_locale",
+          "release_id"
+        ],
+        "title": "EducationTrackSummary"
+      },
       "EligibleInstructorResponse": {
         "properties": {
           "id": {
@@ -61446,6 +61092,52 @@
         ],
         "title": "LearningProfileResponse",
         "description": "User learning profile response"
+      },
+      "LessonAssessmentResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "stable_key": {
+            "type": "string",
+            "title": "Stable Key"
+          },
+          "delivery_mode": {
+            "type": "string",
+            "title": "Delivery Mode"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentVariantResponse"
+            },
+            "type": "array",
+            "title": "Variants"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "stable_key",
+          "delivery_mode",
+          "purpose"
+        ],
+        "title": "LessonAssessmentResponse"
       },
       "LevelChangeResponse": {
         "properties": {

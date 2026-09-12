@@ -29,7 +29,7 @@ CCD-20  challenge media panel (cs-cc-mood-section) in cs_challenge_panel.html pr
 CCD-21  _setChallengePhoto JS function present in shell (challenge preview mode)
 
 Route/snapshot:
-CCD-22  route count = 934
+CCD-22  route count = 922
 CCD-23  OpenAPI snapshot match true
 
 Naming:
@@ -780,7 +780,7 @@ class TestCCD22to23RouteSnapshot:
         """CCD-22: Route count is 851 (CC-DESIGN-1 SNAPSHOT adds POST /challenges/{id}/card/photo)."""
         from app.main import app
         count = len(app.openapi().get("paths", {}))
-        assert count == 934, f"Expected 934 routes, got {count}"
+        assert count == 922, f"Expected 922 routes, got {count}"
 
     def test_ccd_23_openapi_snapshot_match(self):
         """CCD-23: OpenAPI snapshot matches live API."""

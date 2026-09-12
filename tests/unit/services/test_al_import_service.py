@@ -14,6 +14,7 @@ ALS-11  apply_import — re-validates payload; tampered quiz_title still blocked
 ALS-12  apply_import — writes ALImportLog row with correct counts
 """
 import json
+import uuid
 import pytest
 
 from app.services.al_import_service import (
@@ -310,3 +311,14 @@ class TestApplyImport:
         assert log.questions_created == 2
         assert log.status == ImportStatus.SUCCESS
         assert log.spec == "LFA_FOOTBALL_PLAYER"
+
+    def test_pc3_draft_import_is_not_runtime_visible(self, postgres_db):
+        title = f"PC3 Draft Import {uuid.uuid4().hex}"
+        summary = apply_import(
+            self._make_payload(title), "LFA_FOOTBALL_PLAYER", postgres_db, None,
+            import_as_draft=True,
+        )
+        assert summary.quizzes_created == 1
+        quiz = postgres_db.query(Quiz).filter(Quiz.title == title).one()
+        assert quiz.content_status == "DRAFT"
+        assert quiz.is_active is False

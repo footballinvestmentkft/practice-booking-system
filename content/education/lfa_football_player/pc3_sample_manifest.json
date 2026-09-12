@@ -1,0 +1,563 @@
+{
+  "schema_version": "1.0",
+  "program_id": "LFA_FOOTBALL_PLAYER",
+  "track": {
+    "stable_key": "player-core-sample",
+    "code": "PC3-PLAYER-SAMPLE",
+    "name": "LFA Football Player Sample",
+    "default_locale": "en"
+  },
+  "release": {
+    "version": 1,
+    "status": "DRAFT"
+  },
+  "modules": [
+    {
+      "stable_key": "introduction",
+      "name": "Introduction",
+      "translations": {
+        "hu": {
+          "name": "Bevezetés"
+        }
+      },
+      "lessons": [
+        {
+          "stable_key": "physical-culture-background",
+          "title": "Physical Culture Background",
+          "translations": {
+            "hu": {
+              "title": "Testkulturális előzmények"
+            }
+          },
+          "topic_key": "training.physical_culture_background",
+          "assessments": [
+            {
+              "stable_key": "physical-culture-background-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_01_physical_culture_background_easy.json"
+                },
+                {
+                  "locale": "hu",
+                  "source_path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_01_testkulturalis_elozmenyek_easy.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "civilizational-development",
+          "title": "The Response to Lifestyle Problems Caused by Civilizational Development",
+          "translations": {
+            "hu": {
+              "title": "A válasz a civilizációs fejlődés életmódra ható problémáira"
+            }
+          },
+          "topic_key": "training.civilizational_development",
+          "assessments": [
+            {
+              "stable_key": "civilizational-development-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_02_civilizational_development_easy.json"
+                },
+                {
+                  "locale": "hu",
+                  "source_path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_02_bevezetes_civilizacios_problemak_easy.json"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stable_key": "training-theory-fundamentals",
+      "name": "Fundamentals of Training Theory",
+      "translations": {
+        "hu": {
+          "name": "Edzéselmélet alapjai"
+        }
+      },
+      "lessons": [
+        {
+          "stable_key": "concept-of-training",
+          "title": "The Concept and Interpretation of Training",
+          "translations": {
+            "hu": {
+              "title": "Az edzés fogalma és értelmezése"
+            }
+          },
+          "topic_key": "training.concept",
+          "assessments": [
+            {
+              "stable_key": "concept-of-training-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_03_concept_of_training_easy.json"
+                },
+                {
+                  "locale": "hu",
+                  "source_path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_03_edzes_fogalma_easy.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "load-and-adaptation",
+          "title": "The Relationship Between Load and Adaptation",
+          "translations": {
+            "hu": {
+              "title": "A terhelés és alkalmazkodás (adaptáció) összefüggése"
+            }
+          },
+          "topic_key": "training.load_adaptation",
+          "assessments": [
+            {
+              "stable_key": "load-and-adaptation-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_04_load_and_adaptation_easy.json"
+                },
+                {
+                  "locale": "hu",
+                  "source_path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_04_terheles_adaptacio_easy.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "training-load-components",
+          "title": "Components of Training Load",
+          "translations": {
+            "hu": {
+              "title": "Az edzésterhelés összetevői"
+            }
+          },
+          "topic_key": "training.load_components",
+          "assessments": [
+            {
+              "stable_key": "training-load-components-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_05_training_load_components_easy.json"
+                },
+                {
+                  "locale": "hu",
+                  "source_path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_05_edzesterheles_osszetevoi_easy.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "training-structure",
+          "title": "Structure of Training (Parts of a Training Session)",
+          "translations": {
+            "hu": {
+              "title": "Az edzés felépítése (edzés részei)"
+            }
+          },
+          "topic_key": "training.structure",
+          "assessments": [
+            {
+              "stable_key": "training-structure-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_06_structure_of_training_easy.json"
+                },
+                {
+                  "locale": "hu",
+                  "source_path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_06_edzes_felepitese_easy.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "training-principles",
+          "title": "Training Principles (Fundamental Principles)",
+          "translations": {
+            "hu": {
+              "title": "Az edzéselvek (alapelvek)"
+            }
+          },
+          "topic_key": "training.principles",
+          "assessments": [
+            {
+              "stable_key": "training-principles-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_07_training_principles_easy.json"
+                },
+                {
+                  "locale": "hu",
+                  "source_path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_07_edzeselvek_easy.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "motor-abilities",
+          "title": "Classification of Motor Abilities",
+          "translations": {
+            "hu": {
+              "title": "Motoros képességek felosztása"
+            }
+          },
+          "topic_key": "training.motor_abilities",
+          "assessments": [
+            {
+              "stable_key": "motor-abilities-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/en/lesson/lesson_08_motor_abilities_easy.json"
+                },
+                {
+                  "locale": "hu",
+                  "source_path": "content/adaptive_learning/lfa_football_player/hu/lesson/lesson_08_motoros_kepessegek_easy.json"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stable_key": "football-awareness",
+      "name": "Football Awareness",
+      "lessons": [
+        {
+          "stable_key": "football-fundamentals",
+          "title": "Football Fundamentals",
+          "topic_key": "football.awareness.fundamentals",
+          "assessments": [
+            {
+              "stable_key": "football-awareness-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/general/football_awareness_easy.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "football-governance-competition",
+          "title": "Football Governance and Competition",
+          "topic_key": "football.awareness.governance_competition",
+          "assessments": [
+            {
+              "stable_key": "football-awareness-medium",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "MEDIUM",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/general/football_awareness_medium.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "football-governance-global",
+          "title": "Football Governance and Global Structures",
+          "topic_key": "football.awareness.global_structures",
+          "assessments": [
+            {
+              "stable_key": "football-awareness-hard",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "HARD",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/general/football_awareness_hard.json"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stable_key": "rules",
+      "name": "Rules",
+      "lessons": [
+        {
+          "stable_key": "laws-of-the-game",
+          "title": "Laws of the Game",
+          "topic_key": "football.rules.laws_of_the_game",
+          "assessments": [
+            {
+              "stable_key": "laws-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/lesson/rules_easy.json"
+                }
+              ]
+            },
+            {
+              "stable_key": "laws-medium",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "MEDIUM",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/lesson/rules_medium.json"
+                }
+              ]
+            },
+            {
+              "stable_key": "laws-hard",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "HARD",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/lesson/rules_hard.json"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stable_key": "tactics",
+      "name": "Tactics",
+      "lessons": [
+        {
+          "stable_key": "formations-basic-principles",
+          "title": "Formations and Basic Principles",
+          "topic_key": "football.tactics.formations_basic",
+          "assessments": [
+            {
+              "stable_key": "tactics-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/lesson/tactics_easy.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "formations-systems-play",
+          "title": "Formations and Systems of Play",
+          "topic_key": "football.tactics.systems",
+          "assessments": [
+            {
+              "stable_key": "tactics-medium",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "MEDIUM",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/lesson/tactics_medium.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "advanced-tactics",
+          "title": "Advanced Tactics",
+          "topic_key": "football.tactics.advanced",
+          "assessments": [
+            {
+              "stable_key": "tactics-hard",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "HARD",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/lesson/tactics_hard.json"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stable_key": "conditioning",
+      "name": "Conditioning",
+      "lessons": [
+        {
+          "stable_key": "conditioning-fundamentals",
+          "title": "Physical Conditioning Fundamentals",
+          "topic_key": "conditioning.fundamentals",
+          "assessments": [
+            {
+              "stable_key": "conditioning-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/_shared/sports_physiology/conditioning_easy.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "conditioning-applied",
+          "title": "Physical Conditioning Applied",
+          "topic_key": "conditioning.applied",
+          "assessments": [
+            {
+              "stable_key": "conditioning-medium",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "MEDIUM",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/_shared/sports_physiology/conditioning_medium.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "physiology-periodization",
+          "title": "Advanced Physiology and Periodization",
+          "topic_key": "conditioning.periodization",
+          "assessments": [
+            {
+              "stable_key": "conditioning-hard",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "HARD",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/_shared/sports_physiology/conditioning_hard.json"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stable_key": "athlete-nutrition",
+      "name": "Athlete Nutrition",
+      "lessons": [
+        {
+          "stable_key": "sports-nutrition-foundations",
+          "title": "Foundations of Sports Nutrition",
+          "topic_key": "nutrition.foundations",
+          "assessments": [
+            {
+              "stable_key": "nutrition-easy",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "EASY",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/nutrition/athlete_nutrition_easy.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "advanced-sports-nutrition",
+          "title": "Advanced Sports Nutrition",
+          "topic_key": "nutrition.advanced",
+          "assessments": [
+            {
+              "stable_key": "nutrition-medium",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "MEDIUM",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/nutrition/athlete_nutrition_medium.json"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "stable_key": "elite-nutrition-periodization",
+          "title": "Elite Nutrition Periodization",
+          "topic_key": "nutrition.periodization",
+          "assessments": [
+            {
+              "stable_key": "nutrition-hard",
+              "delivery_mode": "ADAPTIVE",
+              "purpose": "FORMATIVE",
+              "difficulty": "HARD",
+              "variants": [
+                {
+                  "locale": "en",
+                  "source_path": "content/adaptive_learning/lfa_football_player/nutrition/athlete_nutrition_hard.json"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

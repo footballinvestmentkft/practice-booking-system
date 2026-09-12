@@ -158,7 +158,7 @@ class TestS3B112to13RouteAndSnapshot:
         """S3B1-12: Route count = 845 (test cleanup does not affect routes)."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 934, f"Expected 934 routes, got {len(paths)}"
+        assert len(paths) == 922, f"Expected 922 routes, got {len(paths)}"
 
     def test_s3b1_13_openapi_snapshot_match(self):
         """S3B1-13: OpenAPI snapshot matches live API."""
