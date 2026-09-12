@@ -36,11 +36,11 @@ class TestS2A01to02RouteRegistration:
         paths = [getattr(r, "path", "") for r in app.routes]
         assert "/card-studio/player" in paths
 
-    def test_s2a_02_route_count_933(self):
-        """S2A-02 (updated CS-S4A): Total route count is 933."""
+    def test_s2a_02_route_count_934(self):
+        """S2A-02 (updated CS-S4A): Total route count is 934."""
         from app.main import app
         count = len(app.openapi().get("paths", {}))
-        assert count == 933, f"Expected 933 routes, got {count}"
+        assert count == 934, f"Expected 934 routes, got {count}"
 
 
 # ── S2A-03..08: _resolve_player_context logic ────────────────────────────────

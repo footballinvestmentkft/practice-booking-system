@@ -26,6 +26,12 @@ from ....models.pitch_instructor_assignment import (
 from ....services.tournament.pitch_instructor_service import (
     assign_instructor_to_pitch_direct,
 )
+from ....services.player_participation_service import (
+    ParticipationError,
+    cancel_player_booking,
+    confirm_waitlisted_booking,
+    record_attendance,
+)
 
 from . import templates, _admin_guard
 
@@ -108,24 +114,19 @@ async def admin_booking_confirm(
 ):
     """Confirm a booking (admin, cookie auth)."""
     _admin_guard(user)
-    booking = db.query(Booking).filter(Booking.id == booking_id).first()
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    if booking.status == BookingStatus.CONFIRMED:
-        raise HTTPException(status_code=400, detail="Booking already confirmed")
-
-    session_obj = db.query(SessionModel).filter(SessionModel.id == booking.session_id).first()
-    if session_obj and session_obj.capacity:
-        confirmed_count = db.query(sqlfunc.count(Booking.id)).filter(
-            Booking.session_id == booking.session_id,
-            Booking.status == BookingStatus.CONFIRMED,
-        ).scalar() or 0
-        if confirmed_count >= session_obj.capacity:
-            raise HTTPException(status_code=409, detail=f"Session at capacity ({session_obj.capacity})")
-
-    booking.status = BookingStatus.CONFIRMED
-    db.commit()
-    return JSONResponse({"success": True, "message": "Booking confirmed"})
+    try:
+        result = confirm_waitlisted_booking(
+            db, actor=user, booking_id=booking_id, source="WEB"
+        )
+    except ParticipationError as exc:
+        if exc.code == "BOOKING_NOT_FOUND":
+            status_code = 404
+        elif exc.code == "SESSION_AT_CAPACITY":
+            status_code = 409
+        else:
+            status_code = 400
+        raise HTTPException(status_code=status_code, detail=exc.code) from exc
+    return JSONResponse({"success": True, "message": "Booking confirmed", "replayed": result.replayed})
 
 
 @router.post("/admin/bookings/{booking_id}/cancel")
@@ -138,17 +139,19 @@ async def admin_booking_cancel(
 ):
     """Cancel a booking (admin, cookie auth)."""
     _admin_guard(user)
-    booking = db.query(Booking).filter(Booking.id == booking_id).with_for_update().first()
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    if booking.status == BookingStatus.CANCELLED:
-        raise HTTPException(status_code=400, detail="Booking already cancelled")
-
-    booking.status = BookingStatus.CANCELLED
-    booking.cancelled_at = datetime.now()
-    booking.notes = reason
-    db.commit()
-    return JSONResponse({"success": True, "message": "Booking cancelled"})
+    try:
+        result = cancel_player_booking(
+            db, actor=user, booking_id=booking_id, reason=reason,
+            admin_override=True, source="WEB",
+        )
+    except ParticipationError as exc:
+        raise HTTPException(status_code=404 if exc.code == "BOOKING_NOT_FOUND" else 400, detail=exc.code) from exc
+    return JSONResponse({
+        "success": True,
+        "message": "Booking cancelled",
+        "replayed": result.replayed,
+        "promoted_booking_id": result.promoted_booking_id,
+    })
 
 
 @router.post("/admin/bookings/{booking_id}/attendance")
@@ -162,32 +165,19 @@ async def admin_booking_attendance(
 ):
     """Mark/update attendance for a booking (admin, cookie auth)."""
     _admin_guard(user)
-    valid_statuses = [s.value for s in AttendanceStatus]
-    if attendance_status not in valid_statuses:
-        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
-
-    booking = db.query(Booking).filter(Booking.id == booking_id).with_for_update().first()
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-
-    if booking.attendance:
-        booking.attendance.status = AttendanceStatus(attendance_status)
-        booking.attendance.notes = notes or booking.attendance.notes
-        booking.attendance.marked_by = user.id
-    else:
-        att = Attendance(
-            user_id=booking.user_id,
-            session_id=booking.session_id,
-            booking_id=booking.id,
-            status=AttendanceStatus(attendance_status),
-            notes=notes or None,
-            marked_by=user.id,
+    try:
+        result = record_attendance(
+            db, actor=user, booking_id=booking_id, status=attendance_status,
+            notes=notes or None, source="WEB",
         )
-        db.add(att)
-
-    booking.update_attendance_status()
-    db.commit()
-    return JSONResponse({"success": True, "message": f"Attendance marked: {attendance_status}"})
+    except ValueError as exc:
+        code = exc.code if isinstance(exc, ParticipationError) else "INVALID_ATTENDANCE_STATUS"
+        raise HTTPException(status_code=400, detail=code) from exc
+    return JSONResponse({
+        "success": True,
+        "message": f"Attendance marked: {attendance_status}",
+        "replayed": result.replayed,
+    })
 
 
 @router.get("/admin/sessions", response_class=HTMLResponse)

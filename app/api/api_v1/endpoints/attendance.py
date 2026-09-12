@@ -10,7 +10,7 @@ from ....database import get_db
 from ....dependencies import get_current_user, get_current_admin_or_instructor_user
 from ....models.user import User, UserRole
 from ....models.session import Session as SessionTypel, EventCategory
-from ....models.booking import Booking, BookingStatus
+from ....models.booking import Booking
 from ....models.attendance import Attendance, AttendanceStatus
 from ....models.project import ProjectEnrollment, ProjectMilestone, ProjectMilestoneProgress, MilestoneStatus
 from ....schemas.attendance import (
@@ -20,11 +20,26 @@ from ....schemas.attendance import (
 from sqlalchemy.orm import joinedload
 from app.services import segment_reward_service
 from app.services.authorization_policy import AuthorizationPolicy
+from app.api.helpers.participation_errors import participation_http_error
+from app.services.player_participation_service import (
+    ParticipationError,
+    player_checkin,
+    record_attendance,
+    require_session_manager,
+)
 
 router = APIRouter()
 
 
-def _require_attendance_manager(current_user: User, session: SessionTypel) -> None:
+def _require_attendance_manager(
+    db: Session, current_user: User, session: SessionTypel
+) -> None:
+    if session.event_category != EventCategory.MATCH:
+        try:
+            require_session_manager(db, current_user, session)
+        except ParticipationError as exc:
+            raise participation_http_error(exc) from exc
+        return
     if not AuthorizationPolicy.can_manage_attendance(current_user, session):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -51,10 +66,9 @@ def create_attendance(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Session not found"
         )
-    _require_attendance_manager(current_user, session)
-
     # 🏆 TOURNAMENT SESSION: No booking required
     if session.event_category == EventCategory.MATCH:
+        _require_attendance_manager(db, current_user, session)
         # Tournament sessions ONLY support present/absent (NO late/excused)
         if attendance_data.status not in [AttendanceStatus.present, AttendanceStatus.absent]:
             raise HTTPException(
@@ -75,30 +89,33 @@ def create_attendance(
                 detail="booking_id is required for regular (non-tournament) sessions"
             )
 
-        # Check if booking exists and is confirmed
-        booking = db.query(Booking).filter(Booking.id == attendance_data.booking_id).first()
-        if not booking:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Booking not found"
+        try:
+            result = record_attendance(
+                db,
+                actor=current_user,
+                booking_id=attendance_data.booking_id,
+                player_id=attendance_data.user_id,
+                session_id=attendance_data.session_id,
+                status=attendance_data.status,
+                notes=attendance_data.notes,
+                source="API",
             )
-
-        if booking.status != BookingStatus.CONFIRMED:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Can only create attendance for confirmed bookings"
-            )
+        except ParticipationError as exc:
+            raise participation_http_error(exc) from exc
+        attendance = result.attendance
         if (
-            booking.user_id != attendance_data.user_id
-            or booking.session_id != attendance_data.session_id
+            not result.replayed
+            and not result.change_requested
+            and attendance.status == AttendanceStatus.present
         ):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Booking does not match the attendance user and session",
+            _update_milestone_sessions_on_attendance(
+                db, attendance.user_id, attendance.session_id
             )
-
-        # Check if attendance already exists (by booking_id)
-        existing_attendance = db.query(Attendance).filter(Attendance.booking_id == attendance_data.booking_id).first()
+            segment_reward_service.award_session_segments(
+                db, attendance.session_id, attendance.id
+            )
+            db.commit()
+        return attendance
 
     if existing_attendance:
         # UPDATE existing attendance
@@ -167,7 +184,7 @@ def list_attendance(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Session not found"
             )
-        _require_attendance_manager(current_user, session)
+        _require_attendance_manager(db, current_user, session)
         query = query.filter(Attendance.session_id == session_id)
     elif current_user.role != UserRole.ADMIN:
         query = query.join(SessionTypel).filter(
@@ -214,73 +231,17 @@ def checkin(
     """
     Check in to a session
     """
-    # Check if booking exists and belongs to current user
-    booking = db.query(Booking).filter(Booking.id == booking_id).first()
-    if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Booking not found"
-        )
-    
-    if booking.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only check in to your own bookings"
-        )
-    
-    if booking.status != BookingStatus.CONFIRMED:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Can only check in to confirmed bookings"
-        )
-    
-    # ✅ VALIDATE CHECK-IN WINDOW: Opens 15 minutes before session start
-    session = booking.session
-    current_time = time_provider.now().replace(tzinfo=None)
-    session_start = session.date_start.replace(tzinfo=None) if session.date_start.tzinfo else session.date_start
-    session_end = session.date_end.replace(tzinfo=None) if session.date_end.tzinfo else session.date_end
-
-    # 🔒 RULE #3: Check-in opens 15 minutes before session start
-    checkin_window_start = session_start - timedelta(minutes=15)
-
-    if current_time < checkin_window_start:
-        minutes_until_checkin = (checkin_window_start - current_time).total_seconds() / 60
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Check-in opens 15 minutes before the session starts. "
-                   f"Please wait {int(minutes_until_checkin)} more minutes."
-        )
-
-    if current_time > session_end:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Session has ended. Check-in closed."
-        )
-    
-    # Check if attendance record exists
-    attendance = db.query(Attendance).filter(Attendance.booking_id == booking_id).first()
-    if not attendance:
-        # Create new attendance record
-        attendance = Attendance(
-            user_id=current_user.id,
-            session_id=session.id,
+    try:
+        return player_checkin(
+            db,
+            player=current_user,
             booking_id=booking_id,
-            status=AttendanceStatus.present,
-            check_in_time=current_time,
-            notes=checkin_data.notes
-        )
-        db.add(attendance)
-    else:
-        # Update existing record
-        attendance.check_in_time = current_time
-        attendance.status = AttendanceStatus.present
-        if checkin_data.notes:
-            attendance.notes = checkin_data.notes
-    
-    db.commit()
-    db.refresh(attendance)
-    
-    return attendance
+            notes=checkin_data.notes,
+            now=time_provider.now(),
+            source="API",
+        ).attendance
+    except ParticipationError as exc:
+        raise participation_http_error(exc) from exc
 
 
 @router.patch("/{attendance_id}", response_model=AttendanceSchema)
@@ -307,9 +268,38 @@ def update_attendance(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Session not found",
         )
-    _require_attendance_manager(current_user, session)
+    if session.event_category != EventCategory.MATCH:
+        if attendance.booking_id is None:
+            raise HTTPException(status_code=400, detail="BOOKING_REFERENCE_REQUIRED")
+        update_data = attendance_update.model_dump(exclude_unset=True)
+        try:
+            result = record_attendance(
+                db,
+                actor=current_user,
+                booking_id=attendance.booking_id,
+                status=update_data.get("status", attendance.status),
+                notes=update_data.get("notes"),
+                source="API",
+            )
+        except ParticipationError as exc:
+            raise participation_http_error(exc) from exc
+        attendance = result.attendance
+        if (
+            not result.replayed
+            and not result.change_requested
+            and attendance.status == AttendanceStatus.present
+        ):
+            _update_milestone_sessions_on_attendance(
+                db, attendance.user_id, attendance.session_id
+            )
+            segment_reward_service.award_session_segments(
+                db, attendance.session_id, attendance.id
+            )
+            db.commit()
+        return attendance
 
     if session.event_category == EventCategory.MATCH:
+        _require_attendance_manager(db, current_user, session)
         # Tournament sessions ONLY support present/absent (NO late/excused)
         if hasattr(attendance_update, 'status') and attendance_update.status:
             if attendance_update.status not in [AttendanceStatus.present, AttendanceStatus.absent]:

@@ -3,7 +3,7 @@ Integration test: Session booking cancellation lifecycle
 
 Positive flows:
   1. Student POSTs /sessions/book/{id}       → 303 + Booking row in DB
-  2. Student POSTs /sessions/cancel/{id}     → 303 + Booking row deleted from DB
+  2. Student POSTs /sessions/cancel/{id}     → 303 + Booking retained as CANCELLED
 
 Negative flows:
   3. Book already-booked session             → 303 info=already_booked
@@ -13,7 +13,7 @@ Negative flows:
 
 DB validation:
   - After book:   Booking(user_id, session_id, status=CONFIRMED) exists
-  - After cancel: Booking row no longer present
+  - After cancel: Booking history remains with status=CANCELLED
   - After failed cancel: Booking row still present (DB unchanged)
 """
 
@@ -36,7 +36,7 @@ class TestBookingCancellationLifecycle:
         )
 
         assert resp.status_code == 303
-        assert "success=booked" in resp.headers["location"]
+        assert "success=confirmed" in resp.headers["location"]
 
         # Verify DB state
         booking = (
@@ -50,7 +50,7 @@ class TestBookingCancellationLifecycle:
         assert booking is not None
         assert booking.status == BookingStatus.CONFIRMED
 
-    def test_cancel_booking_removes_row_from_db(
+    def test_cancel_booking_preserves_cancelled_history(
         self,
         student_client,
         future_booking,
@@ -58,7 +58,7 @@ class TestBookingCancellationLifecycle:
         student_user,
         test_db,
     ):
-        """POST /sessions/cancel/{id} → 303 redirect + Booking row deleted from DB."""
+        """POST /sessions/cancel/{id} → 303 redirect + immutable booking history."""
         booking_id = future_booking.id
 
         resp = student_client.post(
@@ -69,10 +69,11 @@ class TestBookingCancellationLifecycle:
         assert resp.status_code == 303
         assert "success=cancelled" in resp.headers["location"]
 
-        # Verify DB state — row must be gone
+        # Verify DB state — financial/participation history must remain queryable.
         test_db.expire_all()
-        gone = test_db.query(Booking).filter(Booking.id == booking_id).first()
-        assert gone is None
+        cancelled = test_db.query(Booking).filter(Booking.id == booking_id).one()
+        assert cancelled.status == BookingStatus.CANCELLED
+        assert cancelled.cancelled_at is not None
 
     def test_book_already_booked_returns_info_redirect(
         self,

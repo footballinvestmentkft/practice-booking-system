@@ -25,6 +25,7 @@ from app.api.api_v1.endpoints.bookings.student import (
 )
 from app.models.user import UserRole
 from app.models.booking import BookingStatus
+from app.services.player_participation_service import ParticipationError
 from fastapi import HTTPException
 
 _BASE = "app.api.api_v1.endpoints.bookings.student"
@@ -90,162 +91,52 @@ def _past_session():
 
 class TestCreateBooking:
 
-    def test_non_student_role_raises_403(self):
-        db = _seq_db()
-        booking_data = MagicMock()
-        with pytest.raises(HTTPException) as exc:
-            create_booking(booking_data, db=db, current_user=_user(role=UserRole.ADMIN))
-        assert exc.value.status_code == 403
-
-    def test_session_not_found_raises_404(self):
-        db = _seq_db(_q(first=None))          # session query → None
-        booking_data = MagicMock()
-        with pytest.raises(HTTPException) as exc:
-            create_booking(booking_data, db=db, current_user=_user())
-        assert exc.value.status_code == 404
-
-    @patch(f"{_BASE}.validate_can_book_session", return_value=(False, "not eligible"))
-    def test_validation_failed_raises_400(self, _mock_val):
-        session = _future_session()
-        db = _seq_db(_q(first=session))
-        booking_data = MagicMock()
-        with pytest.raises(HTTPException) as exc:
-            create_booking(booking_data, db=db, current_user=_user())
-        assert exc.value.status_code == 400
-        assert "not eligible" in exc.value.detail
-
-    @patch(f"{_BASE}.validate_can_book_session", return_value=(True, None))
-    def test_existing_booking_raises_400(self, _):
-        session = _future_session()
-        existing = MagicMock()
-        existing.status = BookingStatus.CONFIRMED
-        db = _seq_db(
-            _q(first=session),     # session query
-            _q(first=existing),    # existing booking query
-        )
-        booking_data = MagicMock()
-        with pytest.raises(HTTPException) as exc:
-            create_booking(booking_data, db=db, current_user=_user())
-        assert exc.value.status_code == 400
-
-    @patch(f"{_BASE}.validate_can_book_session", return_value=(True, None))
-    def test_past_session_raises_400(self, _):
-        session = _past_session()
-        db = _seq_db(
-            _q(first=session),
-            _q(first=None),   # no existing booking
-        )
-        booking_data = MagicMock()
-        with pytest.raises(HTTPException) as exc:
-            create_booking(booking_data, db=db, current_user=_user())
-        assert exc.value.status_code == 400
-        assert "past" in exc.value.detail.lower()
-
-    @patch(f"{_BASE}.validate_can_book_session", return_value=(True, None))
-    def test_booking_deadline_passed_raises_400(self, _):
-        """Session is 12 hours away → within 24h booking deadline."""
-        session = _future_session(hours_ahead=12)
-        db = _seq_db(
-            _q(first=session),
-            _q(first=None),
-        )
-        booking_data = MagicMock()
-        with pytest.raises(HTTPException) as exc:
-            create_booking(booking_data, db=db, current_user=_user())
-        assert exc.value.status_code == 400
-        assert "24 hours" in exc.value.detail
-
-    @patch(f"{_BASE}.validate_can_book_session", return_value=(True, None))
-    def test_confirmed_booking_when_capacity_available(self, _):
-        """confirmed_count < capacity → status CONFIRMED."""
-        session = _future_session()
-        session.capacity = 10
-        db = _seq_db(
-            _q(first=session),          # session lookup
-            _q(first=None),             # no existing booking
-            _q(),                       # with_for_update lock
-            _q(scalar=3),               # confirmed count < 10
-        )
-        booking_data = MagicMock()
-        booking_data.session_id = 1
-        booking_data.notes = "test"
-        with patch(f"{_BASE}.Booking") as MockBooking:
-            mock_b = MagicMock()
-            MockBooking.return_value = mock_b
-            result = create_booking(booking_data, db=db, current_user=_user())
-        db.add.assert_called()
-        db.commit.assert_called()
-
-    @patch(f"{_BASE}.validate_can_book_session", return_value=(True, None))
-    def test_waitlisted_booking_when_capacity_full(self, _):
-        """confirmed_count >= capacity → status WAITLISTED."""
-        session = _future_session()
-        session.capacity = 5
-        db = _seq_db(
-            _q(first=session),
-            _q(first=None),
-            _q(),                       # lock
-            _q(scalar=5),               # confirmed = capacity
-            _q(scalar=2),               # waitlist count
-        )
-        booking_data = MagicMock()
-        booking_data.session_id = 1
-        booking_data.notes = ""
-        with patch(f"{_BASE}.Booking") as MockBooking:
-            mock_b = MagicMock()
-            MockBooking.return_value = mock_b
-            result = create_booking(booking_data, db=db, current_user=_user())
-        db.commit.assert_called()
-
-    @patch(f"{_BASE}.validate_can_book_session", return_value=(True, None))
-    def test_integrity_error_uq_active_booking_raises_409(self, _):
-        """IntegrityError with uq_active_booking key → 409."""
-        session = _future_session()
-        session.capacity = 10
-        db = _seq_db(
-            _q(first=session),
-            _q(first=None),
-            _q(),
-            _q(scalar=2),
-        )
-        booking_data = MagicMock()
-        booking_data.session_id = 1
-        booking_data.notes = ""
-
-        orig_exc = Exception("duplicate key value violates unique constraint uq_active_booking")
-        ie = IntegrityError("stmt", {}, orig_exc)
-
-        with patch(f"{_BASE}.Booking"):
-            db.commit.side_effect = ie
+    @pytest.mark.parametrize(("code", "status_code"), [
+        ("PLAYER_ROLE_REQUIRED", 403),
+        ("SESSION_NOT_FOUND", 404),
+        ("GUARDIAN_CONSENT_REQUIRED", 400),
+        ("SESSION_CATEGORY_MISMATCH", 400),
+        ("BOOKING_CONCURRENCY_CONFLICT", 409),
+    ])
+    def test_canonical_policy_error_mapping(self, code, status_code):
+        booking_data = MagicMock(session_id=7, notes="note")
+        with patch(f"{_BASE}.book_player_session", side_effect=ParticipationError(code)):
             with pytest.raises(HTTPException) as exc:
-                create_booking(booking_data, db=db, current_user=_user())
-        assert exc.value.status_code == 409
-        assert "concurrent" in exc.value.detail.lower() or "already" in exc.value.detail.lower()
+                create_booking(booking_data, db=MagicMock(), current_user=_user())
+        assert exc.value.status_code == status_code
+        assert exc.value.detail == code
 
-    @patch(f"{_BASE}.validate_can_book_session", return_value=(True, None))
-    def test_integrity_error_other_constraint_raises_409(self, _):
-        """IntegrityError with other constraint → generic 409."""
-        session = _future_session()
-        session.capacity = 10
-        db = _seq_db(
-            _q(first=session),
-            _q(first=None),
-            _q(),
-            _q(scalar=2),
+    @pytest.mark.parametrize("booking_status", [
+        BookingStatus.CONFIRMED, BookingStatus.WAITLISTED
+    ])
+    def test_delegates_creation_and_returns_canonical_booking(self, booking_status):
+        booking = MagicMock(status=booking_status)
+        result = MagicMock(booking=booking, replayed=False)
+        booking_data = MagicMock(session_id=7, notes="note")
+        db = MagicMock()
+        player = _user()
+        with patch(f"{_BASE}.book_player_session", return_value=result) as command, \
+             patch(f"{_BASE}.metrics") as metric:
+            response = create_booking(booking_data, db=db, current_user=player)
+        assert response is booking
+        command.assert_called_once_with(
+            db, player=player,
+            session_id=7, notes="note", source="API"
         )
-        booking_data = MagicMock()
-        booking_data.session_id = 1
-        booking_data.notes = ""
+        metric.increment.assert_any_call("bookings_created")
+        if booking_status == BookingStatus.WAITLISTED:
+            metric.increment.assert_any_call("bookings_waitlisted")
 
-        orig_exc = Exception("some_other_constraint")
-        ie = IntegrityError("stmt", {}, orig_exc)
-
-        with patch(f"{_BASE}.Booking"):
-            db.commit.side_effect = ie
-            with pytest.raises(HTTPException) as exc:
-                create_booking(booking_data, db=db, current_user=_user())
-        assert exc.value.status_code == 409
-        assert "constraint" in exc.value.detail.lower()
+    def test_duplicate_replay_does_not_increment_metrics(self):
+        booking = MagicMock(status=BookingStatus.CONFIRMED)
+        result = MagicMock(booking=booking, replayed=True)
+        with patch(f"{_BASE}.book_player_session", return_value=result), \
+             patch(f"{_BASE}.metrics") as metric:
+            response = create_booking(
+                MagicMock(session_id=7, notes=None), db=MagicMock(), current_user=_user()
+            )
+        assert response is booking
+        metric.increment.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -389,105 +280,41 @@ class TestGetBooking:
 
 class TestCancelBooking:
 
-    def test_booking_not_found_raises_404(self):
-        db = _seq_db(_q(first=None))
-        with pytest.raises(HTTPException) as exc:
-            cancel_booking(booking_id=99, db=db, current_user=_user())
-        assert exc.value.status_code == 404
+    @pytest.mark.parametrize(("code", "status_code"), [
+        ("BOOKING_NOT_FOUND", 404),
+        ("NOT_BOOKING_OWNER", 403),
+        ("CANCELLATION_DEADLINE_PASSED", 400),
+        ("ATTENDANCE_ALREADY_RECORDED", 400),
+    ])
+    def test_canonical_cancellation_error_mapping(self, code, status_code):
+        with patch(f"{_BASE}.cancel_player_booking", side_effect=ParticipationError(code)):
+            with pytest.raises(HTTPException) as exc:
+                cancel_booking(booking_id=8, db=MagicMock(), current_user=_user())
+        assert exc.value.status_code == status_code
+        assert exc.value.detail == code
 
-    def test_not_owner_raises_403(self):
-        booking = MagicMock()
-        booking.user_id = 999
-        db = _seq_db(_q(first=booking))
-        with pytest.raises(HTTPException) as exc:
-            cancel_booking(booking_id=1, db=db, current_user=_user(uid=42))
-        assert exc.value.status_code == 403
+    def test_delegates_idempotent_cancellation(self):
+        booking = MagicMock(session_id=12)
+        result = MagicMock(booking=booking, replayed=True, promoted_booking_id=None)
+        db = MagicMock(); player = _user()
+        with patch(f"{_BASE}.cancel_player_booking", return_value=result) as command:
+            response = cancel_booking(booking_id=8, db=db, current_user=player)
+        command.assert_called_once_with(db, actor=player, booking_id=8, source="API")
+        assert response == {
+            "message": "Booking cancelled successfully",
+            "cancelled_booking_id": 8,
+            "session_id": 12,
+            "replayed": True,
+        }
 
-    def test_already_cancelled_raises_400(self):
-        booking = MagicMock()
-        booking.user_id = 42
-        booking.status = BookingStatus.CANCELLED
-        db = _seq_db(_q(first=booking))
-        with pytest.raises(HTTPException) as exc:
-            cancel_booking(booking_id=1, db=db, current_user=_user(uid=42))
-        assert exc.value.status_code == 400
-        assert "already cancelled" in exc.value.detail.lower()
-
-    def test_past_session_raises_400(self):
-        booking = MagicMock()
-        booking.user_id = 42
-        booking.status = BookingStatus.CONFIRMED
-        # session started 1 hour ago
-        past_start = datetime.now(timezone.utc) - timedelta(hours=1)
-        booking.session.date_start = past_start.replace(tzinfo=None)
-        db = _seq_db(_q(first=booking))
-        with pytest.raises(HTTPException) as exc:
-            cancel_booking(booking_id=1, db=db, current_user=_user(uid=42))
-        assert exc.value.status_code == 400
-        assert "past" in exc.value.detail.lower()
-
-    def test_cancellation_deadline_passed_raises_400(self):
-        """Session starts in 6 hours → within 12h cancellation window."""
-        booking = MagicMock()
-        booking.user_id = 42
-        booking.status = BookingStatus.CONFIRMED
-        soon = datetime.now(timezone.utc) + timedelta(hours=6)
-        booking.session.date_start = soon.replace(tzinfo=None)
-        db = _seq_db(_q(first=booking))
-        with pytest.raises(HTTPException) as exc:
-            cancel_booking(booking_id=1, db=db, current_user=_user(uid=42))
-        assert exc.value.status_code == 400
-        assert "12 hours" in exc.value.detail
-
-    @patch(f"{_BASE}.auto_promote_from_waitlist", return_value=None)
-    def test_confirmed_booking_triggers_auto_promote(self, mock_promote):
-        """Cancelling CONFIRMED booking calls auto_promote_from_waitlist."""
-        booking = MagicMock()
-        booking.user_id = 42
-        booking.status = BookingStatus.CONFIRMED
-        booking.session_id = 1
-        future = datetime.now(timezone.utc) + timedelta(hours=48)
-        booking.session.date_start = future.replace(tzinfo=None)
-        db = _seq_db(_q(first=booking))
-
-        result = cancel_booking(booking_id=1, db=db, current_user=_user(uid=42))
-        mock_promote.assert_called_once_with(db, 1)
-        assert result["message"] == "Booking cancelled successfully"
-        assert "promotion" not in result
-
-    @patch(f"{_BASE}.auto_promote_from_waitlist")
-    def test_promotion_included_in_response_when_user_promoted(self, mock_promote):
-        """If promotion_result returns a user, response includes promotion key."""
-        promoted = MagicMock()
-        promoted.name = "Waitlist User"
-        promoted.email = "wait@example.com"
-        mock_promote.return_value = (promoted, MagicMock())
-
-        booking = MagicMock()
-        booking.user_id = 42
-        booking.status = BookingStatus.CONFIRMED
-        booking.session_id = 1
-        future = datetime.now(timezone.utc) + timedelta(hours=48)
-        booking.session.date_start = future.replace(tzinfo=None)
-        db = _seq_db(_q(first=booking))
-
-        result = cancel_booking(booking_id=1, db=db, current_user=_user(uid=42))
-        assert "promotion" in result
-        assert result["promotion"]["promoted_user_name"] == "Waitlist User"
-
-    @patch(f"{_BASE}.auto_promote_from_waitlist", return_value=None)
-    def test_waitlisted_booking_no_auto_promote(self, mock_promote):
-        """Cancelling WAITLISTED booking does NOT call auto_promote."""
-        booking = MagicMock()
-        booking.user_id = 42
-        booking.status = BookingStatus.WAITLISTED
-        booking.session_id = 1
-        future = datetime.now(timezone.utc) + timedelta(hours=48)
-        booking.session.date_start = future.replace(tzinfo=None)
-        db = _seq_db(_q(first=booking))
-
-        cancel_booking(booking_id=1, db=db, current_user=_user(uid=42))
-        mock_promote.assert_not_called()
+    def test_reports_waitlist_promotion(self):
+        result = MagicMock(
+            booking=MagicMock(session_id=12), replayed=False, promoted_booking_id=91
+        )
+        with patch(f"{_BASE}.cancel_player_booking", return_value=result):
+            response = cancel_booking(booking_id=8, db=MagicMock(), current_user=_user())
+        assert response["promoted_booking_id"] == 91
+        assert response["replayed"] is False
 
 
 # ---------------------------------------------------------------------------

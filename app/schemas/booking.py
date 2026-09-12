@@ -88,3 +88,17 @@ class BookingConfirm(BaseModel):
 
 class BookingCancel(BaseModel):
     reason: Optional[str] = None
+
+
+class PlayerSessionAvailability(BaseModel):
+    session_id: int
+    title: str
+    date_start: datetime
+    date_end: datetime
+    category: str
+    capacity: Optional[int] = None
+    confirmed: int
+    available: Optional[int] = None
+    waitlisted: int
+    booking_id: Optional[int] = None
+    participation_status: str

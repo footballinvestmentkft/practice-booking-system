@@ -14,8 +14,46 @@ from sqlalchemy import func, and_, case
 from app.database import get_db
 from app.models.session import Session as SessionModel
 from app.models.booking import Booking, BookingStatus
+from app.dependencies import get_current_user
+from app.models.specialization import SpecializationType
+from app.models.user import User
+from app.schemas.booking import PlayerSessionAvailability
+from app.services.player_participation_service import player_session_availability
 
 router = APIRouter()
+
+
+@router.get("/player/available", response_model=List[PlayerSessionAvailability])
+def get_player_available_sessions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> List[PlayerSessionAvailability]:
+    """List sessions that pass the same canonical policy used by booking commands."""
+    sessions = db.query(SessionModel).filter(
+        SessionModel.target_specialization == SpecializationType.LFA_FOOTBALL_PLAYER,
+        SessionModel.session_status == "scheduled",
+    ).order_by(SessionModel.date_start.asc()).limit(100).all()
+    result = []
+    for session in sessions:
+        availability = player_session_availability(
+            db, player=current_user, session=session
+        )
+        if not availability.get("eligible"):
+            continue
+        result.append(PlayerSessionAvailability(
+            session_id=session.id,
+            title=session.title,
+            date_start=session.date_start,
+            date_end=session.date_end,
+            category=availability["category"],
+            capacity=availability["capacity"],
+            confirmed=availability["confirmed"],
+            available=availability["available"],
+            waitlisted=availability["waitlisted"],
+            booking_id=availability["booking_id"],
+            participation_status=availability["participation_status"],
+        ))
+    return result
 
 
 @router.get("/availability", response_model=Dict[int, Dict[str, Any]])

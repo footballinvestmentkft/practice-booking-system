@@ -55,8 +55,11 @@ def _session(session_id=TEST_SESSION_ID, capacity=10, hours_ahead=48):
         id=session_id,
         capacity=capacity,
         semester_id=1,
+        semester=SimpleNamespace(age_groups=["PRE"]),
         target_specialization=None,
         mixed_specialization=True,
+        session_status="scheduled",
+        event_category=None,
         date_start=datetime.now() + timedelta(hours=hours_ahead),
         date_end=datetime.now() + timedelta(hours=hours_ahead + 2),
         group_id=None,
@@ -224,8 +227,8 @@ class TestRaceB01DuplicateBooking:
         booking_data = _booking_create()
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.student.validate_can_book_session",
-            return_value=(True, ""),
+            "app.services.player_participation_service._player_enrollment",
+            return_value=SimpleNamespace(id=1),
         ):
             with pytest.raises(HTTPException) as exc_info:
                 create_booking(booking_data, mock_db, user)
@@ -253,8 +256,8 @@ class TestRaceB01DuplicateBooking:
         booking_data = _booking_create()
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.student.validate_can_book_session",
-            return_value=(True, ""),
+            "app.services.player_participation_service._player_enrollment",
+            return_value=SimpleNamespace(id=1),
         ):
             with pytest.raises((HTTPException, IntegrityError)):
                 create_booking(booking_data, mock_db, user)
@@ -281,8 +284,8 @@ class TestRaceB01DuplicateBooking:
         booking_data = _booking_create()
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.student.validate_can_book_session",
-            return_value=(True, ""),
+            "app.services.player_participation_service._player_enrollment",
+            return_value=SimpleNamespace(id=1),
         ):
             with pytest.raises(HTTPException) as exc_info:
                 create_booking(booking_data, mock_db, user)
@@ -323,8 +326,8 @@ class TestRaceB02CapacityOverbooking:
         booking_data = _booking_create()
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.student.validate_can_book_session",
-            return_value=(True, ""),
+            "app.services.player_participation_service._player_enrollment",
+            return_value=SimpleNamespace(id=1),
         ):
             create_booking(booking_data, mock_db, user)
 
@@ -364,8 +367,8 @@ class TestRaceB02CapacityOverbooking:
         user_a = _user()  # Uses TEST_USER_ID default
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.student.validate_can_book_session",
-            return_value=(True, ""),
+            "app.services.player_participation_service._player_enrollment",
+            return_value=SimpleNamespace(id=1),
         ):
             booking_a = create_booking(_booking_create(), mock_db_a, user_a)
 
@@ -375,8 +378,8 @@ class TestRaceB02CapacityOverbooking:
         user_b = _user(user_id=2)
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.student.validate_can_book_session",
-            return_value=(True, ""),
+            "app.services.player_participation_service._player_enrollment",
+            return_value=SimpleNamespace(id=1),
         ):
             booking_b = create_booking(_booking_create(), mock_db_b, user_b)
 
@@ -422,8 +425,8 @@ class TestRaceB03WaitlistPosition:
         booking_data = _booking_create()
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.student.validate_can_book_session",
-            return_value=(True, ""),
+            "app.services.player_participation_service._player_enrollment",
+            return_value=SimpleNamespace(id=1),
         ):
             create_booking(booking_data, mock_db, user)
 
@@ -456,8 +459,8 @@ class TestRaceB03WaitlistPosition:
         booking_data = _booking_create()
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.student.validate_can_book_session",
-            return_value=(True, ""),
+            "app.services.player_participation_service._player_enrollment",
+            return_value=SimpleNamespace(id=1),
         ):
             with pytest.raises(HTTPException) as exc_info:
                 create_booking(booking_data, mock_db, user)
@@ -584,11 +587,11 @@ class TestRaceB05DoubleCancel:
         GREEN after: add .with_for_update() to booking fetch in cancel_booking.
         """
         booking_obj = _booking(status=BookingStatus.CONFIRMED)  # Uses TEST_USER_ID default
-        mock_db, _, booking_chain = _make_mock_db()
+        mock_db, _, booking_chain = _make_mock_db(session_obj=booking_obj.session)
         booking_chain.first.return_value = booking_obj
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.student.auto_promote_from_waitlist",
+            "app.services.player_participation_service._promote_waitlisted",
             return_value=None,
         ):
             cancel_booking(booking_id=TEST_BOOKING_ID, db=mock_db, current_user=_user())
@@ -611,11 +614,11 @@ class TestRaceB05DoubleCancel:
         cancel_data = MagicMock(spec=BookingCancel)
         cancel_data.reason = "test"
 
-        mock_db, _, booking_chain = _make_mock_db()
+        mock_db, _, booking_chain = _make_mock_db(session_obj=booking_obj.session)
         booking_chain.first.return_value = booking_obj
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.admin.auto_promote_from_waitlist",
+            "app.services.player_participation_service._promote_waitlisted",
             return_value=None,
         ):
             admin_cancel_booking(
@@ -630,14 +633,13 @@ class TestRaceB05DoubleCancel:
             "Fix: .with_for_update() on the admin booking fetch."
         )
 
-    def test_b05_second_cancel_on_already_cancelled_booking_raises_400(self):
+    def test_b05_second_cancel_on_already_cancelled_booking_is_idempotent(self):
         """
         RED: cancel_booking has no guard against cancelling an already-CANCELLED
         booking. After the B05 FOR UPDATE fix, the second thread reads
         status=CANCELLED (updated by the first thread under the lock) and
-        must raise HTTP 400 (cannot cancel an already-cancelled booking).
-
-        Currently: second cancel silently re-cancels (no status check).
+        must return the original cancellation as an explicit replay without
+        promoting another waitlisted booking.
         """
         # Simulate the post-lock state: booking was already cancelled by Thread A
         already_cancelled = _booking(status=BookingStatus.CANCELLED)  # Uses TEST_USER_ID default
@@ -645,21 +647,17 @@ class TestRaceB05DoubleCancel:
         booking_chain.first.return_value = already_cancelled
 
         with patch(
-            "app.api.api_v1.endpoints.bookings.student.auto_promote_from_waitlist",
+            "app.services.player_participation_service._promote_waitlisted",
             return_value=None,
         ):
-            with pytest.raises(HTTPException) as exc_info:
-                cancel_booking(
-                    booking_id=TEST_BOOKING_ID,
-                    db=mock_db,
-                    current_user=_user(),  # Uses TEST_USER_ID default
-                )
+            response = cancel_booking(
+                booking_id=TEST_BOOKING_ID,
+                db=mock_db,
+                current_user=_user(),  # Uses TEST_USER_ID default
+            )
 
-        assert exc_info.value.status_code in (400, 409), (
-            "RACE-B05: cancelling an already-CANCELLED booking must raise 400/409. "
-            "After FOR UPDATE fix, second thread reads status=CANCELLED and must not "
-            "proceed. Current code: no status guard on cancel → silently re-cancels."
-        )
+        assert response["replayed"] is True
+        assert already_cancelled.status == BookingStatus.CANCELLED
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -758,8 +756,9 @@ class TestRaceB07DuplicateAttendance:
         """
         booking_obj = _booking(status=BookingStatus.CONFIRMED)
         booking_obj.attendance = None
+        booking_obj.session.date_start = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1)
 
-        mock_db, _, booking_chain = _make_mock_db()
+        mock_db, _, booking_chain = _make_mock_db(session_obj=booking_obj.session)
         booking_chain.first.return_value = booking_obj
 
         update_booking_attendance(
@@ -776,18 +775,19 @@ class TestRaceB07DuplicateAttendance:
             "Fix: add .with_for_update() to booking fetch in update_booking_attendance."
         )
 
-    def test_b07_attendance_integrity_error_at_commit_becomes_409(self):
+    def test_b07_attendance_integrity_error_rolls_back_and_returns_409(self):
         """
         RED: update_booking_attendance has no IntegrityError handler.
         DB unique constraint uq_booking_attendance fires when two instructors
-        race to create attendance for the same booking → IntegrityError propagates.
-
-        GREEN after: try/except IntegrityError → HTTP 409 around db.commit().
+        race to create attendance for the same booking. If the winning row is
+        not visible on reload, the loser rolls back and reports a conflict.
         """
         booking_obj = _booking(status=BookingStatus.CONFIRMED)
         booking_obj.attendance = None
+        booking_obj.session.date_start = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1)
 
         mock_db, _, booking_chain = _make_mock_db(
+            session_obj=booking_obj.session,
             commit_raises=IntegrityError(
                 "INSERT INTO attendance ...",
                 {},
@@ -803,8 +803,5 @@ class TestRaceB07DuplicateAttendance:
                 db=mock_db,
                 current_user=_user(role=UserRole.ADMIN),
             )
-
-        assert exc_info.value.status_code == 409, (
-            "RACE-B07: IntegrityError from uq_booking_attendance MUST become HTTP 409. "
-            "Current code has no IntegrityError handler → propagates as 500."
-        )
+        assert exc_info.value.status_code == 409
+        assert mock_db.rollback.called

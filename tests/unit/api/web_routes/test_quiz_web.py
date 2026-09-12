@@ -878,7 +878,10 @@ class TestSubmitQuiz:
             session_obj, booking_auto, None,
         )
 
-        with patch(f"{_BASE}.templates") as mock_tmpl:
+        with (
+            patch(f"{_BASE}.templates") as mock_tmpl,
+            patch(f"{_BASE}.complete_virtual_session_participation") as complete,
+        ):
             mock_tmpl.TemplateResponse.return_value = MagicMock()
             _run(submit_quiz(
                 request=self._form_req(),
@@ -890,5 +893,11 @@ class TestSubmitQuiz:
                 user=_student(),
             ))
 
-        # auto_attendance Attendance was added → db.add called at least twice (attempt save + attendance)
-        assert db.add.call_count >= 1
+        complete.assert_called_once_with(
+            db,
+            player=complete.call_args.kwargs["player"],
+            session_id=5,
+            notes="Auto-marked: Quiz completed with 0%",
+            source="WEB_QUIZ",
+        )
+        assert complete.call_args.kwargs["player"].id == 99

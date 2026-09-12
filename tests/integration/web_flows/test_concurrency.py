@@ -62,7 +62,7 @@ class TestDoubleBookingIdempotency:
             follow_redirects=False,
         )
         assert resp1.status_code == 303
-        assert "success=booked" in resp1.headers["location"]
+        assert "success=confirmed" in resp1.headers["location"]
 
         # Second booking — same session, same student
         resp2 = student_client.post(
@@ -84,7 +84,7 @@ class TestDoubleBookingIdempotency:
         assert len(bookings) == 1
         assert bookings[0].status == BookingStatus.CONFIRMED
 
-    def test_double_cancel_same_session_returns_not_found(
+    def test_double_cancel_same_session_returns_idempotent_replay(
         self,
         student_client,
         future_booking,
@@ -92,10 +92,7 @@ class TestDoubleBookingIdempotency:
         student_user,
         test_db,
     ):
-        """Cancel same booking twice → 1st: success=cancelled; 2nd: error=booking_not_found.
-
-        The 2nd cancel arrives after the Booking row is already deleted.
-        """
+        """Cancel twice → one transition followed by an explicit replay."""
         booking_id = future_booking.id
 
         # First cancel — succeeds
@@ -106,20 +103,20 @@ class TestDoubleBookingIdempotency:
         assert resp1.status_code == 303
         assert "success=cancelled" in resp1.headers["location"]
 
-        # Booking row is gone
+        # Booking row remains as the audit/history anchor.
         test_db.expire_all()
-        assert test_db.query(Booking).filter(Booking.id == booking_id).first() is None
+        cancelled = test_db.query(Booking).filter(Booking.id == booking_id).one()
+        assert cancelled.status == BookingStatus.CANCELLED
 
-        # Second cancel — booking already gone → not_found
+        # Second cancel is replay-safe.
         resp2 = student_client.post(
             f"/sessions/cancel/{future_session.id}",
             follow_redirects=False,
         )
         assert resp2.status_code == 303
-        assert "booking_not_found" in resp2.headers["location"]
+        assert "success=already_cancelled" in resp2.headers["location"]
 
-        # DB still clean — no ghost row
-        assert test_db.query(Booking).filter(Booking.id == booking_id).first() is None
+        assert test_db.query(Booking).filter(Booking.id == booking_id).one().status == BookingStatus.CANCELLED
 
 
 class TestDoubleQuizSubmitIdempotency:
@@ -209,7 +206,7 @@ class TestDoubleAttendanceMarkIdempotency:
             follow_redirects=False,
         )
         assert resp2.status_code == 303
-        assert "attendance_marked" in resp2.headers["location"]
+        assert "attendance_unchanged" in resp2.headers["location"]
 
         # DB: exactly 1 Attendance row (no duplicate insert)
         test_db.expire_all()

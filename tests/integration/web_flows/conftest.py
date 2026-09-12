@@ -33,9 +33,13 @@ from app.main import app
 from app.database import engine, get_db
 from app.dependencies import get_current_user_web
 from app.models.semester import Semester, SemesterStatus
-from app.models.session import Session as SessionModel, SessionType
+from app.models.semester_enrollment import EnrollmentStatus, SemesterEnrollment
+from app.models.session import EventCategory, Session as SessionModel, SessionType
 from app.models.booking import Booking, BookingStatus
+from app.models.license import UserLicense
 from app.models.quiz import Quiz, QuizCategory, QuizDifficulty
+from app.models.specialization import SpecializationType
+from app.services.player_identity_service import issue_football_player_entitlement
 
 
 # ── Timing helper ─────────────────────────────────────────────────────────────
@@ -132,16 +136,45 @@ def instructor_client(test_db: Session, instructor_user):
 # ── Data fixtures ─────────────────────────────────────────────────────────────
 
 @pytest.fixture
-def semester(test_db: Session) -> Semester:
-    """Minimal Semester — required FK for Session (NOT NULL)."""
+def semester(test_db: Session, student_user, instructor_user) -> Semester:
+    """Canonical Football semester with Player and Coach participation context."""
     sem = Semester(
         code=f"WF-{uuid.uuid4().hex[:8].upper()}",
         name="Web Flow Test Semester",
         start_date=date.today(),
         end_date=date.today() + timedelta(days=90),
         status=SemesterStatus.ONGOING,
+        specialization_type="LFA_FOOTBALL_PLAYER",
+        age_group="AMATEUR",
     )
     test_db.add(sem)
+    test_db.flush()
+    entitlement = issue_football_player_entitlement(
+        test_db,
+        user=student_user,
+        payment_verified=True,
+        on_date=date.today(),
+    )
+    test_db.add(SemesterEnrollment(
+        user_id=student_user.id,
+        semester_id=sem.id,
+        user_license_id=entitlement.license.id,
+        football_category_assignment_id=entitlement.assignment.id,
+        request_status=EnrollmentStatus.APPROVED,
+        payment_verified=True,
+        is_active=True,
+        age_category=entitlement.assignment.effective_category,
+    ))
+    instructor_user.specialization = SpecializationType.LFA_COACH
+    test_db.add(UserLicense(
+        user_id=instructor_user.id,
+        specialization_type="LFA_COACH",
+        canonical_program_id="LFA_COACH",
+        current_level=5,
+        max_achieved_level=5,
+        started_at=datetime.utcnow(),
+        is_active=True,
+    ))
     test_db.commit()
     test_db.refresh(sem)
     return sem
@@ -149,15 +182,17 @@ def semester(test_db: Session) -> Semester:
 
 @pytest.fixture
 def future_session(test_db: Session, semester: Semester, instructor_user) -> SessionModel:
-    """On-site session starting 24h from now — within booking window (>12h deadline)."""
+    """On-site session starting 48h from now — safely before the 24h booking cutoff."""
     now = _now_bp()
     s = SessionModel(
         title="Future On-Site Session",
         semester_id=semester.id,
         session_type=SessionType.on_site,
-        date_start=now + timedelta(hours=24),
-        date_end=now + timedelta(hours=25),
+        date_start=now + timedelta(hours=48),
+        date_end=now + timedelta(hours=49),
         instructor_id=instructor_user.id,
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(s)
     test_db.commit()
@@ -182,6 +217,8 @@ def active_session(test_db: Session, semester: Semester, instructor_user) -> Ses
         date_start=now - timedelta(minutes=5),
         date_end=now + timedelta(hours=1),
         instructor_id=instructor_user.id,
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(s)
     test_db.commit()
@@ -207,6 +244,8 @@ def hybrid_session(test_db: Session, semester: Semester, instructor_user) -> Ses
         date_end=now + timedelta(hours=1),
         instructor_id=instructor_user.id,
         actual_start_time=datetime.utcnow(),  # session was explicitly started
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(s)
     test_db.commit()
@@ -257,6 +296,8 @@ def near_future_session(test_db: Session, semester: Semester, instructor_user) -
         date_start=now + timedelta(hours=6),
         date_end=now + timedelta(hours=7),
         instructor_id=instructor_user.id,
+        target_specialization=SpecializationType.LFA_FOOTBALL_PLAYER,
+        event_category=EventCategory.TRAINING,
     )
     test_db.add(s)
     test_db.commit()

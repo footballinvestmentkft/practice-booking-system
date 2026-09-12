@@ -22,6 +22,9 @@ from ...models.booking import Booking
 from ...models.attendance import Attendance
 from ...models.quiz import Quiz, QuizQuestion, QuizAnswerOption, QuizAttempt, QuizUserAnswer, SessionQuiz
 from ...models.gamification import UserStats
+from ...services.player_participation_service import (
+    complete_virtual_session_participation,
+)
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -364,30 +367,17 @@ async def submit_quiz(
 
             # VIRTUAL SESSION: Auto-mark attendance if quiz passed
             if session and session.session_type.value == 'virtual' and passed:
-                booking = db.query(Booking).filter(
-                    Booking.user_id == user.id,
-                    Booking.session_id == session.id
-                ).first()
-
-                if booking:  # pragma: no branch  # booking verified CONFIRMED at lines 263-273 above
-                    # Check if attendance already exists
-                    existing_attendance = db.query(Attendance).filter(
-                        Attendance.user_id == user.id,
-                        Attendance.session_id == session.id
-                    ).first()
-
-                    if not existing_attendance:  # pragma: no branch  # idempotency; covered by instructor.py identical path
-                        # Auto-create attendance as 'present' for successful quiz
-                        auto_attendance = Attendance(
-                            user_id=user.id,
-                            session_id=session.id,
-                            booking_id=booking.id,
-                            status='present',
-                            check_in_time=datetime.now(timezone.utc)
-                        )
-                        db.add(auto_attendance)
-                        db.commit()
-                        logger.info("attendance_auto_marked_virtual", extra={"session_id": session.id, "user": user.email})
+                complete_virtual_session_participation(
+                    db,
+                    player=user,
+                    session_id=session.id,
+                    notes=f"Auto-marked: Quiz completed with {score}%",
+                    source="WEB_QUIZ",
+                )
+                logger.info(
+                    "attendance_auto_marked_virtual",
+                    extra={"session_id": session.id, "user_id": user.id},
+                )
 
         except ValueError:
             pass
@@ -412,4 +402,3 @@ async def submit_quiz(
 # PERFORMANCE REVIEW ENDPOINTS (On-Site Sessions Only)
 # Two-way evaluation system for On-Site training sessions
 # ==========================================
-

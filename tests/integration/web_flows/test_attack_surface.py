@@ -230,7 +230,7 @@ class TestIDOR:
             status=BookingStatus.CONFIRMED,
         )
         test_db.add(booking_a)
-        test_db.flush()
+        test_db.commit()
 
         app.dependency_overrides[get_db] = _db_override(test_db)
         app.dependency_overrides[get_current_user_web] = lambda: user_b  # attacker

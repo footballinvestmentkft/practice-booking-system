@@ -16,6 +16,7 @@ import logging
 from ...database import get_db
 from ...dependencies import get_current_user_web
 from ...models.user import User, UserRole
+from ...models.specialization import SpecializationType
 from ...models.session import Session as SessionModel, SessionType
 from ...models.booking import Booking, BookingStatus
 from ...models.attendance import Attendance, AttendanceHistory
@@ -24,6 +25,14 @@ from ...models.quiz import Quiz, QuizQuestion, QuizAttempt, SessionQuiz
 from ...models.performance_review import InstructorSessionReview, StudentPerformanceReview
 from ...models.session_segment import SessionSegment
 from ...services.skill_progression._config import get_all_skill_keys
+from ...services.player_participation_service import (
+    ParticipationError,
+    book_player_session,
+    booking_window_decision,
+    cancel_player_booking,
+    cancellation_window_decision,
+    player_session_availability,
+)
 from .student_features import _spec_ctx
 
 # Setup templates
@@ -77,7 +86,8 @@ async def sessions_page(
         # Add enrolled count and student reviews for each session
         for session in my_sessions:
             enrolled_count = db.query(Booking).filter(
-                Booking.session_id == session.id
+                Booking.session_id == session.id,
+                Booking.status != BookingStatus.CANCELLED,
             ).count()
             session.enrolled_count = enrolled_count
             session.instructor_name = user.name
@@ -121,11 +131,21 @@ async def sessions_page(
             # No approved enrollments = no sessions visible
             upcoming_sessions = []
 
+        if user.specialization == SpecializationType.LFA_FOOTBALL_PLAYER:
+            upcoming_sessions = [
+                session for session in upcoming_sessions
+                if player_session_availability(
+                    db, player=user, session=session
+                ).get("eligible")
+            ]
+
         # Get user's bookings
         my_bookings = db.query(Booking).filter(
             Booking.user_id == user.id
         ).all()
-        enrolled_session_ids = {b.session_id for b in my_bookings}
+        enrolled_session_ids = {
+            b.session_id for b in my_bookings if b.status != BookingStatus.CANCELLED
+        }
 
         # Add enrolled status and instructor name to sessions
         budapest_tz = ZoneInfo("Europe/Budapest")
@@ -176,8 +196,15 @@ async def sessions_page(
                             session.quiz_completed = True
                             break
 
-            session.can_cancel = session.is_enrolled and now < cancellation_deadline and not my_attendance and not my_instructor_review
-            session.can_book = not session.is_enrolled and now < cancellation_deadline  # Can only book if 12+ hours before session start
+            session.can_cancel = (
+                session.is_enrolled
+                and cancellation_window_decision(session, now).allowed
+                and not my_attendance
+                and not my_instructor_review
+            )
+            session.can_book = (
+                not session.is_enrolled and booking_window_decision(session, now).allowed
+            )
 
             # Get instructor name
             if session.instructor_id:
@@ -188,7 +215,8 @@ async def sessions_page(
 
             # Get enrolled count
             enrolled_count = db.query(Booking).filter(
-                Booking.session_id == session.id
+                Booking.session_id == session.id,
+                Booking.status != BookingStatus.CANCELLED,
             ).count()
             session.enrolled_count = enrolled_count
 
@@ -223,50 +251,16 @@ async def book_session(
     user: User = Depends(get_current_user_web)
 ):
     """Book a session"""
-    session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
-    if not session:
-        # Redirect back with error
-        return RedirectResponse(url="/sessions?error=session_not_found", status_code=303)
-
-    # CRITICAL: Cannot book within 12 hours before session start
-    # Use Budapest timezone for comparison (sessions are stored in Budapest time)
-    budapest_tz = ZoneInfo("Europe/Budapest")
-    now = datetime.now(budapest_tz).replace(tzinfo=None)  # Budapest time, naive
-    session_start = session.date_start  # Stored as naive Budapest time
-    booking_deadline = session_start - timedelta(hours=12)
-
-    logger.debug(
-        "booking_deadline_check",
-        extra={"now": str(now), "start": str(session_start), "deadline": str(booking_deadline)},
-    )
-
-    if now >= booking_deadline:
-        logger.warning("booking_blocked_deadline", extra={"user": user.email, "session_id": session_id})
-        return RedirectResponse(url="/sessions?error=booking_deadline_passed", status_code=303)
-
-    # Check if already booked
-    existing_booking = db.query(Booking).filter(
-        Booking.user_id == user.id,
-        Booking.session_id == session_id
-    ).first()
-
-    if existing_booking:
-        # Already booked
-        return RedirectResponse(url="/sessions?info=already_booked", status_code=303)
-
-    # Create booking
-    booking = Booking(
-        user_id=user.id,
-        session_id=session_id,
-        status=BookingStatus.CONFIRMED
-    )
-    db.add(booking)
-    db.commit()
-
-    logger.info("session_booked", extra={"user": user.email, "session_id": session_id})
-
-    # Redirect back to sessions
-    return RedirectResponse(url="/sessions?success=booked", status_code=303)
+    try:
+        result = book_player_session(
+            db, player=user, session_id=session_id, source="WEB"
+        )
+    except ParticipationError as exc:
+        return RedirectResponse(
+            url=f"/sessions?error={exc.code.lower()}", status_code=303
+        )
+    outcome = "already_booked" if result.replayed else result.booking.status.value.lower()
+    return RedirectResponse(url=f"/sessions?success={outcome}", status_code=303)
 
 
 @router.post("/sessions/cancel/{session_id}")
@@ -277,58 +271,16 @@ async def cancel_booking(
     user: User = Depends(get_current_user_web)
 ):
     """Cancel a booking"""
-    booking = db.query(Booking).filter(
-        Booking.user_id == user.id,
-        Booking.session_id == session_id
-    ).first()
-
-    if not booking:
-        return RedirectResponse(url="/sessions?error=booking_not_found", status_code=303)
-
-    # Get the session to check if it has started
-    session = db.query(SessionModel).filter(SessionModel.id == session_id).first()
-    if not session:
-        return RedirectResponse(url="/sessions?error=session_not_found", status_code=303)
-
-    # Check cancellation deadline - Use Budapest timezone (database stores naive timestamps in local time)
-    budapest_tz = ZoneInfo("Europe/Budapest")
-    now = datetime.now(budapest_tz)
-
-    # Database stores timestamps WITHOUT timezone (interpreted as Budapest time)
-    session_start = session.date_start
-    if session_start.tzinfo is None:
-        session_start = session_start.replace(tzinfo=budapest_tz)
-
-    # CRITICAL: Cannot cancel if session has ended
-    if session.actual_end_time:
-        return RedirectResponse(url=f"/sessions/{session_id}?error=session_already_ended", status_code=303)
-
-    # 12-hour cancellation deadline - cannot cancel within 12 hours of session start
-    cancellation_deadline = session_start - timedelta(hours=12)
-
-    if now >= cancellation_deadline:
-        return RedirectResponse(url=f"/sessions/{session_id}?error=cancellation_deadline_passed", status_code=303)
-
-    # Check if attendance has been marked for this booking
-    attendance = db.query(Attendance).filter(Attendance.booking_id == booking.id).first()
-    if attendance:
-        return RedirectResponse(url=f"/sessions/{session_id}?error=attendance_already_marked", status_code=303)
-
-    # Check if student has submitted an instructor review (CRITICAL: cannot cancel after evaluation!)
-    instructor_review = db.query(InstructorSessionReview).filter(
-        InstructorSessionReview.session_id == session_id,
-        InstructorSessionReview.student_id == user.id
-    ).first()
-    if instructor_review:
-        return RedirectResponse(url=f"/sessions/{session_id}?error=evaluation_already_submitted", status_code=303)
-
-    # Delete the booking
-    db.delete(booking)
-    db.commit()
-
-    logger.info("session_booking_cancelled", extra={"user": user.email, "session_id": session_id})
-
-    return RedirectResponse(url="/sessions?success=cancelled", status_code=303)
+    try:
+        result = cancel_player_booking(
+            db, actor=user, session_id=session_id, source="WEB"
+        )
+    except ParticipationError as exc:
+        return RedirectResponse(
+            url=f"/sessions/{session_id}?error={exc.code.lower()}", status_code=303
+        )
+    suffix = "already_cancelled" if result.replayed else "cancelled"
+    return RedirectResponse(url=f"/sessions?success={suffix}", status_code=303)
 
 
 @router.get("/sessions/{session_id}", response_class=HTMLResponse)
@@ -348,7 +300,10 @@ async def session_details(
     session.instructor_name = instructor.name if instructor else "TBA"
 
     # Get enrolled students with attendance status
-    bookings = db.query(Booking).filter(Booking.session_id == session_id).all()
+    bookings = db.query(Booking).filter(
+        Booking.session_id == session_id,
+        Booking.status != BookingStatus.CANCELLED,
+    ).all()
     enrolled_students = []
     for booking in bookings:
         student = db.query(User).filter(User.id == booking.user_id).first()
@@ -450,8 +405,15 @@ async def session_details(
     # Check if booking can be cancelled (12-hour deadline)
     # CANNOT cancel if: attendance exists OR instructor review exists OR past 12-hour deadline
     cancellation_deadline = session_start - timedelta(hours=12)
-    can_cancel_booking = is_enrolled and not is_instructor and now < cancellation_deadline and not my_attendance and not my_instructor_review
-    can_book_session = not is_enrolled and not is_instructor and now < cancellation_deadline  # Can only book if 12+ hours before session start
+    can_cancel_booking = (
+        is_enrolled and not is_instructor
+        and cancellation_window_decision(session, now).allowed
+        and not my_attendance and not my_instructor_review
+    )
+    can_book_session = (
+        not is_enrolled and not is_instructor
+        and booking_window_decision(session, now).allowed
+    )
 
     # Load quiz data for HYBRID and VIRTUAL sessions
     session_quizzes = []
@@ -578,5 +540,3 @@ async def session_details(
             "all_skill_keys": get_all_skill_keys() if is_instructor else [],
         }
     )
-
-

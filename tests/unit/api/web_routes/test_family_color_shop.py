@@ -223,8 +223,8 @@ class TestRouteRegistration:
     def test_ts_13_route_count_836(self):
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 933, (
-            f"Expected 933 routes, got {len(paths)}"
+        assert len(paths) == 934, (
+            f"Expected 934 routes, got {len(paths)}"
         )
 
     def test_ts_14_unlock_theme_still_registered(self):

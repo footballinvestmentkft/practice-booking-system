@@ -78,3 +78,102 @@ struct LFAPlayerLicense: Decodable {
         case baseParticipationRetained = "base_participation_retained"
     }
 }
+
+// Canonical Player participation contract. Policy decisions remain server-side;
+// native clients consume the same eligibility projection and mutation endpoints.
+struct PlayerSessionAvailabilityDTO: Decodable {
+    let sessionId: Int
+    let title: String
+    let dateStart: String
+    let dateEnd: String
+    let category: String
+    let capacity: Int?
+    let confirmed: Int
+    let available: Int?
+    let waitlisted: Int
+    let bookingId: Int?
+    let participationStatus: String
+
+    enum CodingKeys: String, CodingKey {
+        case sessionId = "session_id"
+        case title
+        case dateStart = "date_start"
+        case dateEnd = "date_end"
+        case category, capacity, confirmed, available, waitlisted
+        case bookingId = "booking_id"
+        case participationStatus = "participation_status"
+    }
+}
+
+struct PlayerBookingRequest: Encodable {
+    let sessionId: Int
+    let notes: String?
+
+    enum CodingKeys: String, CodingKey {
+        case sessionId = "session_id"
+        case notes
+    }
+}
+
+struct PlayerBookingDTO: Decodable {
+    let id: Int
+    let userId: Int
+    let sessionId: Int
+    let status: String
+    let waitlistPosition: Int?
+    let notes: String?
+    let createdAt: String
+    let updatedAt: String?
+    let cancelledAt: String?
+    let attendedStatus: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case sessionId = "session_id"
+        case status
+        case waitlistPosition = "waitlist_position"
+        case notes
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+        case cancelledAt = "cancelled_at"
+        case attendedStatus = "attended_status"
+    }
+}
+
+struct PlayerBookingCancellationDTO: Decodable {
+    let message: String
+    let cancelledBookingId: Int
+    let sessionId: Int
+    let replayed: Bool
+    let promotedBookingId: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case message
+        case cancelledBookingId = "cancelled_booking_id"
+        case sessionId = "session_id"
+        case replayed
+        case promotedBookingId = "promoted_booking_id"
+    }
+}
+
+enum PlayerParticipationAPI {
+    static let availabilityPath = "/api/v1/sessions/player/available"
+    static let bookingPath = "/api/v1/bookings/"
+
+    static func availableSessions(token: String) async throws -> [PlayerSessionAvailabilityDTO] {
+        try await APIClient.get(path: availabilityPath, token: token)
+    }
+
+    static func book(sessionId: Int, notes: String? = nil, token: String) async throws -> PlayerBookingDTO {
+        try await APIClient.post(
+            path: bookingPath,
+            body: PlayerBookingRequest(sessionId: sessionId, notes: notes),
+            token: token
+        )
+    }
+
+    static func cancel(bookingId: Int, token: String) async throws -> PlayerBookingCancellationDTO {
+        try await APIClient.delete(path: "\(bookingPath)\(bookingId)", token: token)
+    }
+}
