@@ -1,18 +1,18 @@
 # LFA PC3 — Player Content Mapping (2026)
 
-**Status:** owner-review artifact only; implementation has not started
+**Status:** accepted PC3 sample-content mapping; implementation has not started
 
 **Baseline:** `LFA_CANONICAL_BASELINE_PC2` → `382b5698eb0252194ce136992918496c78f864aa`
 
 **Program:** `LFA_FOOTBALL_PLAYER`
 
-**Proposed Track:** `LFA Football Player — Core Education`
+**Sample Track:** stable key `lfa-football-player-pc3-sample`; provisional English display label `LFA Football Player — Core Education`
 
 **Canonical hierarchy:** `Program → Track → Module → Lesson` (each corpus file becomes a Quiz/assessment placement under the mapped Lesson)
 
 ## Safety and scope
 
-This mapping is a proposal for owner review. No educational text, answer, explanation, metadata, source JSON, application code or database row was changed. No import, backfill, publication, deployment, remote access or push occurred.
+This mapping is the accepted sample fixture for PC3 architecture validation. It is not the complete or final LFA Football Player curriculum and does not determine its future size. No educational text, answer, explanation, metadata, source JSON, application code or database row was changed. No import, backfill, publication, deployment, remote access or push occurred.
 
 The existing files are mapped as assessment sources. They are not treated as complete lesson bodies. Approval of a mapping does not assert that prose/video/component content already exists for that Lesson.
 
@@ -120,7 +120,7 @@ No exact same-language question text is duplicated within or across the 31 files
       - EN: `content/adaptive_learning/lfa_football_player/nutrition/athlete_nutrition_hard.json`
       - HU: **MISSING**
 
-The proposed tree has one Track, seven Modules and 21 Lessons. `Rules → Laws of the Game` intentionally shows three English difficulty-specific assessment files under one Lesson. That granularity remains an owner decision; splitting them would produce 23 Lessons instead of 21. Numbered Lessons 1–8 retain their explicit repository order. The cross-Module order after Lesson 8 is a proposal because the repository has no authoritative whole-course sequence.
+The sample tree has one Track, seven Modules and 21 Lessons. `Rules → Laws of the Game` has three English difficulty-specific LessonAssessments under one Lesson, as approved. Numbered Lessons 1–8 retain their corpus order for repeatable test seeding. The displayed cross-Module order and provisional Track label are sample content data, not a final curriculum or schema decision.
 
 ## Complete file inventory and proposed placement
 
@@ -160,7 +160,7 @@ The proposed tree has one Track, seven Modules and 21 Lessons. `Rules → Laws o
 
 ## Complete owner-review evidence table
 
-`APPROVE` below means “evidence supports this proposed mapping; awaiting owner confirmation.” It does not record owner approval yet. `CHANGE` identifies a proposed correction to conflicting current module metadata. `MISSING` means the hierarchy mapping is clear but the HU counterpart is absent. `AMBIGUOUS` requires a hierarchy decision.
+`APPROVE` records the accepted mapping/localization relationship. `HU BACKLOG` records a missing optional Hungarian counterpart and is not a publication or PC3 blocker. Historical `CHANGE` and `AMBIGUOUS` findings are resolved in the decision register below.
 
 | File | EN/HU counterpart | Pair evidence | Confidence | Conflict / ambiguity | Duplicate / overlap suspicion | Missing translation | Owner review status |
 |---|---|---|---|---|---|---|---|
@@ -180,41 +180,43 @@ The proposed tree has one Track, seven Modules and 21 Lessons. `Rules → Laws o
 | `lesson_07_edzeselvek_easy.json` | `lesson_07_training_principles_easy.json` | lesson number + 100% ordered structure + bilingual semantic review; signature `0507204aad51` | `HIGH` | No content mismatch found. Localized `concept_tags` differ and need an explicit shared taxonomy-key map. | Verified localization pair, not a duplicate; identical ordered structural signature. | `NO` | `APPROVE` |
 | `lesson_08_motor_abilities_easy.json` | `lesson_08_motoros_kepessegek_easy.json` | lesson number + 100% ordered structure + bilingual semantic review; signature `b72cfaea6fa6` | `HIGH` | No content mismatch found. Localized `concept_tags` differ and need an explicit shared taxonomy-key map. | Verified localization pair, not a duplicate; identical ordered structural signature. | `NO` | `APPROVE` |
 | `lesson_08_motoros_kepessegek_easy.json` | `lesson_08_motor_abilities_easy.json` | lesson number + 100% ordered structure + bilingual semantic review; signature `b72cfaea6fa6` | `HIGH` | No content mismatch found. Localized `concept_tags` differ and need an explicit shared taxonomy-key map. | Verified localization pair, not a duplicate; identical ordered structural signature. | `NO` | `APPROVE` |
-| `football_awareness_easy.json` | `—` | No counterpart in repository | `MEDIUM` | Current `module=General`; file family and title prefix say Football Awareness. The proposal changes the module mapping. | Concept overlap with the awareness set and Football Rules; 0 exact duplicate questions. | `HU` | `CHANGE` |
-| `football_awareness_medium.json` | `—` | No counterpart in repository | `MEDIUM` | Current `module=General`; file family and title prefix say Football Awareness. The proposal changes the module mapping. | Concept overlap with the awareness set and Football Rules; 0 exact duplicate questions. | `HU` | `CHANGE` |
-| `football_awareness_hard.json` | `—` | No counterpart in repository | `HIGH` | Current module, file family and title prefix agree. | Concept overlap with awareness medium and Football Rules; 0 exact duplicate questions. | `HU` | `MISSING` |
-| `rules_easy.json` | `—` | No counterpart in repository | `MEDIUM` | All three difficulty files share one topic. Proposal: one Lesson with three assessment sets; owner must confirm one Lesson versus three staged Lessons. | Thematic overlap across Rules and Football Awareness; 0 exact duplicate questions. | `HU` | `AMBIGUOUS` |
-| `rules_medium.json` | `—` | No counterpart in repository | `MEDIUM` | All three difficulty files share one topic. Proposal: one Lesson with three assessment sets; owner must confirm one Lesson versus three staged Lessons. | Thematic overlap across Rules and Football Awareness; 0 exact duplicate questions. | `HU` | `AMBIGUOUS` |
-| `rules_hard.json` | `—` | No counterpart in repository | `MEDIUM` | All three difficulty files share one topic. Proposal: one Lesson with three assessment sets; owner must confirm one Lesson versus three staged Lessons. | Thematic overlap across Rules and Football Awareness; 0 exact duplicate questions. | `HU` | `AMBIGUOUS` |
-| `tactics_easy.json` | `—` | No counterpart in repository | `HIGH` | Current module/topic and file family agree. | Expected tactics-family concept overlap; 0 exact duplicate questions. | `HU` | `MISSING` |
-| `tactics_medium.json` | `—` | No counterpart in repository | `HIGH` | Current module/topic and file family agree. | Expected tactics-family concept overlap; 0 exact duplicate questions. | `HU` | `MISSING` |
-| `tactics_hard.json` | `—` | No counterpart in repository | `HIGH` | Current module/topic and file family agree. | Expected tactics-family concept overlap; 0 exact duplicate questions. | `HU` | `MISSING` |
-| `conditioning_easy.json` | `—` | No counterpart in repository | `HIGH` | Source is under `_shared`, but `specializations` explicitly contains only `LFA_FOOTBALL_PLAYER`; no Program ambiguity. | Expected conditioning-family concept overlap; 0 exact duplicate questions. | `HU` | `MISSING` |
-| `conditioning_medium.json` | `—` | No counterpart in repository | `HIGH` | Source is under `_shared`, but `specializations` explicitly contains only `LFA_FOOTBALL_PLAYER`; no Program ambiguity. | Expected conditioning-family concept overlap; 0 exact duplicate questions. | `HU` | `MISSING` |
-| `conditioning_hard.json` | `—` | No counterpart in repository | `HIGH` | Source is under `_shared`, but `specializations` explicitly contains only `LFA_FOOTBALL_PLAYER`; no Program ambiguity. | Expected conditioning-family concept overlap; 0 exact duplicate questions. | `HU` | `MISSING` |
-| `athlete_nutrition_easy.json` | `—` | No counterpart in repository | `MEDIUM` | Current `module=Nutrition`; file family/title and the hard file say Athlete Nutrition. The proposal changes the module mapping. | Concept overlap with nutrition medium and Conditioning; 0 exact duplicate questions. | `HU` | `CHANGE` |
-| `athlete_nutrition_medium.json` | `—` | No counterpart in repository | `MEDIUM` | Current `module=Nutrition`; file family/title and the hard file say Athlete Nutrition. The proposal changes the module mapping. | Concept overlap with nutrition easy/hard and Conditioning; 0 exact duplicate questions. | `HU` | `CHANGE` |
-| `athlete_nutrition_hard.json` | `—` | No counterpart in repository | `HIGH` | Current module, file family and title prefix agree. | Concept overlap with nutrition medium and Conditioning; 0 exact duplicate questions. | `HU` | `MISSING` |
+| `football_awareness_easy.json` | `—` | No counterpart in repository | `MEDIUM` | Current `module=General`; file family and title prefix say Football Awareness. The proposal changes the module mapping. | Concept overlap with the awareness set and Football Rules; 0 exact duplicate questions. | `HU` | `APPROVE — Football Awareness; HU BACKLOG` |
+| `football_awareness_medium.json` | `—` | No counterpart in repository | `MEDIUM` | Current `module=General`; file family and title prefix say Football Awareness. The proposal changes the module mapping. | Concept overlap with the awareness set and Football Rules; 0 exact duplicate questions. | `HU` | `APPROVE — Football Awareness; HU BACKLOG` |
+| `football_awareness_hard.json` | `—` | No counterpart in repository | `HIGH` | Current module, file family and title prefix agree. | Concept overlap with awareness medium and Football Rules; 0 exact duplicate questions. | `HU` | `APPROVE — Football Awareness; HU BACKLOG` |
+| `rules_easy.json` | `—` | No counterpart in repository | `MEDIUM` | Owner resolved: one `Laws of the Game` Lesson with three difficulty-specific LessonAssessments. | Thematic overlap across Rules and Football Awareness; 0 exact duplicate questions. | `HU` | `APPROVE — one Lesson / three assessments; HU BACKLOG` |
+| `rules_medium.json` | `—` | No counterpart in repository | `MEDIUM` | Owner resolved: one `Laws of the Game` Lesson with three difficulty-specific LessonAssessments. | Thematic overlap across Rules and Football Awareness; 0 exact duplicate questions. | `HU` | `APPROVE — one Lesson / three assessments; HU BACKLOG` |
+| `rules_hard.json` | `—` | No counterpart in repository | `MEDIUM` | Owner resolved: one `Laws of the Game` Lesson with three difficulty-specific LessonAssessments. | Thematic overlap across Rules and Football Awareness; 0 exact duplicate questions. | `HU` | `APPROVE — one Lesson / three assessments; HU BACKLOG` |
+| `tactics_easy.json` | `—` | No counterpart in repository | `HIGH` | Current module/topic and file family agree. | Expected tactics-family concept overlap; 0 exact duplicate questions. | `HU` | `APPROVE — HU BACKLOG` |
+| `tactics_medium.json` | `—` | No counterpart in repository | `HIGH` | Current module/topic and file family agree. | Expected tactics-family concept overlap; 0 exact duplicate questions. | `HU` | `APPROVE — HU BACKLOG` |
+| `tactics_hard.json` | `—` | No counterpart in repository | `HIGH` | Current module/topic and file family agree. | Expected tactics-family concept overlap; 0 exact duplicate questions. | `HU` | `APPROVE — HU BACKLOG` |
+| `conditioning_easy.json` | `—` | No counterpart in repository | `HIGH` | Source is under `_shared`, but `specializations` explicitly contains only `LFA_FOOTBALL_PLAYER`; no Program ambiguity. | Expected conditioning-family concept overlap; 0 exact duplicate questions. | `HU` | `APPROVE — HU BACKLOG` |
+| `conditioning_medium.json` | `—` | No counterpart in repository | `HIGH` | Source is under `_shared`, but `specializations` explicitly contains only `LFA_FOOTBALL_PLAYER`; no Program ambiguity. | Expected conditioning-family concept overlap; 0 exact duplicate questions. | `HU` | `APPROVE — HU BACKLOG` |
+| `conditioning_hard.json` | `—` | No counterpart in repository | `HIGH` | Source is under `_shared`, but `specializations` explicitly contains only `LFA_FOOTBALL_PLAYER`; no Program ambiguity. | Expected conditioning-family concept overlap; 0 exact duplicate questions. | `HU` | `APPROVE — HU BACKLOG` |
+| `athlete_nutrition_easy.json` | `—` | No counterpart in repository | `MEDIUM` | Current `module=Nutrition`; file family/title and the hard file say Athlete Nutrition. The proposal changes the module mapping. | Concept overlap with nutrition medium and Conditioning; 0 exact duplicate questions. | `HU` | `APPROVE — HU BACKLOG` |
+| `athlete_nutrition_medium.json` | `—` | No counterpart in repository | `MEDIUM` | Current `module=Nutrition`; file family/title and the hard file say Athlete Nutrition. The proposal changes the module mapping. | Concept overlap with nutrition easy/hard and Conditioning; 0 exact duplicate questions. | `HU` | `APPROVE — HU BACKLOG` |
+| `athlete_nutrition_hard.json` | `—` | No counterpart in repository | `HIGH` | Current module, file family and title prefix agree. | Concept overlap with nutrition medium and Conditioning; 0 exact duplicate questions. | `HU` | `APPROVE — HU BACKLOG` |
 
-## Owner decisions requested
+## Owner decisions applied
 
-1. **Track name:** approve or change `LFA Football Player — Core Education`. One Track is proposed.
-2. **Module names and grouping:** approve the seven-Module grouping. In particular, confirm moving `football_awareness_easy/medium` from current `General` to `Football Awareness`, and moving `athlete_nutrition_easy/medium` from `Nutrition` to `Athlete Nutrition`.
-3. **Rules granularity:** approve one `Laws of the Game` Lesson with three difficulty-specific assessment sets, or change to three staged Lessons. The proposal is one Lesson because all three files have the exact same current `topic`.
-4. **EN/HU localization pairs:** approve the eight proven pairs. Their content is aligned, but localized concept tags need explicit language-neutral taxonomy keys during implementation.
-5. **Missing Hungarian content:** decide whether the 15 English-only files may be published initially with explicit English fallback, or must wait for separately authored/reviewed Hungarian translations. PC3 will not generate translations.
-6. **Lesson sequence:** approve or change the displayed Module/Lesson order. Repository metadata supplies file grouping and difficulty, but no authoritative whole-course ordering across these seven Modules.
+- The eight proven EN/HU pairs share stable language-neutral content identity.
+- `Football Awareness` and `Athlete Nutrition` are the canonical Module names for this sample mapping.
+- `Rules → Laws of the Game` is one Lesson with three difficulty-specific LessonAssessments.
+- Tactics, Conditioning and Athlete Nutrition each use three distinct sample Lessons.
+- Missing Hungarian counterparts are localization backlog, not a PC3 or English-base publication blocker.
+- `concept_tags` map to language-neutral taxonomy keys with localized display labels.
+
+The Track display label and full future Module/Lesson order remain ordinary versioned content configuration. They do not block architecture implementation and do not require schema/application-code changes.
 
 ## Ambiguity and conflict register
 
 | ID | Files | Finding | Proposed handling | Owner status |
 |---|---|---|---|---|
-| PCM-01 | `football_awareness_easy.json`, `football_awareness_medium.json` | `module=General` conflicts with filename family/title prefix and the hard file’s `module=Football Awareness`. | Map all three to Football Awareness. | `CHANGE` |
-| PCM-02 | `athlete_nutrition_easy.json`, `athlete_nutrition_medium.json` | `module=Nutrition` conflicts with filename family/title prefix and hard file’s `module=Athlete Nutrition`. | Map all three to Athlete Nutrition. | `CHANGE` |
-| PCM-03 | `rules_easy/medium/hard.json` | Same topic (`Laws of the Game`) but different difficulty/title suffix; repository does not say whether these are one Lesson or three. | One Lesson with three assessment placements. | `AMBIGUOUS` |
-| PCM-04 | eight EN/HU pairs | Content structure and semantics match, but `concept_tags` are localized strings rather than shared stable keys. | Approve localization pair; create reviewed language-neutral taxonomy mapping later without editing content. | `APPROVE` |
-| PCM-05 | 15 English-only files | No HU counterpart exists. | Keep missing explicitly; do not generate content. | `MISSING` |
-| PCM-06 | all 31 files | Files contain assessment questions, not complete Lesson component content. | Map as LessonAssessment sources; Lesson prose/components require separate approved content inventory. | `AMBIGUOUS` at content-completeness level |
+| PCM-01 | `football_awareness_easy.json`, `football_awareness_medium.json` | `module=General` conflicts with filename family/title prefix and the hard file’s `module=Football Awareness`. | Map all three to Football Awareness. | `RESOLVED — OWNER APPROVED` |
+| PCM-02 | `athlete_nutrition_easy.json`, `athlete_nutrition_medium.json` | `module=Nutrition` conflicts with filename family/title prefix and hard file’s `module=Athlete Nutrition`. | Map all three to Athlete Nutrition. | `RESOLVED — OWNER APPROVED` |
+| PCM-03 | `rules_easy/medium/hard.json` | Same topic (`Laws of the Game`) with different difficulty/title suffix. | One Lesson with three assessment placements. | `RESOLVED — OWNER APPROVED` |
+| PCM-04 | eight EN/HU pairs | Content structure and semantics match, but `concept_tags` are localized strings rather than shared stable keys. | Use shared language-neutral taxonomy keys and localized labels without editing content. | `RESOLVED — OWNER APPROVED` |
+| PCM-05 | 15 English-only files | No HU counterpart exists. | Keep missing explicitly; do not generate content. | `ACCEPTED LOCALIZATION BACKLOG — NOT BLOCKER` |
+| PCM-06 | all 31 files | Files contain assessment questions, not complete final Lesson component content. | Use as PC3 sample LessonAssessment sources; future curriculum/content grows through versioned content operations. | `EXPECTED FUTURE CONTENT — NOT BLOCKER` |
 
 ## Counts
 
@@ -223,14 +225,14 @@ The proposed tree has one Track, seven Modules and 21 Lessons. `Rules → Laws o
 - Proven EN/HU pairs: **8** (**16 files**, **117 questions per locale**)
 - Translation mismatches: **0**
 - Files with missing HU counterpart: **15**
-- Hierarchy mappings requiring specific owner attention: **7 files** (four conflicting module labels and three Rules granularity rows)
+- Hierarchy mappings requiring further owner attention for PC3: **0**
 - Exact duplicate questions found: **0**
-- Proposed Tracks: **1**
-- Proposed Modules: **7**
-- Proposed Lessons: **21** under the one-Laws-of-the-Game proposal; **23** if Rules is split into three Lessons
+- Sample Tracks: **1**
+- Sample Modules: **7**
+- Sample Lessons: **21**
 
 ## Cost guard
 
 No push or PR was created. Expected GitHub Actions runs: `0`. GitHub macOS/paid runner use: `NO`.
 
-**NO IMPLEMENTATION — WAITING FOR OWNER APPROVAL**
+**NO IMPLEMENTATION — SAMPLE MAPPING ACCEPTED FOR PC3 VALIDATION**

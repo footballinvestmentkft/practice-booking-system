@@ -1,6 +1,6 @@
 # LFA PC3 — Player Canonical Education Hierarchy Specification (2026)
 
-**Status:** specification only; implementation has not started
+**Status:** extensibility specification ready; implementation has not started
 
 **Baseline:** `LFA_CANONICAL_BASELINE_PC2` → `382b5698eb0252194ce136992918496c78f864aa`
 
@@ -8,11 +8,23 @@
 
 **Scope:** Education Center hierarchy, content association, assessment association, and education completion state
 
-**Excluded:** content rewriting, Coach/GānCuju/Internship content creation, historical backfill, deployment, production database mutation, PC4 work
+**Excluded:** complete-curriculum authoring, content rewriting, Coach/GānCuju/Internship hierarchy design or content creation, historical backfill, deployment, production database mutation, PC4 work
+
+## Product scope clarification
+
+PC3 proves the architecture and extensibility of the current Player Education Center with the 31-file, 375-question sample corpus. It does not certify a complete or final LFA Football Player curriculum. A complete book, final table of contents, final Module/Lesson count, full assessment coverage, and complete locale coverage are **EXPECTED FUTURE CONTENT — NOT A BLOCKER**.
+
+The hierarchy in this specification is canonical only for `LFA_FOOTBALL_PLAYER`:
+
+```text
+LFA_FOOTBALL_PLAYER → Track → Module → Lesson → Component
+```
+
+It is not an implicit universal curriculum or progression hierarchy for `LFA_COACH`, `GANCUJU_PLAYER`, or `INTERNSHIP`. Those specializations remain separate domain owners and require separate validation before adopting any professional structure. The shared education platform is limited to capabilities that are actually common: content identity, localization, version/release, assessment linkage, progress/history provenance, and draft/publish lifecycle.
 
 ## Executive decision
 
-The canonical learner-visible hierarchy shall be:
+The canonical Player learner-visible hierarchy shall be:
 
 ```text
 Program → Track → Module → Lesson → Component
@@ -20,7 +32,7 @@ Program → Track → Module → Lesson → Component
 
 The following terms do not create additional hierarchy levels:
 
-- **Program** is the existing WS1 canonical program (`Specialization`), initially `LFA_FOOTBALL_PLAYER`.
+- **Program** is the existing WS1 canonical program (`Specialization`). PC3 implements education only for `LFA_FOOTBALL_PLAYER`.
 - **Track** is the course-like learning path inside a Program. “Course” is not a second entity or API synonym.
 - **Curriculum** means the complete published, versioned Track tree. It is an aggregate/view, not a database entity.
 - **Topic** is stable taxonomy metadata attached to Lessons and assessments. It is not a parent between Module and Lesson.
@@ -36,7 +48,7 @@ Program → Track → [TrackRelease] → Module → Lesson → Component
                                       └──── LessonAssessment → Quiz → Questions
 ```
 
-This keeps the product hierarchy small while making published content immutable, localizable, and historically reproducible.
+This keeps the Player product hierarchy small while making published content immutable, localizable, and historically reproducible. Reusing the shared lifecycle capabilities does not authorize another specialization to reuse the Player hierarchy.
 
 ## Audit method and limits
 
@@ -191,7 +203,7 @@ The professional wording and answers in these files must remain unchanged. PC3 m
 | PC3-C07 | Program progression mixed with education | `SpecializationProgress` stores level/XP/session/project totals | Track/Module progress stores course completion | Education can incorrectly become license/level truth | Program progression remains separate projection; education emits verified outcomes only |
 | PC3-C08 | XP write paths | Legacy curriculum writes nonexistent `users.total_xp` | Current XP service writes `users.xp_balance` and ledger | Failure or balance drift | Education uses canonical XP ledger/service with idempotency key |
 | PC3-C09 | Player identity collision | `seed_player_curriculum.py:20-27` uses legacy `PLAYER` and names GānCuju/Ganball content | WS1 canonical alias maps `PLAYER → GANCUJU_PLAYER` (`canonical_policy.py:80`) | Unsafe reinterpretation as Football Player | Preserve/manual review; never auto-map to `LFA_FOOTBALL_PLAYER` |
-| PC3-C10 | Player content gap | Track initializer creates Internship/Coach/GānCuju only (`initialize_track_system.py:25-49`) | Adaptive corpus is all `LFA_FOOTBALL_PLAYER` | No navigable Player course tree | Create approved Player Track release from an explicit mapping manifest |
+| PC3-C10 | Player content gap | Track initializer creates Internship/Coach/GānCuju only (`initialize_track_system.py:25-49`) | Adaptive corpus is all `LFA_FOOTBALL_PLAYER` | No navigable Player course tree | Create the accepted Player sample Track release from an explicit mapping manifest |
 | PC3-C11 | Content lifecycle | Quiz has DRAFT/PUBLISHED/ARCHIVED | Tracks/Modules/Components have only `is_active` or no lifecycle/version | In-place edits change historical meaning | Immutable published Track release and versioned Quiz identity |
 | PC3-C12 | Native contract | Backend exposes three competing APIs | iOS consumes none of them | Native Player journey cannot learn/complete | Add one typed `/education` contract; web and iOS consume it |
 | PC3-C13 | Weak test evidence | Generated smoke tests accept HTTP 500 and literal placeholders | Unit tests mock raw SQL behavior | Broken schema can appear green | PostgreSQL behavior/contract tests with exact statuses and state assertions |
@@ -241,8 +253,8 @@ Topic does not control order, unlock, eligibility, or completion. If later edito
 
 | Entity | Meaning | Source of truth | Key invariants |
 |---|---|---|---|
-| `Specialization` / Program | WS1 canonical program identity | Existing `specializations.id` and canonical policy | PC3 first accepts only `LFA_FOOTBALL_PLAYER`; legacy aliases resolve before lookup |
-| `Track` | Stable course-like learning path in one Program | `tracks` | Has one Program; stable code; no content version fields used as identity |
+| `Specialization` / Program | WS1 canonical program identity and content-domain isolation boundary | Existing `specializations.id` and canonical policy | PC3 accepts only `LFA_FOOTBALL_PLAYER`; legacy aliases resolve before lookup; no cross-specialization content relation |
+| `Track` | Stable Player course-like learning path | `tracks`, owned by `LFA_FOOTBALL_PLAYER` in PC3 | Has one Program; stable code; no content version fields used as identity; presence of this table does not define another specialization's hierarchy |
 | `TrackRelease` | Immutable version of a Track curriculum | New table | Unique `(track_id, version)`; one current published release; publication is atomic |
 | `Module` | Ordered thematic unit inside one release | Refactored `modules` | Stable key within release; cannot span releases |
 | `Lesson` | Ordered learner outcome/completion boundary inside one Module | New table | Stable key; contains components and assessment placements |
@@ -259,6 +271,12 @@ Topic does not control order, unlock, eligibility, or completion. If later edito
 | `XPTransaction` | Reward ledger | Existing canonical XP service/ledger | Education never directly edits User or Specialization XP balances |
 
 `SpecializationProgress`, `LicenseProgression`, `UserQuestionPerformance`, AL session metrics, achievements, and skill progression are not education hierarchy/completion authorities. They may consume canonical completion outcomes or provide analytics.
+
+### Shared platform capability boundary
+
+The shared platform may provide reusable services and persistence contracts for stable content keys, locale variants, immutable releases, assessment revisions/placements, learner outcome provenance, audit events, and draft/publish state. It must not supply a hardcoded universal Module/Lesson graph or assume that another specialization progresses through Player Lessons. Every content aggregate carries a mandatory specialization owner, and every lookup, publish command, assessment placement, and progress mutation validates that owner before returning or changing state.
+
+For PC3, `Track`, `Module`, `Lesson`, and `Component` form the Player domain aggregate. A future specialization may adopt, configure, extend, or reject that shape only through a separately validated specification. Shared tables or services are implementation reuse; they are not evidence that the professional hierarchy is shared.
 
 ## Assessment mapping
 
@@ -293,6 +311,8 @@ Fallback is deterministic: requested locale → English. Missing English canonic
 
 The existing Hungarian corpus is legitimate localization/educational content. Mapping EN/HU pairs is editorial evidence work; spelling or professional content must not be changed by migration.
 
+Adding `en`, `hu`, or another BCP-47 locale is a content operation against stable language-neutral keys. It creates a locale variant or a new immutable release/revision through the same content command; it requires no application-code branch, enum addition, table addition, or schema migration.
+
 ## Content versioning model
 
 1. Draft `TrackRelease` trees may be edited.
@@ -302,7 +322,11 @@ The existing Hungarian corpus is legitimate localization/educational content. Ma
 5. New enrollments use the current published release. Existing learners remain on their bound release unless an explicit, separately approved transfer is recorded.
 6. Completion records and certificates retain release/version identity and enough display metadata to remain historically intelligible.
 
+After the initial PC3 schema exists, adding a Track, Module, Lesson, Component, translation, or LessonAssessment is a validated content command. Adding nodes to an already published curriculum creates a new Track release; attaching an assessment later creates a new release/placement while prior learner outcomes remain bound to the earlier release and exact Quiz revision. A Lesson may be published without an assessment when its content policy marks no assessment as required.
+
 ## Proposed additive DB mapping
+
+This is the one-time additive schema needed to establish the Player aggregate and shared lifecycle capabilities. Future Player content growth uses rows/releases and does not require further schema or application-code changes. The schema must retain mandatory specialization ownership so it cannot silently turn the Player hierarchy into a universal professional model.
 
 ### Reuse and extend
 
@@ -329,6 +353,7 @@ No new generic workflow engine, polymorphic content framework, independent Curri
 ### Required constraints
 
 - Program/Track and all parent-child FKs must be real database FKs.
+- Every Track and release lookup, child mutation, assessment placement, progress row, and audit event must resolve to one specialization owner; composite/application constraints reject mixed-specialization ancestry.
 - Unique stable keys within their parent/release.
 - Unique Track version per Track and at most one current published release.
 - Published release and published Quiz revisions are application-immutable, backed by tests and restricted commands.
@@ -336,6 +361,7 @@ No new generic workflow engine, polymorphic content framework, independent Curri
 - Unique `EducationProgressEvent.idempotency_key` per logical command.
 - Completion FKs bind to the same Track release; cross-tree component/module/assessment IDs fail before mutation.
 - Deletion of published content/history is restricted; archive/retire instead.
+- Locale identifiers are data values validated as BCP-47 tags, not a closed application enum, so adding a locale requires no schema/code change.
 
 The initial migration is additive and nullable where existing rows cannot be proven. Canonical application writes must enforce the new fields immediately; nullable columns exist only to preserve historical rows, not to allow new ambiguous data.
 
@@ -364,6 +390,12 @@ Rules:
 
 `SpecializationProgress` may receive a projection after commit, but cannot determine Lesson/Module/Track completion. License/category/skill progression remains outside PC3.
 
+## Content operation contract
+
+After the PC3 schema and command service are deployed, authorized content publishers can create a Track draft, add/reorder Modules, add/reorder Lessons, add supported Component instances, add locale variants, attach or remove draft assessment placements, validate a release, and publish it without an application release or schema migration. Each operation validates stable keys, specialization ownership, ancestry, locale data and draft state. Published rows are immutable; changes create a new release or Quiz revision.
+
+The contract covers new instances of supported Component types. Introducing a new executable Component behavior or media protocol may require a separately reviewed application/contract change; ordinary text, media reference, resource and instruction Components remain data operations.
+
 ## API mapping
 
 The canonical API surface should be cohesive and typed under `/api/v1/education`:
@@ -380,6 +412,8 @@ The canonical API surface should be cohesive and typed under `/api/v1/education`
 | `GET /progress` | Learner education progress bound to release/version |
 
 All mutation requests require an idempotency key. Responses include `program_id`, `track_id`, `track_release_id`, `content_version`, stable child IDs, locale metadata, and explicit state.
+
+During PC3 these endpoints return education content only for `LFA_FOOTBALL_PLAYER`. A Coach, GānCuju or Internship program identifier cannot be interpreted through the Player hierarchy and returns an explicit unsupported/no-content response until that specialization has its own validated domain contract.
 
 Compatibility plan:
 
@@ -410,7 +444,7 @@ The existing native identity/license/skill shell is retained. No Coach, GānCuju
 
 ## Adaptive Learning mapping
 
-1. Introduce an owner-reviewed mapping manifest containing stable Program/Track/Module/Lesson/topic/quiz keys, source path, locale, and source checksum.
+1. Introduce a version-controlled Player sample mapping manifest containing stable Program/Track/Module/Lesson/topic/quiz keys, source path, locale, and source checksum. It is test/seed content, not a declaration of the final curriculum size.
 2. Import the existing 31 files byte/field faithfully into versioned Quiz revisions. Do not edit question text, answers, explanation or educational meaning.
 3. Link each approved Quiz revision to a Lesson through `LessonAssessment`.
 4. New AL sessions receive `lesson_assessment_id`; the service resolves allowed Quiz IDs from that placement.
@@ -418,7 +452,7 @@ The existing native identity/license/skill shell is retained. No Coach, GānCuju
 6. Topic/module strings become localized display/taxonomy metadata. They never identify DB scope.
 7. Completed adaptive sessions remain analytics/audit evidence. A required adaptive placement completes only under its explicit passing/completion policy.
 
-The current corpus is sufficient to build question sets, but not sufficient by itself to decide the approved Module/Lesson editorial structure. That mapping is an owner/content-owner gate.
+The current corpus is sufficient for PC3 architecture, import, localization, placement, completion, release, provenance, and isolation validation. Its current mapping is sample content and does not define the size or final editorial structure of the future Player curriculum. Full curriculum authoring is a later content operation and is not a PC3 gate.
 
 ## Legacy compatibility and historical data
 
@@ -455,12 +489,12 @@ There is no automatic backfill, title-based guessing, Program reinterpretation, 
 - Do not alter or delete existing rows.
 - Add model/service tests before routes change.
 
-### Phase PC3-3 — canonical service and Player draft content map
+### Phase PC3-3 — canonical service and Player sample content map
 
 - Implement one read/command service with PC1 authorization.
-- Build a draft `LFA_FOOTBALL_PLAYER` Track release only from the reviewed mapping manifest.
+- Build a draft `LFA_FOOTBALL_PLAYER` Track release from the accepted sample mapping manifest.
 - Import existing source content unchanged with checksums and stable keys.
-- Keep the release unpublished until coverage and editorial mapping gates pass.
+- Prove draft exclusion, publish validation and atomic publication in disposable PostgreSQL. Missing optional Hungarian variants do not block the English base sample release.
 
 ### Phase PC3-4 — surface convergence
 
@@ -500,6 +534,8 @@ There is no automatic backfill, title-based guessing, Program reinterpretation, 
 - FK, stable-key, version uniqueness, current-release and cross-release ancestry constraints.
 - Published release/Quiz immutability and new-version flow.
 - Rollback leaves historical rows readable and no partial writes.
+- Draft releases and draft Quiz revisions are absent from learner-facing catalog, curriculum and assessment queries.
+- Outcomes from an older release continue to resolve their original release, placement, Quiz revision, locale and content hash after a later release is published.
 
 ### Import/content fidelity
 
@@ -508,6 +544,9 @@ There is no automatic backfill, title-based guessing, Program reinterpretation, 
 - Same checksum replay is idempotent; same title with different checksum is a new reviewed revision, not a silent skip.
 - EN/HU association uses reviewed stable keys, never normalized display-title guesses.
 - Unknown schema field fails visibly or is retained according to explicit schema policy; it is never silently discarded.
+- Create a new Track, Module, Lesson and Component through content data/commands without changing application code or schema.
+- Create a Lesson with no assessment, publish it under an allowed no-assessment policy, then attach an assessment in a later release without changing prior history.
+- Add a new locale tag and localized fields without code or schema changes; verify deterministic English fallback when that locale is absent.
 
 ### Authorization and isolation
 
@@ -515,6 +554,7 @@ There is no automatic backfill, title-based guessing, Program reinterpretation, 
 - Learner can read/mutate only own progress.
 - Cross-Program, cross-Track, cross-release and foreign Lesson/Component/assessment IDs fail before mutation.
 - Admin/content-publisher roles can draft/publish only through explicit policy; instructor access follows canonical role assignment where needed.
+- Identical stable child keys in different specializations never collide or leak; Player endpoints reject Coach/GānCuju/Internship-owned content and the implementation contains no assumption that their curriculum shape matches Player.
 
 ### Completion, replay and concurrency
 
@@ -569,22 +609,43 @@ No platform-wide model rewrite is required. “REWRITE” applies only to the br
 
 ## Owner/content-owner decisions
 
-The domain hierarchy itself has no unresolved owner decision: this specification selects Track as the single course-like concept, Curriculum as an aggregate, and Topic as metadata.
+The PC3 architecture has no unresolved owner decision. Track is the Player course-like concept, Curriculum is a release aggregate, Topic is taxonomy metadata, and the current 31-file corpus is accepted as sufficient sample/test content.
 
-One content decision is required before a Player release may be published:
-
-1. **PLAYER CONTENT MAPPING APPROVAL — REQUIRED FOR PUBLICATION.** Approve the explicit mapping manifest that assigns each existing `LFA_FOOTBALL_PLAYER` source file/Quiz revision to canonical Track→Module→Lesson placements and pairs verified EN/HU translations. The repository supplies labels and questions but not a reliable approved Lesson structure. PC3 implementation may build the additive schema, importer and a draft manifest/report before this approval; it may not guess mappings, rewrite content, or publish the release.
+The final Player book, complete Module/Lesson inventory, final display titles/order, full assessment coverage, and complete locale coverage remain future editorial content decisions. They neither block PC3 implementation nor require schema/application-code changes after PC3. Production content publication remains a separate controlled operation.
 
 The legacy `PLAYER` Ganball curriculum is not part of this decision: WS1 already resolves `PLAYER` to `GANCUJU_PLAYER`, so it remains read-only/manual review and cannot populate the Football Player Track.
+
+## PC3 extensibility acceptance matrix
+
+`PASS` means the product rule and target design are sufficient at specification time. `NEEDS IMPLEMENTATION` means the design supports the requirement, but executable proof must be added during PC3. `BLOCKER` means the requirement cannot be implemented safely from the current baseline. There are no identified blockers.
+
+| # | Acceptance requirement | Repository/design evidence | Status |
+|---:|---|---|---|
+| 1 | Current sample Player content works end-to-end | The 31 files/375 questions cover EN/HU grouping, multiple Modules/Lessons, three assessment difficulties, adaptive metadata and missing-locale fallback. Current runtime still lacks the canonical hierarchy and placement service. | **NEEDS IMPLEMENTATION** |
+| 2 | Add Track/Module/Lesson/Component without application-code change | Stable keys, ordered rows, typed Component payloads and release-scoped parent FKs make each node content data after the one-time PC3 schema. | **NEEDS IMPLEMENTATION** |
+| 3 | Add EN/HU/other localization without schema change | BCP-47 locale keys are data values; stable identity and localized display fields are separate. No locale-specific column or enum is allowed. | **NEEDS IMPLEMENTATION** |
+| 4 | Attach a new assessment to an existing Lesson | `LessonAssessment` is an explicit placement row pointing to an immutable Quiz revision; no title/category parsing is involved. | **NEEDS IMPLEMENTATION** |
+| 5 | Create a Lesson without assessment | Lesson completion evaluates required placements; an empty required-placement set is valid when the Lesson policy allows content-only completion. | **NEEDS IMPLEMENTATION** |
+| 6 | Add an assessment later | A later Track release adds the placement while earlier learner progress remains bound to the prior release. | **NEEDS IMPLEMENTATION** |
+| 7 | Draft content never appears in published runtime | Learner reads resolve only `Track.current_release_id` and published Quiz revisions; draft IDs fail closed. | **NEEDS IMPLEMENTATION** |
+| 8 | Versioned release preserves outcome provenance | Progress, attempts, events, certificates and rewards retain release, placement, Quiz revision, locale and content hash identity. | **NEEDS IMPLEMENTATION** |
+| 9 | Specialization content is isolated | Mandatory specialization ownership and full-ancestry validation reject cross-specialization reads, placements and progress mutations. | **NEEDS IMPLEMENTATION** |
+| 10 | Player hierarchy does not become an implicit universal hierarchy | This specification scopes Track→Module→Lesson→Component to `LFA_FOOTBALL_PLAYER`; only lifecycle capabilities are shared. Other specialization structures require separate validation. | **PASS** |
+
+The implementation gate must turn rows 1–9 from `NEEDS IMPLEMENTATION` to `PASS` with PostgreSQL, API/web/native, localization, release/provenance and isolation tests. A complete curriculum is not part of that gate.
 
 ## Acceptance gate for implementation
 
 PC3 implementation is complete only when:
 
-- one Player hierarchy is available through canonical API, web and native contracts;
+- the accepted sample Player hierarchy is available through canonical API, web and native contracts;
 - no active route owns parallel hierarchy/completion business logic;
 - adaptive selection uses explicit assessment placement IDs;
-- the approved existing content is preserved exactly and linked by stable IDs/checksums;
+- all 31 sample files and 375 questions are preserved exactly and linked by stable IDs/checksums;
+- a Track, Module, Lesson, Component, locale and assessment placement can be added as content data without schema/application-code changes;
+- a Lesson may exist without an assessment, and a later release may add one;
+- drafts are excluded from learner runtime and published history remains release-bound;
+- cross-specialization access and placement fail closed, without imposing the Player hierarchy on another specialization;
 - progress and rewards are atomic, idempotent, auditable and release-bound;
 - historical ambiguous data is unchanged and fail-closed;
 - all required PostgreSQL, contract, native and prior-baseline regressions pass locally;
@@ -594,4 +655,4 @@ PC3 implementation is complete only when:
 
 This specification work performs no push and creates no PR. Therefore expected GitHub Actions runs are `0`; GitHub macOS/paid runners are not used. Any later implementation push requires a fresh open-PR, `push`, `pull_request`, `workflow_run` and runner preflight with expected Actions runs exactly `0`.
 
-**IMPLEMENTATION NOT STARTED — WAITING FOR OWNER REVIEW**
+**LFA PC3 EXTENSIBILITY SPEC READY — IMPLEMENTATION NOT STARTED**
