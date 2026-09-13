@@ -140,6 +140,32 @@ def test_valid_human_review_creates_immutable_result_and_exact_pc5_provenance(te
     test_db.rollback()
 
 
+def test_owner_unapproved_default_zero_rewards_create_no_xp_or_credit_ledger(test_db):
+    player, reviewer = _player(test_db), _admin(test_db)
+    initial_xp = player.xp_balance
+    initial_credit = player.credit_balance
+    video = _video(test_db, player)
+    event = _event(test_db, video, player, 100, "right_instep", "right")
+    service = JugglingVerificationService(test_db)
+
+    assert service.policy == JugglingVerificationPolicy(xp_reward=0, credit_reward=0)
+    record = service.verify_human(
+        video_id=video.id,
+        reviewer=reviewer,
+        command=_command(service, video, player, [event]),
+    )
+    test_db.flush()
+
+    outcome = test_db.get(PlayerProgressionOutcome, record.progression_outcome_id)
+    assert outcome.xp_delta == 0
+    assert record.credit_transaction_id is None
+    assert test_db.query(XPTransaction).filter_by(user_id=player.id).count() == 0
+    assert test_db.query(CreditTransaction).filter_by(user_id=player.id).count() == 0
+    test_db.refresh(player)
+    assert player.xp_balance == initial_xp
+    assert player.credit_balance == initial_credit
+
+
 def test_zero_touch_attempt_is_invalid_and_never_positive_progression(test_db):
     player, reviewer = _player(test_db), _admin(test_db)
     video = _video(test_db, player)
@@ -284,7 +310,7 @@ def test_verification_rollback_removes_record_outcome_xp_and_credit(test_db, mon
     assert test_db.get(User, player_id).credit_balance == 11
 
 
-def test_concurrent_verification_is_exactly_once():
+def test_concurrent_verification_with_explicit_test_rewards_is_exactly_once():
     setup = sessionmaker(bind=engine)()
     try:
         player, reviewer = _player(setup), _admin(setup)
@@ -326,8 +352,18 @@ def test_concurrent_verification_is_exactly_once():
     try:
         assert verify.query(JugglingVerification).filter_by(video_id=ids[2]).count() == 1
         assert verify.query(PlayerProgressionOutcome).filter_by(source_type="JUGGLING_VERIFICATION").filter_by(player_user_id=ids[0]).count() == 1
-        assert verify.query(XPTransaction).filter_by(user_id=ids[0]).count() == 1
-        assert verify.query(CreditTransaction).filter_by(user_id=ids[0]).count() == 1
+        xp_rows = verify.query(XPTransaction).filter_by(user_id=ids[0]).all()
+        credit_rows = verify.query(CreditTransaction).filter_by(user_id=ids[0]).all()
+        assert len(xp_rows) == 1
+        assert xp_rows[0].amount == 7
+        assert xp_rows[0].balance_after == 7
+        assert len(credit_rows) == 1
+        assert credit_rows[0].amount == 2
+        assert credit_rows[0].balance_after == 13
+        assert (
+            credit_rows[0].transaction_type
+            == "JUGGLING_VERIFIED_RESULT_REWARD"
+        )
         player = verify.get(User, ids[0])
         assert player.xp_balance == 7
         assert player.credit_balance == 13
