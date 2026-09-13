@@ -4,6 +4,7 @@ Start and submit quiz attempts
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from uuid import UUID
 
 from .....database import get_db
 from .....dependencies import get_current_user
@@ -131,6 +132,12 @@ def submit_quiz_attempt(
     try:
         # Submit quiz and get results
         attempt = quiz_service.submit_quiz_attempt(current_user.id, submission)
+
+        # PC4 canonical assessments already create their single authoritative
+        # outcome and replay-safe XP transaction inside QuizService.  Legacy
+        # post-submit hooks below must not create a parallel outcome authority.
+        if isinstance(attempt.assessment_attempt_id, UUID):
+            return attempt
 
         # ==========================================
         # 🆕 HOOK 1: AUTOMATIC COMPETENCY ASSESSMENT

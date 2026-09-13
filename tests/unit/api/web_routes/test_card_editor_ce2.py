@@ -438,9 +438,11 @@ class TestCE217RouteCount:
         910 → 912: AN-3B2F PR-1A ball training hub (GET /ball-training/queue + POST /ball-training/feedback)
         934 → 922: PC3 removes 14 unbacked raw-SQL curriculum routes and adds
                    2 canonical Player education read routes.
+        922 → 926: PC4 adds canonical assessment start, next-question, answer,
+                   and completion routes.
         """
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 922, (
-            f"Expected 922 routes, got {len(paths)}"
+        assert len(paths) == 926, (
+            f"Expected 926 routes, got {len(paths)}"
         )

@@ -94,6 +94,7 @@ from .track import (
     Track, TrackRelease, Module, Lesson, ModuleComponent, LessonAssessment,
     LessonAssessmentQuiz, EducationProgressEvent,
 )
+from .assessment import AssessmentAttempt, AssessmentIssuedQuestion
 from .certificate import CertificateTemplate, IssuedCertificate
 from .user_progress import UserTrackProgress, UserModuleProgress, TrackProgressStatus, ModuleProgressStatus
 
@@ -131,6 +132,8 @@ configure_relationships()
 configure_license_relationships()
 
 __all__ = [
+    "AssessmentAttempt",
+    "AssessmentIssuedQuestion",
     "User",
     "UserRole",
     "InstructorSpecialization",

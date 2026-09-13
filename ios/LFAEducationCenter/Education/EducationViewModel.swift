@@ -106,6 +106,165 @@ enum PlayerEducationAPI {
     }
 }
 
+struct PlayerAssessmentOption: Decodable, Equatable {
+    let id: Int
+    let text: String
+    let order: Int
+}
+
+struct PlayerIssuedQuestion: Decodable, Identifiable, Equatable {
+    let id: String
+    let sequence: Int
+    let questionType: String
+    let points: Int
+    let text: String
+    let options: [PlayerAssessmentOption]
+    enum CodingKeys: String, CodingKey {
+        case id, sequence, points, text, options
+        case questionType = "question_type"
+    }
+}
+
+struct PlayerAssessmentAttempt: Decodable, Equatable {
+    let id: String
+    let trackReleaseId: String
+    let lessonId: String
+    let lessonAssessmentId: String
+    let quizRevision: Int
+    let locale: String
+    let deliveryMode: String
+    let status: String
+    let questions: [PlayerIssuedQuestion]
+    enum CodingKeys: String, CodingKey {
+        case id, locale, status, questions
+        case trackReleaseId = "track_release_id"
+        case lessonId = "lesson_id"
+        case lessonAssessmentId = "lesson_assessment_id"
+        case quizRevision = "quiz_revision"
+        case deliveryMode = "delivery_mode"
+    }
+}
+
+struct PlayerAssessmentAnswerResult: Decodable, Equatable {
+    let issuedQuestionId: String
+    let accepted: Bool
+    let isCorrect: Bool
+    let pointsEarned: Int
+    enum CodingKeys: String, CodingKey {
+        case accepted
+        case issuedQuestionId = "issued_question_id"
+        case isCorrect = "is_correct"
+        case pointsEarned = "points_earned"
+    }
+}
+
+struct PlayerAssessmentOutcome: Decodable, Equatable {
+    let attemptId: String
+    let status: String
+    let totalQuestions: Int
+    let answeredQuestions: Int
+    let correctAnswers: Int
+    let totalPoints: Int
+    let earnedPoints: Int
+    let scorePercent: Double
+    let passed: Bool
+    let xpAwarded: Int
+    let trackReleaseId: String
+    let lessonId: String
+    let lessonAssessmentId: String
+    let quizRevision: Int
+    let locale: String
+    let provenance: [String: EducationJSONValue]
+    enum CodingKeys: String, CodingKey {
+        case status, passed, locale, provenance
+        case attemptId = "attempt_id"
+        case totalQuestions = "total_questions"
+        case answeredQuestions = "answered_questions"
+        case correctAnswers = "correct_answers"
+        case totalPoints = "total_points"
+        case earnedPoints = "earned_points"
+        case scorePercent = "score_percent"
+        case xpAwarded = "xp_awarded"
+        case trackReleaseId = "track_release_id"
+        case lessonId = "lesson_id"
+        case lessonAssessmentId = "lesson_assessment_id"
+        case quizRevision = "quiz_revision"
+    }
+}
+
+private struct PlayerAssessmentStartBody: Encodable { let locale: String }
+private struct PlayerAssessmentAnswerBody: Encodable {
+    let issuedQuestionId: String
+    let selectedOptionId: Int?
+    let answerText: String?
+    let idempotencyKey: String
+    enum CodingKeys: String, CodingKey {
+        case issuedQuestionId = "issued_question_id"
+        case selectedOptionId = "selected_option_id"
+        case answerText = "answer_text"
+        case idempotencyKey = "idempotency_key"
+    }
+}
+private struct PlayerAssessmentCompleteBody: Encodable {
+    let idempotencyKey: String
+    enum CodingKeys: String, CodingKey { case idempotencyKey = "idempotency_key" }
+}
+private struct EmptyAssessmentBody: Encodable {}
+
+enum PlayerAssessmentAPI {
+    static func startPath(assessmentId: String) -> String {
+        "/api/v1/education/assessments/\(assessmentId)/attempts"
+    }
+    static func nextQuestionPath(attemptId: String) -> String {
+        "/api/v1/education/assessment-attempts/\(attemptId)/next-question"
+    }
+    static func answerPath(attemptId: String) -> String {
+        "/api/v1/education/assessment-attempts/\(attemptId)/answers"
+    }
+    static func completePath(attemptId: String) -> String {
+        "/api/v1/education/assessment-attempts/\(attemptId)/complete"
+    }
+
+    @MainActor
+    static func start(assessmentId: String, locale: String, using auth: AuthManager) async throws -> PlayerAssessmentAttempt {
+        try await auth.authenticatedPost(
+            path: startPath(assessmentId: assessmentId),
+            body: PlayerAssessmentStartBody(locale: locale)
+        )
+    }
+
+    @MainActor
+    static func nextQuestion(attemptId: String, using auth: AuthManager) async throws -> PlayerIssuedQuestion? {
+        try await auth.authenticatedPost(
+            path: nextQuestionPath(attemptId: attemptId), body: EmptyAssessmentBody()
+        )
+    }
+
+    @MainActor
+    static func answer(
+        attemptId: String, issuedQuestionId: String, selectedOptionId: Int?,
+        answerText: String?, idempotencyKey: String, using auth: AuthManager
+    ) async throws -> PlayerAssessmentAnswerResult {
+        try await auth.authenticatedPost(
+            path: answerPath(attemptId: attemptId),
+            body: PlayerAssessmentAnswerBody(
+                issuedQuestionId: issuedQuestionId,
+                selectedOptionId: selectedOptionId,
+                answerText: answerText,
+                idempotencyKey: idempotencyKey
+            )
+        )
+    }
+
+    @MainActor
+    static func complete(attemptId: String, idempotencyKey: String, using auth: AuthManager) async throws -> PlayerAssessmentOutcome {
+        try await auth.authenticatedPost(
+            path: completePath(attemptId: attemptId),
+            body: PlayerAssessmentCompleteBody(idempotencyKey: idempotencyKey)
+        )
+    }
+}
+
 // Education Center data layer.
 //
 // Endpoint mapping:

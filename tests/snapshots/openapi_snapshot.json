@@ -14409,6 +14409,236 @@
         }
       }
     },
+    "/api/v1/education/assessments/{assessment_id}/attempts": {
+      "post": {
+        "tags": [
+          "education"
+        ],
+        "summary": "Start Assessment Attempt",
+        "operationId": "start_assessment_attempt_api_v1_education_assessments__assessment_id__attempts_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentStartRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentAttemptResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/education/assessment-attempts/{attempt_id}/next-question": {
+      "post": {
+        "tags": [
+          "education"
+        ],
+        "summary": "Issue Adaptive Question",
+        "operationId": "issue_adaptive_question_api_v1_education_assessment_attempts__attempt_id__next_question_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/IssuedQuestionResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Issue Adaptive Question Api V1 Education Assessment Attempts  Attempt Id  Next Question Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/education/assessment-attempts/{attempt_id}/answers": {
+      "post": {
+        "tags": [
+          "education"
+        ],
+        "summary": "Answer Assessment Question",
+        "operationId": "answer_assessment_question_api_v1_education_assessment_attempts__attempt_id__answers_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentAnswerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentAnswerResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/education/assessment-attempts/{attempt_id}/complete": {
+      "post": {
+        "tags": [
+          "education"
+        ],
+        "summary": "Complete Assessment Attempt",
+        "operationId": "complete_assessment_attempt_api_v1_education_assessment_attempts__attempt_id__complete_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentCompleteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentOutcomeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/competency/my-competencies": {
       "get": {
         "tags": [
@@ -42646,13 +42876,39 @@
           {
             "name": "module_prefix",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
-              "description": "Quiz title prefix identifying the module (required)",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Legacy quiz title prefix",
               "title": "Module Prefix"
             },
-            "description": "Quiz title prefix identifying the module (required)"
+            "description": "Legacy quiz title prefix"
+          },
+          {
+            "name": "assessment_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Canonical LessonAssessment identifier",
+              "title": "Assessment Id"
+            },
+            "description": "Canonical LessonAssessment identifier"
           },
           {
             "name": "time_limit",
@@ -48713,6 +48969,18 @@
             "type": "integer",
             "title": "Question Id"
           },
+          "issued_question_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued Question Id"
+          },
           "selected_option_id": {
             "type": "integer",
             "title": "Selected Option Id"
@@ -48724,6 +48992,17 @@
           "time_spent_seconds": {
             "type": "number",
             "title": "Time Spent Seconds"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
           }
         },
         "type": "object",
@@ -48947,6 +49226,153 @@
         "title": "ApplyCouponRequest",
         "description": "Request schema for applying a coupon"
       },
+      "AssessmentAnswerRequest": {
+        "properties": {
+          "issued_question_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Issued Question Id"
+          },
+          "selected_option_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Option Id"
+          },
+          "answer_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Text"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "issued_question_id",
+          "idempotency_key"
+        ],
+        "title": "AssessmentAnswerRequest"
+      },
+      "AssessmentAnswerResponse": {
+        "properties": {
+          "issued_question_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Issued Question Id"
+          },
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted"
+          },
+          "is_correct": {
+            "type": "boolean",
+            "title": "Is Correct"
+          },
+          "points_earned": {
+            "type": "integer",
+            "title": "Points Earned"
+          }
+        },
+        "type": "object",
+        "required": [
+          "issued_question_id",
+          "accepted",
+          "is_correct",
+          "points_earned"
+        ],
+        "title": "AssessmentAnswerResponse"
+      },
+      "AssessmentAttemptResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "track_release_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Track Release Id"
+          },
+          "lesson_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lesson Id"
+          },
+          "lesson_assessment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lesson Assessment Id"
+          },
+          "quiz_revision": {
+            "type": "integer",
+            "title": "Quiz Revision"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale"
+          },
+          "delivery_mode": {
+            "type": "string",
+            "title": "Delivery Mode"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/IssuedQuestionResponse"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "track_release_id",
+          "lesson_id",
+          "lesson_assessment_id",
+          "quiz_revision",
+          "locale",
+          "delivery_mode",
+          "status",
+          "questions"
+        ],
+        "title": "AssessmentAttemptResponse"
+      },
+      "AssessmentCompleteRequest": {
+        "properties": {
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "idempotency_key"
+        ],
+        "title": "AssessmentCompleteRequest"
+      },
       "AssessmentHistoryResponse": {
         "properties": {
           "id": {
@@ -49006,6 +49432,98 @@
         ],
         "title": "AssessmentHistoryResponse",
         "description": "Assessment history entry"
+      },
+      "AssessmentOutcomeResponse": {
+        "properties": {
+          "attempt_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Attempt Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "total_questions": {
+            "type": "integer",
+            "title": "Total Questions"
+          },
+          "answered_questions": {
+            "type": "integer",
+            "title": "Answered Questions"
+          },
+          "correct_answers": {
+            "type": "integer",
+            "title": "Correct Answers"
+          },
+          "total_points": {
+            "type": "integer",
+            "title": "Total Points"
+          },
+          "earned_points": {
+            "type": "integer",
+            "title": "Earned Points"
+          },
+          "score_percent": {
+            "type": "number",
+            "title": "Score Percent"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "xp_awarded": {
+            "type": "integer",
+            "title": "Xp Awarded"
+          },
+          "track_release_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Track Release Id"
+          },
+          "lesson_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lesson Id"
+          },
+          "lesson_assessment_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lesson Assessment Id"
+          },
+          "quiz_revision": {
+            "type": "integer",
+            "title": "Quiz Revision"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale"
+          },
+          "provenance": {
+            "type": "object",
+            "title": "Provenance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "attempt_id",
+          "status",
+          "total_questions",
+          "answered_questions",
+          "correct_answers",
+          "total_points",
+          "earned_points",
+          "score_percent",
+          "passed",
+          "xp_awarded",
+          "track_release_id",
+          "lesson_id",
+          "lesson_assessment_id",
+          "quiz_revision",
+          "locale",
+          "provenance"
+        ],
+        "title": "AssessmentOutcomeResponse"
       },
       "AssessmentResponse": {
         "properties": {
@@ -49177,6 +49695,17 @@
         ],
         "title": "AssessmentResponse",
         "description": "Response model for assessment"
+      },
+      "AssessmentStartRequest": {
+        "properties": {
+          "locale": {
+            "type": "string",
+            "title": "Locale",
+            "default": "en"
+          }
+        },
+        "type": "object",
+        "title": "AssessmentStartRequest"
       },
       "AssessmentVariantResponse": {
         "properties": {
@@ -60143,6 +60672,71 @@
         "title": "InvoiceRequestCreate",
         "description": "Request body for creating an invoice request"
       },
+      "IssuedOptionResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "order": {
+            "type": "integer",
+            "title": "Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "order"
+        ],
+        "title": "IssuedOptionResponse"
+      },
+      "IssuedQuestionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "sequence": {
+            "type": "integer",
+            "title": "Sequence"
+          },
+          "question_type": {
+            "type": "string",
+            "title": "Question Type"
+          },
+          "points": {
+            "type": "integer",
+            "title": "Points"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/IssuedOptionResponse"
+            },
+            "type": "array",
+            "title": "Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sequence",
+          "question_type",
+          "points",
+          "text",
+          "options"
+        ],
+        "title": "IssuedQuestionResponse"
+      },
       "JobBoardPosition": {
         "properties": {
           "id": {
@@ -70514,6 +71108,23 @@
             "type": "integer",
             "title": "Session Duration Seconds",
             "default": 180
+          },
+          "assessment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessment Id"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale",
+            "default": "en"
           }
         },
         "type": "object",

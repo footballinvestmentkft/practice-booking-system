@@ -135,4 +135,64 @@ final class PlayerIdentityContractTests: XCTestCase {
         XCTAssertEqual(curriculum.modules.first?.lessons.first?.assessments.first?.variants.first?.quizId, 12)
         XCTAssertEqual(PlayerEducationAPI.tracksPath, "/api/v1/education/programs/LFA_FOOTBALL_PLAYER/tracks")
     }
+
+    func testCanonicalPlayerAssessmentContractPreservesReleaseAndIssuedSnapshotIdentity() throws {
+        let json = """
+        {
+          "id": "attempt-1",
+          "track_release_id": "release-3",
+          "lesson_id": "lesson-7",
+          "lesson_assessment_id": "assessment-2",
+          "quiz_revision": 4,
+          "locale": "en-GB",
+          "delivery_mode": "ADAPTIVE",
+          "status": "IN_PROGRESS",
+          "questions": [{
+            "id": "issued-9", "sequence": 1,
+            "question_type": "MULTIPLE_CHOICE", "points": 2,
+            "text": "Which option?",
+            "options": [{"id": 31, "text": "Option A", "order": 1}]
+          }]
+        }
+        """.data(using: .utf8)!
+
+        let attempt = try JSONDecoder().decode(PlayerAssessmentAttempt.self, from: json)
+
+        XCTAssertEqual(attempt.trackReleaseId, "release-3")
+        XCTAssertEqual(attempt.lessonAssessmentId, "assessment-2")
+        XCTAssertEqual(attempt.quizRevision, 4)
+        XCTAssertEqual(attempt.questions.first?.id, "issued-9")
+        XCTAssertEqual(attempt.questions.first?.options.first?.id, 31)
+        XCTAssertEqual(
+            PlayerAssessmentAPI.answerPath(attemptId: "attempt-1"),
+            "/api/v1/education/assessment-attempts/attempt-1/answers"
+        )
+    }
+
+    func testCanonicalPlayerAssessmentOutcomeDecodesImmutableProvenance() throws {
+        let json = """
+        {
+          "attempt_id": "attempt-1", "status": "COMPLETED",
+          "total_questions": 10, "answered_questions": 10,
+          "correct_answers": 1, "total_points": 10, "earned_points": 1,
+          "score_percent": 10.0, "passed": false, "xp_awarded": 0,
+          "track_release_id": "release-3", "lesson_id": "lesson-7",
+          "lesson_assessment_id": "assessment-2", "quiz_revision": 4,
+          "locale": "en-GB",
+          "provenance": {"issued_question_snapshot_hash": "abc123"}
+        }
+        """.data(using: .utf8)!
+
+        let outcome = try JSONDecoder().decode(PlayerAssessmentOutcome.self, from: json)
+
+        XCTAssertEqual(outcome.totalQuestions, 10)
+        XCTAssertEqual(outcome.answeredQuestions, 10)
+        XCTAssertEqual(outcome.scorePercent, 10.0)
+        XCTAssertEqual(outcome.xpAwarded, 0)
+        XCTAssertEqual(outcome.quizRevision, 4)
+        XCTAssertEqual(
+            outcome.provenance["issued_question_snapshot_hash"],
+            .string("abc123")
+        )
+    }
 }

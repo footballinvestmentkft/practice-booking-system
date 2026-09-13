@@ -1,6 +1,7 @@
 """Adaptive Learning web routes — entry page, session page, session lifecycle (AL-3)."""
 from datetime import datetime, timezone
 from pathlib import Path
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -14,6 +15,7 @@ from ...models.quiz import ALSessionStatus, AdaptiveLearningSession, ALAnswerLog
 from ...models.user import User
 from ...models.xp_transaction import XPTransaction
 from ...services.adaptive_learning import AdaptiveLearningService
+from ...services.assessment_integrity_service import AssessmentIntegrityError, AssessmentIntegrityService
 from ...services.authorization_policy import AuthorizationPolicy
 from ...services.gamification.xp_service import award_xp
 from .helpers import require_student_onboarding
@@ -284,7 +286,8 @@ _VALID_LANGUAGES = {"en", "hu"}
 async def al_session_start(
     request: Request,
     category: str = Query("LESSON", description="QuizCategory value for this session"),
-    module_prefix: str = Query(..., description="Quiz title prefix identifying the module (required)"),
+    module_prefix: str | None = Query(None, description="Legacy quiz title prefix"),
+    assessment_id: UUID | None = Query(None, description="Canonical LessonAssessment identifier"),
     time_limit: int = Query(180, description="Session time limit in seconds (60, 180, or 300)"),
     language: str = Query("en", description="Session language ('en' or 'hu')"),
     force_new: bool = Query(False, description="Retire any active session and create a fresh one"),
@@ -303,6 +306,35 @@ async def al_session_start(
     guard = require_student_onboarding(user)
     if guard:
         return JSONResponse({"error": "onboarding required"}, status_code=403)
+
+    if isinstance(assessment_id, UUID):
+        service = AssessmentIntegrityService(db)
+        try:
+            attempt = service.start_attempt(
+                user=user, assessment_id=assessment_id, locale=language,
+            )
+            if attempt.delivery_mode != "ADAPTIVE":
+                raise AssessmentIntegrityError("NOT_ADAPTIVE_ATTEMPT")
+            session = db.query(AdaptiveLearningSession).filter_by(
+                assessment_attempt_id=attempt.id
+            ).one()
+            session.session_time_limit_seconds = time_limit
+            session.session_start_time = session.session_start_time or datetime.now(timezone.utc)
+            db.commit()
+            return JSONResponse({
+                "session_id": session.id, "assessment_attempt_id": str(attempt.id),
+                "resumed": len(attempt.issued_questions) > 0,
+                "category": session.category.value, "module_prefix": None,
+                "language": session.language,
+                "started_at": session.session_start_time.isoformat(),
+                "time_limit_seconds": time_limit,
+                "time_remaining_seconds": time_limit,
+                "current_score": attempt.correct_answers * 2 - attempt.answered_questions,
+                "questions_presented": attempt.answered_questions,
+            })
+        except AssessmentIntegrityError as exc:
+            db.rollback()
+            return JSONResponse({"error": exc.code}, status_code=403)
 
     if not module_prefix or not module_prefix.strip():
         return JSONResponse({"error": "module_prefix is required"}, status_code=422)
@@ -475,9 +507,30 @@ async def al_session_next_question(
     if guard:
         return JSONResponse({"error": "onboarding required"}, status_code=403)
 
-    _, err = _session_guard(db, session_id, user.id)
+    session, err = _session_guard(db, session_id, user.id)
     if err:
         return err
+
+    if isinstance(session.assessment_attempt_id, UUID):
+        service = AssessmentIntegrityService(db)
+        try:
+            issued = service.issue_next_question(
+                user=user, attempt_id=session.assessment_attempt_id,
+            )
+            db.commit()
+            if issued is None:
+                return JSONResponse({"session_complete": True, "reason": "pool_exhausted"})
+            data = service.public_question(issued)
+            return JSONResponse({
+                "id": issued.source_question_id,
+                "issued_question_id": data["id"],
+                "text": data["text"], "type": data["question_type"],
+                "options": data["options"], "difficulty": session.target_difficulty,
+                "session_time_remaining": session.session_time_limit_seconds,
+            })
+        except AssessmentIntegrityError as exc:
+            db.rollback()
+            return JSONResponse({"error": exc.code}, status_code=400)
 
     # Parse client-tracked exclude list
     seen_ids: set[int] = set()
@@ -509,7 +562,7 @@ async def al_session_answer(
     if guard:
         return JSONResponse({"error": "onboarding required"}, status_code=403)
 
-    _, err = _session_guard(db, session_id, user.id)
+    session, err = _session_guard(db, session_id, user.id)
     if err:
         return err
 
@@ -519,6 +572,34 @@ async def al_session_answer(
     time_spent: float = float(body.get("time_spent_seconds", 30.0))
     timed_out: bool = bool(body.get("timed_out", False))
     presented_option_ids: list = body.get("presented_option_ids") or []
+
+    if isinstance(session.assessment_attempt_id, UUID):
+        issued_question_id = body.get("issued_question_id")
+        idempotency_key = body.get("idempotency_key")
+        if not issued_question_id or not idempotency_key:
+            return JSONResponse(
+                {"error": "issued_question_id and idempotency_key required"}, status_code=422
+            )
+        service = AssessmentIntegrityService(db)
+        try:
+            row = service.answer_question(
+                user=user, attempt_id=session.assessment_attempt_id,
+                issued_question_id=issued_question_id,
+                selected_option_id=None if timed_out else selected_option_id,
+                idempotency_key=idempotency_key,
+            )
+            db.commit()
+            return JSONResponse({
+                "correct": bool(row.is_correct), "timed_out": timed_out,
+                "explanation": row.question_snapshot.get("explanation") or "",
+                "score_delta": 1 if row.is_correct else -1,
+                "score": row.attempt.correct_answers * 2 - row.attempt.answered_questions,
+                "new_target_difficulty": session.target_difficulty,
+                "performance_trend": session.performance_trend,
+            })
+        except AssessmentIntegrityError as exc:
+            db.rollback()
+            return JSONResponse({"error": exc.code}, status_code=400)
 
     if not question_id:
         return JSONResponse({"error": "question_id required"}, status_code=422)
@@ -631,6 +712,24 @@ async def al_session_complete(
     )
     if not AuthorizationPolicy.can_access_adaptive_session(user, session):
         return JSONResponse({"error": "session not found"}, status_code=404)
+    if isinstance(session.assessment_attempt_id, UUID):
+        service = AssessmentIntegrityService(db)
+        try:
+            attempt = service.complete_attempt(
+                user=user, attempt_id=session.assessment_attempt_id,
+                idempotency_key=f"adaptive:{session.id}:complete",
+            )
+            db.commit()
+            return JSONResponse({
+                "session_id": session_id,
+                "questions_presented": attempt.total_questions,
+                "questions_correct": attempt.correct_answers,
+                "xp_earned": attempt.xp_awarded,
+                "accuracy_pct": attempt.score_percent or 0.0,
+            })
+        except AssessmentIntegrityError as exc:
+            db.rollback()
+            return JSONResponse({"error": exc.code}, status_code=400)
     if session.ended_at is not None:
         return JSONResponse(
             {"error": "session already completed", "session_complete": True},

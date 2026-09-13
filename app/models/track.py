@@ -248,6 +248,7 @@ class EducationProgressEvent(Base):
     lesson_assessment_id = Column(UUID(as_uuid=True), ForeignKey("lesson_assessments.id", ondelete="RESTRICT"), nullable=False)
     quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="RESTRICT"), nullable=False)
     quiz_attempt_id = Column(Integer, ForeignKey("quiz_attempts.id", ondelete="RESTRICT"), nullable=False)
+    assessment_attempt_id = Column(UUID(as_uuid=True), ForeignKey("assessment_attempts.id", ondelete="RESTRICT"), nullable=True, unique=True)
     quiz_revision = Column(Integer, nullable=False)
     locale = Column(String(35), nullable=False)
     event_type = Column(String(30), nullable=False, default="ASSESSMENT_COMPLETED")

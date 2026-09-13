@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, SmallInteger, String, Text, Boolean, DateTime, ForeignKey, Enum as SQLEnum, Float, UniqueConstraint
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -128,11 +128,13 @@ class QuizAttempt(Base):
     correct_answers = Column(Integer, nullable=False, default=0)
     xp_awarded = Column(Integer, nullable=False, default=0)
     passed = Column(Boolean, nullable=False, default=False)
+    assessment_attempt_id = Column(UUID(as_uuid=True), ForeignKey("assessment_attempts.id", ondelete="RESTRICT"), nullable=True, unique=True)
     
     # Relationships
     user = relationship("User")
     quiz = relationship("Quiz", back_populates="attempts")
     user_answers = relationship("QuizUserAnswer", back_populates="attempt", cascade="all, delete-orphan")
+    assessment_attempt = relationship("AssessmentAttempt")
 
 class QuizUserAnswer(Base):
     __tablename__ = "quiz_user_answers"
@@ -225,6 +227,7 @@ class AdaptiveLearningSession(Base):
     # NULL on legacy sessions; required for all new sessions via v2 flow
     module_prefix = Column(String(200), nullable=True)
     lesson_assessment_id = Column(ForeignKey("lesson_assessments.id", ondelete="RESTRICT"), nullable=True)
+    assessment_attempt_id = Column(UUID(as_uuid=True), ForeignKey("assessment_attempts.id", ondelete="RESTRICT"), nullable=True, unique=True)
 
     # Adaptive algorithm data
     target_difficulty = Column(Float, default=0.5)  # 0.0-1.0
