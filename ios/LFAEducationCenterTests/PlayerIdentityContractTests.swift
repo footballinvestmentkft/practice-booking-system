@@ -195,4 +195,28 @@ final class PlayerIdentityContractTests: XCTestCase {
             .string("abc123")
         )
     }
+    func testCanonicalPlayerProgressionContractDecodesSharedState() throws {
+        let json = """
+        {
+          "player_user_id": 7, "specialization_id": "LFA_FOOTBALL_PLAYER",
+          "xp": 125, "level": 1,
+          "skills": [{"key": "passing", "value": 72.0, "last_outcome_id": "outcome-1"}],
+          "achievements": [{
+            "key": "FIRST_PLAYER_ASSESSMENT_COMPLETED",
+            "badge_type": "first_quiz_completed", "title": "First Player Assessment Completed",
+            "earned_at": "2026-09-13T12:00:00Z"
+          }]
+        }
+        """.data(using: .utf8)!
+
+        let state = try JSONDecoder().decode(PlayerProgressionState.self, from: json)
+        XCTAssertEqual(state.specializationId, "LFA_FOOTBALL_PLAYER")
+        XCTAssertEqual(state.xp, 125)
+        XCTAssertEqual(state.skills.first?.key, "passing")
+        XCTAssertEqual(state.skills.first?.lastOutcomeId, "outcome-1")
+        XCTAssertEqual(state.achievements.first?.key, "FIRST_PLAYER_ASSESSMENT_COMPLETED")
+        XCTAssertEqual(PlayerProgressionAPI.statePath, "/api/v1/progression/player-state")
+        XCTAssertEqual(PlayerProgressionAPI.historyPath, "/api/v1/progression/player-history")
+    }
+
 }

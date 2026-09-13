@@ -2941,18 +2941,17 @@ def test_instructor_skills_form_renders(test_db: Session, client: TestClient):
     """
     instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
     student = _make_user(test_db, role=UserRole.STUDENT)
-    lic = UserLicense(
-        user_id=student.id,
-        specialization_type="LFA_FOOTBALL_PLAYER",
-        is_active=True,
-        onboarding_completed=True,
-        started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
-        football_skills={
-            "heading": 50.0, "shooting": 50.0, "crossing": 50.0,
-            "passing": 50.0, "dribbling": 50.0, "ball_control": 50.0,
-        },
+    entitlement = issue_football_player_entitlement(
+        test_db,
+        user=student,
+        payment_verified=True,
+        on_date=date.today(),
     )
-    test_db.add(lic)
+    lic = entitlement.license
+    lic.football_skills = {
+        "heading": 50.0, "shooting": 50.0, "crossing": 50.0,
+        "passing": 50.0, "dribbling": 50.0, "ball_control": 50.0,
+    }
     test_db.flush()
 
     app.dependency_overrides[get_current_user_web] = lambda: instructor
@@ -2984,18 +2983,17 @@ def test_instructor_skills_update_and_audit(test_db: Session, client: TestClient
     """
     instructor = _make_user(test_db, role=UserRole.INSTRUCTOR)
     student = _make_user(test_db, role=UserRole.STUDENT)
-    lic = UserLicense(
-        user_id=student.id,
-        specialization_type="LFA_FOOTBALL_PLAYER",
-        is_active=True,
-        onboarding_completed=True,
-        started_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
-        football_skills={
-            "heading": 50.0, "shooting": 50.0, "crossing": 50.0,
-            "passing": 50.0, "dribbling": 50.0, "ball_control": 50.0,
-        },
+    entitlement = issue_football_player_entitlement(
+        test_db,
+        user=student,
+        payment_verified=True,
+        on_date=date.today(),
     )
-    test_db.add(lic)
+    lic = entitlement.license
+    lic.football_skills = {
+        "heading": 50.0, "shooting": 50.0, "crossing": 50.0,
+        "passing": 50.0, "dribbling": 50.0, "ball_control": 50.0,
+    }
     test_db.flush()
 
     app.dependency_overrides[get_current_user_web] = lambda: instructor

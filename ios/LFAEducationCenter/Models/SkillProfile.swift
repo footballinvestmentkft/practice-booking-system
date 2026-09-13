@@ -48,3 +48,49 @@ struct SkillProfile: Decodable {
         case skills
     }
 }
+
+// Canonical PC5 projection. Values come from the same server-side progression
+// authority used by assessment and instructor skill commands.
+enum PlayerProgressionAPI {
+    static let statePath = "/api/v1/progression/player-state"
+    static let historyPath = "/api/v1/progression/player-history"
+}
+
+struct PlayerProgressionState: Decodable {
+    let playerUserId: Int
+    let specializationId: String
+    let xp: Int
+    let level: Int
+    let skills: [CanonicalPlayerSkill]
+    let achievements: [CanonicalPlayerAchievement]
+
+    enum CodingKeys: String, CodingKey {
+        case playerUserId = "player_user_id"
+        case specializationId = "specialization_id"
+        case xp, level, skills, achievements
+    }
+}
+
+struct CanonicalPlayerSkill: Decodable {
+    let key: String
+    let value: Double
+    let lastOutcomeId: String
+
+    enum CodingKeys: String, CodingKey {
+        case key, value
+        case lastOutcomeId = "last_outcome_id"
+    }
+}
+
+struct CanonicalPlayerAchievement: Decodable {
+    let key: String
+    let badgeType: String
+    let title: String
+    let earnedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case key, title
+        case badgeType = "badge_type"
+        case earnedAt = "earned_at"
+    }
+}

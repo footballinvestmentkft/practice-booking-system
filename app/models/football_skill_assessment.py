@@ -14,6 +14,7 @@ State Definitions:
   - ARCHIVED: Old assessment replaced by newer one (terminal state)
 """
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
@@ -87,6 +88,7 @@ class FootballSkillAssessment(Base):
     previous_status = Column(String(20), nullable=True)
     status_changed_at = Column(DateTime, nullable=True)
     status_changed_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    progression_outcome_id = Column(UUID(as_uuid=True), ForeignKey("player_progression_outcomes.id", ondelete="RESTRICT"), nullable=True, unique=True)
 
     # Relationships
     user_license = relationship("UserLicense", foreign_keys=[user_license_id])

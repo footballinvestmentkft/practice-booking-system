@@ -19,6 +19,8 @@ from ...models.project import ProjectEnrollment, ProjectEnrollmentStatus
 from ...models.user_progress import SpecializationProgress
 
 from .xp_service import calculate_user_stats, award_xp
+from app.services.player_identity_service import get_active_football_entitlement
+from app.services.player_progression_service import PlayerProgressionService
 
 def award_achievement(
     db: Session,
@@ -46,7 +48,29 @@ def award_achievement(
     Returns:
         UserAchievement object (existing or newly created)
     """
-    # Check if user already has this achievement
+    # Canonical Football Player achievements are materialized only by the PC5
+    # outcome authority. The legacy public function remains a compatibility bridge.
+    player = db.get(User, user_id)
+    if player is not None and get_active_football_entitlement(db, user_id=user_id) is not None:
+        canonical_key = f"LEGACY:{specialization_id or 'GLOBAL'}:{badge_type.value}"
+        PlayerProgressionService(db).apply_outcome(
+            player=player,
+            source_player_user_id=user_id,
+            source_type="LEGACY_ACHIEVEMENT_COMMAND",
+            source_id=canonical_key,
+            idempotency_key=f"legacy-achievement:{user_id}:{canonical_key}",
+            actor=player,
+            achievements=[{
+                "key": canonical_key, "badge_type": badge_type.value, "title": title,
+                "description": description, "icon": icon,
+            }],
+            provenance={"legacy_achievement_bridge": True, "semester_count": semester_count},
+            context={"requested_specialization_id": specialization_id},
+        )
+        db.commit()
+        return db.query(UserAchievement).filter_by(user_id=user_id, canonical_key=canonical_key).one()
+
+    # Check if user already has this legacy/non-Player achievement
     existing = db.query(UserAchievement).filter(
         UserAchievement.user_id == user_id,
         UserAchievement.badge_type == badge_type.value,

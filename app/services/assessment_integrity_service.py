@@ -17,8 +17,6 @@ from app.models.quiz import (
     AdaptiveLearningSession, ALSessionStatus, ContentStatus, QuestionType,
     QuizAnswerOption, QuizAttempt, QuizQuestion, QuizUserAnswer,
 )
-from app.models.gamification import UserStats
-from app.models.xp_transaction import XPTransaction
 from app.models.track import (
     EducationProgressEvent, LessonAssessment, LessonAssessmentQuiz, TrackRelease,
 )
@@ -27,6 +25,7 @@ from app.services.education_content_service import normalize_bcp47_locale
 from app.services.player_identity_service import (
     PlayerIdentityError, get_authorized_football_player_context,
 )
+from app.services.player_progression_service import PlayerProgressionService
 
 
 PLAYER_PROGRAM_ID = "LFA_FOOTBALL_PLAYER"
@@ -341,29 +340,6 @@ class AssessmentIntegrityService:
                 is_correct=bool(row.is_correct),
             ))
 
-        xp_amount = int((attempt.content_provenance or {}).get("xp_reward", 0)) if attempt.passed else 0
-        if xp_amount:
-            xp_key = f"assessment:{attempt.id}:xp"
-            existing_xp = self.db.query(XPTransaction).filter_by(idempotency_key=xp_key).one_or_none()
-            if existing_xp is None:
-                locked_user = self.db.query(User).filter(User.id == user.id).with_for_update().one()
-                locked_user.xp_balance = (locked_user.xp_balance or 0) + xp_amount
-                self.db.add(XPTransaction(
-                    user_id=user.id, transaction_type="ASSESSMENT_COMPLETION",
-                    amount=xp_amount, balance_after=locked_user.xp_balance,
-                    description=f"Assessment completed: {attempt.quiz.title}",
-                    idempotency_key=xp_key,
-                ))
-                stats = self.db.query(UserStats).filter_by(user_id=user.id).with_for_update().one_or_none()
-                if stats is None:
-                    stats = UserStats(user_id=user.id, total_xp=xp_amount, level=max(1, xp_amount // 1000))
-                    self.db.add(stats)
-                else:
-                    stats.total_xp = (stats.total_xp or 0) + xp_amount
-                    stats.level = max(1, stats.total_xp // 1000)
-            attempt.xp_awarded = xp_amount
-        legacy.xp_awarded = attempt.xp_awarded
-
         adaptive = self.db.query(AdaptiveLearningSession).filter_by(assessment_attempt_id=attempt.id).one_or_none()
         if adaptive is not None:
             adaptive.ended_at = now
@@ -390,6 +366,12 @@ class AssessmentIntegrityService:
             "scoring_version": "PC4-1",
         })
         attempt.content_provenance = provenance
+
+        progression = PlayerProgressionService(self.db).apply_assessment_outcome(
+            player=user, attempt=attempt, actor=user,
+        )
+        attempt.xp_awarded = progression.xp_delta
+        legacy.xp_awarded = progression.xp_delta
         self.db.add(EducationProgressEvent(
             user_id=user.id,
             track_id=attempt.release.track_id,
@@ -399,6 +381,7 @@ class AssessmentIntegrityService:
             quiz_id=attempt.quiz_id,
             quiz_attempt_id=legacy.id,
             assessment_attempt_id=attempt.id,
+            progression_outcome_id=progression.id,
             quiz_revision=attempt.quiz_revision,
             locale=attempt.locale,
             event_type="ASSESSMENT_COMPLETED",

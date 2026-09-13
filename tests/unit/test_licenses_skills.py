@@ -42,6 +42,7 @@ Mock strategy:
 import asyncio
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
+from uuid import uuid4
 from fastapi import HTTPException
 
 from app.api.api_v1.endpoints.licenses.skills import (
@@ -53,6 +54,7 @@ from app.models.user import UserRole
 
 _BASE = "app.api.api_v1.endpoints.licenses.skills"
 _AUDIT = f"{_BASE}.AuditService"
+_PROGRESSION = f"{_BASE}.PlayerProgressionService"
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -65,11 +67,13 @@ def _user(role: UserRole = UserRole.INSTRUCTOR, user_id: int = 42):
     return u
 
 
-def _license(user_id=42, spec="LFA_PLAYER_PRE", skills=None, updated_by=None):
+def _license(user_id=42, spec="LFA_FOOTBALL_PLAYER", skills=None, updated_by=None):
     lic = MagicMock()
     lic.id = 1
     lic.user_id = user_id
     lic.specialization_type = spec
+    lic.canonical_program_id = spec if spec == "LFA_FOOTBALL_PLAYER" else None
+    lic.user = _user(UserRole.STUDENT, user_id)
     lic.football_skills = skills
     lic.skills_updated_by = updated_by
     lic.skills_last_updated_at = None
@@ -273,12 +277,13 @@ class TestUpdateFootballSkills:
     def test_happy_path_commits_and_logs_audit(self):
         lic = _license(user_id=42)
         db = _db_put(lic)
-        with patch(_AUDIT) as mock_audit:
+        with patch(_AUDIT) as mock_audit, patch(_PROGRESSION) as progression:
+            progression.return_value.apply_outcome.return_value.id = uuid4()
             result = asyncio.run(update_football_skills(
                 license_id=1, skills_data=_all_skills(),
                 current_user=_user(role=UserRole.INSTRUCTOR, user_id=42), db=db,
             ))
-        db.commit.assert_called_once()
+        progression.return_value.apply_outcome.assert_called_once()
         mock_audit.return_value.log.assert_called_once()
         assert result["success"] is True
 
@@ -286,18 +291,20 @@ class TestUpdateFootballSkills:
         lic = _license(user_id=42)
         db = _db_put(lic)
         skills = {**_all_skills(), "heading": 80.567}
-        with patch(_AUDIT):
-            asyncio.run(update_football_skills(
+        with patch(_AUDIT), patch(_PROGRESSION) as progression:
+            progression.return_value.apply_outcome.return_value.id = uuid4()
+            result = asyncio.run(update_football_skills(
                 license_id=1, skills_data=skills,
                 current_user=_user(role=UserRole.INSTRUCTOR), db=db,
             ))
-        assert lic.football_skills["heading"] == 80.6
+        assert result["skills"]["heading"] == 80.6
 
     def test_instructor_notes_stored_when_provided(self):
         lic = _license(user_id=42)
         db = _db_put(lic)
         skills = {**_all_skills(), "instructor_notes": "Good progress"}
-        with patch(_AUDIT):
+        with patch(_AUDIT), patch(_PROGRESSION) as progression:
+            progression.return_value.apply_outcome.return_value.id = uuid4()
             asyncio.run(update_football_skills(
                 license_id=1, skills_data=skills,
                 current_user=_user(role=UserRole.INSTRUCTOR), db=db,

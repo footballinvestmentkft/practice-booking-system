@@ -298,8 +298,11 @@ class TestInstructorUpdateStudentSkills:
 
         with patch(f"{_BASE}.templates") as mock_tmpl, \
              patch(f"{_BASE}.AuditService") as mock_audit_svc, \
-             patch(f"{_BASE}.AuditAction"):
+             patch(f"{_BASE}.AuditAction"), \
+             patch(f"{_BASE}.PlayerProgressionService") as mock_progression:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
+            mock_audit_svc.return_value.log.side_effect = lambda **_: db.commit()
+            mock_progression.return_value.apply_outcome.return_value.id = "outcome-1"
             _run(instructor_update_student_skills(
                 request=_req(), student_id=7, license_id=1, db=db, user=user,
                 **_VALID_SKILLS,
@@ -324,9 +327,12 @@ class TestInstructorUpdateStudentSkills:
         db.query.return_value.filter.return_value.first.side_effect = [student, license]
 
         with patch(f"{_BASE}.templates") as mock_tmpl, \
-             patch(f"{_BASE}.AuditService"), \
-             patch(f"{_BASE}.AuditAction"):
+             patch(f"{_BASE}.AuditService") as mock_audit_svc, \
+             patch(f"{_BASE}.AuditAction"), \
+             patch(f"{_BASE}.PlayerProgressionService") as mock_progression:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
+            mock_audit_svc.return_value.log.side_effect = lambda **_: db.commit()
+            mock_progression.return_value.apply_outcome.return_value.id = "outcome-2"
             _run(instructor_update_student_skills(
                 request=_req(), student_id=7, license_id=1, db=db, user=user,
                 **_VALID_SKILLS_NO_NOTES,

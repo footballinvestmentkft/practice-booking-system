@@ -22,6 +22,21 @@ from app.services.canonical_policy import CanonicalProgram, resolve_program_id
 logger = logging.getLogger(__name__)
 
 
+def _is_canonical_player(specialization: str) -> bool:
+    return (
+        resolve_program_id(specialization).canonical_program
+        is CanonicalProgram.LFA_FOOTBALL_PLAYER
+    )
+
+
+def _player_sync_denied() -> Dict[str, Any]:
+    return {
+        "success": False,
+        "message": "Canonical Player progression is outcome-driven; legacy sync is disabled",
+        "action": "denied",
+    }
+
+
 class ProgressLicenseSyncService:
     """Service to synchronize SpecializationProgress and UserLicense"""
 
@@ -48,6 +63,8 @@ class ProgressLicenseSyncService:
             Dict with sync result
         """
         specialization = specialization.upper()
+        if _is_canonical_player(specialization):
+            return _player_sync_denied()
 
         # Get source of truth (SpecializationProgress)
         progress = self.db.query(SpecializationProgress).filter(
@@ -164,6 +181,8 @@ class ProgressLicenseSyncService:
             Dict with sync result
         """
         specialization = specialization.upper()
+        if _is_canonical_player(specialization):
+            return _player_sync_denied()
 
         # Get source of truth (UserLicense)
         license = self.db.query(UserLicense).filter(
@@ -255,6 +274,9 @@ class ProgressLicenseSyncService:
         Returns:
             List of desync issues with details
         """
+        if specialization and _is_canonical_player(specialization):
+            return []
+
         issues = []
 
         # Query all users with both Progress and License
@@ -281,6 +303,8 @@ class ProgressLicenseSyncService:
         results = query.all()
 
         for row in results:
+            if _is_canonical_player(row.specialization_id):
+                continue
             if row.progress_level != row.license_level:
                 issues.append({
                     "user_id": row.student_id,
@@ -313,6 +337,8 @@ class ProgressLicenseSyncService:
             orphan_progress = orphan_progress.filter(SpecializationProgress.specialization_id == specialization.upper())
 
         for row in orphan_progress.all():
+            if _is_canonical_player(row.specialization_id):
+                continue
             issues.append({
                 "user_id": row.student_id,
                 "user_email": row.email,
@@ -345,6 +371,8 @@ class ProgressLicenseSyncService:
             orphan_license = orphan_license.filter(UserLicense.specialization_type == specialization.upper())
 
         for row in orphan_license.all():
+            if _is_canonical_player(row.specialization_type):
+                continue
             issues.append({
                 "user_id": row.user_id,
                 "user_email": row.email,
