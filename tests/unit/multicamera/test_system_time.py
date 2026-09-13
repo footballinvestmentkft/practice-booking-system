@@ -92,7 +92,7 @@ class TestSystemTimeResponse:
         """ST-09: OpenAPI route count == 922 (932 baseline + 1 new)."""
         schema = client.app.openapi()
         paths = len(schema.get("paths", {}))
-        assert paths == 922, f"Expected 922 routes, got {paths}"
+        assert paths == 926, f"Expected 926 routes, got {paths}"
 
     def test_st_10_openapi_presence(self, client):
         """ST-10: /api/v1/system/time in OpenAPI schema."""

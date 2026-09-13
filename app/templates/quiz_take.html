@@ -210,6 +210,25 @@
             <input type="hidden" name="attempt_id" value="{{ attempt_id }}">
             <input type="hidden" name="time_spent" id="timeSpent" value="0">
 
+            {% if canonical_questions is not none %}
+            {% for question in canonical_questions %}
+            <div class="question">
+                <div class="question-text">{{ loop.index }}. {{ question.text }}</div>
+                <div class="options">
+                    {% for option in question.options|sort(attribute='order') %}
+                    <div class="option">
+                        <input type="radio"
+                               name="issued_{{ question.id }}"
+                               value="{{ option.id }}"
+                               id="q{{ question.id }}_opt{{ option.id }}"
+                               required>
+                        <label for="q{{ question.id }}_opt{{ option.id }}">{{ option.text }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
             {% for question in quiz.questions|sort(attribute='order_index') %}
             <div class="question">
                 <div class="question-text">{{ loop.index }}. {{ question.question_text }}</div>
@@ -227,6 +246,7 @@
                 </div>
             </div>
             {% endfor %}
+            {% endif %}
 
             <button type="submit" class="submit-btn" id="submitBtn">✓ Submit Quiz</button>
         </form>

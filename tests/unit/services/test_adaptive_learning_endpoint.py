@@ -234,7 +234,7 @@ class TestSubmitAnswer:
 
     def test_question_not_found_returns_404(self):
         """SA-01: question not found → 404."""
-        db = _seq_db(None)  # first query (QuizQuestion) returns None
+        db = _seq_db(None, None)  # legacy session then QuizQuestion not found
         req = self._req()
         with pytest.raises(HTTPException) as exc:
             with patch(f"{_BASE}.AdaptiveLearningService"):
@@ -253,7 +253,7 @@ class TestSubmitAnswer:
         session.questions_correct = 3
         session.xp_earned = 50
 
-        db = _seq_db(question, session)  # q1=QuizQuestion, q2=AdaptiveLearningSession
+        db = _seq_db(session, question, session)  # canonical check, question, final stats
         req = self._req(option_id=None)  # No selected_option_id
 
         with patch(f"{_BASE}.AdaptiveLearningService") as MockSvc:
@@ -281,7 +281,7 @@ class TestSubmitAnswer:
         session.questions_correct = 2
         session.xp_earned = 30
 
-        db = _seq_db(question, session)
+        db = _seq_db(session, question, session)
         req = self._req(text="OFFSIDE")  # correct (case-insensitive)
 
         with patch(f"{_BASE}.AdaptiveLearningService") as MockSvc:
@@ -307,7 +307,7 @@ class TestSubmitAnswer:
         session.questions_correct = 0
         session.xp_earned = 0
 
-        db = _seq_db(question, session)
+        db = _seq_db(session, question, session)
         req = self._req(text="handball")  # wrong answer
 
         with patch(f"{_BASE}.AdaptiveLearningService") as MockSvc:
@@ -329,7 +329,7 @@ class TestSubmitAnswer:
         session.questions_correct = 0
         session.xp_earned = 0
 
-        db = _seq_db(question, session)
+        db = _seq_db(session, question, session)
         req = self._req()
 
         with patch(f"{_BASE}.AdaptiveLearningService") as MockSvc:
@@ -346,7 +346,7 @@ class TestSubmitAnswer:
         question.question_type = QuestionType.MULTIPLE_CHOICE
         question.explanation = ""
 
-        db = _seq_db(question, None)  # session not found
+        db = _seq_db(None, question, None)  # legacy session check, question, final stats
         req = self._req()
 
         with patch(f"{_BASE}.AdaptiveLearningService") as MockSvc:

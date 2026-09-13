@@ -326,8 +326,8 @@ class TestCSS21to23RouteConfirmations:
         """CSS-21: adding 2 card-studio routes raises count from 842 to 844."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 922, (
-            f"Expected 922 routes, got {len(paths)}"
+        assert len(paths) == 926, (
+            f"Expected 926 routes, got {len(paths)}"
         )
 
     def test_css_22_card_studio_route_registered(self):

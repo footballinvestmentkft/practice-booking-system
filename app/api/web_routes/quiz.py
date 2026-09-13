@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from pathlib import Path
 from datetime import datetime, timezone
+from uuid import UUID
 from typing import Optional
 
 from zoneinfo import ZoneInfo
@@ -21,9 +22,13 @@ from ...models.session import Session as SessionModel, SessionType
 from ...models.booking import Booking
 from ...models.attendance import Attendance
 from ...models.quiz import Quiz, QuizQuestion, QuizAnswerOption, QuizAttempt, QuizUserAnswer, SessionQuiz
+from ...models.track import LessonAssessmentQuiz
 from ...models.gamification import UserStats
 from ...services.player_participation_service import (
     complete_virtual_session_participation,
+)
+from ...services.assessment_integrity_service import (
+    AssessmentIntegrityError, AssessmentIntegrityService,
 )
 
 # Setup templates
@@ -155,24 +160,51 @@ async def take_quiz(
                 detail="You must book this session before taking the quiz. Please enroll first!"
             )
 
-    # Check if user already has an active (incomplete) attempt
-    active_attempt = db.query(QuizAttempt).filter(
-        QuizAttempt.user_id == user.id,
-        QuizAttempt.quiz_id == quiz_id,
-        QuizAttempt.completed_at == None
-    ).first()
-
-    # If no active attempt, create one
-    if not active_attempt:
-        active_attempt = QuizAttempt(
-            user_id=user.id,
-            quiz_id=quiz_id,
-            started_at=datetime.now(timezone.utc),
-            total_questions=len(quiz.questions)
-        )
-        db.add(active_attempt)
-        db.commit()
-        db.refresh(active_attempt)
+    mappings = db.query(LessonAssessmentQuiz).filter_by(quiz_id=quiz_id).all()
+    if not isinstance(mappings, list):
+        mappings = []
+    canonical_attempt = None
+    canonical_questions = None
+    if mappings:
+        if len(mappings) != 1:
+            raise HTTPException(status_code=409, detail="ASSESSMENT_CONTEXT_REQUIRED")
+        service = AssessmentIntegrityService(db)
+        try:
+            canonical_attempt = service.start_attempt(
+                user=user, assessment_id=mappings[0].lesson_assessment_id,
+                locale=mappings[0].locale,
+            )
+            db.commit()
+        except AssessmentIntegrityError as exc:
+            db.rollback()
+            raise HTTPException(status_code=403, detail=exc.code) from exc
+        active_attempt = db.query(QuizAttempt).filter_by(
+            assessment_attempt_id=canonical_attempt.id
+        ).one()
+        canonical_questions = [
+            {
+                "id": str(row.id),
+                "text": row.question_snapshot.get("text"),
+                "options": row.option_snapshot,
+            }
+            for row in canonical_attempt.issued_questions
+        ]
+    else:
+        active_attempt = db.query(QuizAttempt).filter(
+            QuizAttempt.user_id == user.id,
+            QuizAttempt.quiz_id == quiz_id,
+            QuizAttempt.completed_at == None
+        ).first()
+        if not active_attempt:
+            active_attempt = QuizAttempt(
+                user_id=user.id,
+                quiz_id=quiz_id,
+                started_at=datetime.now(timezone.utc),
+                total_questions=len(quiz.questions)
+            )
+            db.add(active_attempt)
+            db.commit()
+            db.refresh(active_attempt)
 
     # Calculate remaining time
     elapsed_seconds = (datetime.now(timezone.utc) - active_attempt.started_at).total_seconds()
@@ -181,12 +213,18 @@ async def take_quiz(
 
     # If time expired, auto-submit with 0 score
     if remaining_seconds == 0:
-        active_attempt.completed_at = datetime.now(timezone.utc)
-        active_attempt.score = 0.0
-        active_attempt.correct_answers = 0
-        active_attempt.passed = False
-        active_attempt.xp_awarded = 0
-        active_attempt.time_spent_minutes = quiz.time_limit_minutes
+        if canonical_attempt is not None:
+            AssessmentIntegrityService(db).complete_attempt(
+                user=user, attempt_id=canonical_attempt.id,
+                idempotency_key=f"web:{active_attempt.id}:complete",
+            )
+        else:
+            active_attempt.completed_at = datetime.now(timezone.utc)
+            active_attempt.score = 0.0
+            active_attempt.correct_answers = 0
+            active_attempt.passed = False
+            active_attempt.xp_awarded = 0
+            active_attempt.time_spent_minutes = quiz.time_limit_minutes
         db.commit()
 
         return templates.TemplateResponse("quiz_result.html", {
@@ -214,8 +252,9 @@ async def take_quiz(
         "quiz": quiz,
         "session": session,
         "session_id": session_id,
-        "attempt_id": active_attempt.id,
-        "remaining_seconds": remaining_seconds
+            "attempt_id": active_attempt.id,
+            "remaining_seconds": remaining_seconds,
+            "canonical_questions": canonical_questions,
     })
 
 
@@ -292,12 +331,52 @@ async def submit_quiz(
     if not attempt:
         raise HTTPException(status_code=404, detail="Quiz attempt not found")
 
-    # Check if already completed
-    if attempt.completed_at:
+    # Legacy attempts reject replay. PC4 canonical completion is idempotent.
+    if attempt.completed_at and not isinstance(attempt.assessment_attempt_id, UUID):
         raise HTTPException(status_code=400, detail="Quiz already submitted")
 
     # Get form data
     form_data = await request.form()
+
+    if isinstance(attempt.assessment_attempt_id, UUID):
+        service = AssessmentIntegrityService(db)
+        try:
+            canonical = service._attempt(attempt.assessment_attempt_id, user)
+            if canonical.status == "IN_PROGRESS":
+                for issued in canonical.issued_questions:
+                    selected = form_data.get(f"issued_{issued.id}")
+                    if selected:
+                        service.answer_question(
+                            user=user, attempt_id=canonical.id,
+                            issued_question_id=issued.id,
+                            selected_option_id=int(selected),
+                            idempotency_key=f"web:{attempt.id}:question:{issued.source_question_id}",
+                        )
+            canonical = service.complete_attempt(
+                user=user, attempt_id=canonical.id,
+                idempotency_key=f"web:{attempt.id}:complete",
+            )
+            attempt.time_spent_minutes = time_spent
+            db.commit()
+        except AssessmentIntegrityError as exc:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=exc.code) from exc
+        canonical_session = None
+        if session_id and session_id not in {"", "None"}:
+            canonical_session = db.get(SessionModel, int(session_id))
+            if canonical_session and canonical_session.session_type == SessionType.virtual and canonical.passed:
+                complete_virtual_session_participation(
+                    db, player=user, session_id=canonical_session.id,
+                    notes=f"Auto-marked: canonical assessment completed with {canonical.score_percent}%",
+                    source="WEB_QUIZ",
+                )
+        return templates.TemplateResponse("quiz_result.html", {
+            "request": request, "user": user, "quiz": quiz, "session": canonical_session,
+            "session_id": session_id, "score": canonical.score_percent,
+            "passed": canonical.passed, "correct_count": canonical.correct_answers,
+            "total_questions": canonical.total_questions,
+            "xp_awarded": canonical.xp_awarded, "time_spent": time_spent,
+        })
 
     # Calculate score
     correct_count = 0

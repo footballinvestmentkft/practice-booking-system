@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -7,8 +8,9 @@ from datetime import datetime, timedelta, timezone
 from ....database import get_db
 from ....dependencies import get_current_user
 from ....models.user import User
-from ....models.quiz import QuizCategory, QuestionType, QuizQuestion, Quiz, AdaptiveLearningSession
+from ....models.quiz import QuizCategory, QuestionType, QuizQuestion, Quiz, QuizAnswerOption, AdaptiveLearningSession
 from ....services.adaptive_learning import AdaptiveLearningService
+from ....services.assessment_integrity_service import AssessmentIntegrityError, AssessmentIntegrityService
 
 router = APIRouter()
 
@@ -17,12 +19,16 @@ router = APIRouter()
 class StartSessionRequest(BaseModel):
     category: QuizCategory
     session_duration_seconds: int = 180  # 3 minutes default
+    assessment_id: UUID | None = None
+    locale: str = "en"
 
 class AnswerQuestionRequest(BaseModel):
     question_id: int
+    issued_question_id: UUID | None = None
     selected_option_id: int = None
     answer_text: str = None
     time_spent_seconds: float
+    idempotency_key: str | None = None
 
 class AdaptiveSessionResponse(BaseModel):
     session_id: int
@@ -81,6 +87,29 @@ def start_adaptive_learning_session(
             detail="Only students can start learning sessions"
         )
     
+    if request.assessment_id is not None:
+        service = AssessmentIntegrityService(db)
+        try:
+            attempt = service.start_attempt(
+                user=current_user, assessment_id=request.assessment_id,
+                locale=request.locale,
+            )
+            if attempt.delivery_mode != "ADAPTIVE":
+                raise AssessmentIntegrityError("NOT_ADAPTIVE_ATTEMPT")
+            session = db.query(AdaptiveLearningSession).filter_by(
+                assessment_attempt_id=attempt.id
+            ).one()
+            session.session_time_limit_seconds = request.session_duration_seconds
+            db.commit()
+            return AdaptiveSessionResponse(
+                session_id=session.id, target_difficulty=session.target_difficulty,
+                category=session.category.value,
+                session_duration_seconds=session.session_time_limit_seconds,
+            )
+        except AssessmentIntegrityError as exc:
+            db.rollback()
+            raise HTTPException(status_code=403, detail=exc.code) from exc
+
     adaptive_service = AdaptiveLearningService(db)
     session = adaptive_service.start_adaptive_session(
         current_user.id, 
@@ -105,6 +134,33 @@ def get_next_question(
     """
     Get the next adaptive question for the session
     """
+    session = db.query(AdaptiveLearningSession).filter_by(
+        id=session_id, user_id=current_user.id
+    ).first()
+    if session and isinstance(session.assessment_attempt_id, UUID):
+        service = AssessmentIntegrityService(db)
+        try:
+            issued = service.issue_next_question(
+                user=current_user, attempt_id=session.assessment_attempt_id,
+            )
+            db.commit()
+            if issued is None:
+                return {"session_complete": True, "reason": "no_questions"}
+            data = service.public_question(issued)
+            return {
+                "id": issued.source_question_id,
+                "issued_question_id": data["id"],
+                "question_text": data["text"],
+                "question_type": data["question_type"],
+                "answer_options": data["options"],
+                "estimated_difficulty": session.target_difficulty,
+                "session_time_remaining": session.session_time_limit_seconds,
+                "concept_tags": [], "time_limit_seconds": 90,
+            }
+        except AssessmentIntegrityError as exc:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=exc.code) from exc
+
     adaptive_service = AdaptiveLearningService(db)
     result = adaptive_service.get_next_question(current_user.id, session_id)
     
@@ -149,6 +205,41 @@ def submit_answer(
     """
     Submit an answer and get adaptive feedback
     """
+    session = db.query(AdaptiveLearningSession).filter_by(
+        id=session_id, user_id=current_user.id
+    ).first()
+    if session and isinstance(session.assessment_attempt_id, UUID):
+        if request.issued_question_id is None or not request.idempotency_key:
+            raise HTTPException(status_code=400, detail="ISSUED_QUESTION_AND_IDEMPOTENCY_REQUIRED")
+        service = AssessmentIntegrityService(db)
+        try:
+            row = service.answer_question(
+                user=current_user, attempt_id=session.assessment_attempt_id,
+                issued_question_id=request.issued_question_id,
+                selected_option_id=request.selected_option_id,
+                answer_text=request.answer_text,
+                idempotency_key=request.idempotency_key,
+            )
+            db.commit()
+            return AnswerResultResponse(
+                is_correct=bool(row.is_correct), explanation=None, xp_earned=0,
+                new_target_difficulty=session.target_difficulty,
+                performance_trend=session.performance_trend,
+                mastery_update={},
+                session_stats={
+                    "questions_answered": row.attempt.answered_questions,
+                    "questions_correct": row.attempt.correct_answers,
+                    "xp_earned": 0,
+                    "success_rate": (
+                        row.attempt.correct_answers / row.attempt.answered_questions * 100
+                        if row.attempt.answered_questions else 0
+                    ),
+                },
+            )
+        except AssessmentIntegrityError as exc:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=exc.code) from exc
+
     adaptive_service = AdaptiveLearningService(db)
     
     # Verify answer correctness
@@ -222,6 +313,29 @@ def end_learning_session(
     """
     End the adaptive learning session and get summary
     """
+    session = db.query(AdaptiveLearningSession).filter_by(
+        id=session_id, user_id=current_user.id
+    ).first()
+    if session and isinstance(session.assessment_attempt_id, UUID):
+        service = AssessmentIntegrityService(db)
+        try:
+            attempt = service.complete_attempt(
+                user=current_user, attempt_id=session.assessment_attempt_id,
+                idempotency_key=f"adaptive:{session.id}:complete",
+            )
+            db.commit()
+            return SessionSummaryResponse(
+                questions_answered=attempt.total_questions,
+                correct_answers=attempt.correct_answers,
+                success_rate=attempt.score_percent or 0.0,
+                xp_earned=attempt.xp_awarded,
+                performance_trend=session.performance_trend,
+                final_difficulty=session.target_difficulty,
+            )
+        except AssessmentIntegrityError as exc:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=exc.code) from exc
+
     adaptive_service = AdaptiveLearningService(db)
     summary = adaptive_service.end_session(current_user.id, session_id)
     if not summary:

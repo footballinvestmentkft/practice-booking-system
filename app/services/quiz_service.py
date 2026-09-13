@@ -2,12 +2,14 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
 from datetime import datetime
+from uuid import UUID
 
 from app.models.quiz import (
     Quiz, QuizQuestion, QuizAnswerOption, QuizAttempt, QuizUserAnswer,
     QuestionType, QuizCategory
 )
 from app.models.user import User
+from app.models.track import LessonAssessmentQuiz
 from app.schemas.quiz import (
     QuizCreate, QuizAttemptSubmit,
     QuizStatistics, UserQuizStatistics
@@ -87,6 +89,21 @@ class QuizService:
 
     def start_quiz_attempt(self, user_id: int, quiz_id: int) -> QuizAttempt:
         """Start a new quiz attempt"""
+        mappings = self.db.query(LessonAssessmentQuiz).filter_by(quiz_id=quiz_id).all()
+        if not isinstance(mappings, list):
+            mappings = []
+        if mappings:
+            if len(mappings) != 1:
+                raise ValueError("ASSESSMENT_CONTEXT_REQUIRED")
+            from app.services.assessment_integrity_service import AssessmentIntegrityService
+            user = self.db.get(User, user_id)
+            canonical = AssessmentIntegrityService(self.db).start_attempt(
+                user=user,
+                assessment_id=mappings[0].lesson_assessment_id,
+                locale=mappings[0].locale,
+            )
+            self.db.commit()
+            return self.db.query(QuizAttempt).filter_by(assessment_attempt_id=canonical.id).one()
         # Check if user already completed this quiz
         existing_attempt = self.db.query(QuizAttempt).filter(
             and_(
@@ -138,12 +155,33 @@ class QuizService:
             and_(
                 QuizAttempt.id == submission.attempt_id,
                 QuizAttempt.user_id == user_id,
-                QuizAttempt.completed_at.is_(None)
             )
-        ).first()
+        ).with_for_update().first()
         
         if not attempt:
-            raise ValueError("Quiz attempt not found or already completed")
+            raise ValueError("Quiz attempt not found")
+        if isinstance(attempt.assessment_attempt_id, UUID):
+            from app.services.assessment_integrity_service import AssessmentIntegrityService
+            user = self.db.get(User, user_id)
+            service = AssessmentIntegrityService(self.db)
+            canonical = service._attempt(attempt.assessment_attempt_id, user)
+            if canonical.status == "IN_PROGRESS":
+                for answer in submission.answers:
+                    service.answer_source_question(
+                        user=user, attempt_id=canonical.id, question_id=answer.question_id,
+                        selected_option_id=answer.selected_option_id,
+                        answer_text=answer.answer_text,
+                        idempotency_key=f"quiz:{attempt.id}:question:{answer.question_id}",
+                    )
+            service.complete_attempt(
+                user=user, attempt_id=canonical.id,
+                idempotency_key=f"quiz:{attempt.id}:complete",
+            )
+            self.db.commit()
+            self.db.refresh(attempt)
+            return attempt
+        if attempt.completed_at is not None:
+            raise ValueError("Quiz attempt already completed")
         
         # Check time limit
         quiz = self.get_quiz_by_id(attempt.quiz_id)

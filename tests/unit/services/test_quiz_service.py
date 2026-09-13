@@ -48,6 +48,7 @@ def _q(db, first=None, all_=None):
     q.order_by.return_value = q
     q.limit.return_value = q
     q.join.return_value = q
+    q.with_for_update.return_value = q
     q.first.return_value = first
     q.all.return_value = all_ if all_ is not None else []
     q.subquery.return_value = MagicMock()
@@ -68,6 +69,7 @@ def _multi_q(db, specs):
         q.order_by.return_value = q
         q.limit.return_value = q
         q.join.return_value = q
+        q.with_for_update.return_value = q
         q.first.return_value = spec.get("first")
         q.all.return_value = spec.get("all_", [])
         q.subquery.return_value = MagicMock()
@@ -183,6 +185,7 @@ class TestStartQuizAttempt:
         svc, db = _make_svc()
         ongoing = _make_attempt(id=5, completed_at=None)
         _multi_q(db, [
+            {"all_": []},       # no canonical assessment mapping
             {"first": None},     # check completed → not found
             {"first": ongoing},  # check ongoing → found
         ])
@@ -192,6 +195,7 @@ class TestStartQuizAttempt:
     def test_raises_when_quiz_not_found(self):
         svc, db = _make_svc()
         _multi_q(db, [
+            {"all_": []},    # no canonical assessment mapping
             {"first": None},  # check completed
             {"first": None},  # check ongoing
             {"first": None},  # get_quiz_by_id → quiz not found
@@ -203,6 +207,7 @@ class TestStartQuizAttempt:
         svc, db = _make_svc()
         inactive = _make_quiz(is_active=False)
         _multi_q(db, [
+            {"all_": []},        # no canonical assessment mapping
             {"first": None},      # check completed
             {"first": None},      # check ongoing
             {"first": inactive},  # get_quiz_by_id → inactive quiz
@@ -214,6 +219,7 @@ class TestStartQuizAttempt:
         svc, db = _make_svc()
         quiz = _make_quiz(id=1, is_active=True, questions=[MagicMock(), MagicMock()])
         _multi_q(db, [
+            {"all_": []},     # no canonical assessment mapping
             {"first": None},   # check completed
             {"first": None},   # check ongoing
             {"first": quiz},   # get_quiz_by_id → found + active
@@ -226,6 +232,7 @@ class TestStartQuizAttempt:
         svc, db = _make_svc()
         quiz = _make_quiz(id=2, is_active=True, questions=[])
         _multi_q(db, [
+            {"all_": []},
             {"first": None},
             {"first": None},
             {"first": quiz},
