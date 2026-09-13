@@ -10,7 +10,6 @@ PHASE 2: State Machine Integration
 - Row-level locking for concurrency protection
 """
 from sqlalchemy.orm import Session
-from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from typing import Dict, Optional, List, Tuple
@@ -23,6 +22,7 @@ from ..models.user import User, UserRole
 from ..models.skill_reward import SkillReward
 from ..skills_config import get_all_skill_keys
 from app.utils.lock_logger import lock_timer
+from .player_progression_service import PlayerProgressionService
 from .skill_state_machine import (
     SkillAssessmentState,
     validate_state_transition,
@@ -277,11 +277,28 @@ class FootballSkillService:
                 f"Assessment created (requires_validation={requires_validation})"
             )
 
-            # ================================================================
-            # Step 7: Recalculate cached average (existing logic)
-            # ================================================================
-            self.recalculate_skill_average(user_license_id, skill_name)
-
+            # PC5: the immutable assessment is the source; the canonical
+            # progression authority owns the skill state/projection write.
+            progression = PlayerProgressionService(self.db).apply_outcome(
+                player=license.user,
+                source_player_user_id=license.user_id,
+                source_type="INSTRUCTOR_SKILL_ASSESSMENT",
+                source_id=str(assessment.id),
+                idempotency_key=f"football-skill-assessment:{assessment.id}",
+                actor=instructor,
+                skill_updates={skill_name: percentage},
+                provenance={
+                    "football_skill_assessment_id": assessment.id,
+                    "user_license_id": user_license_id,
+                    "points_earned": points_earned,
+                    "points_total": points_total,
+                    "percentage": percentage,
+                    "requires_validation": requires_validation,
+                },
+                context={"notes_present": bool(notes)},
+            )
+            assessment.progression_outcome_id = progression.id
+            self.db.flush()
             return (assessment, True)
 
     def validate_assessment(
@@ -437,7 +454,11 @@ class FootballSkillService:
 
     def recalculate_skill_average(self, user_license_id: int, skill_name: str) -> float:
         """
-        Recalculate average for a specific skill and update cached value
+        Return the historical assessment average without writing progression.
+
+        PC5 deliberately keeps this legacy helper as a read-only compatibility
+        calculation. New assessment writes are applied by create_assessment()
+        through PlayerProgressionService with immutable source provenance.
 
         Args:
             user_license_id: UserLicense ID
@@ -458,34 +479,6 @@ class FootballSkillService:
         # Calculate average
         average = sum(a.percentage for a in assessments) / len(assessments)
         average = round(average, 1)
-
-        # Update cached value in user_licenses.football_skills JSON.
-        # S02: FOR UPDATE serialises this write with concurrent tournament finalizations
-        # that also hold FOR UPDATE on the same UserLicense row (Step 1.5 in orchestrator).
-        # Lock order: both paths target the same physical row; whichever arrives first
-        # holds the lock and the other blocks — no deadlock possible.
-        # lock_timer measures time from FOR UPDATE through flag_modified (true hold time).
-        with lock_timer("skill", "UserLicense", user_license_id, logger,
-                        caller="FootballSkillService.recalculate_skill_average"):
-            license = self.db.query(UserLicense).filter(
-                UserLicense.id == user_license_id
-            ).with_for_update().first()
-            if license:
-                if not license.football_skills:
-                    license.football_skills = {}
-
-                existing = license.football_skills.get(skill_name)
-                if isinstance(existing, dict):
-                    # S03: dict-format entry (V2 / tournament path) — preserve structure.
-                    # Only update the 'baseline' sub-key; leave current_level / deltas intact.
-                    existing["baseline"] = average
-                    license.football_skills[skill_name] = existing
-                else:
-                    # Scalar-format entry (V1 / assessment-only user) — write as float.
-                    license.football_skills[skill_name] = average
-
-                # Mark as modified (for JSON field)
-                flag_modified(license, 'football_skills')
 
         return average
 

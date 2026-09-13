@@ -408,10 +408,12 @@ class TestCreateAssessmentWithLock:
             return _recalc_early_return()
         db.query.side_effect = _smart_side
 
-        _, is_new = svc.create_assessment(
-            user_license_id=99, skill_name=VALID_SKILL,
-            points_earned=7, points_total=10, assessed_by=42,
-        )
+        with patch("app.services.football_skill_service.PlayerProgressionService") as progression:
+            progression.return_value.apply_outcome.return_value.id = "pc5-outcome"
+            _, is_new = svc.create_assessment(
+                user_license_id=99, skill_name=VALID_SKILL,
+                points_earned=7, points_total=10, assessed_by=42,
+            )
         assert is_new is True
         assert old.status == SkillAssessmentState.ARCHIVED
         assert old.archived_by == 42
@@ -436,10 +438,12 @@ class TestCreateAssessmentWithLock:
             return _recalc_early_return()
         db.query.side_effect = _side
 
-        _, is_new = svc.create_assessment(
-            user_license_id=99, skill_name=VALID_SKILL,
-            points_earned=7, points_total=10, assessed_by=42,
-        )
+        with patch("app.services.football_skill_service.PlayerProgressionService") as progression:
+            progression.return_value.apply_outcome.return_value.id = "pc5-outcome"
+            _, is_new = svc.create_assessment(
+                user_license_id=99, skill_name=VALID_SKILL,
+                points_earned=7, points_total=10, assessed_by=42,
+            )
         assert is_new is True
         db.add.assert_called_once()
 
@@ -466,10 +470,12 @@ class TestCreateAssessmentWithLock:
             return _recalc_early_return()
         db.query.side_effect = _side
 
-        _, is_new = svc.create_assessment(
-            user_license_id=99, skill_name=VALID_SKILL,
-            points_earned=7, points_total=10, assessed_by=42,
-        )
+        with patch("app.services.football_skill_service.PlayerProgressionService") as progression:
+            progression.return_value.apply_outcome.return_value.id = "pc5-outcome"
+            _, is_new = svc.create_assessment(
+                user_license_id=99, skill_name=VALID_SKILL,
+                points_earned=7, points_total=10, assessed_by=42,
+            )
         assert is_new is True  # tenure calculated, no error
 
     def test_instructor_not_found_raises_value_error(self, mock_lock):

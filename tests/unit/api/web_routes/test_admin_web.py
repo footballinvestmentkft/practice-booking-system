@@ -584,9 +584,11 @@ class TestInstructorUpdateSkills:
         db.query.return_value.filter.return_value.first.side_effect = [student, license_obj]
 
         with patch(f"{_INSTRUCTOR_BASE}.templates") as mock_tmpl, \
-             patch(f"{_INSTRUCTOR_BASE}.AuditService") as mock_audit:
+             patch(f"{_INSTRUCTOR_BASE}.AuditService") as mock_audit, \
+             patch(f"{_INSTRUCTOR_BASE}.PlayerProgressionService") as mock_progression:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
-            mock_audit.return_value.log.return_value = None
+            mock_audit.return_value.log.side_effect = lambda **_: db.commit()
+            mock_progression.return_value.apply_outcome.return_value.id = "outcome-1"
             _run(instructor_update_student_skills(
                 request=_req(), student_id=99, license_id=1, db=db, user=user,
                 heading=75.0, shooting=80.0, crossing=70.0,
@@ -727,9 +729,11 @@ class TestMotivationAssessmentSubmit:
         db.query.return_value.filter.return_value.first.side_effect = [student, license_obj]
 
         with patch(f"{_INSTRUCTOR_BASE}.templates") as mock_tmpl, \
-             patch(f"{_INSTRUCTOR_BASE}.AuditService") as mock_audit:
+             patch(f"{_INSTRUCTOR_BASE}.AuditService") as mock_audit, \
+             patch(f"{_INSTRUCTOR_BASE}.PlayerProgressionService") as mock_progression:
             mock_tmpl.TemplateResponse.return_value = MagicMock()
-            mock_audit.return_value.log.return_value = None
+            mock_audit.return_value.log.side_effect = lambda **_: db.commit()
+            mock_progression.return_value.apply_outcome.return_value.id = "outcome-2"
             _run(instructor_update_student_skills(
                 request=_req(), student_id=99, license_id=1, db=db, user=user,
                 heading=75.0, shooting=80.0, crossing=70.0,

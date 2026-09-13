@@ -167,18 +167,18 @@ class TestRaceS02AssessmentLock:
         db.query.side_effect = _dispatch
         return db, assessment_chain, license_chain
 
-    def test_rs02_with_for_update_called_on_license(self):
-        """RED → GREEN: with_for_update() must be called before reading football_skills."""
+    def test_pc5_legacy_recalculation_does_not_lock_or_write_license(self):
+        """PC5 keeps the legacy average helper read-only."""
         from app.services.football_skill_service import FootballSkillService
 
         db, _, license_chain = self._make_db()
         service = FootballSkillService(db)
         service.recalculate_skill_average(user_license_id=1, skill_name="passing")
 
-        license_chain.filter.return_value.with_for_update.assert_called_once()
+        license_chain.filter.return_value.with_for_update.assert_not_called()
 
-    def test_rs02_skill_written_after_lock(self):
-        """RED → GREEN: assessment write happens on the locked license instance."""
+    def test_pc5_legacy_recalculation_leaves_skill_projection_unchanged(self):
+        """Only PlayerProgressionService may update the skill projection."""
         from app.services.football_skill_service import FootballSkillService
 
         db, _, license_chain = self._make_db()
@@ -188,12 +188,11 @@ class TestRaceS02AssessmentLock:
         # The returned average should be correct regardless
         assert result == 75.0
 
-        # The locked instance is what gets written to
+        # The compatibility calculation must not write either mocked instance.
         locked_license = (
             license_chain.filter.return_value.with_for_update.return_value.first.return_value
         )
-        # After fix, football_skills["passing"] on the locked instance is updated
-        assert locked_license.football_skills.get("passing") == 75.0
+        assert locked_license.football_skills.get("passing") == 70.0
 
     def test_rs02_stale_overwrite_scenario(self):
         """
@@ -366,9 +365,9 @@ class TestRaceS03FormatNormalisation:
             "Assessment must NOT downgrade dict-format entry to a bare float — "
             "RACE-S03 not closed"
         )
-        # The assessment average (80.0) should update the baseline sub-key
-        assert entry.get("baseline") == 80.0, (
-            "Assessment average must update 'baseline' sub-key, not replace the dict"
+        # PC5: the read-only compatibility calculation cannot rewrite baseline.
+        assert entry.get("baseline") == 70.0, (
+            "Legacy recalculation must not bypass canonical progression"
         )
         # tournament data must be preserved
         assert entry.get("current_level") == 78.5, (

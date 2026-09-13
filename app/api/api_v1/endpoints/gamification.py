@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 
 from ....database import get_db
 from ....dependencies import get_current_user
-from ....models.user import User
+from ....models.user import User, UserRole
+from ....services.player_identity_service import get_active_football_entitlement
 from ....services.gamification import GamificationService
 from ....schemas.gamification import UserGamificationResponse
 
@@ -48,7 +49,7 @@ def get_user_gamification_data(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
+
     gamification_service = GamificationService(db)
     data = gamification_service.get_user_gamification_data(user_id)
     
@@ -76,6 +77,12 @@ def refresh_user_achievements(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
+        )
+
+    if get_active_football_entitlement(db, user_id=user_id) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Canonical Player progression is outcome-driven; refresh is not permitted",
         )
     
     gamification_service = GamificationService(db)

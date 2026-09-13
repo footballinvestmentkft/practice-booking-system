@@ -152,6 +152,15 @@ class ProgressLicenseCoupler:
             SQLAlchemyError: If database error occurs
         """
         specialization = specialization.upper()
+        if (
+            resolve_program_id(specialization).canonical_program
+            is CanonicalProgram.LFA_FOOTBALL_PLAYER
+        ):
+            return {
+                "success": False,
+                "message": "Canonical Player progression is outcome-driven; legacy coupling is disabled",
+                "error_type": "canonical_player_sync_denied",
+            }
 
         try:
             # Start transaction (will auto-rollback on exception)
@@ -285,6 +294,15 @@ class ProgressLicenseCoupler:
             Dict with sync result
         """
         specialization = specialization.upper()
+        if (
+            resolve_program_id(specialization).canonical_program
+            is CanonicalProgram.LFA_FOOTBALL_PLAYER
+        ):
+            return {
+                "success": False,
+                "message": "Canonical Player progression is outcome-driven; legacy coupling is disabled",
+                "action": "denied",
+            }
 
         try:
             with self.acquire_locks(user_id, specialization) as (progress, license):

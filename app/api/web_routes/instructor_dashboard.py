@@ -6,6 +6,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from pathlib import Path
+import hashlib
+import json
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import joinedload
@@ -22,6 +24,7 @@ from ...models.specialization import SpecializationType
 from ...models.audit_log import AuditAction
 from ...services.audit_service import AuditService
 from ...services.canonical_policy import CanonicalProgram, resolve_license_program
+from ...services.player_progression_service import PlayerProgressionError, PlayerProgressionService
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -246,19 +249,28 @@ async def instructor_update_student_skills(
     # Round to 1 decimal place
     skills_dict = {k: round(v, 1) for k, v in skills.items()}
 
-    # Update license
-    license.football_skills = skills_dict
-    license.skills_last_updated_at = datetime.now(timezone.utc)
-    license.skills_updated_by = user.id
-
-    # Update instructor notes if provided
+    payload_hash = hashlib.sha256(
+        json.dumps(skills_dict, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    try:
+        outcome = PlayerProgressionService(db).apply_outcome(
+            player=student,
+            source_player_user_id=student.id,
+            source_type="LEGACY_INSTRUCTOR_SKILL_UPDATE",
+            source_id=f"{license_id}:{user.id}:{payload_hash}",
+            idempotency_key=f"legacy-skill-update:{license_id}:{user.id}:{payload_hash}",
+            actor=user,
+            skill_updates=skills_dict,
+            provenance={"web": "/instructor/students/{student_id}/skills/{license_id}", "payload_hash": payload_hash},
+            context={"notes_present": bool(instructor_notes.strip())},
+        )
+    except PlayerProgressionError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=exc.code) from exc
     if instructor_notes.strip():
         license.instructor_notes = instructor_notes.strip()
 
-    db.commit()
-    db.refresh(license)
-
-    # Log audit
+    # Log audit in the same transaction; AuditService owns the commit.
     audit_service = AuditService(db)
     audit_service.log(
         action=AuditAction.FOOTBALL_SKILLS_UPDATED,
@@ -270,9 +282,11 @@ async def instructor_update_student_skills(
             "student_email": student.email,
             "specialization": license.specialization_type,
             "skills": skills_dict,
-            "instructor_notes": instructor_notes
+            "instructor_notes": instructor_notes,
+            "progression_outcome_id": str(outcome.id),
         }
     )
+    db.refresh(license)
 
     logger.info("instructor_skills_updated", extra={"instructor": user.email, "student": student.email, "spec": license.specialization_type})
 
@@ -318,4 +332,3 @@ async def instructor_update_student_skills(
 # All routes are automatically included via router.include_router() at the
 # end of this file.
 # ============================================================================
-

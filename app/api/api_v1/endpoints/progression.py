@@ -1,4 +1,5 @@
-from typing import List, Optional, Dict
+from datetime import datetime
+from typing import Any, List, Optional, Dict
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -6,6 +7,8 @@ from app.models.user import User
 from app.models.license import UserLicense
 from app.dependencies import get_current_user
 from app.services import skill_progression_service
+from app.models.player_progression import PlayerSkillState
+from app.services.player_progression_service import PlayerProgressionError, PlayerProgressionService
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -293,7 +296,17 @@ def get_skill_profile(
     profile_data = skill_progression_service.get_skill_profile(db, current_user.id)
 
     skills = profile_data.get("skills", {})
-    average_level = profile_data.get("average_level", 0.0)
+    canonical_states = db.query(PlayerSkillState).filter_by(player_user_id=current_user.id).all()
+    for state in canonical_states:
+        existing = skills.setdefault(state.skill_key, {})
+        baseline = float(existing.get("baseline", state.current_value))
+        existing["current_level"] = state.current_value
+        existing["total_delta"] = round(state.current_value - baseline, 4)
+        existing["canonical_outcome_id"] = str(state.last_outcome_id)
+    average_level = (
+        sum(float(row["current_level"]) for row in skills.values()) / len(skills)
+        if skills else 0.0
+    )
     total_tournaments = profile_data.get("total_tournaments", 0)
     total_assessments = profile_data.get("total_assessments", 0)
 
@@ -325,6 +338,66 @@ def get_skill_profile(
         total_assessments=total_assessments,
         total_tournaments=total_tournaments
     )
+
+
+
+
+class CanonicalSkillStateResponse(BaseModel):
+    key: str
+    value: float
+    last_outcome_id: str
+
+
+class CanonicalAchievementResponse(BaseModel):
+    key: str
+    badge_type: str
+    title: str
+    earned_at: datetime
+
+
+class CanonicalPlayerStateResponse(BaseModel):
+    player_user_id: int
+    specialization_id: str
+    xp: int
+    level: int
+    skills: List[CanonicalSkillStateResponse]
+    achievements: List[CanonicalAchievementResponse]
+
+
+class CanonicalPlayerHistoryResponse(BaseModel):
+    id: str
+    source_type: str
+    source_id: str
+    xp_delta: int
+    provenance: Dict[str, Any]
+    context: Dict[str, Any]
+    actor_user_id: int
+    applied_at: datetime
+
+
+@router.get("/player-state", response_model=CanonicalPlayerStateResponse)
+def get_canonical_player_state(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Read the canonical Player progression projection without side effects."""
+    try:
+        return PlayerProgressionService(db).get_state(player=current_user)
+    except PlayerProgressionError as exc:
+        raise HTTPException(status_code=403, detail=exc.code) from exc
+
+
+@router.get("/player-history", response_model=List[CanonicalPlayerHistoryResponse])
+def get_canonical_player_history(
+    limit: int = Query(100, ge=1, le=200),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Read immutable canonical Player outcomes; this endpoint never synchronizes data."""
+    try:
+        return PlayerProgressionService(db).get_history(player=current_user, limit=limit)
+    except PlayerProgressionError as exc:
+        raise HTTPException(status_code=403, detail=exc.code) from exc
 
 
 # ============================================================================

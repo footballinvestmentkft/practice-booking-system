@@ -271,7 +271,7 @@ class TestSHOP14to15RouteAndSnapshot:
         """SHOP-14: route count = 922."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 926, f"Expected 926 routes, got {len(paths)}"
+        assert len(paths) == 928, f"Expected 928 routes, got {len(paths)}"
 
     def test_shop_15_openapi_snapshot_match(self):
         """SHOP-15: OpenAPI snapshot matches live API."""

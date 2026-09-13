@@ -305,6 +305,7 @@ final class EducationViewModel: ObservableObject {
     @Published private(set) var progressData:   [String: SpecializationProgressData]  = [:]
     @Published private(set) var lfaLicense:     LFAPlayerLicense?                     = nil
     @Published private(set) var skillProfile:   SkillProfile?                          = nil
+    @Published private(set) var playerProgression: PlayerProgressionState?              = nil
     @Published private(set) var educationTracks: [EducationTrackSummary]               = []
     @Published private(set) var curriculum: EducationCurriculum?                       = nil
 
@@ -324,6 +325,7 @@ final class EducationViewModel: ObservableObject {
         progressData   = [:]
         lfaLicense     = nil
         skillProfile   = nil
+        playerProgression = nil
         educationTracks = []
         curriculum = nil
         await fetchData(using: authManager)
@@ -338,6 +340,7 @@ final class EducationViewModel: ObservableObject {
         progressData   = [:]
         lfaLicense     = nil
         skillProfile   = nil
+        playerProgression = nil
         educationTracks = []
         curriculum = nil
     }
@@ -383,6 +386,9 @@ final class EducationViewModel: ObservableObject {
         // 5. Skill profile — non-fatal (404 = no active LFA license yet)
         skillProfile = try? await authManager.authenticatedGet(
             path: "/api/v1/progression/skill-profile"
+        )
+        playerProgression = try? await authManager.authenticatedGet(
+            path: PlayerProgressionAPI.statePath
         )
 
         // 6. Canonical Player education. Draft releases are filtered server-side.

@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime, timezone
 import enum
 
@@ -52,6 +53,9 @@ class UserAchievement(Base):
     earned_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     semester_count = Column(Integer, nullable=True)  # For semester-based badges
     specialization_id = Column(String(50), ForeignKey('specializations.id'), nullable=True)  # 🆕 NEW
+    # PC5 canonical grants. Nullable fields preserve all legacy achievement rows.
+    canonical_key = Column(String(100), nullable=True)
+    progression_outcome_id = Column(UUID(as_uuid=True), ForeignKey("player_progression_outcomes.id", ondelete="RESTRICT"), nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="achievements")

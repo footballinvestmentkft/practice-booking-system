@@ -5,15 +5,18 @@ Handles fetching complete gamification data for users including stats, achieveme
 """
 
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+from types import SimpleNamespace
 from typing import Dict
 
-from ...models.gamification import UserAchievement
+from ...models.gamification import UserAchievement, UserStats
+from ...models.user import User
+from ...models.attendance import Attendance
+from ...models.feedback import Feedback
 from ...models.semester import Semester
 from ...models.session import Session as SessionType
 from ...models.booking import Booking
 
-from .xp_service import calculate_user_stats
-from .badge_service import check_and_award_semester_achievements
 
 
 def get_user_gamification_data(db: Session, user_id: int) -> Dict:
@@ -33,11 +36,28 @@ def get_user_gamification_data(db: Session, user_id: int) -> Dict:
             - semesters: List of semesters user participated in
             - current_semester: Current active semester
     """
-    # Calculate and update user stats
-    stats = calculate_user_stats(db, user_id)
-
-    # Check and award semester achievements
-    check_and_award_semester_achievements(db, user_id)
+    # Read-only projection: GET must never create/update stats or achievements.
+    stored = db.query(UserStats).filter_by(user_id=user_id).one_or_none()
+    booking_rows = db.query(Booking, SessionType, Semester).join(
+        SessionType, Booking.session_id == SessionType.id
+    ).join(Semester, SessionType.semester_id == Semester.id).filter(
+        Booking.user_id == user_id
+    ).all()
+    semester_ids = {semester.id for _, _, semester in booking_rows}
+    semester_dates = [semester.start_date for _, _, semester in booking_rows if semester.start_date]
+    total_bookings = len(booking_rows)
+    total_cancelled = sum(1 for booking, _, _ in booking_rows if getattr(booking.status, "value", booking.status) == "cancelled")
+    total_attended = db.query(Attendance).filter(Attendance.user_id == user_id).count()
+    feedback_given = db.query(Feedback).filter(Feedback.user_id == user_id).count()
+    user = db.get(User, user_id)
+    total_xp = int(stored.total_xp if stored is not None else (user.xp_balance if user else 0) or 0)
+    level = int(stored.level if stored is not None else max(1, total_xp // 1000))
+    stats = SimpleNamespace(
+        semesters_participated=len(semester_ids), first_semester_date=min(semester_dates) if semester_dates else None,
+        total_bookings=total_bookings, total_attended=total_attended, total_cancelled=total_cancelled,
+        attendance_rate=(total_attended / total_bookings * 100) if total_bookings else 0.0,
+        feedback_given=feedback_given, total_xp=total_xp, level=level,
+    )
 
     # Get all user achievements
     achievements = db.query(UserAchievement).filter(

@@ -59,6 +59,11 @@ def _license(lid=10, user_id=42, spec="LFA_PLAYER_PRE"):
     lic.id = lid
     lic.user_id = user_id
     lic.specialization_type = spec
+    lic.canonical_program_id = (
+        "LFA_FOOTBALL_PLAYER"
+        if spec == "LFA_FOOTBALL_PLAYER" or spec.startswith("LFA_PLAYER")
+        else None
+    )
     lic.football_skills = None
     lic.skills_updated_by = None
     lic.skills_last_updated_at = None
@@ -206,7 +211,7 @@ class TestUpdateFootballSkills:
     def test_ufs04_missing_skill_400(self):
         """UFS-04: missing required skill → 400."""
         from fastapi import HTTPException
-        lic = _license(spec="LFA_PLAYER_PRE")
+        lic = _license(spec="LFA_FOOTBALL_PLAYER")
         q = _q(first_val=lic)
         db = MagicMock(); db.query.return_value = q
         incomplete = dict(VALID_SKILLS)
@@ -218,7 +223,7 @@ class TestUpdateFootballSkills:
     def test_ufs05_skill_out_of_range_400(self):
         """UFS-05: skill value > 100 → 400."""
         from fastapi import HTTPException
-        lic = _license(spec="LFA_PLAYER_PRE")
+        lic = _license(spec="LFA_FOOTBALL_PLAYER")
         q = _q(first_val=lic)
         db = MagicMock(); db.query.return_value = q
         bad = dict(VALID_SKILLS); bad["heading"] = 150
@@ -229,7 +234,7 @@ class TestUpdateFootballSkills:
     def test_ufs06_negative_skill_value_400(self):
         """UFS-06: skill value < 0 → 400."""
         from fastapi import HTTPException
-        lic = _license(spec="LFA_PLAYER_PRE")
+        lic = _license(spec="LFA_FOOTBALL_PLAYER")
         q = _q(first_val=lic)
         db = MagicMock(); db.query.return_value = q
         bad = dict(VALID_SKILLS); bad["shooting"] = -5
@@ -239,11 +244,13 @@ class TestUpdateFootballSkills:
 
     def test_ufs07_success_no_notes(self):
         """UFS-07: success, no instructor_notes → committed."""
-        lic = _license(spec="LFA_PLAYER_PRE")
+        lic = _license(spec="LFA_FOOTBALL_PLAYER")
         q = _q(first_val=lic)
         db = MagicMock(); db.query.return_value = q
-        with patch(f"{_BASE}.AuditService") as MockAudit:
-            MockAudit.return_value.log.return_value = None
+        with patch(f"{_BASE}.AuditService") as MockAudit, \
+             patch(f"{_BASE}.PlayerProgressionService") as MockProgression:
+            MockAudit.return_value.log.side_effect = lambda **_: db.commit()
+            MockProgression.return_value.apply_outcome.return_value.id = "outcome-1"
             result = self._call(db=db)
         db.commit.assert_called_once()
         assert result["success"] is True
@@ -251,24 +258,28 @@ class TestUpdateFootballSkills:
 
     def test_ufs08_success_with_notes(self):
         """UFS-08: instructor_notes in payload → license.instructor_notes set."""
-        lic = _license(spec="LFA_PLAYER_PRE")
+        lic = _license(spec="LFA_FOOTBALL_PLAYER")
         q = _q(first_val=lic)
         db = MagicMock(); db.query.return_value = q
         skills_with_notes = dict(VALID_SKILLS)
         skills_with_notes["instructor_notes"] = "Great footwork"
-        with patch(f"{_BASE}.AuditService") as MockAudit:
-            MockAudit.return_value.log.return_value = None
+        with patch(f"{_BASE}.AuditService") as MockAudit, \
+             patch(f"{_BASE}.PlayerProgressionService") as MockProgression:
+            MockAudit.return_value.log.side_effect = lambda **_: db.commit()
+            MockProgression.return_value.apply_outcome.return_value.id = "outcome-2"
             result = self._call(db=db, skills_data=skills_with_notes)
         assert lic.instructor_notes == "Great footwork"
         assert result["success"] is True
 
     def test_ufs09_admin_can_update(self):
         """UFS-09: admin role → allowed."""
-        lic = _license(spec="LFA_PLAYER_PRE")
+        lic = _license(spec="LFA_FOOTBALL_PLAYER")
         q = _q(first_val=lic)
         db = MagicMock(); db.query.return_value = q
-        with patch(f"{_BASE}.AuditService") as MockAudit:
-            MockAudit.return_value.log.return_value = None
+        with patch(f"{_BASE}.AuditService") as MockAudit, \
+             patch(f"{_BASE}.PlayerProgressionService") as MockProgression:
+            MockAudit.return_value.log.side_effect = lambda **_: db.commit()
+            MockProgression.return_value.apply_outcome.return_value.id = "outcome-3"
             result = self._call(db=db, current_user=_admin())
         assert result["success"] is True
 
