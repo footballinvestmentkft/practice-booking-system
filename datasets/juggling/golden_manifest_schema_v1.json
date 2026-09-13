@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "lfa-pc6a-golden-v1",
+  "type": "object",
+  "required": ["schema_version", "samples"],
+  "properties": {
+    "schema_version": {"const": "PC6A_GOLDEN_V1"},
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sample_id", "video_checksum_sha256", "privacy_review_status", "ground_truth"],
+        "properties": {
+          "sample_id": {"type": "string", "minLength": 1},
+          "video_checksum_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "privacy_review_status": {"const": "APPROVED"},
+          "ground_truth": {
+            "type": "object",
+            "required": ["touch_count", "sequence_status", "sequence_start_ms", "sequence_end_ms", "termination_reason", "contact_events"],
+            "properties": {
+              "touch_count": {"type": "integer", "minimum": 0},
+              "sequence_status": {"enum": ["VALID", "INVALID"]},
+              "sequence_start_ms": {"type": ["integer", "null"], "minimum": 0},
+              "sequence_end_ms": {"type": ["integer", "null"], "minimum": 0},
+              "termination_reason": {"enum": ["BALL_DROPPED", "VIDEO_ENDED", "PLAYER_STOPPED", "INVALID_SEQUENCE"]},
+              "contact_events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["timestamp_ms", "contact_type"],
+                  "properties": {
+                    "timestamp_ms": {"type": "integer", "minimum": 0},
+                    "contact_type": {"type": "string", "minLength": 1},
+                    "side": {"enum": ["left", "right", "center", "unknown", null]}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

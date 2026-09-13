@@ -1,5 +1,5 @@
 """
-Juggling AN-1 — Contact annotation API tests (CA-01..CA-60).
+Juggling AN-1 — Contact annotation API tests (CA-01..CA-61).
 
 Tests cover:
   Taxonomy endpoint (CA-01..CA-06)
@@ -727,5 +727,16 @@ class TestCA58_PostFinishGuard:
         evt_id = r_list.json()["events"][0]["event_id"]
         client.post(f"{_contacts_url(video.id)}/finish", json={"confirm_zero_contacts": False}, headers=_auth(token))
         r = client.delete(f"{_contacts_url(video.id)}/{evt_id}", headers=_auth(token))
+        assert r.status_code == 409
+        assert "annotation_closed" in _err_msg(r)
+
+    @pytest.mark.parametrize("final_status", ["reviewed", "rejected"])
+    def test_ca61_verified_or_rejected_annotation_remains_closed(
+        self, client, token, video, db_session, final_status,
+    ):
+        """PC6A: final human-review states cannot reopen Player annotation writes."""
+        video.annotation_status = final_status
+        db_session.commit()
+        r = client.post(_contacts_url(video.id), json=_base_event(), headers=_auth(token))
         assert r.status_code == 409
         assert "annotation_closed" in _err_msg(r)

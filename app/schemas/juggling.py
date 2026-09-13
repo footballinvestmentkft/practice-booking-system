@@ -341,6 +341,76 @@ class FinishAnnotationOut(BaseModel):
     annotation_finished_at: datetime
 
 
+# ── PC6A: canonical human-reviewed verification ──────────────────────────────
+
+class ContactReviewDecisionRequest(BaseModel):
+    event_id: uuid.UUID
+    decision: Literal["CONFIRM", "REJECT", "CORRECT"]
+    include_in_sequence: bool = False
+    corrected_contact_type: Optional[str] = None
+    note: Optional[str] = Field(None, max_length=500)
+
+    @model_validator(mode="after")
+    def _correction_contract(self) -> "ContactReviewDecisionRequest":
+        if self.decision == "CORRECT" and not self.corrected_contact_type:
+            raise ValueError("corrected_contact_type is required for CORRECT")
+        if self.decision != "CORRECT" and self.corrected_contact_type is not None:
+            raise ValueError("corrected_contact_type is only valid for CORRECT")
+        if self.decision == "REJECT" and self.include_in_sequence:
+            raise ValueError("rejected contact cannot be included")
+        return self
+
+
+class HumanJugglingVerificationRequest(BaseModel):
+    player_user_id: int = Field(..., gt=0)
+    expected_annotation_revision_hash: str = Field(..., min_length=64, max_length=64)
+    event_decisions: List[ContactReviewDecisionRequest]
+    status: Literal["VALID", "INVALID"]
+    sequence_start_ms: Optional[int] = Field(None, ge=0)
+    sequence_end_ms: Optional[int] = Field(None, ge=0)
+    termination_reason: Literal[
+        "BALL_DROPPED", "VIDEO_ENDED", "PLAYER_STOPPED", "INVALID_SEQUENCE"
+    ]
+    confidence: float = Field(..., ge=0.0, le=1.0)
+
+
+class JugglingVerificationCandidateOut(BaseModel):
+    video_id: uuid.UUID
+    player_user_id: int
+    video_checksum_sha256: str
+    video_version: str
+    annotation_revision_hash: str
+    contact_events: List[Dict[str, Any]]
+
+
+class JugglingVerificationOut(BaseModel):
+    id: uuid.UUID
+    player_user_id: int
+    video_id: uuid.UUID
+    reviewer_user_id: int
+    verification_method: str
+    verification_version: str
+    status: str
+    video_checksum_sha256: str
+    video_version: str
+    source_annotation_revision_hash: str
+    contact_event_revision_hash: str
+    touch_count: int
+    score: int
+    side_breakdown: Dict[str, int]
+    body_part_breakdown: Dict[str, int]
+    sequence_start_ms: Optional[int]
+    sequence_end_ms: Optional[int]
+    termination_reason: str
+    confidence: float
+    provenance_hash: str
+    progression_outcome_id: uuid.UUID
+    credit_transaction_id: Optional[int]
+    verified_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 # ── Phase 2A: Pose Snapshot schemas ──────────────────────────────────────────
 
 class PoseSnapshotCreateRequest(BaseModel):

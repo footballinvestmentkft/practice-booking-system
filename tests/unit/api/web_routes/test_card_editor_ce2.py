@@ -440,9 +440,11 @@ class TestCE217RouteCount:
                    2 canonical Player education read routes.
         922 → 928: PC4 adds canonical assessment start, next-question, answer,
                    and completion routes.
+        928 → 931: PC6A adds the admin candidate/verification and Player
+                   verification-read routes.
         """
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 928, (
-            f"Expected 928 routes, got {len(paths)}"
+        assert len(paths) == 931, (
+            f"Expected 931 routes, got {len(paths)}"
         )

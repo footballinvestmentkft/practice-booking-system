@@ -62,7 +62,7 @@ from app.services.juggling.taxonomy_service import (
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-_POST_FINISH_STATUSES = frozenset({"human_review_pending"})
+_POST_FINISH_STATUSES = frozenset({"human_review_pending", "reviewed", "rejected"})
 _IN_PROGRESS_STATUSES = frozenset({"in_progress"})
 _ANNOTATABLE_STATUSES = frozenset({None, "metadata_ready", "in_progress"})
 
@@ -85,8 +85,8 @@ def _guard_post_finish(video: JugglingVideo) -> None:
     if video.annotation_status in _POST_FINISH_STATUSES:
         raise HTTPException(
             status_code=409,
-            detail="annotation_closed — annotation is locked in human_review_pending status. "
-                   "No further CRUD is allowed until an admin re-opens it.",
+            detail="annotation_closed — annotation is locked after submission for review. "
+                   "No further CRUD is allowed.",
         )
 
 

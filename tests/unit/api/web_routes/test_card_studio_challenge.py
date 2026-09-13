@@ -294,8 +294,8 @@ class TestCCS11RouteCount:
         """CCS-11: route count = 922."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 928, (
-            f"Expected 928 routes, got {len(paths)}"
+        assert len(paths) == 931, (
+            f"Expected 931 routes, got {len(paths)}"
         )
 
     def test_ccs_11b_card_editor_challenge_route_registered(self):
