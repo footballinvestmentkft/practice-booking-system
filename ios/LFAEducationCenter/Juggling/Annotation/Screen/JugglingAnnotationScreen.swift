@@ -152,7 +152,10 @@ struct JugglingAnnotationScreen: View {
                         )
                     }
 
-                    PlaybackControlBar(controller: playback, isEnabled: loaderReady)
+                    PlaybackControlBar(
+                        controller: playback,
+                        isEnabled: loaderReady && playback.isReady
+                    )
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
 
@@ -267,16 +270,19 @@ struct JugglingAnnotationScreen: View {
                 if case .ready(let url) = state {
                     loaderVideoURL = url                    // AN-3B2A P2B-3
                     let asset = AVAsset(url: url)
-                    playback.loadAsset(asset)
-                    if let avp = playback.avPlayer { avp.play() }
+                    playback.loadAsset(asset, autoplay: true)
                     Task { poseSnapshots = await vm.fetchPoseSnapshots() }
-                    // AN-3B2D-2: start continuous skeleton extraction
-                    denseSkeletonVM.startExtraction(asset: asset)
-                    // AN-3B2D-3: fetch dense ball trajectory
-                    let durMs = Int(CMTimeGetSeconds(asset.duration) * 1000)
-                    Task { await ballTrajectoryVM.fetchTrajectory(durationMs: durMs > 0 ? durMs : nil) }
                 }
             })
+            .onChange(of: playback.isReady) { ready in
+                guard ready, let url = loaderVideoURL else { return }
+                let asset = AVAsset(url: url)
+                // Heavy local Vision extraction starts only after AVPlayerItem is
+                // ready, so it cannot compete with initial decoder preparation.
+                denseSkeletonVM.startExtraction(asset: asset)
+                let durMs = Int(CMTimeGetSeconds(playback.duration) * 1000)
+                Task { await ballTrajectoryVM.fetchTrajectory(durationMs: durMs > 0 ? durMs : nil) }
+            }
             .onChange(of: vm.activeEvents) { events in
                 // Remove pending pose entries for events that were deleted.
                 let activeIds = Set(events.map { $0.deviceEventId })
@@ -383,6 +389,21 @@ struct JugglingAnnotationScreen: View {
                     .frame(width: renderSize.width, height: renderSize.height)
                     .rotationEffect(.degrees(Double(playback.userRotation)))
                     .animation(.easeInOut(duration: 0.25), value: playback.userRotation)
+
+                if playback.isPreparing {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .accessibilityLabel("Preparing video")
+                } else if playback.playbackError != nil {
+                    VStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .foregroundColor(.orange)
+                        Text("Video cannot be played.")
+                            .foregroundColor(.white)
+                            .font(.caption)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
 
                 // AN-3B2D-2: continuous > event-snapshot > nothing
                 if showSkeletonOverlay {
