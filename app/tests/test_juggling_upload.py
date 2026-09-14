@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import struct
 import uuid
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app.services.juggling import feature_flag as ff_module
+from app.services.player_identity_service import issue_football_player_entitlement
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -43,10 +45,39 @@ def _grant_consent(client, token):
     )
 
 
+def _authorize_football_player(db_session, student_user):
+    issue_football_player_entitlement(
+        db_session, user=student_user, payment_verified=True,
+    )
+    db_session.flush()
+
+
 def _init_upload(client, token, source_type="uploaded_video"):
     return client.post(
         "/api/v1/users/me/juggling/videos/upload-init",
         json={"source_type": source_type, "upload_source": "gallery"},
+        headers=_auth(token),
+    )
+
+
+def _init_solo_capture(client, token, metadata=None):
+    attempt = client.post(
+        "/api/v1/users/me/juggling/capture-attempts",
+        json={"request_idempotency_key": f"request-{uuid.uuid4()}"},
+        headers=_auth(token),
+    )
+    assert attempt.status_code == 201, attempt.text
+    return client.post(
+        "/api/v1/users/me/juggling/videos/upload-init",
+        json={
+            "source_type": "in_app_capture",
+            "upload_source": "camera",
+            "capture_attempt_id": attempt.json()["capture_attempt_id"],
+            "upload_idempotency_key": f"upload-{uuid.uuid4()}",
+            "client_reported_metadata": {
+                **(metadata or {}), "camera_position": "front",
+            },
+        },
         headers=_auth(token),
     )
 
@@ -63,10 +94,13 @@ def _upload_file(client, token, video_id, data=None, filename="video.mp4", ct="v
 
 # ── upload-init tests ─────────────────────────────────────────────────────────
 
-def test_ju01_upload_init_in_app_capture_201(client, student_token):
+def test_ju01_upload_init_in_app_capture_201(client, student_token, student_user, db_session):
     """JU-01: upload-init source_type=in_app_capture returns 201."""
+    student_user.date_of_birth = date(2000, 1, 1)
+    db_session.flush()
+    _authorize_football_player(db_session, student_user)
     _grant_consent(client, student_token)
-    r = _init_upload(client, student_token, "in_app_capture")
+    r = _init_solo_capture(client, student_token)
     assert r.status_code == 201, r.text
     data = r.json()
     assert data["status"] == "pending_upload"
@@ -293,8 +327,8 @@ def test_ju16_complete_409_from_pending_upload(client, student_token):
     assert r.status_code == 409, r.text
 
 
-def test_ju17_complete_409_double_submit(client, student_token, tmp_path):
-    """JU-17: calling complete twice returns 409 on second call."""
+def test_ju17_complete_replay_is_idempotent(client, student_token, tmp_path):
+    """JU-17: replay returns the canonical state and queues work exactly once."""
     _grant_consent(client, student_token)
     init = _init_upload(client, student_token)
     video_id = init.json()["video_id"]
@@ -306,33 +340,34 @@ def test_ju17_complete_409_double_submit(client, student_token, tmp_path):
 
     with patch("app.api.api_v1.endpoints.users.juggling_videos.transcode_video_task") as mock_task:
         mock_task.delay = MagicMock()
-        client.post(
+        first = client.post(
             f"/api/v1/users/me/juggling/videos/{video_id}/complete",
             headers=_auth(student_token),
         )
-        r = client.post(
+        replay = client.post(
             f"/api/v1/users/me/juggling/videos/{video_id}/complete",
             headers=_auth(student_token),
         )
-    assert r.status_code == 409, r.text
+    assert first.status_code == replay.status_code == 200
+    assert first.json()["status"] == replay.json()["status"] == "processing"
+    mock_task.delay.assert_called_once_with(video_id)
 
 
 def test_ju18_server_metadata_overrides_client_metadata(
-    client, student_token, tmp_path, db_session
+    client, student_token, student_user, tmp_path, db_session
 ):
     """JU-18: server_detected_metadata is written by task; client metadata is not authoritative."""
     from app.models.juggling import JugglingVideo
     from app.services.juggling import video_service
 
+    student_user.date_of_birth = date(2000, 1, 1)
+    db_session.flush()
+    _authorize_football_player(db_session, student_user)
     _grant_consent(client, student_token)
     # Init with client metadata claiming fps=24
-    r_init = client.post(
-        "/api/v1/users/me/juggling/videos/upload-init",
-        json={
-            "source_type": "in_app_capture",
-            "client_reported_metadata": {"fps": 24.0, "resolution": "640x480"},
-        },
-        headers=_auth(student_token),
+    r_init = _init_solo_capture(
+        client, student_token,
+        metadata={"fps": 24.0, "resolution": "640x480"},
     )
     video_id = r_init.json()["video_id"]
 

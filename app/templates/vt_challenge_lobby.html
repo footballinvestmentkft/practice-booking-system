@@ -101,7 +101,7 @@
 
         <div class="lb-player {{ 'ready' if cr_ready else '' }}" id="lb-player-challenger">
             <div class="lb-player-name">
-                {{ challenger.nickname or challenger.email if challenger else 'Challenger' }}
+                {{ challenger.nickname or 'Player unavailable' if challenger else 'Challenger' }}
             </div>
             <div class="lb-player-status">
                 {{ 'Ready' if cr_ready else 'Waiting...' }}
@@ -113,7 +113,7 @@
 
         <div class="lb-player {{ 'ready' if cd_ready else '' }}" id="lb-player-challenged">
             <div class="lb-player-name">
-                {{ challenged.nickname or challenged.email if challenged else 'Challenged' }}
+                {{ challenged.nickname or 'Player unavailable' if challenged else 'Challenged' }}
             </div>
             <div class="lb-player-status">
                 {{ 'Ready' if cd_ready else 'Waiting...' }}

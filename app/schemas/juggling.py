@@ -30,7 +30,8 @@ from pydantic import AliasChoices, BaseModel, Field, field_validator, model_vali
 
 _CLIENT_METADATA_ALLOWED_KEYS = frozenset({
     "fps", "resolution", "duration_seconds", "codec",
-    "device", "os_version", "app_version",
+    "device", "device_model", "camera_position", "orientation_degrees",
+    "os_version", "app_version", "capture_version",
 })
 
 
@@ -54,6 +55,18 @@ class JugglingConsentOut(BaseModel):
 _VALID_TRAINING_VIDEO_TYPES = frozenset({"juggling", "gan_footvolley", "gan_foottennis"})
 
 
+class JugglingCaptureAttemptCreateRequest(BaseModel):
+    request_idempotency_key: str = Field(min_length=16, max_length=64)
+
+
+class JugglingCaptureAttemptOut(BaseModel):
+    capture_attempt_id: uuid.UUID
+    capture_mode: Literal["SOLO_VERIFIED"]
+    camera_position: Literal["front"]
+    status: Literal["ISSUED", "BOUND"]
+    issued_at: datetime
+
+
 class JugglingUploadInitRequest(BaseModel):
     source_type:          str = Field(..., description="in_app_capture | uploaded_video")
     upload_source:        str = Field(default="unknown",
@@ -61,6 +74,8 @@ class JugglingUploadInitRequest(BaseModel):
     training_video_type:  str = Field(default="juggling",
                                       description="juggling | gan_footvolley | gan_foottennis")
     client_reported_metadata: Optional[Dict[str, Any]] = None
+    upload_idempotency_key: Optional[str] = Field(default=None, min_length=16, max_length=64)
+    capture_attempt_id: Optional[uuid.UUID] = None
 
     @model_validator(mode="after")
     def _validate_enums(self) -> "JugglingUploadInitRequest":
@@ -94,6 +109,9 @@ class JugglingUploadInitOut(BaseModel):
     video_id:   str
     status:     str
     upload_url: str
+    capture_attempt_id: Optional[uuid.UUID] = None
+    capture_mode: Optional[str] = None
+    camera_position: Optional[str] = None
     message:    str = "Upload ready. POST the video file to upload_url."
 
 
@@ -386,6 +404,7 @@ class JugglingVerificationCandidateOut(BaseModel):
 class JugglingVerificationOut(BaseModel):
     id: uuid.UUID
     player_user_id: int
+    player_nickname_snapshot: Optional[str]
     video_id: uuid.UUID
     reviewer_user_id: int
     verification_method: str

@@ -62,6 +62,9 @@ final class PlaybackController: ObservableObject {
     @Published private(set) var selectedRate:       PlaybackRate = .normal
     @Published private(set) var videoNaturalSize:   CGSize?      = nil
     @Published private(set) var userRotation:       Int          = 0   // 0/90/180/270
+    @Published private(set) var isReady:            Bool         = false
+    @Published private(set) var isPreparing:        Bool         = false
+    @Published private(set) var playbackError:      String?      = nil
     @Published var duration: CMTime = .zero
 
     // Set once when the asset loads; var (not private(set)) so tests can inject
@@ -70,6 +73,9 @@ final class PlaybackController: ObservableObject {
 
     private let player: PlayerSeekable
     private var timeObserver: Any?
+    private var itemStatusObservation: NSKeyValueObservation?
+    private var assetPreparationTask: Task<Void, Never>?
+    private var didHonorAutoplay = false
 
     /// Safe read-only access to the underlying AVPlayer for layer-based rendering.
     /// Returns nil when the controller is initialised with a non-AVPlayer mock (tests).
@@ -80,12 +86,20 @@ final class PlaybackController: ObservableObject {
     init(player: PlayerSeekable = AVPlayer(), initialRotation: Int = 0) {
         self.player = player
         self.userRotation = [0, 90, 180, 270].contains(initialRotation) ? initialRotation : 0
+        // Unit-test players have no AVPlayerItem lifecycle. They remain ready so
+        // the existing transport-control tests continue to exercise the controls.
+        self.isReady = !(player is AVPlayer)
         if let avp = player as? AVPlayer {
+            // The annotation asset is a complete local file. Waiting for a
+            // streaming buffer can leave physical devices at 0:00 indefinitely.
+            avp.automaticallyWaitsToMinimizeStalling = false
             setupPeriodicObserver(avp)
         }
     }
 
     deinit {
+        assetPreparationTask?.cancel()
+        itemStatusObservation?.invalidate()
         if let avp = player as? AVPlayer, let obs = timeObserver {
             avp.removeTimeObserver(obs)
         }
@@ -94,24 +108,140 @@ final class PlaybackController: ObservableObject {
     // MARK: — Asset loading
 
     // Call once the authenticated temp-file URL is ready (after download).
-    // Reads nominalFrameRate / minFrameDuration from the asset before playback starts.
-    // Also reads naturalSize + preferredTransform to publish videoNaturalSize for
-    // mixed-orientation layout (16:9 landscape vs 9:16 portrait).
-    func loadAsset(_ asset: AVAsset) {
-        frameDuration = Self.effectiveFrameDuration(for: asset)
-        if let track = asset.tracks(withMediaType: .video).first {
-            videoNaturalSize = Self.displaySize(
-                naturalSize:        track.naturalSize,
-                preferredTransform: track.preferredTransform
-            )
+    // AVAsset properties are loaded asynchronously before the item is attached.
+    // Autoplay is honored only after AVPlayerItem reaches .readyToPlay; this keeps
+    // the UI from showing Pause while a physical device is still black at 0:00.
+    func loadAsset(_ asset: AVAsset, autoplay: Bool = false) {
+        assetPreparationTask?.cancel()
+        itemStatusObservation?.invalidate()
+        itemStatusObservation = nil
+        didHonorAutoplay = false
+        isReady = false
+        isPreparing = true
+        isPlaying = false
+        playbackError = nil
+        videoNaturalSize = nil
+        duration = .zero
+
+        assetPreparationTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let metadata = try await Self.prepareMetadata(for: asset)
+                guard !Task.isCancelled else { return }
+
+                self.frameDuration = metadata.frameDuration
+                self.videoNaturalSize = metadata.displaySize
+                self.duration = metadata.duration
+
+                guard let avp = self.player as? AVPlayer else {
+                    self.isPreparing = false
+                    self.isReady = true
+                    if autoplay { self.play() }
+                    return
+                }
+
+                let item = AVPlayerItem(asset: asset)
+                self.itemStatusObservation = item.observe(\.status, options: [.initial, .new]) {
+                    [weak self, weak item] observedItem, _ in
+                    let safeError = item?.error == nil ? nil : "Video cannot be played."
+                    Task { @MainActor [weak self] in
+                        self?.applyItemStatus(
+                            observedItem.status,
+                            autoplayRequested: autoplay,
+                            errorDescription: safeError
+                        )
+                    }
+                }
+                avp.replaceCurrentItem(with: item)
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.applyItemStatus(
+                    .failed,
+                    autoplayRequested: autoplay,
+                    errorDescription: "Video cannot be played."
+                )
+            }
         }
-        if let avp = player as? AVPlayer {
-            let item = AVPlayerItem(asset: asset)
-            avp.replaceCurrentItem(with: item)
+    }
+
+    private struct PreparedMetadata {
+        let frameDuration: CMTime
+        let displaySize: CGSize
+        let duration: CMTime
+    }
+
+    private enum AssetPreparationError: Error {
+        case unplayable
+        case missingVideoTrack
+        case invalidDuration
+    }
+
+    private static func prepareMetadata(for asset: AVAsset) async throws -> PreparedMetadata {
+        let playable = try await asset.load(.isPlayable)
+        guard playable else { throw AssetPreparationError.unplayable }
+
+        let duration = try await asset.load(.duration)
+        guard duration.isValid, duration > .zero else {
+            throw AssetPreparationError.invalidDuration
         }
-        let dur = asset.duration
-        if dur.isValid && dur > .zero {
-            duration = dur
+
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        guard let track = tracks.first else {
+            throw AssetPreparationError.missingVideoTrack
+        }
+
+        let naturalSize = try await track.load(.naturalSize)
+        let preferredTransform = try await track.load(.preferredTransform)
+        let nominalFPS = try await track.load(.nominalFrameRate)
+        let minFrameDuration = try await track.load(.minFrameDuration)
+
+        return PreparedMetadata(
+            frameDuration: frameDuration(
+                nominalFPS: nominalFPS,
+                minFrameDuration: minFrameDuration.isValid && minFrameDuration > .zero
+                    ? minFrameDuration
+                    : nil
+            ),
+            displaySize: displaySize(
+                naturalSize: naturalSize,
+                preferredTransform: preferredTransform
+            ),
+            duration: duration
+        )
+    }
+
+    // Internal so the readiness behavior is regression-testable with a mock
+    // player and does not require an AVFoundation decoder in unit tests.
+    func applyItemStatus(
+        _ status: AVPlayerItem.Status,
+        autoplayRequested: Bool,
+        errorDescription: String? = nil
+    ) {
+        switch status {
+        case .unknown:
+            isReady = false
+            isPreparing = true
+            isPlaying = false
+        case .readyToPlay:
+            isReady = true
+            isPreparing = false
+            playbackError = nil
+            if autoplayRequested && !didHonorAutoplay {
+                didHonorAutoplay = true
+                play()
+            }
+        case .failed:
+            player.pause()
+            isReady = false
+            isPreparing = false
+            isPlaying = false
+            playbackError = errorDescription ?? "Video cannot be played."
+        @unknown default:
+            player.pause()
+            isReady = false
+            isPreparing = false
+            isPlaying = false
+            playbackError = "Video cannot be played."
         }
     }
 
@@ -126,6 +256,7 @@ final class PlaybackController: ObservableObject {
     // MARK: — Transport controls
 
     func play() {
+        guard isReady else { return }
         player.play()
         player.rate = selectedRate.rawValue
         isPlaying   = true

@@ -19,6 +19,7 @@ final class MockPlayer: PlayerSeekable {
     var lastToleranceBefore: CMTime?
     var lastToleranceAfter:  CMTime?
     var playCalled  = false
+    var playCallCount = 0
     var pauseCalled = false
 
     func seek(to time: CMTime, toleranceBefore: CMTime, toleranceAfter: CMTime) {
@@ -29,7 +30,7 @@ final class MockPlayer: PlayerSeekable {
         _currentTime          = time  // simulate instantaneous seek for tests
     }
 
-    func play()  { playCalled  = true; rate = 1.0 }
+    func play()  { playCalled = true; playCallCount += 1; rate = 1.0 }
     func pause() { pauseCalled = true; rate = 0 }
 }
 
@@ -46,6 +47,49 @@ final class PlaybackControllerTests: XCTestCase {
             controller.duration = duration
         }
         return (controller, player)
+    }
+
+    // MARK: — Physical-device playback readiness regression (PC6B-PB01..03)
+
+    // A Play request made while AVPlayerItem is still unknown must not make the
+    // UI claim that playback has started. This was the physical-device failure:
+    // the button changed to Pause while the video remained black at 0:00.000.
+    func test_PC6B_PB01_unknownItemDoesNotStartOrReportPlayback() {
+        let (ctrl, player) = makeController()
+
+        ctrl.applyItemStatus(.unknown, autoplayRequested: true)
+
+        XCTAssertFalse(ctrl.isReady)
+        XCTAssertFalse(ctrl.isPlaying)
+        XCTAssertFalse(player.playCalled)
+    }
+
+    func test_PC6B_PB02_readyItemStartsRequestedAutoplayExactlyOnce() {
+        let (ctrl, player) = makeController()
+
+        ctrl.applyItemStatus(.readyToPlay, autoplayRequested: true)
+        ctrl.applyItemStatus(.readyToPlay, autoplayRequested: true)
+
+        XCTAssertTrue(ctrl.isReady)
+        XCTAssertTrue(ctrl.isPlaying)
+        XCTAssertTrue(player.playCalled)
+        XCTAssertEqual(player.playCallCount, 1)
+        XCTAssertEqual(player.rate, PlaybackRate.normal.rawValue)
+    }
+
+    func test_PC6B_PB03_failedItemSurfacesErrorWithoutStartingPlayback() {
+        let (ctrl, player) = makeController()
+
+        ctrl.applyItemStatus(
+            .failed,
+            autoplayRequested: true,
+            errorDescription: "fixture cannot be decoded"
+        )
+
+        XCTAssertFalse(ctrl.isReady)
+        XCTAssertFalse(ctrl.isPlaying)
+        XCTAssertFalse(player.playCalled)
+        XCTAssertEqual(ctrl.playbackError, "fixture cannot be decoded")
     }
 
     // MARK: — frameDuration pure-function tests (AN3-T17..T23)

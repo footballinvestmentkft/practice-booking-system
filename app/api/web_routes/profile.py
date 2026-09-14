@@ -32,6 +32,11 @@ from ...services.player_identity_service import (
     get_current_player_assignment,
     update_identity_profile,
 )
+from ...services.public_identity_service import (
+    PublicIdentityPolicyError,
+    nickname_available,
+    normalize_public_nickname,
+)
 import app.services.card_export_service as _export_svc
 
 # Setup templates
@@ -417,10 +422,12 @@ async def lfa_player_profile_edit_submit(
     nickname: str | None = None
     nickname_clean = nickname_raw.strip()
     if nickname_clean:
-        if len(nickname_clean) > 30:
-            errors.append("Nickname must be 30 characters or fewer")
-        else:
-            nickname = nickname_clean
+        try:
+            nickname = normalize_public_nickname(nickname_clean)
+            if not nickname_available(db, nickname=nickname, current_user_id=user.id):
+                errors.append("PUBLIC_DISPLAY_IDENTITY_CONFLICT")
+        except PublicIdentityPolicyError as exc:
+            errors.append(exc.code)
 
     # ── Re-render form on validation error (no DB write) ──────────────────────
     if errors:
@@ -496,6 +503,34 @@ async def profile_edit_submit(
 ):
     """Update user profile"""
     try:
+        canonical_nickname: str | None = None
+        if nickname:
+            try:
+                canonical_nickname = normalize_public_nickname(nickname)
+            except PublicIdentityPolicyError as exc:
+                return templates.TemplateResponse(
+                    "profile_edit.html",
+                    {
+                        "request": request, "user": user, "error": exc.code,
+                        "country_list": COUNTRY_OPTIONS,
+                        "spec_header_class": "hdr-hub", "show_spec_nav": False,
+                    },
+                    status_code=422,
+                )
+            if not nickname_available(
+                db, nickname=canonical_nickname, current_user_id=user.id,
+            ):
+                return templates.TemplateResponse(
+                    "profile_edit.html",
+                    {
+                        "request": request, "user": user,
+                        "error": "PUBLIC_DISPLAY_IDENTITY_CONFLICT",
+                        "country_list": COUNTRY_OPTIONS,
+                        "spec_header_class": "hdr-hub", "show_spec_nav": False,
+                    },
+                    status_code=409,
+                )
+
         # Parse date of birth
         try:
             dob = datetime.strptime(date_of_birth, '%Y-%m-%d').date()
@@ -585,7 +620,7 @@ async def profile_edit_submit(
 
         # Update non-identity profile fields
         user.name = name
-        user.nickname = nickname if nickname else None
+        user.nickname = canonical_nickname
         user.phone = phone if phone else None
         user.nationality = nationality if nationality else None
         user.secondary_nationality = secondary_nationality if secondary_nationality else None

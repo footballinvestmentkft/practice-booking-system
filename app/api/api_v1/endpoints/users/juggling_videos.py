@@ -40,6 +40,8 @@ from app.models.juggling import JugglingVideo, JugglingVideoStatus, JugglingTran
 from app.models.user import User
 from app.schemas.juggling import (
     JugglingCompleteOut,
+    JugglingCaptureAttemptCreateRequest,
+    JugglingCaptureAttemptOut,
     JugglingQualityOut,
     JugglingRotationPatchOut,
     JugglingRotationPatchRequest,
@@ -50,12 +52,21 @@ from app.schemas.juggling import (
     JugglingVideoListOut,
 )
 from app.services.juggling.consent_service import has_service_consent
+from app.services.player_identity_service import (
+    PlayerIdentityError,
+    get_authorized_football_player_context,
+)
 from app.services.juggling.feature_flag import require_juggling_enabled
 from app.services.juggling.security_service import (
     VideoSecurityError,
     run_all_pre_save_checks,
 )
 from app.services.juggling import video_service
+from app.services.juggling.capture_policy_service import (
+    CapturePolicyError,
+    bind_solo_upload,
+    issue_solo_attempt,
+)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -72,6 +83,37 @@ from app.config import settings
 from app.tasks.juggling_transcode_task import transcode_video_task
 
 router = APIRouter()
+
+
+@router.post(
+    "/me/juggling/capture-attempts",
+    response_model=JugglingCaptureAttemptOut,
+    status_code=201,
+    dependencies=[Depends(require_juggling_enabled)],
+    summary="Issue a canonical front-camera SOLO_VERIFIED capture attempt",
+    tags=["juggling"],
+)
+def create_capture_attempt(
+    body: JugglingCaptureAttemptCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> JugglingCaptureAttemptOut:
+    try:
+        get_authorized_football_player_context(db, user=current_user)
+    except PlayerIdentityError as exc:
+        raise HTTPException(status_code=403, detail=exc.code) from exc
+    attempt = issue_solo_attempt(
+        db,
+        user_id=current_user.id,
+        request_idempotency_key=body.request_idempotency_key,
+    )
+    return JugglingCaptureAttemptOut(
+        capture_attempt_id=attempt.id,
+        capture_mode=attempt.capture_mode,
+        camera_position=attempt.camera_position,
+        status=attempt.status,
+        issued_at=attempt.issued_at,
+    )
 
 # ── P5 list helpers ───────────────────────────────────────────────────────────
 
@@ -104,17 +146,6 @@ def _duration_seconds(video: JugglingVideo) -> float | None:
         return float(val)
     except (TypeError, ValueError):
         return None
-
-
-# ── Statuses from which complete() is blocked ─────────────────────────────────
-# (gdpr_deleted is also caught by _get_video_or_404 → 410)
-_COMPLETE_BLOCKED = {
-    JugglingVideoStatus.pending_upload.value,
-    JugglingVideoStatus.processing.value,
-    JugglingVideoStatus.analyzed.value,
-    JugglingVideoStatus.rejected.value,
-    JugglingVideoStatus.gdpr_deleted.value,
-}
 
 
 def _get_video_or_404(video_id: str, user_id: int, db: Session) -> JugglingVideo:
@@ -206,14 +237,51 @@ def upload_init(
             detail="service_consent required before uploading juggling videos.",
         )
 
-    video = video_service.create_pending(
-        user_id=current_user.id,
-        source_type=body.source_type,
-        upload_source=body.upload_source,
-        client_reported_metadata=body.client_reported_metadata,
-        db=db,
-        training_video_type=body.training_video_type,
-    )
+    if body.source_type == "in_app_capture":
+        try:
+            get_authorized_football_player_context(db, user=current_user)
+        except PlayerIdentityError as exc:
+            raise HTTPException(status_code=403, detail=exc.code) from exc
+
+        if body.upload_source != "camera":
+            raise HTTPException(status_code=422, detail="SOLO_CAPTURE_SOURCE_MISMATCH")
+        if body.capture_attempt_id is None or body.upload_idempotency_key is None:
+            raise HTTPException(status_code=422, detail="CAPTURE_ATTEMPT_REQUIRED")
+        if body.training_video_type != "juggling":
+            raise HTTPException(status_code=422, detail="SOLO_CAPTURE_ACTIVITY_MISMATCH")
+    elif body.capture_attempt_id is not None:
+        raise HTTPException(
+            status_code=422, detail="CAPTURE_ATTEMPT_NOT_ALLOWED_FOR_IMPORT",
+        )
+
+    try:
+        if body.source_type == "in_app_capture":
+            video = bind_solo_upload(
+                db,
+                user_id=current_user.id,
+                capture_attempt_id=body.capture_attempt_id,
+                upload_idempotency_key=body.upload_idempotency_key,
+                client_reported_metadata=body.client_reported_metadata or {},
+            )
+        else:
+            video = video_service.create_pending(
+                user_id=current_user.id,
+                source_type=body.source_type,
+                upload_source=body.upload_source,
+                client_reported_metadata=body.client_reported_metadata,
+                db=db,
+                training_video_type=body.training_video_type,
+                upload_idempotency_key=body.upload_idempotency_key,
+            )
+    except CapturePolicyError as exc:
+        status_code = 404 if exc.code == "CAPTURE_ATTEMPT_NOT_FOUND" else 409
+        if exc.code in {"CAPTURE_CAMERA_POSITION_MISMATCH", "CAPTURE_ATTEMPT_POLICY_MISMATCH"}:
+            status_code = 422
+        raise HTTPException(status_code=status_code, detail=exc.code) from exc
+    except ValueError as exc:
+        if str(exc) == "UPLOAD_IDEMPOTENCY_CONFLICT":
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise
 
     video_id = str(video.id)
     base_url = str(request.base_url).rstrip("/")
@@ -223,6 +291,9 @@ def upload_init(
         video_id=video_id,
         status=video.status,
         upload_url=upload_url,
+        capture_attempt_id=video.capture_attempt_id,
+        capture_mode=video.capture_mode,
+        camera_position=video.authoritative_camera_position,
     )
 
 
@@ -240,13 +311,6 @@ async def upload_file(
     current_user: User = Depends(get_current_user),
 ) -> JugglingUploadFileOut:
     video = _get_video_or_404(video_id, current_user.id, db)
-
-    if video.status != JugglingVideoStatus.pending_upload.value:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Cannot upload: video is in status={video.status!r}. "
-                   f"Only pending_upload videos accept file uploads.",
-        )
 
     file_bytes = await file.read()
     client_filename = file.filename or "upload.mp4"
@@ -266,6 +330,16 @@ async def upload_file(
             raise HTTPException(status_code=400, detail=reason)
         else:
             raise HTTPException(status_code=415, detail=reason)
+
+    if video.status != JugglingVideoStatus.pending_upload.value:
+        if video.checksum_sha256 == checksum and video.file_size_bytes == len(file_bytes):
+            return JugglingUploadFileOut(
+                video_id=video_id,
+                status=video.status,
+                file_size_bytes=video.file_size_bytes,
+                checksum_sha256=video.checksum_sha256,
+            )
+        raise HTTPException(status_code=409, detail="UPLOAD_REPLAY_CONTENT_MISMATCH")
 
     file_path = video_service.save_file(file_bytes, server_filename)
 
@@ -298,28 +372,16 @@ def complete(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> JugglingCompleteOut:
-    video = _get_video_or_404(video_id, current_user.id, db)
+    _get_video_or_404(video_id, current_user.id, db)
+    try:
+        video, claimed = video_service.claim_processing_once(video_id, db)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    if not claimed:
+        return JugglingCompleteOut(video_id=video_id, status=video.status)
 
-    if video.status in _COMPLETE_BLOCKED:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Cannot call complete from status={video.status!r}. "
-                   f"Only 'uploaded' may proceed.",
-        )
-
-    # failed is the only status not in _COMPLETE_BLOCKED — but it can only
-    # proceed after reset_processing() restores it to 'uploaded'.
-    if video.status == JugglingVideoStatus.failed.value:
-        raise HTTPException(
-            status_code=409,
-            detail="Video is in 'failed' status. Reset to 'uploaded' via admin "
-                   "reset_processing before retrying.",
-        )
-
-    # Transition to processing BEFORE enqueue (mood_photo pattern)
-    # P2: transcode_video_task runs first; it dispatches analyze_video_task
-    # only when transcode_status=done or skipped.
-    video_service.set_processing(video_id, db)
+    # The locked status claim commits before enqueue. Only its winner starts
+    # transcode; replaying or concurrent callers return the canonical state.
     transcode_video_task.delay(video_id)
 
     if settings.BALL_TRAJECTORY_ENABLED:

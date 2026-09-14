@@ -726,6 +726,79 @@ final class JugglingVideoUploadViewModelTests: XCTestCase {
             return XCTFail("Expected .failure after export failure, got \(vm.state)")
         }
     }
+
+    func test_PC6B_cameraPermissionDeniedIsFailClosed() {
+        let vm = makeVM(mock: MockUploadClient())
+        vm.cameraPermissionDenied()
+        XCTAssertEqual(vm.state, .failure(.cameraPermissionDenied))
+        XCTAssertFalse(vm.isActive)
+    }
+
+    func test_PC6B_capturePreviewDeleteRemovesLocalVideoBeforeUpload() async throws {
+        let mock = MockUploadClient()
+        let vm = makeVM(mock: mock)
+        let prepared = await vm.prepareDirectCapture()
+        XCTAssertTrue(prepared)
+        let url = try makeTempVideoFile()
+        vm.captureDidFinish(tempURL: url, metadata: [
+            "capture_version": .string("PC6B_V1"),
+            "camera_position": .string("front")
+        ])
+        XCTAssertEqual(vm.state, .capturePreview)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+        vm.discardCapturedVideo()
+        XCTAssertEqual(vm.state, .idle)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+        XCTAssertFalse(mock.uploadInitCalled)
+    }
+
+    func test_PC6B_captureConsentThenUsesCanonicalCameraUploadPipeline() async throws {
+        let mock = makeSuccessMock()
+        mock.uploadInitResult = .success(JugglingUploadInitResponse(
+            videoId: "v1", status: "pending_upload", uploadUrl: "/upload",
+            captureAttemptId: "attempt-1", captureMode: "SOLO_VERIFIED",
+            cameraPosition: "front"
+        ))
+        let vm = makeVM(mock: mock)
+        let prepared = await vm.prepareDirectCapture()
+        XCTAssertTrue(prepared)
+        let url = try makeTempVideoFile()
+        vm.captureDidFinish(tempURL: url, metadata: [
+            "duration_seconds": .number(3.5),
+            "camera_position": .string("front")
+        ])
+        vm.uploadCapturedVideo(trainingConsent: true, adminReviewConsent: true)
+        await vm.uploadTask?.value
+        XCTAssertEqual(vm.state, .success)
+        XCTAssertTrue(mock.consentCalled)
+        XCTAssertTrue(mock.captureAttemptCalled)
+        XCTAssertEqual(mock.lastSourceType, "in_app_capture")
+        XCTAssertEqual(mock.lastUploadSource, "camera")
+        XCTAssertEqual(mock.lastClientMetadata["duration_seconds"], .number(3.5))
+        XCTAssertEqual(mock.lastCaptureAttemptId, "attempt-1")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+    }
+
+    func test_PC6B_interruptedCaptureDeletesPartialFile() async throws {
+        let vm = makeVM(mock: MockUploadClient())
+        let prepared = await vm.prepareDirectCapture()
+        XCTAssertTrue(prepared)
+        let url = try makeTempVideoFile()
+        vm.captureInterrupted(tempURL: url)
+        XCTAssertEqual(vm.state, .failure(.captureInterrupted))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+    }
+
+    func test_PC6B_captureWithoutServerIssuedAttemptFailsClosed() throws {
+        let vm = makeVM(mock: MockUploadClient())
+        let url = try makeTempVideoFile()
+        vm.captureDidFinish(tempURL: url, metadata: ["camera_position": .string("front")])
+        XCTAssertEqual(
+            vm.state,
+            .failure(.invalidState("Canonical front-camera attempt required"))
+        )
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+    }
 }
 
 // MARK: — MockExportService
@@ -810,10 +883,22 @@ final class MockUploadClient: JugglingAnnotationAPIClientProtocol {
     var uploadInitResult: Result<JugglingUploadInitResponse, Error> = .failure(JugglingUploadError.unauthorized)
     var uploadVideoFileResult: Result<JugglingUploadFileResponse, Error> = .failure(JugglingUploadError.unauthorized)
     var completeUploadResult: Result<JugglingCompleteResponse, Error> = .failure(JugglingUploadError.unauthorized)
+    var captureAttemptResult: Result<JugglingCaptureAttemptResponse, Error> = .success(
+        JugglingCaptureAttemptResponse(
+            captureAttemptId: "attempt-1", captureMode: "SOLO_VERIFIED",
+            cameraPosition: "front", status: "ISSUED"
+        )
+    )
 
     private(set) var uploadInitCalled = false
     private(set) var uploadVideoFileCalled = false
     private(set) var completeUploadCalled = false
+    private(set) var consentCalled = false
+    private(set) var captureAttemptCalled = false
+    private(set) var lastSourceType: String?
+    private(set) var lastUploadSource: String?
+    private(set) var lastClientMetadata: [String: JugglingMetadataValue] = [:]
+    private(set) var lastCaptureAttemptId: String?
 
     // Captured to verify URL/MIME passed to uploadVideoFile.
     private(set) var lastUploadVideoFileURL: URL?
@@ -838,6 +923,38 @@ final class MockUploadClient: JugglingAnnotationAPIClientProtocol {
     func uploadInit(sourceType: String, uploadSource: String) async throws -> JugglingUploadInitResponse {
         uploadInitCalled = true
         return try uploadInitResult.get()
+    }
+
+    func uploadInit(
+        sourceType: String, uploadSource: String, idempotencyKey: String,
+        clientMetadata: [String: JugglingMetadataValue]
+    ) async throws -> JugglingUploadInitResponse {
+        uploadInitCalled = true
+        lastSourceType = sourceType
+        lastUploadSource = uploadSource
+        lastClientMetadata = clientMetadata
+        return try uploadInitResult.get()
+    }
+
+    func uploadInit(
+        sourceType: String, uploadSource: String, idempotencyKey: String,
+        clientMetadata: [String: JugglingMetadataValue], captureAttemptId: String?
+    ) async throws -> JugglingUploadInitResponse {
+        uploadInitCalled = true
+        lastSourceType = sourceType
+        lastUploadSource = uploadSource
+        lastClientMetadata = clientMetadata
+        lastCaptureAttemptId = captureAttemptId
+        return try uploadInitResult.get()
+    }
+
+    func issueSoloCaptureAttempt(idempotencyKey: String) async throws -> JugglingCaptureAttemptResponse {
+        captureAttemptCalled = true
+        return try captureAttemptResult.get()
+    }
+
+    func grantJugglingConsent(service: Bool, training: Bool, adminReview: Bool) async throws {
+        consentCalled = true
     }
 
     func uploadVideoFile(videoId: String, fileURL: URL, mimeType: String) async throws -> JugglingUploadFileResponse {

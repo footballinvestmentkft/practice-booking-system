@@ -90,6 +90,13 @@ def update_own_profile(
             )
 
     update_data = user_update.model_dump(exclude_unset=True)
+    if "nickname" in update_data and update_data["nickname"] is not None:
+        valid, message = validate_nickname(
+            update_data["nickname"], db, current_user_id=current_user.id,
+        )
+        if not valid:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message)
+        update_data["nickname"] = update_data["nickname"].strip()
     candidate_dob = update_data.pop("date_of_birth", current_user.date_of_birth)
     if current_user.role is UserRole.STUDENT or candidate_dob is not None:
         try:
