@@ -508,13 +508,10 @@ def test_pm32_openapi_path_delta_exactly_plus_2(client):
     assert len(media_paths) == 2, f"Expected 2 juggling media OpenAPI paths, got: {media_paths}"
 
 
-# ── PM-33: No DB migration ────────────────────────────────────────────────────
+# ── PM-33: Migration graph integrity ──────────────────────────────────────────
 
-def test_pm33_no_db_migration():
-    """PM-33: Alembic has a single head (no merge divergence).
-
-    Updated for AN-3B2B-1: ball_detections + training_video_type migrations.
-    """
+def test_pm33_single_current_db_migration_head():
+    """PM-33: Alembic has the reviewed PC6B head without graph divergence."""
     from alembic.config import Config
     from alembic.script import ScriptDirectory
     import os
@@ -524,7 +521,7 @@ def test_pm33_no_db_migration():
     cfg = Config(alembic_ini)
     script = ScriptDirectory.from_config(cfg)
     heads = script.get_heads()
-    assert heads == ["2026_06_18_1200"], f"Unexpected alembic heads: {heads}"
+    assert heads == ["2026_09_14_1000"], f"Unexpected alembic heads: {heads}"
 
 
 # ── PM-34: P1/P2/P3 regression ───────────────────────────────────────────────

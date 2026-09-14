@@ -470,14 +470,14 @@ def test_jvl25_openapi_path_and_route_delta(client):
 
 # ── JVL-26: Alembic head remains singular ───────────────────────────────────────────
 
-def test_jvl26_alembic_head_unchanged():
-    """JVL-26: PC6A remains the repository's single Alembic head."""
+def test_jvl26_pc6b_is_the_single_alembic_head():
+    """JVL-26: PC6B extends the chain without creating a second head."""
     from alembic.config import Config
     from alembic.script import ScriptDirectory
     import os
     cfg = Config(os.path.join(os.path.dirname(__file__), "..", "..", "..", "alembic.ini"))
     heads = ScriptDirectory.from_config(cfg).get_heads()
-    assert heads == ["2026_09_13_3000"], f"Unexpected Alembic heads: {heads}"
+    assert heads == ["2026_09_14_1000"], f"Unexpected Alembic heads: {heads}"
 
 
 # ── JVL-27: P4 thumbnail/media regression ────────────────────────────────────

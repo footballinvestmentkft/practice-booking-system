@@ -50,6 +50,7 @@ from app.schemas.juggling import (
     JugglingVideoListOut,
 )
 from app.services.juggling.consent_service import has_service_consent
+from app.services.program_eligibility_service import evaluate_user_profile
 from app.services.juggling.feature_flag import require_juggling_enabled
 from app.services.juggling.security_service import (
     VideoSecurityError,
@@ -104,17 +105,6 @@ def _duration_seconds(video: JugglingVideo) -> float | None:
         return float(val)
     except (TypeError, ValueError):
         return None
-
-
-# ── Statuses from which complete() is blocked ─────────────────────────────────
-# (gdpr_deleted is also caught by _get_video_or_404 → 410)
-_COMPLETE_BLOCKED = {
-    JugglingVideoStatus.pending_upload.value,
-    JugglingVideoStatus.processing.value,
-    JugglingVideoStatus.analyzed.value,
-    JugglingVideoStatus.rejected.value,
-    JugglingVideoStatus.gdpr_deleted.value,
-}
 
 
 def _get_video_or_404(video_id: str, user_id: int, db: Session) -> JugglingVideo:
@@ -206,14 +196,25 @@ def upload_init(
             detail="service_consent required before uploading juggling videos.",
         )
 
-    video = video_service.create_pending(
-        user_id=current_user.id,
-        source_type=body.source_type,
-        upload_source=body.upload_source,
-        client_reported_metadata=body.client_reported_metadata,
-        db=db,
-        training_video_type=body.training_video_type,
-    )
+    if body.source_type == "in_app_capture":
+        profile = evaluate_user_profile(db, current_user)
+        if not profile.usable:
+            raise HTTPException(status_code=403, detail=profile.reason)
+
+    try:
+        video = video_service.create_pending(
+            user_id=current_user.id,
+            source_type=body.source_type,
+            upload_source=body.upload_source,
+            client_reported_metadata=body.client_reported_metadata,
+            db=db,
+            training_video_type=body.training_video_type,
+            upload_idempotency_key=body.upload_idempotency_key,
+        )
+    except ValueError as exc:
+        if str(exc) == "UPLOAD_IDEMPOTENCY_CONFLICT":
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise
 
     video_id = str(video.id)
     base_url = str(request.base_url).rstrip("/")
@@ -241,13 +242,6 @@ async def upload_file(
 ) -> JugglingUploadFileOut:
     video = _get_video_or_404(video_id, current_user.id, db)
 
-    if video.status != JugglingVideoStatus.pending_upload.value:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Cannot upload: video is in status={video.status!r}. "
-                   f"Only pending_upload videos accept file uploads.",
-        )
-
     file_bytes = await file.read()
     client_filename = file.filename or "upload.mp4"
     content_type = file.content_type or "application/octet-stream"
@@ -266,6 +260,16 @@ async def upload_file(
             raise HTTPException(status_code=400, detail=reason)
         else:
             raise HTTPException(status_code=415, detail=reason)
+
+    if video.status != JugglingVideoStatus.pending_upload.value:
+        if video.checksum_sha256 == checksum and video.file_size_bytes == len(file_bytes):
+            return JugglingUploadFileOut(
+                video_id=video_id,
+                status=video.status,
+                file_size_bytes=video.file_size_bytes,
+                checksum_sha256=video.checksum_sha256,
+            )
+        raise HTTPException(status_code=409, detail="UPLOAD_REPLAY_CONTENT_MISMATCH")
 
     file_path = video_service.save_file(file_bytes, server_filename)
 
@@ -298,28 +302,16 @@ def complete(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> JugglingCompleteOut:
-    video = _get_video_or_404(video_id, current_user.id, db)
+    _get_video_or_404(video_id, current_user.id, db)
+    try:
+        video, claimed = video_service.claim_processing_once(video_id, db)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    if not claimed:
+        return JugglingCompleteOut(video_id=video_id, status=video.status)
 
-    if video.status in _COMPLETE_BLOCKED:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Cannot call complete from status={video.status!r}. "
-                   f"Only 'uploaded' may proceed.",
-        )
-
-    # failed is the only status not in _COMPLETE_BLOCKED — but it can only
-    # proceed after reset_processing() restores it to 'uploaded'.
-    if video.status == JugglingVideoStatus.failed.value:
-        raise HTTPException(
-            status_code=409,
-            detail="Video is in 'failed' status. Reset to 'uploaded' via admin "
-                   "reset_processing before retrying.",
-        )
-
-    # Transition to processing BEFORE enqueue (mood_photo pattern)
-    # P2: transcode_video_task runs first; it dispatches analyze_video_task
-    # only when transcode_status=done or skipped.
-    video_service.set_processing(video_id, db)
+    # The locked status claim commits before enqueue. Only its winner starts
+    # transcode; replaying or concurrent callers return the canonical state.
     transcode_video_task.delay(video_id)
 
     if settings.BALL_TRAJECTORY_ENABLED:

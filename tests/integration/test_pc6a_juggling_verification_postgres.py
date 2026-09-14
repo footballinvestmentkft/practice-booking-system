@@ -24,6 +24,7 @@ from app.services.juggling.verification_service import (
     JugglingVerificationPolicy,
     JugglingVerificationService,
 )
+from app.services.juggling.golden_dataset import build_reviewed_manifest
 from app.services.player_identity_service import issue_football_player_entitlement
 
 
@@ -138,6 +139,52 @@ def test_valid_human_review_creates_immutable_result_and_exact_pc5_provenance(te
     with pytest.raises(DBAPIError):
         test_db.commit()
     test_db.rollback()
+
+
+def test_reviewed_pc6a_result_exports_privacy_safe_pc6b_golden_sample(test_db):
+    player, reviewer = _player(test_db), _admin(test_db)
+    consent = test_db.query(JugglingConsent).filter_by(user_id=player.id).one()
+    consent.training_consent = True
+    video = _video(test_db, player)
+    video.server_detected_metadata = {
+        "duration_seconds": 3.5, "fps": 30.0, "resolution": "1080x1920",
+    }
+    video.client_reported_metadata = {
+        "device_model": "iPhone", "camera_position": "back",
+        "local_path": "/private/raw.mov",
+    }
+    event = _event(test_db, video, player, 250, "right_instep", "right")
+    service = JugglingVerificationService(test_db)
+    verification = service.verify_human(
+        video_id=video.id,
+        reviewer=reviewer,
+        command=_command(service, video, player, [event]),
+    )
+    test_db.flush()
+
+    manifest = build_reviewed_manifest(test_db)
+    sample = next(
+        row for row in manifest["samples"]
+        if row["sample_id"] == str(verification.id)
+    )
+
+    assert sample["sample_id"] == str(verification.id)
+    assert sample["ground_truth"]["touch_count"] == 1
+    assert sample["annotation_revision"] == verification.contact_event_revision_hash
+    assert len(sample["player_safe_reference"]) == 64
+    assert "local_path" not in sample["capture_metadata"]
+    assert test_db.get(
+        PlayerProgressionOutcome, verification.progression_outcome_id,
+    ).source_id == str(verification.id)
+    assert test_db.query(XPTransaction).filter_by(user_id=player.id).count() == 0
+    assert test_db.query(CreditTransaction).filter_by(user_id=player.id).count() == 0
+
+    consent.training_consent = False
+    test_db.flush()
+    revoked_manifest = build_reviewed_manifest(test_db)
+    assert str(verification.id) not in {
+        row["sample_id"] for row in revoked_manifest["samples"]
+    }
 
 
 def test_owner_unapproved_default_zero_rewards_create_no_xp_or_credit_ledger(test_db):

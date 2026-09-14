@@ -1,18 +1,23 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "lfa-pc6a-golden-v1",
+  "$id": "lfa-pc6b-golden-v1",
   "type": "object",
   "required": ["schema_version", "samples"],
   "properties": {
-    "schema_version": {"const": "PC6A_GOLDEN_V1"},
+    "schema_version": {"const": "PC6B_GOLDEN_V1"},
     "samples": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["sample_id", "video_checksum_sha256", "privacy_review_status", "ground_truth"],
+        "required": ["sample_id", "player_safe_reference", "video_checksum_sha256", "annotation_revision", "review_status", "privacy_review_status", "ground_truth"],
         "properties": {
           "sample_id": {"type": "string", "minLength": 1},
+          "player_safe_reference": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
           "video_checksum_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "duration_seconds": {"type": ["number", "null"], "minimum": 0},
+          "capture_metadata": {"type": "object"},
+          "annotation_revision": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "review_status": {"const": "VERIFIED"},
           "privacy_review_status": {"const": "APPROVED"},
           "ground_truth": {
             "type": "object",

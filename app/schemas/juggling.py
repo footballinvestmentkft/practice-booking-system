@@ -30,7 +30,8 @@ from pydantic import AliasChoices, BaseModel, Field, field_validator, model_vali
 
 _CLIENT_METADATA_ALLOWED_KEYS = frozenset({
     "fps", "resolution", "duration_seconds", "codec",
-    "device", "os_version", "app_version",
+    "device", "device_model", "camera_position", "orientation_degrees",
+    "os_version", "app_version", "capture_version",
 })
 
 
@@ -61,6 +62,7 @@ class JugglingUploadInitRequest(BaseModel):
     training_video_type:  str = Field(default="juggling",
                                       description="juggling | gan_footvolley | gan_foottennis")
     client_reported_metadata: Optional[Dict[str, Any]] = None
+    upload_idempotency_key: Optional[str] = Field(default=None, min_length=16, max_length=64)
 
     @model_validator(mode="after")
     def _validate_enums(self) -> "JugglingUploadInitRequest":

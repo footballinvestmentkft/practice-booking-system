@@ -149,6 +149,10 @@ class JugglingVideo(Base):
                            comment="in_app_capture | uploaded_video")
     upload_source = Column(String(30), nullable=False, default="unknown",
                            comment="camera | gallery | file | unknown")
+    upload_idempotency_key = Column(
+        String(64), nullable=True,
+        comment="Client-generated replay key for one logical upload attempt",
+    )
     training_video_type = Column(
         String(30), nullable=False,
         default=JugglingTrainingVideoType.juggling.value,
@@ -197,15 +201,24 @@ class JugglingVideo(Base):
                                        comment="SHA-256 hex of processed file; null if skipped")
 
     # ── Client-reported metadata (not authoritative) ─────────────────────────
-    # Allowed keys: fps, resolution, duration_seconds, codec,
-    #               device, os_version, app_version
+    # Allowed keys: fps, resolution, duration_seconds, codec, device,
+    #               device_model, camera_position, orientation_degrees,
+    #               os_version, app_version, capture_version
     client_reported_metadata = Column(
         JSONB, nullable=True,
         comment=(
             "Client-supplied metadata. Not authoritative. "
             "server_detected_metadata overrides on conflict. "
-            "Allowed: fps, resolution, duration_seconds, codec, "
-            "device, os_version, app_version."
+            "Allowed: fps, resolution, duration_seconds, codec, device, "
+            "device_model, camera_position, orientation_degrees, os_version, "
+            "app_version, capture_version."
+        ),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "upload_idempotency_key",
+            name="uq_juggling_video_user_upload_idempotency",
         ),
     )
 

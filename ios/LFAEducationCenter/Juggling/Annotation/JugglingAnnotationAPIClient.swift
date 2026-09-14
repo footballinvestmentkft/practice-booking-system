@@ -30,6 +30,11 @@ protocol JugglingAnnotationAPIClientProtocol: AnyObject {
     func deleteVideo(videoId: String) async throws
     // B-3: three-step video upload pipeline (init → upload → complete)
     func uploadInit(sourceType: String, uploadSource: String) async throws -> JugglingUploadInitResponse
+    func uploadInit(
+        sourceType: String, uploadSource: String, idempotencyKey: String,
+        clientMetadata: [String: JugglingMetadataValue]
+    ) async throws -> JugglingUploadInitResponse
+    func grantJugglingConsent(service: Bool, training: Bool, adminReview: Bool) async throws
     func uploadVideoFile(videoId: String, fileURL: URL, mimeType: String) async throws -> JugglingUploadFileResponse
     func completeUpload(videoId: String) async throws -> JugglingCompleteResponse
     // AN-3B2C-1: ball detection
@@ -38,6 +43,21 @@ protocol JugglingAnnotationAPIClientProtocol: AnyObject {
     // AN-3B2B1: ball feedback
     func fetchFeedbackQueue(videoId: String, limit: Int) async -> BallFeedbackQueueResponse?
     func submitBallFeedback(videoId: String, request: BallFeedbackRequest) async throws -> BallFeedbackOut
+}
+
+extension JugglingAnnotationAPIClientProtocol {
+    func uploadInit(
+        sourceType: String, uploadSource: String, idempotencyKey: String,
+        clientMetadata: [String: JugglingMetadataValue]
+    ) async throws -> JugglingUploadInitResponse {
+        try await uploadInit(sourceType: sourceType, uploadSource: uploadSource)
+    }
+
+    func grantJugglingConsent(
+        service: Bool, training: Bool, adminReview: Bool
+    ) async throws {
+        // Test doubles and legacy callers may rely on server-side existing consent.
+    }
 }
 
 @MainActor
@@ -194,12 +214,39 @@ final class JugglingAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
     //   network → JugglingUploadError.networkError
 
     func uploadInit(sourceType: String, uploadSource: String) async throws -> JugglingUploadInitResponse {
+        try await uploadInit(
+            sourceType: sourceType, uploadSource: uploadSource,
+            idempotencyKey: UUID().uuidString, clientMetadata: [:]
+        )
+    }
+
+    func uploadInit(
+        sourceType: String, uploadSource: String, idempotencyKey: String,
+        clientMetadata: [String: JugglingMetadataValue]
+    ) async throws -> JugglingUploadInitResponse {
         let path = "/api/v1/users/me/juggling/videos/upload-init"
-        let body = JugglingUploadInitBody(sourceType: sourceType, uploadSource: uploadSource)
+        let body = JugglingUploadInitBody(
+            sourceType: sourceType, uploadSource: uploadSource,
+            uploadIdempotencyKey: idempotencyKey, clientReportedMetadata: clientMetadata
+        )
         do {
             return try await authManager.authenticatedPost(path: path, body: body)
         } catch let err as APIError {
             throw JugglingAnnotationAPIClient.mapUploadInitError(err)
+        }
+    }
+
+    func grantJugglingConsent(service: Bool, training: Bool, adminReview: Bool) async throws {
+        let body = JugglingConsentBody(
+            serviceConsent: service, trainingConsent: training,
+            adminReviewConsent: adminReview
+        )
+        do {
+            let _: JugglingConsentResponse = try await authManager.authenticatedPost(
+                path: "/api/v1/users/me/juggling-consent", body: body
+            )
+        } catch let error as APIError {
+            throw JugglingAnnotationAPIClient.mapUploadInitError(error)
         }
     }
 
@@ -557,13 +604,48 @@ enum AnnotationAPIError: Error, LocalizedError {
 
 private struct EmptyBody: Encodable {}
 
+enum JugglingMetadataValue: Encodable, Equatable {
+    case string(String)
+    case number(Double)
+    case integer(Int)
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let value): try container.encode(value)
+        case .number(let value): try container.encode(value)
+        case .integer(let value): try container.encode(value)
+        }
+    }
+}
+
 struct JugglingUploadInitBody: Encodable {
     let sourceType:   String
     let uploadSource: String
+    let uploadIdempotencyKey: String?
+    let clientReportedMetadata: [String: JugglingMetadataValue]?
     enum CodingKeys: String, CodingKey {
         case sourceType   = "source_type"
         case uploadSource = "upload_source"
+        case uploadIdempotencyKey = "upload_idempotency_key"
+        case clientReportedMetadata = "client_reported_metadata"
     }
+}
+
+private struct JugglingConsentBody: Encodable {
+    let serviceConsent: Bool
+    let trainingConsent: Bool
+    let adminReviewConsent: Bool
+    enum CodingKeys: String, CodingKey {
+        case serviceConsent = "service_consent"
+        case trainingConsent = "training_consent"
+        case adminReviewConsent = "admin_review_consent"
+    }
+}
+
+private struct JugglingConsentResponse: Decodable {
+    let serviceConsent: Bool
+    enum CodingKeys: String, CodingKey { case serviceConsent = "service_consent" }
 }
 
 struct JugglingUploadInitResponse: Decodable {
@@ -617,6 +699,8 @@ enum JugglingUploadError: Error, LocalizedError, Equatable {
     case exportCancelled              // export cancelled by the user
     case invalidExportOutput          // exported file failed post-export validation
     case insufficientStorage          // export failed due to lack of free disk space
+    case cameraPermissionDenied
+    case captureInterrupted
 
     var errorDescription: String? {
         switch self {
@@ -631,6 +715,8 @@ enum JugglingUploadError: Error, LocalizedError, Equatable {
         case .exportCancelled:       return "A feldolgozás megszakítva."
         case .invalidExportOutput:   return "A tömörített videó érvénytelen. Próbálj másik videót."
         case .insufficientStorage:   return "Nincs elég szabad tárhely a videó feldolgozásához."
+        case .cameraPermissionDenied:return "Camera access is required to record a juggling video."
+        case .captureInterrupted:    return "Recording was interrupted. Please try again."
         }
     }
 
@@ -647,6 +733,8 @@ enum JugglingUploadError: Error, LocalizedError, Equatable {
         case (.exportCancelled, .exportCancelled): return true
         case (.invalidExportOutput, .invalidExportOutput): return true
         case (.insufficientStorage, .insufficientStorage): return true
+        case (.cameraPermissionDenied, .cameraPermissionDenied): return true
+        case (.captureInterrupted, .captureInterrupted): return true
         default:                                   return false
         }
     }

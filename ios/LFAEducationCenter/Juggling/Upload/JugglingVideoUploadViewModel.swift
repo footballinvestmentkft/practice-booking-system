@@ -31,6 +31,7 @@ final class JugglingVideoUploadViewModel: ObservableObject {
     enum UploadState: Equatable {
         case idle
         case selecting
+        case capturePreview
         case preparing
         case exporting(progress: Double)
         case uploading(progress: Double)
@@ -40,7 +41,7 @@ final class JugglingVideoUploadViewModel: ObservableObject {
 
         static func == (lhs: UploadState, rhs: UploadState) -> Bool {
             switch (lhs, rhs) {
-            case (.idle, .idle), (.selecting, .selecting), (.preparing, .preparing),
+            case (.idle, .idle), (.selecting, .selecting), (.capturePreview, .capturePreview), (.preparing, .preparing),
                  (.completing, .completing), (.success, .success):
                 return true
             case (.exporting(let a), .exporting(let b)):
@@ -83,6 +84,8 @@ final class JugglingVideoUploadViewModel: ObservableObject {
         return err.errorDescription
     }
 
+    var capturedPreviewURL: URL? { pendingCapturedURL }
+
     // MARK: — Internal (exposed via @testable for unit tests)
 
     private(set) var uploadTask: Task<Void, Never>?
@@ -104,6 +107,11 @@ final class JugglingVideoUploadViewModel: ObservableObject {
     private var exportedMimeType: String?
 
     private var currentVideoId: String?
+    private var uploadSourceType = "uploaded_video"
+    private var uploadSource = "gallery"
+    private var uploadIdempotencyKey = UUID().uuidString
+    private var clientMetadata: [String: JugglingMetadataValue] = [:]
+    private var pendingCapturedURL: URL?
 
     // MIME types accepted for the EXPORTED output (the export service always
     // produces "video/mp4", but this is validated rather than assumed).
@@ -166,8 +174,67 @@ final class JugglingVideoUploadViewModel: ObservableObject {
             return
         }
         state = .preparing
+        uploadSourceType = "uploaded_video"
+        uploadSource = "gallery"
+        uploadIdempotencyKey = UUID().uuidString
+        clientMetadata = [:]
         uploadTask = Task { [self] in
             await exportAndUpload(sourceURL: tempURL)
+        }
+    }
+
+    /// Takes ownership of a local camera file but does not upload it until the
+    /// player has reviewed the preview and explicitly grants service consent.
+    func captureDidFinish(tempURL: URL, metadata: [String: JugglingMetadataValue]) {
+        guard state == .idle else {
+            try? FileManager.default.removeItem(at: tempURL)
+            return
+        }
+        pendingCapturedURL = tempURL
+        clientMetadata = metadata
+        state = .capturePreview
+    }
+
+    func discardCapturedVideo() {
+        guard case .capturePreview = state else { return }
+        if let url = pendingCapturedURL { try? FileManager.default.removeItem(at: url) }
+        pendingCapturedURL = nil
+        clientMetadata = [:]
+        state = .idle
+    }
+
+    func cameraPermissionDenied() {
+        guard state == .idle else { return }
+        state = .failure(.cameraPermissionDenied)
+    }
+
+    func captureInterrupted(tempURL: URL?) {
+        if let tempURL { try? FileManager.default.removeItem(at: tempURL) }
+        guard state == .idle else { return }
+        state = .failure(.captureInterrupted)
+    }
+
+    func uploadCapturedVideo(trainingConsent: Bool, adminReviewConsent: Bool) {
+        guard case .capturePreview = state, let source = pendingCapturedURL else { return }
+        pendingCapturedURL = nil
+        uploadSourceType = "in_app_capture"
+        uploadSource = "camera"
+        uploadIdempotencyKey = UUID().uuidString
+        state = .preparing
+        uploadTask = Task { [self] in
+            do {
+                try await apiClient.grantJugglingConsent(
+                    service: true, training: trainingConsent, adminReview: adminReviewConsent
+                )
+                guard !Task.isCancelled else { try? FileManager.default.removeItem(at: source); return }
+                await exportAndUpload(sourceURL: source)
+            } catch let error as JugglingUploadError {
+                try? FileManager.default.removeItem(at: source)
+                state = .failure(error)
+            } catch {
+                try? FileManager.default.removeItem(at: source)
+                state = .failure(.networkError(error))
+            }
         }
     }
 
@@ -181,6 +248,8 @@ final class JugglingVideoUploadViewModel: ObservableObject {
         exportService.cancelExport()
         uploadTask = nil
         cleanupAllTempFiles(reason: "cancel()")
+        if let url = pendingCapturedURL { try? FileManager.default.removeItem(at: url) }
+        pendingCapturedURL = nil
         currentVideoId = nil
         state = .idle
     }
@@ -319,10 +388,11 @@ final class JugglingVideoUploadViewModel: ObservableObject {
             // Step 1 — upload-init
             guard !Task.isCancelled else { return }
             #if DEBUG
-            log("uploadInit starting — sourceType=uploaded_video, uploadSource=gallery")
+            log("uploadInit starting — sourceType=\(uploadSourceType), uploadSource=\(uploadSource)")
             #endif
             let initResp = try await apiClient.uploadInit(
-                sourceType: "uploaded_video", uploadSource: "gallery"
+                sourceType: uploadSourceType, uploadSource: uploadSource,
+                idempotencyKey: uploadIdempotencyKey, clientMetadata: clientMetadata
             )
             #if DEBUG
             log("uploadInit succeeded — status=\(initResp.status)")

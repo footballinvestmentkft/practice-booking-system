@@ -61581,6 +61581,19 @@
               }
             ],
             "title": "Client Reported Metadata"
+          },
+          "upload_idempotency_key": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Idempotency Key"
           }
         },
         "type": "object",

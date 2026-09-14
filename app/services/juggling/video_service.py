@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.config import settings
 from app.models.juggling import (
@@ -62,8 +63,23 @@ def create_pending(
     client_reported_metadata: Optional[Dict[str, Any]],
     db: Session,
     training_video_type: str = "juggling",
+    upload_idempotency_key: str | None = None,
 ) -> JugglingVideo:
-    """Create a new juggling_video record in pending_upload state."""
+    """Create or replay one logical pending upload for this user."""
+    if upload_idempotency_key:
+        existing = db.query(JugglingVideo).filter(
+            JugglingVideo.user_id == user_id,
+            JugglingVideo.upload_idempotency_key == upload_idempotency_key,
+        ).first()
+        if existing is not None:
+            if (
+                existing.source_type != source_type
+                or existing.upload_source != upload_source
+                or existing.training_video_type != training_video_type
+                or (existing.client_reported_metadata or {}) != (client_reported_metadata or {})
+            ):
+                raise ValueError("UPLOAD_IDEMPOTENCY_CONFLICT")
+            return existing
     video = JugglingVideo(
         id=_uuid_mod.uuid4(),
         user_id=user_id,
@@ -72,11 +88,60 @@ def create_pending(
         training_video_type=training_video_type,
         status=JugglingVideoStatus.pending_upload.value,
         client_reported_metadata=client_reported_metadata,
+        upload_idempotency_key=upload_idempotency_key,
     )
     db.add(video)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        if not upload_idempotency_key:
+            raise
+        existing = db.query(JugglingVideo).filter(
+            JugglingVideo.user_id == user_id,
+            JugglingVideo.upload_idempotency_key == upload_idempotency_key,
+        ).one_or_none()
+        if existing is None:
+            raise
+        if (
+            existing.source_type != source_type
+            or existing.upload_source != upload_source
+            or existing.training_video_type != training_video_type
+            or (existing.client_reported_metadata or {}) != (client_reported_metadata or {})
+        ):
+            raise ValueError("UPLOAD_IDEMPOTENCY_CONFLICT")
+        return existing
     db.refresh(video)
     return video
+
+
+def claim_processing_once(video_id: str, db: Session) -> tuple[JugglingVideo, bool]:
+    """Lock and claim analysis exactly once across concurrent complete calls."""
+    video = (
+        db.query(JugglingVideo)
+        .filter(JugglingVideo.id == video_id)
+        .with_for_update()
+        .populate_existing()
+        .one_or_none()
+    )
+    if video is None:
+        raise ValueError(f"video_not_found: {video_id}")
+    if video.status in {
+        JugglingVideoStatus.processing.value,
+        JugglingVideoStatus.analyzed.value,
+        JugglingVideoStatus.rejected.value,
+    }:
+        return video, False
+    if video.status != JugglingVideoStatus.uploaded.value:
+        raise ValueError(
+            f"invalid_transition: cannot call complete from status={video.status!r}. "
+            f"Only 'uploaded' may proceed."
+        )
+    video.status = JugglingVideoStatus.processing.value
+    video.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(video)
+    return video, True
 
 
 def set_uploaded(

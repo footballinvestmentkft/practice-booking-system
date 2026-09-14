@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import struct
 import uuid
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -63,8 +64,10 @@ def _upload_file(client, token, video_id, data=None, filename="video.mp4", ct="v
 
 # ── upload-init tests ─────────────────────────────────────────────────────────
 
-def test_ju01_upload_init_in_app_capture_201(client, student_token):
+def test_ju01_upload_init_in_app_capture_201(client, student_token, student_user, db_session):
     """JU-01: upload-init source_type=in_app_capture returns 201."""
+    student_user.date_of_birth = date(2000, 1, 1)
+    db_session.flush()
     _grant_consent(client, student_token)
     r = _init_upload(client, student_token, "in_app_capture")
     assert r.status_code == 201, r.text
@@ -293,8 +296,8 @@ def test_ju16_complete_409_from_pending_upload(client, student_token):
     assert r.status_code == 409, r.text
 
 
-def test_ju17_complete_409_double_submit(client, student_token, tmp_path):
-    """JU-17: calling complete twice returns 409 on second call."""
+def test_ju17_complete_replay_is_idempotent(client, student_token, tmp_path):
+    """JU-17: replay returns the canonical state and queues work exactly once."""
     _grant_consent(client, student_token)
     init = _init_upload(client, student_token)
     video_id = init.json()["video_id"]
@@ -306,24 +309,28 @@ def test_ju17_complete_409_double_submit(client, student_token, tmp_path):
 
     with patch("app.api.api_v1.endpoints.users.juggling_videos.transcode_video_task") as mock_task:
         mock_task.delay = MagicMock()
-        client.post(
+        first = client.post(
             f"/api/v1/users/me/juggling/videos/{video_id}/complete",
             headers=_auth(student_token),
         )
-        r = client.post(
+        replay = client.post(
             f"/api/v1/users/me/juggling/videos/{video_id}/complete",
             headers=_auth(student_token),
         )
-    assert r.status_code == 409, r.text
+    assert first.status_code == replay.status_code == 200
+    assert first.json()["status"] == replay.json()["status"] == "processing"
+    mock_task.delay.assert_called_once_with(video_id)
 
 
 def test_ju18_server_metadata_overrides_client_metadata(
-    client, student_token, tmp_path, db_session
+    client, student_token, student_user, tmp_path, db_session
 ):
     """JU-18: server_detected_metadata is written by task; client metadata is not authoritative."""
     from app.models.juggling import JugglingVideo
     from app.services.juggling import video_service
 
+    student_user.date_of_birth = date(2000, 1, 1)
+    db_session.flush()
     _grant_consent(client, student_token)
     # Init with client metadata claiming fps=24
     r_init = client.post(

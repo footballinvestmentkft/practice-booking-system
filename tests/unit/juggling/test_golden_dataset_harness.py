@@ -33,7 +33,11 @@ def test_empty_checked_in_manifest_is_valid_and_contains_no_media():
     manifest = json.loads(path.read_text())
     validate_manifest(manifest)
     assert manifest["samples"] == []
-    assert not list(Path("datasets/juggling").rglob("*.mp4"))
+    media_extensions = {".mp4", ".mov", ".m4v", ".avi", ".hevc"}
+    assert not [
+        path for path in Path("datasets/juggling").rglob("*")
+        if path.is_file() and path.suffix.lower() in media_extensions
+    ]
 
 
 def test_harness_compares_count_sequence_body_part_and_side():
