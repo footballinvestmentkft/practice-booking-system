@@ -7,10 +7,6 @@ import AVKit
 // Sheet content for B3 (video upload list integration). Presented from
 // JugglingVideoListView via .sheet(isPresented:onDismiss:).
 //
-// Picker lifecycle: the PHPicker is shown via a nested .fullScreenCover bound
-// to viewModel.state == .selecting (iOS 14: only one .sheet reliably presents
-// at a time, so the picker uses fullScreenCover instead of a second sheet).
-//
 // Dismiss lifecycle: the "Mégse" toolbar button and swipe-to-dismiss both
 // route through the parent's .sheet(onDismiss:), which calls
 // viewModel.cancel() if an upload is active — no orphan upload tasks.
@@ -40,12 +36,6 @@ struct JugglingVideoUploadView: View {
             }
         }
         .navigationViewStyle(.stack)
-        .fullScreenCover(isPresented: pickerBinding) {
-            JugglingVideoPHPicker(
-                onPick: { url, mimeType in viewModel.pickerDidSelect(tempURL: url, mimeType: mimeType) },
-                onCancel: { viewModel.pickerCancelled() }
-            )
-        }
         .fullScreenCover(isPresented: $showingCamera) {
             JugglingDirectCameraView(
                 onFinish: { url, metadata in
@@ -60,29 +50,12 @@ struct JugglingVideoUploadView: View {
                     showingCamera = false
                     viewModel.captureInterrupted(tempURL: url)
                 },
-                onCancel: { showingCamera = false }
+                onCancel: {
+                    showingCamera = false
+                    viewModel.cancelPreparedCapture()
+                }
             )
         }
-    }
-
-    // Bridges viewModel.state == .selecting to the fullScreenCover presentation.
-    // Dismissal is driven exclusively by viewModel.state: pickerDidSelect/
-    // pickerCancelled (called from JugglingVideoPHPicker's onPick/onCancel)
-    // move state away from .selecting, which flips `get` to false and lets
-    // SwiftUI dismiss the cover. The setter is intentionally a no-op — it only
-    // exists because Binding requires one, and must NOT call pickerCancelled()
-    // here: SwiftUI invokes it as part of its own reconciliation, which can
-    // fire before the picker's async loadFileRepresentation completion
-    // delivers the real selection (see B3-DIAG investigation).
-    private var pickerBinding: Binding<Bool> {
-        Binding(
-            get: { viewModel.state == .selecting },
-            set: { newValue in
-                #if DEBUG
-                print("[B3-DIAG][View] pickerBinding.set(\(newValue)) — currentState=\(viewModel.state) (no-op)")
-                #endif
-            }
-        )
     }
 
     @ViewBuilder
@@ -93,22 +66,20 @@ struct JugglingVideoUploadView: View {
                 Image(systemName: "video.badge.plus")
                     .font(.system(size: 48))
                     .foregroundColor(Theme.Color.primary)
-                Text("Válassz videót a galériából a feltöltéshez.")
+                Text("Record a juggling attempt with the front camera.")
                     .font(.subheadline)
                     .foregroundColor(Theme.Color.muted)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Theme.Spacing.lg)
-                Button(action: { viewModel.startPicker() }) {
-                    Text("Videó kiválasztása")
-                        .font(.body.weight(.semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, Theme.Spacing.lg)
-                        .padding(.vertical, Theme.Spacing.sm)
-                        .background(Theme.Color.primary)
-                        .cornerRadius(Theme.Radius.md)
+                Button("Record with front camera") {
+                    Task {
+                        if await viewModel.prepareDirectCapture() {
+                            showingCamera = true
+                        }
+                    }
                 }
-                Button("Record with camera") { showingCamera = true }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(viewModel.isPreparingCapture)
             }
 
         case .capturePreview:
@@ -178,7 +149,6 @@ struct JugglingVideoUploadView: View {
                     .padding(.horizontal, Theme.Spacing.lg)
                 Button {
                     viewModel.retry()
-                    viewModel.startPicker()
                 } label: {
                     Text("Újrapróbálás")
                         .font(.body.weight(.semibold))
@@ -196,6 +166,8 @@ struct JugglingVideoUploadView: View {
 private struct JugglingDirectCameraView: View {
     @StateObject private var recorder: JugglingCameraRecorder
     let onCancel: () -> Void
+    @State private var countdown: Int?
+    @State private var countdownTask: Task<Void, Never>?
 
     init(
         onFinish: @escaping (URL, [String: JugglingMetadataValue]) -> Void,
@@ -215,13 +187,31 @@ private struct JugglingDirectCameraView: View {
             JugglingCameraPreview(session: recorder.session).ignoresSafeArea()
             HStack(spacing: 36) {
                 Button("Cancel") { recorder.cancel(); onCancel() }
-                Button(recorder.isRecording ? "Stop" : "Record") {
-                    recorder.isRecording ? recorder.stop() : recorder.start()
+                Button(recorder.isRecording ? "Stop" : (countdown.map(String.init) ?? "Record")) {
+                    if recorder.isRecording {
+                        recorder.stop()
+                    } else if countdown == nil {
+                        startCountdown()
+                    }
                 }.buttonStyle(.borderedProminent)
+                    .disabled(countdown != nil)
             }.padding(28).background(.ultraThinMaterial)
         }
         .task { recorder.prepare() }
-        .onDisappear { recorder.cancel() }
+        .onDisappear { countdownTask?.cancel(); recorder.cancel() }
+    }
+
+    private func startCountdown() {
+        countdownTask?.cancel()
+        countdownTask = Task {
+            for value in [3, 2, 1] {
+                guard !Task.isCancelled else { return }
+                await MainActor.run { countdown = value }
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+            guard !Task.isCancelled else { return }
+            await MainActor.run { countdown = nil; recorder.start() }
+        }
     }
 }
 
@@ -259,7 +249,7 @@ private final class JugglingCameraRecorder: NSObject, ObservableObject, AVCaptur
         guard session.inputs.isEmpty else { session.startRunning(); return }
         session.beginConfiguration()
         session.sessionPreset = .high
-        guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+        guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
               let input = try? AVCaptureDeviceInput(device: camera), session.canAddInput(input),
               session.canAddOutput(output) else {
             session.commitConfiguration(); onInterrupted(nil); return
@@ -303,7 +293,7 @@ private final class JugglingCameraRecorder: NSObject, ObservableObject, AVCaptur
                 "duration_seconds": .number(duration.isFinite ? duration : 0),
                 "fps": .number(Double(track?.nominalFrameRate ?? 0)),
                 "resolution": .string("\(Int(track?.naturalSize.width ?? 0))x\(Int(track?.naturalSize.height ?? 0))"),
-                "camera_position": .string("back"),
+                "camera_position": .string("front"),
                 "orientation_degrees": .integer(0),
                 "device_model": .string(UIDevice.current.model),
                 "os_version": .string(UIDevice.current.systemVersion),

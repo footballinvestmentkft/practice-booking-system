@@ -459,9 +459,8 @@ _CC_STATUSES_WITH_IMPLICIT_INITIAL: frozenset = frozenset({
 
 
 def _cc_display_name(user_obj) -> str:
-    if user_obj is None:
-        return "Unknown"
-    return user_obj.nickname if getattr(user_obj, "nickname", None) else (user_obj.email or "Unknown")
+    from ...services.public_identity_service import safe_public_display_identity
+    return safe_public_display_identity(user_obj) or "Player unavailable"
 
 
 def _cc_build_challenge_row(ch, user_id: int, my_attempt) -> dict:

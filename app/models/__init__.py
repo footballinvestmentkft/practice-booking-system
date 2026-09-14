@@ -75,6 +75,9 @@ from .user_mood_photos import UserMoodPhoto, MOOD_PHOTO_SLOTS, MoodPhotoStatus
 from .biometric import UserBiometricConsent, UserFaceEmbedding, BiometricVerificationLog
 from .juggling import (
     JugglingConsent,
+    JugglingCaptureAttempt,
+    JugglingCaptureAttemptStatus,
+    JugglingCaptureMode,
     JugglingVideo,
     JugglingVideoStatus,
     JugglingVideoQualityStatus,

@@ -5,7 +5,6 @@ Shared functions for pagination, validation, and statistics
 from typing import Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
-import re
 
 from .....models.user import User
 
@@ -74,32 +73,20 @@ def validate_nickname(nickname: str, db: Session, current_user_id: int = None) -
     Returns:
         Tuple of (is_valid, message)
     """
-    # Basic validation
-    if not nickname or len(nickname.strip()) < 3:
-        return False, "A becenév legalább 3 karakter hosszú legyen"
-    
-    if len(nickname) > 30:
-        return False, "A becenév maximum 30 karakter lehet"
-    
-    # Check for inappropriate characters
-    if not re.match("^[a-zA-Z0-9_áéíóöőúüűÁÉÍÓÖŐÚÜŰ]+$", nickname):
-        return False, "A becenév csak betűket, számokat és aláhúzást tartalmazhat"
-    
-    # Check if already exists (case insensitive)
-    query = db.query(User).filter(func.lower(User.nickname) == nickname.lower())
-    if current_user_id:
-        query = query.filter(User.id != current_user_id)
-    
-    existing_user = query.first()
-    if existing_user:
-        return False, "Ez a becenév már foglalt. Kérjük, válasszon másikat!"
-    
-    # Check against reserved nicknames
-    reserved_nicknames = ['admin', 'moderator', 'system', 'support', 'help', 'info', 'test']
-    if nickname.lower() in reserved_nicknames:
-        return False, "Ez a becenév foglalt. Kérjük, válasszon másikat!"
-    
-    return True, "Remek! Ez a becenév elérhető."
+    from app.services.public_identity_service import (
+        PublicIdentityPolicyError,
+        nickname_available,
+    )
+
+    try:
+        available = nickname_available(
+            db, nickname=nickname, current_user_id=current_user_id,
+        )
+    except PublicIdentityPolicyError as exc:
+        return False, exc.code
+    if not available:
+        return False, "PUBLIC_DISPLAY_IDENTITY_CONFLICT"
+    return True, "PUBLIC_DISPLAY_IDENTITY_AVAILABLE"
 
 
 def get_user_statistics(db: Session, user_id: int) -> dict:

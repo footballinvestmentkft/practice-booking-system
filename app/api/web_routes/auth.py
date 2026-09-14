@@ -26,6 +26,11 @@ from ...services.player_identity_service import (
     PlayerIdentityPolicyError,
     update_identity_profile,
 )
+from ...services.public_identity_service import (
+    PublicIdentityPolicyError,
+    nickname_available,
+    normalize_public_nickname,
+)
 
 # Setup templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -306,8 +311,12 @@ async def register_submit(
             return error("First name must be at least 2 characters.")
         if len(last_name.strip()) < 2:
             return error("Last name must be at least 2 characters.")
-        if len(nickname.strip()) < 2:
-            return error("Nickname must be at least 2 characters.")
+        try:
+            canonical_nickname = normalize_public_nickname(nickname)
+        except PublicIdentityPolicyError as exc:
+            return error(exc.code)
+        if not nickname_available(db, nickname=canonical_nickname):
+            return error("PUBLIC_DISPLAY_IDENTITY_CONFLICT")
         if gender not in ("Male", "Female", "Non-binary", "Other"):
             return error("Please select a valid gender.")
         if nationality not in COUNTRY_CODES:
@@ -362,7 +371,7 @@ async def register_submit(
             name=f"{first_name.strip()} {last_name.strip()}",
             first_name=first_name.strip(),
             last_name=last_name.strip(),
-            nickname=nickname.strip(),
+            nickname=canonical_nickname,
             email=email.lower().strip(),
             password_hash=get_password_hash(password),
             phone=phone.strip(),

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ profile_user.name or profile_user.nickname or "Player" }} — LFA Player Profile{% endblock %}
+{% block title %}{{ profile_user.nickname }} — LFA Player Profile{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -615,13 +615,13 @@
     <div class="psp-identity-area">
         <div class="psp-identity">
             {% if photo_url %}
-            <img src="{{ photo_url }}" alt="{{ profile_user.name }}" class="psp-avatar-img">
+            <img src="{{ photo_url }}" alt="{{ profile_user.nickname }}" class="psp-avatar-img">
             {% else %}
             <div class="psp-avatar">{{ initials }}</div>
             {% endif %}
 
             <div class="psp-identity-info">
-                <div class="psp-name">{{ profile_user.name or profile_user.nickname or profile_user.email }}</div>
+                <div class="psp-name">{{ profile_user.nickname }}</div>
                 <div class="psp-pills">
                     <span class="psp-pill psp-pill-ovr">OVR {{ overall }}</span>
                     <span class="psp-pill psp-pill-tier" style="background:{{ tier_color }}">{{ tier_label }}</span>

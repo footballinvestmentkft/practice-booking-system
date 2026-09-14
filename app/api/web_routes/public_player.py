@@ -89,6 +89,14 @@ async def public_player_profile(
     user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
     if not user:
         return HTMLResponse("<h2>Player not found</h2>", status_code=404)
+    from app.services.public_identity_service import (
+        PublicIdentityPolicyError,
+        require_public_display_identity,
+    )
+    try:
+        public_identity = require_public_display_identity(db, user)
+    except PublicIdentityPolicyError:
+        return HTMLResponse("<h2>Public player identity unavailable</h2>", status_code=404)
 
     lfa_license = db.query(UserLicense).filter(
         UserLicense.user_id == user_id,
@@ -151,7 +159,7 @@ async def public_player_profile(
     )
 
     # Initials fallback avatar
-    parts    = (user.name or user.email).split()
+    parts    = public_identity.split()
     initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
 
     # Card display state — platform-first sizing
@@ -251,6 +259,14 @@ def public_player_card(
     ).first()
     if not user:
         return HTMLResponse("<h2>Player not found</h2>", status_code=404)
+    from app.services.public_identity_service import (
+        PublicIdentityPolicyError,
+        require_public_display_identity,
+    )
+    try:
+        public_identity = require_public_display_identity(db, user)
+    except PublicIdentityPolicyError:
+        return HTMLResponse("<h2>Public player identity unavailable</h2>", status_code=404)
 
     lfa_license = db.query(UserLicense).filter(
         UserLicense.user_id == user_id,
@@ -351,7 +367,7 @@ def public_player_card(
         tier_label, tier_color, avatar_bg = "BEGINNER", "#fc8181", "#c53030"
 
     # Initials
-    parts = (user.name or user.email).split()
+    parts = public_identity.split()
     initials = "".join(p[0].upper() for p in parts[:2]) if parts else "?"
 
     # ── CardDraft (hoisted) ───────────────────────────────────────────────────
@@ -381,7 +397,7 @@ def public_player_card(
         })
 
     player = {
-        "name": user.name or user.email,
+        "name": public_identity,
         "nationality": user.nationality,
         "position": position,
         "age_group": age_group,
@@ -617,6 +633,14 @@ async def export_player_card(
     ).first()
     if not target_user:
         raise HTTPException(status_code=404, detail="Player not found")
+    from app.services.public_identity_service import (
+        PublicIdentityPolicyError,
+        require_public_display_identity,
+    )
+    try:
+        require_public_display_identity(db, target_user)
+    except PublicIdentityPolicyError as exc:
+        raise HTTPException(status_code=403, detail=exc.code) from exc
 
     target_license = db.query(UserLicense).filter(
         UserLicense.user_id == user_id,

@@ -208,7 +208,7 @@
                 {% for f in friends_rows %}
                 <option value="{{ f.id }}"
                     {% if preselected_friend_id and f.id == preselected_friend_id %}selected{% endif %}>
-                    {{ f.nickname or f.email }}
+                    {{ f.nickname or 'Player unavailable' }}
                 </option>
                 {% endfor %}
             </select>

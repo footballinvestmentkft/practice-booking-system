@@ -232,9 +232,10 @@ final class JugglingUploadAPIClientTests: XCTestCase {
             idempotencyKey: "capture-attempt-0001",
             clientMetadata: [
                 "duration_seconds": .number(4.5),
-                "camera_position": .string("back"),
+                "camera_position": .string("front"),
                 "orientation_degrees": .integer(90),
-            ]
+            ],
+            captureAttemptId: "server-attempt-0001"
         )
 
         let body = try XCTUnwrap(capturedBody)
@@ -244,10 +245,43 @@ final class JugglingUploadAPIClientTests: XCTestCase {
         XCTAssertEqual(json["source_type"] as? String, "in_app_capture")
         XCTAssertEqual(json["upload_source"] as? String, "camera")
         XCTAssertEqual(json["upload_idempotency_key"] as? String, "capture-attempt-0001")
+        XCTAssertEqual(json["capture_attempt_id"] as? String, "server-attempt-0001")
         let metadata = try XCTUnwrap(json["client_reported_metadata"] as? [String: Any])
         XCTAssertEqual(metadata["duration_seconds"] as? Double, 4.5)
-        XCTAssertEqual(metadata["camera_position"] as? String, "back")
+        XCTAssertEqual(metadata["camera_position"] as? String, "front")
         XCTAssertEqual(metadata["orientation_degrees"] as? Int, 90)
+    }
+
+    func test_PC6B_captureAttemptUsesCanonicalServerEndpoint() async throws {
+        var capturedRequest: URLRequest?
+        var capturedBody: Data?
+        MockURLProtocol.requestHandler = { req in
+            capturedRequest = req
+            capturedBody = try self.requestBodyData(req)
+            return (self.makeHTTPResponse(url: req.url!, status: 201), self.jsonData([
+                "capture_attempt_id": "server-attempt-0001",
+                "capture_mode": "SOLO_VERIFIED",
+                "camera_position": "front",
+                "status": "ISSUED",
+                "issued_at": "2026-09-14T12:00:00Z"
+            ]))
+        }
+
+        let response = try await client.issueSoloCaptureAttempt(
+            idempotencyKey: "capture-request-0001"
+        )
+
+        XCTAssertTrue(capturedRequest?.url?.path.hasSuffix(
+            "/api/v1/users/me/juggling/capture-attempts"
+        ) == true)
+        XCTAssertEqual(response.captureAttemptId, "server-attempt-0001")
+        XCTAssertEqual(response.captureMode, "SOLO_VERIFIED")
+        XCTAssertEqual(response.cameraPosition, "front")
+        let body = try XCTUnwrap(capturedBody)
+        let json = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: body) as? [String: Any]
+        )
+        XCTAssertEqual(json["request_idempotency_key"] as? String, "capture-request-0001")
     }
 
     func test_PC6B_consentUsesCanonicalConsentEndpoint() async throws {

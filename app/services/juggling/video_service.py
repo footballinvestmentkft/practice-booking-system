@@ -65,7 +65,14 @@ def create_pending(
     training_video_type: str = "juggling",
     upload_idempotency_key: str | None = None,
 ) -> JugglingVideo:
-    """Create or replay one logical pending upload for this user."""
+    """Create or replay one legacy/import upload.
+
+    Canonical SOLO_VERIFIED capture must be created by
+    ``capture_policy_service.bind_solo_upload`` so client source labels can
+    never mint trusted capture provenance.
+    """
+    if source_type == "in_app_capture":
+        raise ValueError("CANONICAL_CAPTURE_ATTEMPT_REQUIRED")
     if upload_idempotency_key:
         existing = db.query(JugglingVideo).filter(
             JugglingVideo.user_id == user_id,

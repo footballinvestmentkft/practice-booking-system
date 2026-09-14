@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey, Enum, Index
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey, Enum, Index, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
@@ -23,6 +23,15 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     nickname = Column(String, nullable=True)
+
+    __table_args__ = (
+        Index(
+            "uq_users_nickname_ci",
+            func.lower(nickname),
+            unique=True,
+            postgresql_where=nickname.isnot(None),
+        ),
+    )
 
     # 🆕 NEW: Separate first/last name for better data structure
     first_name = Column(String, nullable=True, comment="User first name (given name)")

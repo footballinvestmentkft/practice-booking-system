@@ -28,11 +28,12 @@ protocol JugglingAnnotationAPIClientProtocol: AnyObject {
     func finishAnnotation(videoId: String, confirmZero: Bool) async throws -> FinishAnnotationOut
     // B-2: storage release — 204 or 410 are both success; throws VideoDeleteError on failure
     func deleteVideo(videoId: String) async throws
+    func issueSoloCaptureAttempt(idempotencyKey: String) async throws -> JugglingCaptureAttemptResponse
     // B-3: three-step video upload pipeline (init → upload → complete)
     func uploadInit(sourceType: String, uploadSource: String) async throws -> JugglingUploadInitResponse
     func uploadInit(
         sourceType: String, uploadSource: String, idempotencyKey: String,
-        clientMetadata: [String: JugglingMetadataValue]
+        clientMetadata: [String: JugglingMetadataValue], captureAttemptId: String?
     ) async throws -> JugglingUploadInitResponse
     func grantJugglingConsent(service: Bool, training: Bool, adminReview: Bool) async throws
     func uploadVideoFile(videoId: String, fileURL: URL, mimeType: String) async throws -> JugglingUploadFileResponse
@@ -46,9 +47,13 @@ protocol JugglingAnnotationAPIClientProtocol: AnyObject {
 }
 
 extension JugglingAnnotationAPIClientProtocol {
+    func issueSoloCaptureAttempt(idempotencyKey: String) async throws -> JugglingCaptureAttemptResponse {
+        throw JugglingUploadError.invalidState("Canonical capture attempt client not configured")
+    }
+
     func uploadInit(
         sourceType: String, uploadSource: String, idempotencyKey: String,
-        clientMetadata: [String: JugglingMetadataValue]
+        clientMetadata: [String: JugglingMetadataValue], captureAttemptId: String? = nil
     ) async throws -> JugglingUploadInitResponse {
         try await uploadInit(sourceType: sourceType, uploadSource: uploadSource)
     }
@@ -216,18 +221,29 @@ final class JugglingAnnotationAPIClient: JugglingAnnotationAPIClientProtocol {
     func uploadInit(sourceType: String, uploadSource: String) async throws -> JugglingUploadInitResponse {
         try await uploadInit(
             sourceType: sourceType, uploadSource: uploadSource,
-            idempotencyKey: UUID().uuidString, clientMetadata: [:]
+            idempotencyKey: UUID().uuidString, clientMetadata: [:], captureAttemptId: nil
         )
+    }
+
+    func issueSoloCaptureAttempt(idempotencyKey: String) async throws -> JugglingCaptureAttemptResponse {
+        let path = "/api/v1/users/me/juggling/capture-attempts"
+        let body = JugglingCaptureAttemptBody(requestIdempotencyKey: idempotencyKey)
+        do {
+            return try await authManager.authenticatedPost(path: path, body: body)
+        } catch let error as APIError {
+            throw JugglingAnnotationAPIClient.mapUploadInitError(error)
+        }
     }
 
     func uploadInit(
         sourceType: String, uploadSource: String, idempotencyKey: String,
-        clientMetadata: [String: JugglingMetadataValue]
+        clientMetadata: [String: JugglingMetadataValue], captureAttemptId: String? = nil
     ) async throws -> JugglingUploadInitResponse {
         let path = "/api/v1/users/me/juggling/videos/upload-init"
         let body = JugglingUploadInitBody(
             sourceType: sourceType, uploadSource: uploadSource,
-            uploadIdempotencyKey: idempotencyKey, clientReportedMetadata: clientMetadata
+            uploadIdempotencyKey: idempotencyKey, clientReportedMetadata: clientMetadata,
+            captureAttemptId: captureAttemptId
         )
         do {
             return try await authManager.authenticatedPost(path: path, body: body)
@@ -624,11 +640,33 @@ struct JugglingUploadInitBody: Encodable {
     let uploadSource: String
     let uploadIdempotencyKey: String?
     let clientReportedMetadata: [String: JugglingMetadataValue]?
+    let captureAttemptId: String?
     enum CodingKeys: String, CodingKey {
         case sourceType   = "source_type"
         case uploadSource = "upload_source"
         case uploadIdempotencyKey = "upload_idempotency_key"
         case clientReportedMetadata = "client_reported_metadata"
+        case captureAttemptId = "capture_attempt_id"
+    }
+}
+
+private struct JugglingCaptureAttemptBody: Encodable {
+    let requestIdempotencyKey: String
+    enum CodingKeys: String, CodingKey {
+        case requestIdempotencyKey = "request_idempotency_key"
+    }
+}
+
+struct JugglingCaptureAttemptResponse: Decodable, Equatable {
+    let captureAttemptId: String
+    let captureMode: String
+    let cameraPosition: String
+    let status: String
+    enum CodingKeys: String, CodingKey {
+        case captureAttemptId = "capture_attempt_id"
+        case captureMode = "capture_mode"
+        case cameraPosition = "camera_position"
+        case status
     }
 }
 
@@ -652,10 +690,29 @@ struct JugglingUploadInitResponse: Decodable {
     let videoId:   String
     let status:    String
     let uploadUrl: String
+    let captureAttemptId: String?
+    let captureMode: String?
+    let cameraPosition: String?
+
+    init(
+        videoId: String, status: String, uploadUrl: String,
+        captureAttemptId: String? = nil, captureMode: String? = nil,
+        cameraPosition: String? = nil
+    ) {
+        self.videoId = videoId
+        self.status = status
+        self.uploadUrl = uploadUrl
+        self.captureAttemptId = captureAttemptId
+        self.captureMode = captureMode
+        self.cameraPosition = cameraPosition
+    }
     enum CodingKeys: String, CodingKey {
         case videoId   = "video_id"
         case status
         case uploadUrl = "upload_url"
+        case captureAttemptId = "capture_attempt_id"
+        case captureMode = "capture_mode"
+        case cameraPosition = "camera_position"
     }
 }
 

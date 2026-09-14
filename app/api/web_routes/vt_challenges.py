@@ -76,6 +76,11 @@ from ...services.challenge_snapshot_service import (
     generate_snapshot,
     validate_challenge_mode,
 )
+from ...services.public_identity_service import (
+    PublicIdentityPolicyError,
+    require_public_display_identity,
+    safe_public_display_identity,
+)
 from ...services.virtual_training_service import VirtualTrainingService
 from .helpers import require_student_onboarding
 from .student_features import _spec_ctx
@@ -199,7 +204,7 @@ def _build_inbox_row(
         "challenge_mode":        ch.challenge_mode,
         "challenge_category":    "virtual",
         "is_challenger":         is_challenger,
-        "opponent_name":         (opponent.nickname or opponent.email) if opponent else "Unknown",
+        "opponent_name":         safe_public_display_identity(opponent) or "Player unavailable",
         "game_name":             game.name if game else "—",
         "game_code":             game_code,
         "difficulty_level":      ch.difficulty_level,
@@ -425,6 +430,14 @@ async def send_challenge(
     if not target:
         return RedirectResponse(url="/challenges/send?error=user_not_found", status_code=303)
 
+    try:
+        challenger_identity = require_public_display_identity(db, user)
+        require_public_display_identity(db, target)
+    except PublicIdentityPolicyError:
+        return RedirectResponse(
+            url="/challenges/send?error=public_identity_required", status_code=303,
+        )
+
     # Friendship guard
     if not is_friends(db, user.id, challenged_user_id):
         return RedirectResponse(url="/challenges/send?error=not_friends", status_code=303)
@@ -535,7 +548,7 @@ async def send_challenge(
         db=db,
         user_id=challenged_user_id,
         title="Challenge Received",
-        message=f"{user.nickname or user.email} challenged you to a VT game.",
+        message=f"{challenger_identity} challenged you to a VT game.",
         notification_type=NotificationType.VT_CHALLENGE_RECEIVED,
         link="/challenges",
     )
@@ -584,7 +597,7 @@ async def accept_challenge(
             db=db,
             user_id=challenge.challenger_id,
             title="Challenge Accepted — Live Lobby",
-            message=f"{user.nickname or user.email} accepted your live challenge. Head to the lobby!",
+            message=f"{_display_name(user)} accepted your live challenge. Head to the lobby!",
             notification_type=NotificationType.VT_CHALLENGE_LIVE_LOBBY,
             link=f"/challenges/{challenge_id}/lobby",
         )
@@ -605,7 +618,7 @@ async def accept_challenge(
             db=db,
             user_id=challenge.challenger_id,
             title="Challenge Accepted",
-            message=f"{user.nickname or user.email} accepted your VT challenge.",
+            message=f"{_display_name(user)} accepted your VT challenge.",
             notification_type=NotificationType.VT_CHALLENGE_ACCEPTED,
             link="/challenges",
         )
@@ -1011,7 +1024,10 @@ _PHASE_CTA = {
 
 
 def _display_name(user: Any) -> str:
-    return user.nickname if (user and user.nickname) else (user.email if user else "Unknown")
+    identity = safe_public_display_identity(user)
+    if identity is None:
+        raise HTTPException(status_code=403, detail="PUBLIC_DISPLAY_IDENTITY_REQUIRED")
+    return identity
 
 
 def _resolve_challenge_render_token(token: str, challenge_id: int, db: Session) -> "User | None":
@@ -1778,7 +1794,7 @@ async def decline_challenge(
         db=db,
         user_id=challenge.challenger_id,
         title="Challenge Declined",
-        message=f"{user.nickname or user.email} declined your VT challenge.",
+        message=f"{_display_name(user)} declined your VT challenge.",
         notification_type=NotificationType.VT_CHALLENGE_DECLINED,
         link="/challenges",
     )
@@ -1818,7 +1834,7 @@ async def cancel_challenge(
         db=db,
         user_id=challenge.challenged_id,
         title="Challenge Cancelled",
-        message=f"{user.nickname or user.email} cancelled their VT challenge.",
+        message=f"{_display_name(user)} cancelled their VT challenge.",
         notification_type=NotificationType.VT_CHALLENGE_CANCELLED,
         link="/challenges",
     )

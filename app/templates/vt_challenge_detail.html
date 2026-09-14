@@ -274,7 +274,7 @@
     {% endif %}
     {% if forfeit_user %}
     <p class="vcd-outcome-sub">
-        {{ forfeit_user.nickname or forfeit_user.email }}
+        {{ forfeit_user.nickname or 'Player unavailable' }}
         {% if outcome_reason == "forfeit_deadline" %} did not play before the deadline.
         {% elif outcome_reason == "forfeit_no_show" %} did not ready up in the lobby.
         {% elif outcome_reason == "forfeit_post_start_timeout" %} did not submit within the live challenge time window.
@@ -325,8 +325,8 @@
     <div class="vcd-vs-grid">
         {# ── Challenger side ── #}
         <div class="vcd-player">
-            <div class="vcd-player-label">{% if is_challenger %}You{% else %}{{ challenger.nickname or challenger.email }}{% endif %}</div>
-            <div class="vcd-player-name">{{ challenger.nickname or challenger.email }}</div>
+            <div class="vcd-player-label">{% if is_challenger %}You{% else %}{{ challenger.nickname or 'Player unavailable' }}{% endif %}</div>
+            <div class="vcd-player-name">{{ challenger.nickname or 'Player unavailable' }}</div>
             {% if challenger_attempt %}
                 <div class="vcd-player-score
                     {%- if _is_forfeit_outcome %} not-used
@@ -355,8 +355,8 @@
 
         {# ── Challenged side ── #}
         <div class="vcd-player">
-            <div class="vcd-player-label">{% if not is_challenger %}You{% else %}{{ challenged.nickname or challenged.email }}{% endif %}</div>
-            <div class="vcd-player-name">{{ challenged.nickname or challenged.email }}</div>
+            <div class="vcd-player-label">{% if not is_challenger %}You{% else %}{{ challenged.nickname or 'Player unavailable' }}{% endif %}</div>
+            <div class="vcd-player-name">{{ challenged.nickname or 'Player unavailable' }}</div>
             {% if challenged_attempt %}
                 <div class="vcd-player-score
                     {%- if _is_forfeit_outcome %} not-used
@@ -407,7 +407,7 @@
     <div class="vcd-deltas-grid">
         {# ── Challenger side ── #}
         <div class="vcd-deltas-block">
-            <h4>{{ challenger.nickname or challenger.email }}</h4>
+            <h4>{{ challenger.nickname or 'Player unavailable' }}</h4>
             {% if challenger_skill_scores %}
                 {% for skill, delta in challenger_skill_scores.items() %}
                 <div class="vcd-delta-row {% if delta < 0 %}neg{% endif %}">
@@ -423,7 +423,7 @@
         </div>
         {# ── Challenged side ── #}
         <div class="vcd-deltas-block">
-            <h4>{{ challenged.nickname or challenged.email }}</h4>
+            <h4>{{ challenged.nickname or 'Player unavailable' }}</h4>
             {% if challenged_skill_scores %}
                 {% for skill, delta in challenged_skill_scores.items() %}
                 <div class="vcd-delta-row {% if delta < 0 %}neg{% endif %}">

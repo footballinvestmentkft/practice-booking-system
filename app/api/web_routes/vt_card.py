@@ -41,6 +41,7 @@ from ...services.vt_card_eligibility import (
     check_single_game_eligibility,
     get_completed_game_ids,
 )
+from ...services.public_identity_service import safe_public_display_identity
 
 router = APIRouter()
 templates = Jinja2Templates(
@@ -62,7 +63,10 @@ _VT_REWARD_TEMPLATE: dict[str, str] = {
 # ── Context helpers ────────────────────────────────────────────────────────────
 
 def _display_name(user: User) -> str:
-    return user.nickname if (user and getattr(user, "nickname", None)) else user.email
+    identity = safe_public_display_identity(user)
+    if identity is None:
+        raise HTTPException(status_code=403, detail="PUBLIC_DISPLAY_IDENTITY_REQUIRED")
+    return identity
 
 
 def _player_display(db: Session, user: User) -> dict:

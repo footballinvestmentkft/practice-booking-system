@@ -40,6 +40,8 @@ from app.models.juggling import JugglingVideo, JugglingVideoStatus, JugglingTran
 from app.models.user import User
 from app.schemas.juggling import (
     JugglingCompleteOut,
+    JugglingCaptureAttemptCreateRequest,
+    JugglingCaptureAttemptOut,
     JugglingQualityOut,
     JugglingRotationPatchOut,
     JugglingRotationPatchRequest,
@@ -50,13 +52,21 @@ from app.schemas.juggling import (
     JugglingVideoListOut,
 )
 from app.services.juggling.consent_service import has_service_consent
-from app.services.program_eligibility_service import evaluate_user_profile
+from app.services.player_identity_service import (
+    PlayerIdentityError,
+    get_authorized_football_player_context,
+)
 from app.services.juggling.feature_flag import require_juggling_enabled
 from app.services.juggling.security_service import (
     VideoSecurityError,
     run_all_pre_save_checks,
 )
 from app.services.juggling import video_service
+from app.services.juggling.capture_policy_service import (
+    CapturePolicyError,
+    bind_solo_upload,
+    issue_solo_attempt,
+)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -73,6 +83,37 @@ from app.config import settings
 from app.tasks.juggling_transcode_task import transcode_video_task
 
 router = APIRouter()
+
+
+@router.post(
+    "/me/juggling/capture-attempts",
+    response_model=JugglingCaptureAttemptOut,
+    status_code=201,
+    dependencies=[Depends(require_juggling_enabled)],
+    summary="Issue a canonical front-camera SOLO_VERIFIED capture attempt",
+    tags=["juggling"],
+)
+def create_capture_attempt(
+    body: JugglingCaptureAttemptCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> JugglingCaptureAttemptOut:
+    try:
+        get_authorized_football_player_context(db, user=current_user)
+    except PlayerIdentityError as exc:
+        raise HTTPException(status_code=403, detail=exc.code) from exc
+    attempt = issue_solo_attempt(
+        db,
+        user_id=current_user.id,
+        request_idempotency_key=body.request_idempotency_key,
+    )
+    return JugglingCaptureAttemptOut(
+        capture_attempt_id=attempt.id,
+        capture_mode=attempt.capture_mode,
+        camera_position=attempt.camera_position,
+        status=attempt.status,
+        issued_at=attempt.issued_at,
+    )
 
 # ── P5 list helpers ───────────────────────────────────────────────────────────
 
@@ -197,20 +238,46 @@ def upload_init(
         )
 
     if body.source_type == "in_app_capture":
-        profile = evaluate_user_profile(db, current_user)
-        if not profile.usable:
-            raise HTTPException(status_code=403, detail=profile.reason)
+        try:
+            get_authorized_football_player_context(db, user=current_user)
+        except PlayerIdentityError as exc:
+            raise HTTPException(status_code=403, detail=exc.code) from exc
+
+        if body.upload_source != "camera":
+            raise HTTPException(status_code=422, detail="SOLO_CAPTURE_SOURCE_MISMATCH")
+        if body.capture_attempt_id is None or body.upload_idempotency_key is None:
+            raise HTTPException(status_code=422, detail="CAPTURE_ATTEMPT_REQUIRED")
+        if body.training_video_type != "juggling":
+            raise HTTPException(status_code=422, detail="SOLO_CAPTURE_ACTIVITY_MISMATCH")
+    elif body.capture_attempt_id is not None:
+        raise HTTPException(
+            status_code=422, detail="CAPTURE_ATTEMPT_NOT_ALLOWED_FOR_IMPORT",
+        )
 
     try:
-        video = video_service.create_pending(
-            user_id=current_user.id,
-            source_type=body.source_type,
-            upload_source=body.upload_source,
-            client_reported_metadata=body.client_reported_metadata,
-            db=db,
-            training_video_type=body.training_video_type,
-            upload_idempotency_key=body.upload_idempotency_key,
-        )
+        if body.source_type == "in_app_capture":
+            video = bind_solo_upload(
+                db,
+                user_id=current_user.id,
+                capture_attempt_id=body.capture_attempt_id,
+                upload_idempotency_key=body.upload_idempotency_key,
+                client_reported_metadata=body.client_reported_metadata or {},
+            )
+        else:
+            video = video_service.create_pending(
+                user_id=current_user.id,
+                source_type=body.source_type,
+                upload_source=body.upload_source,
+                client_reported_metadata=body.client_reported_metadata,
+                db=db,
+                training_video_type=body.training_video_type,
+                upload_idempotency_key=body.upload_idempotency_key,
+            )
+    except CapturePolicyError as exc:
+        status_code = 404 if exc.code == "CAPTURE_ATTEMPT_NOT_FOUND" else 409
+        if exc.code in {"CAPTURE_CAMERA_POSITION_MISMATCH", "CAPTURE_ATTEMPT_POLICY_MISMATCH"}:
+            status_code = 422
+        raise HTTPException(status_code=status_code, detail=exc.code) from exc
     except ValueError as exc:
         if str(exc) == "UPLOAD_IDEMPOTENCY_CONFLICT":
             raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -224,6 +291,9 @@ def upload_init(
         video_id=video_id,
         status=video.status,
         upload_url=upload_url,
+        capture_attempt_id=video.capture_attempt_id,
+        capture_mode=video.capture_mode,
+        camera_position=video.authoritative_camera_position,
     )
 
 

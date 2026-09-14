@@ -1,5 +1,55 @@
 # LFA PC6B Capture / Social Policy Reconciliation Audit (2026)
 
+## Owner-approved policy amendment — 2026-09-14
+
+This amendment supersedes the undecided items recorded in section 6. It does
+not publish or implement a social renderer.
+
+- `User.nickname` is the only canonical public Player display identity. It is
+  globally case-insensitive unique; `User.id` remains the stable internal key.
+- A valid nickname is required at public challenge/social boundaries. Email,
+  legal/full name, and other personal-data fallbacks are forbidden.
+- A verified result stores the valid nickname in effect at verification time as
+  an immutable snapshot while retaining the account link by `User.id`.
+- Social export v1 costs **1 global credit per verified-result unlock**.
+- One successful unlock covers the normal challenge-template family in all
+  supported formats, including unlimited rerender and retry. A failed render
+  must not consume another credit. `CreditService` remains the only credit
+  authority.
+- Social rendering remains a later phase. No renderer, export entitlement, or
+  credit charge is implemented by PC6B capture reconciliation.
+
+The approved canonical SOLO intake is server-issued `SOLO_VERIFIED`, bound to
+the authenticated Player, one attempt ID, and `front` camera policy. Client
+`source_type`, `upload_source`, and metadata are claims only. Gallery/file
+imports and current Instructor/MultiCamera POCs remain non-canonical and cannot
+be promoted to PC6A verification candidates.
+
+## Reconciliation implementation state — 2026-09-14
+
+The narrow findings above have been implemented on
+`codex/pc6b-direct-player-capture`, pending the required physical-iPhone smoke:
+
+- the server issues an idempotent `SOLO_VERIFIED` attempt only to a Player with
+  active canonical `LFA_FOOTBALL_PLAYER` entitlement and current WS1 season
+  assignment;
+- each attempt is bound to its authenticated `User.id`, front-camera policy,
+  and at most one `JugglingVideo`; persisted source labels are server-set;
+- the Player Solo view opens only the front camera and no longer presents the
+  Photos picker; legacy imports remain non-canonical and PC6A rejects them;
+- new human verifications require a valid unique nickname and persist its
+  immutable snapshot alongside `player_user_id`;
+- public Player and current challenge/card boundaries no longer substitute
+  email or legal/full name when nickname is unavailable;
+- no Instructor/MultiCamera canonical verification, social renderer, social
+  unlock, reward charge, production import, or historical nickname rewrite was
+  added.
+
+The original inventory below records the state at audited commit
+`8589eef8cea79ea967e3ccbcefd7dfed16827ccd`; statements marked missing or
+non-compliant there are historical audit evidence rather than the post-change
+runtime status.
+
 ## Scope and baseline
 
 - Repository worktree: `/private/tmp/lfa-pc6b-direct-capture`

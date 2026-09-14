@@ -93,6 +93,15 @@ class JugglingTrainingVideoType(str, enum.Enum):
     gan_foottennis = "gan_foottennis"
 
 
+class JugglingCaptureMode(str, enum.Enum):
+    solo_verified = "SOLO_VERIFIED"
+
+
+class JugglingCaptureAttemptStatus(str, enum.Enum):
+    issued = "ISSUED"
+    bound = "BOUND"
+
+
 class JugglingConsent(Base):
     """
     Per-user consent record for the juggling POC pipeline.
@@ -129,6 +138,54 @@ class JugglingConsent(Base):
     user = relationship("User", back_populates="juggling_consent")
 
 
+class JugglingCaptureAttempt(Base):
+    """Server-issued provenance for one canonical Player camera attempt."""
+
+    __tablename__ = "juggling_capture_attempts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid_mod.uuid4)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True,
+    )
+    request_idempotency_key = Column(String(64), nullable=False)
+    capture_mode = Column(
+        String(30), nullable=False, default=JugglingCaptureMode.solo_verified.value,
+    )
+    camera_position = Column(String(10), nullable=False, default="front")
+    status = Column(
+        String(20), nullable=False, default=JugglingCaptureAttemptStatus.issued.value,
+    )
+    issued_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc),
+    )
+    bound_at = Column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("User")
+    video = relationship(
+        "JugglingVideo", back_populates="capture_attempt", uselist=False,
+        foreign_keys="JugglingVideo.capture_attempt_id",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "request_idempotency_key",
+            name="uq_juggling_capture_attempt_user_request",
+        ),
+        CheckConstraint(
+            "capture_mode = 'SOLO_VERIFIED'",
+            name="ck_juggling_capture_attempt_mode",
+        ),
+        CheckConstraint(
+            "camera_position = 'front'",
+            name="ck_juggling_capture_attempt_camera",
+        ),
+        CheckConstraint(
+            "status IN ('ISSUED','BOUND')",
+            name="ck_juggling_capture_attempt_status",
+        ),
+    )
+
+
 class JugglingVideo(Base):
     """
     Per-video record tracking the full intake pipeline:
@@ -152,6 +209,22 @@ class JugglingVideo(Base):
     upload_idempotency_key = Column(
         String(64), nullable=True,
         comment="Client-generated replay key for one logical upload attempt",
+    )
+    capture_attempt_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("juggling_capture_attempts.id", ondelete="RESTRICT"),
+        nullable=True,
+        unique=True,
+        index=True,
+        comment="Server-issued attempt; required for canonical SOLO_VERIFIED media",
+    )
+    capture_mode = Column(
+        String(30), nullable=True,
+        comment="Server-authoritative capture policy mode; null for legacy/import media",
+    )
+    authoritative_camera_position = Column(
+        String(10), nullable=True,
+        comment="Server-issued camera policy; never derived from client metadata",
     )
     training_video_type = Column(
         String(30), nullable=False,
@@ -220,6 +293,10 @@ class JugglingVideo(Base):
             "user_id", "upload_idempotency_key",
             name="uq_juggling_video_user_upload_idempotency",
         ),
+    )
+
+    capture_attempt = relationship(
+        "JugglingCaptureAttempt", back_populates="video", foreign_keys=[capture_attempt_id],
     )
 
     # ── Server-detected metadata (authoritative, ffprobe) ────────────────────
@@ -499,6 +576,10 @@ class JugglingVerification(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid_mod.uuid4)
     player_user_id = Column(
         Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True,
+    )
+    player_nickname_snapshot = Column(
+        String(30), nullable=True,
+        comment="Immutable canonical public identity at verification time; null only for legacy rows",
     )
     video_id = Column(
         UUID(as_uuid=True), ForeignKey("juggling_videos.id", ondelete="RESTRICT"),

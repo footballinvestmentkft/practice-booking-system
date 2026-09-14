@@ -16,12 +16,24 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models.credit_transaction import TransactionType
-from app.models.juggling import JugglingConsent, JugglingContactEvent, JugglingVerification, JugglingVideo
+from app.models.juggling import (
+    JugglingCaptureAttempt,
+    JugglingCaptureAttemptStatus,
+    JugglingCaptureMode,
+    JugglingConsent,
+    JugglingContactEvent,
+    JugglingVerification,
+    JugglingVideo,
+)
 from app.models.user import User, UserRole
 from app.services.credit_service import CreditService
 from app.services.juggling.sequence_policy import ReviewedContact, SequencePolicyError, validate_human_sequence
 from app.services.juggling.taxonomy_service import derive_side, is_stable, validate_contact_type
 from app.services.player_progression_service import PlayerProgressionError, PlayerProgressionService
+from app.services.public_identity_service import (
+    PublicIdentityPolicyError,
+    require_public_display_identity,
+)
 
 
 VERIFICATION_VERSION = "PC6A_V1"
@@ -146,6 +158,26 @@ class JugglingVerificationService:
             query = query.with_for_update()
         return query.order_by(JugglingContactEvent.timestamp_ms, JugglingContactEvent.id).all()
 
+    def _require_canonical_capture(self, video: JugglingVideo) -> JugglingCaptureAttempt:
+        if (
+            video.capture_attempt_id is None
+            or video.capture_mode != JugglingCaptureMode.solo_verified.value
+            or video.authoritative_camera_position != "front"
+            or video.source_type != "in_app_capture"
+            or video.upload_source != "camera"
+        ):
+            raise JugglingVerificationError("NON_CANONICAL_CAPTURE_PROVENANCE")
+        attempt = self.db.get(JugglingCaptureAttempt, video.capture_attempt_id)
+        if (
+            attempt is None
+            or attempt.user_id != video.user_id
+            or attempt.status != JugglingCaptureAttemptStatus.bound.value
+            or attempt.capture_mode != video.capture_mode
+            or attempt.camera_position != video.authoritative_camera_position
+        ):
+            raise JugglingVerificationError("NON_CANONICAL_CAPTURE_PROVENANCE")
+        return attempt
+
     @staticmethod
     def _video_identity(video: JugglingVideo) -> tuple[str, str]:
         if video.checksum_processed:
@@ -158,6 +190,7 @@ class JugglingVerificationService:
         self, *, video_id: UUID, reviewer: User | None = None,
     ) -> VerificationCandidate:
         video = self._video(video_id)
+        self._require_canonical_capture(video)
         if reviewer is not None:
             if reviewer.role != UserRole.ADMIN:
                 raise JugglingVerificationError("ADMIN_REVIEWER_REQUIRED")
@@ -194,6 +227,7 @@ class JugglingVerificationService:
             raise JugglingVerificationError("PLAYER_VIDEO_MISMATCH")
         if video.training_video_type != "juggling":
             raise JugglingVerificationError("JUGGLING_VIDEO_REQUIRED")
+        capture_attempt = self._require_canonical_capture(video)
 
         request_hash = _command_hash(command)
         existing = self.db.query(JugglingVerification).filter_by(
@@ -214,6 +248,10 @@ class JugglingVerificationService:
         player = self.db.get(User, command.player_user_id)
         if player is None:
             raise JugglingVerificationError("PLAYER_NOT_FOUND")
+        try:
+            player_nickname = require_public_display_identity(self.db, player)
+        except PublicIdentityPolicyError as exc:
+            raise JugglingVerificationError(exc.code) from exc
         all_events = self._events(video.id, lock=True)
         source_snapshot = _snapshot(all_events)
         if _hash(source_snapshot) != command.expected_annotation_revision_hash:
@@ -312,6 +350,11 @@ class JugglingVerificationService:
             "source_annotation_revision_hash": command.expected_annotation_revision_hash,
             "contact_event_revision_hash": final_revision_hash,
             "reviewer_user_id": reviewer.id,
+            "player_user_id": player.id,
+            "player_nickname_snapshot": player_nickname,
+            "capture_attempt_id": str(capture_attempt.id),
+            "capture_mode": capture_attempt.capture_mode,
+            "camera_position": capture_attempt.camera_position,
             "status": command.status,
             "score": sequence.score,
             "touch_count": sequence.touch_count,
@@ -354,6 +397,7 @@ class JugglingVerificationService:
         record = JugglingVerification(
             id=verification_id,
             player_user_id=player.id,
+            player_nickname_snapshot=player_nickname,
             video_id=video.id,
             reviewer_user_id=reviewer.id,
             verification_method="HUMAN",

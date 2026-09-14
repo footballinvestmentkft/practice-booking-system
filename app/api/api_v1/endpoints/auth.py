@@ -22,6 +22,11 @@ from ....utils.validators import validate_phone_number, validate_address, valida
 from ....services.canonical_policy import evaluate_profile_age_policy
 from ....services.program_eligibility_service import record_guardian_consent
 from ....services.player_identity_service import update_identity_profile
+from ....services.public_identity_service import (
+    PublicIdentityPolicyError,
+    nickname_available,
+    normalize_public_nickname,
+)
 
 router = APIRouter()
 
@@ -324,12 +329,17 @@ def register_with_invitation(
             detail=error
         )
 
-    # Validate nickname
-    is_valid, error = validate_name(registration_data.nickname, "Nickname")
-    if not is_valid:
+    # Canonical public identity validation and case-insensitive availability.
+    try:
+        canonical_nickname = normalize_public_nickname(registration_data.nickname)
+    except PublicIdentityPolicyError as exc:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error
+            status_code=status.HTTP_400_BAD_REQUEST, detail=exc.code,
+        ) from exc
+    if not nickname_available(db, nickname=canonical_nickname):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="PUBLIC_DISPLAY_IDENTITY_CONFLICT",
         )
 
     # Validate and format phone number
@@ -360,7 +370,7 @@ def register_with_invitation(
         name=registration_data.name,  # Keep for backward compatibility
         first_name=registration_data.first_name,
         last_name=registration_data.last_name,
-        nickname=registration_data.nickname,
+        nickname=canonical_nickname,
         phone=formatted_phone,  # Use validated and formatted international phone number
         role=UserRole.STUDENT,
         is_active=True,
