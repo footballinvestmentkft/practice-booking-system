@@ -22,6 +22,7 @@ from app.models.juggling import (
     JugglingVideo,
     JugglingVideoStatus,
 )
+from app.models.user import User, UserRole
 from app.tasks.juggling_trajectory_task import run_dense_ball_trajectory
 import app.tasks.juggling_trajectory_task as task_module
 
@@ -58,7 +59,17 @@ def _enable_flags(monkeypatch):
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _make_video(db, *, transcode_status="done", duration_sec=1.0, user_id=1):
+def _make_video(db, *, transcode_status="done", duration_sec=1.0):
+    user = User(
+        name="Ball Trajectory Test Player",
+        email=f"ball-trajectory-{uuid.uuid4().hex}@example.com",
+        password_hash="test-hash",
+        role=UserRole.STUDENT,
+        is_active=True,
+    )
+    db.add(user)
+    db.flush()
+    user_id = user.id
     vid_id = uuid.uuid4()
     consent = db.query(JugglingConsent).filter(JugglingConsent.user_id == user_id).first()
     if consent is None:

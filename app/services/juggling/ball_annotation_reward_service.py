@@ -31,15 +31,15 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from sqlalchemy import func, select, text
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models.credit_transaction import CreditTransaction, TransactionType
-from app.models.gamification import UserStats
 from app.models.juggling import JugglingBallFeedback, UserAnnotationReliability
+from app.models.user import User
 from app.models.xp_transaction import XPTransaction
-from app.services.gamification.utils import get_or_create_user_stats
+from app.services.credit_service import CreditService
+from app.services.xp_write_service import XPWriteService
 
 _ANNOTATION_XP_TYPES = frozenset({
     "BALL_ANNOTATION_XP",
@@ -113,40 +113,15 @@ def _award_xp_inline(
     idempotency_key: str,
     description: str,
 ) -> int:
-    """Inline XP award (no db.commit). Returns xp_amount on success, 0 on duplicate."""
-    new_balance: int = db.execute(
-        text(
-            "UPDATE users SET xp_balance = xp_balance + :delta "
-            "WHERE id = :uid RETURNING xp_balance"
-        ),
-        {"delta": xp_amount, "uid": user_id},
-    ).scalar() or 0
-
-    sp = db.begin_nested()
-    db.add(XPTransaction(
+    """Delegate annotation XP to the canonical XP ledger/balance authority."""
+    _, _, created = XPWriteService(db).award(
         user_id=user_id,
-        transaction_type=transaction_type,
         amount=xp_amount,
-        balance_after=new_balance,
+        transaction_type=transaction_type,
         description=description,
         idempotency_key=idempotency_key,
-    ))
-    try:
-        sp.commit()
-    except IntegrityError:
-        sp.rollback()
-        # Undo the balance increment since the transaction was already recorded.
-        db.execute(
-            text("UPDATE users SET xp_balance = xp_balance - :delta WHERE id = :uid"),
-            {"delta": xp_amount, "uid": user_id},
-        )
-        return 0
-
-    stats: UserStats = get_or_create_user_stats(db, user_id)
-    stats.total_xp = (stats.total_xp or 0) + xp_amount
-    stats.level = max(1, stats.total_xp // 1000)
-    stats.updated_at = datetime.now(timezone.utc)
-    return xp_amount
+    )
+    return xp_amount if created else 0
 
 
 def _award_credit_inline(
@@ -155,44 +130,18 @@ def _award_credit_inline(
     idempotency_key: str,
     description: str,
 ) -> int:
-    """Inline credit award (no db.commit). Returns 1 on success, 0 on duplicate."""
-    existing = db.execute(
-        select(CreditTransaction).where(
-            CreditTransaction.idempotency_key == idempotency_key
-        )
-    ).scalar_one_or_none()
-    if existing is not None:
-        return 0
-
-    new_balance: int = db.execute(
-        text(
-            "UPDATE users SET credit_balance = credit_balance + 1 "
-            "WHERE id = :uid RETURNING credit_balance"
-        ),
-        {"uid": user_id},
-    ).scalar() or 0
-
-    sp = db.begin_nested()
-    db.add(CreditTransaction(
-        user_id=user_id,
-        transaction_type=TransactionType.BALL_ANNOTATION_REWARD.value,
+    """Delegate annotation credit to the canonical global credit authority."""
+    user = db.get(User, user_id)
+    if user is None:
+        raise ValueError("USER_NOT_FOUND")
+    _, created = CreditService(db).credit_with_status(
+        user=user,
         amount=1,
-        balance_after=new_balance,
+        transaction_type=TransactionType.BALL_ANNOTATION_REWARD.value,
         description=description,
         idempotency_key=idempotency_key,
-        created_at=datetime.now(timezone.utc),
-    ))
-    try:
-        sp.commit()
-    except IntegrityError:
-        sp.rollback()
-        db.execute(
-            text("UPDATE users SET credit_balance = credit_balance - 1 WHERE id = :uid"),
-            {"uid": user_id},
-        )
-        return 0
-
-    return 1
+    )
+    return 1 if created else 0
 
 
 def compute_upfront_reward(

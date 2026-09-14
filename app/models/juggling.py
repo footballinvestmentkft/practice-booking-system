@@ -308,6 +308,11 @@ class JugglingVideo(Base):
         foreign_keys="JugglingContactEvent.video_id",
         cascade="all, delete-orphan",
     )
+    verifications = relationship(
+        "JugglingVerification",
+        back_populates="video",
+        foreign_keys="JugglingVerification.video_id",
+    )
 
 
 # ── Juggling contact event enums ──────────────────────────────────────────────
@@ -412,6 +417,14 @@ class JugglingContactEvent(Base):
     note                = Column(String(500), nullable=True)
     ball_height_approx_px = Column(Integer, nullable=True)
 
+    # PC6A human-review audit. The event remains the single annotation entity;
+    # verification snapshots it instead of creating a parallel event model.
+    reviewed_by_user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True,
+    )
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    review_note = Column(String(500), nullable=True)
+
     version    = Column(Integer, nullable=False, default=1, server_default="1")
     created_at = Column(DateTime(timezone=True), nullable=False, index=True,
                         default=lambda: datetime.now(timezone.utc))
@@ -459,9 +472,101 @@ class JugglingContactEvent(Base):
     video          = relationship("JugglingVideo", back_populates="contact_events",
                                   foreign_keys=[video_id])
     created_by     = relationship("User", foreign_keys=[created_by_user_id])
+    reviewed_by    = relationship("User", foreign_keys=[reviewed_by_user_id])
     corrected_from = relationship("JugglingContactEvent",
                                   foreign_keys=[corrected_from_event_id],
                                   remote_side="JugglingContactEvent.id")
+
+
+class JugglingVerification(Base):
+    """Immutable reviewed result for one continuous juggling attempt."""
+
+    __tablename__ = "juggling_verifications"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid_mod.uuid4)
+    player_user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True,
+    )
+    video_id = Column(
+        UUID(as_uuid=True), ForeignKey("juggling_videos.id", ondelete="RESTRICT"),
+        nullable=False, index=True,
+    )
+    reviewer_user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False,
+    )
+    verification_method = Column(String(40), nullable=False)
+    verification_version = Column(String(30), nullable=False)
+    status = Column(String(20), nullable=False)
+    video_checksum_sha256 = Column(String(64), nullable=False)
+    video_version = Column(String(96), nullable=False)
+    source_annotation_revision_hash = Column(String(64), nullable=False)
+    contact_event_revision_hash = Column(String(64), nullable=False)
+    request_hash = Column(String(64), nullable=False)
+    contact_event_snapshot = Column(JSONB, nullable=False)
+    touch_count = Column(Integer, nullable=False)
+    score = Column(Integer, nullable=False)
+    side_breakdown = Column(JSONB, nullable=False, default=dict)
+    body_part_breakdown = Column(JSONB, nullable=False, default=dict)
+    sequence_start_ms = Column(BigInteger, nullable=True)
+    sequence_end_ms = Column(BigInteger, nullable=True)
+    termination_reason = Column(String(30), nullable=False)
+    confidence = Column(Float, nullable=False)
+    provenance = Column(JSONB, nullable=False)
+    provenance_hash = Column(String(64), nullable=False)
+    progression_outcome_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("player_progression_outcomes.id", ondelete="RESTRICT"),
+        nullable=False, unique=True,
+    )
+    credit_transaction_id = Column(
+        Integer, ForeignKey("credit_transactions.id", ondelete="RESTRICT"), nullable=True,
+        unique=True,
+    )
+    verified_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()"),
+    )
+
+    video = relationship("JugglingVideo", back_populates="verifications", foreign_keys=[video_id])
+    player = relationship("User", foreign_keys=[player_user_id])
+    reviewer = relationship("User", foreign_keys=[reviewer_user_id])
+    progression_outcome = relationship("PlayerProgressionOutcome", foreign_keys=[progression_outcome_id])
+    credit_transaction = relationship("CreditTransaction", foreign_keys=[credit_transaction_id])
+
+    __table_args__ = (
+        UniqueConstraint(
+            "video_id", "source_annotation_revision_hash",
+            name="uq_juggling_verification_source_revision",
+        ),
+        UniqueConstraint(
+            "video_id", "contact_event_revision_hash",
+            name="uq_juggling_verification_contact_revision",
+        ),
+        CheckConstraint(
+            "verification_method IN ('HUMAN','APPLE_VISION_RULE_BASED','ML_MODEL')",
+            name="ck_juggling_verification_method",
+        ),
+        CheckConstraint("status IN ('VALID','INVALID')", name="ck_juggling_verification_status"),
+        CheckConstraint("touch_count >= 0 AND score >= 0", name="ck_juggling_verification_score"),
+        CheckConstraint("score = touch_count", name="ck_juggling_verification_score_matches_count"),
+        CheckConstraint(
+            "confidence >= 0.0 AND confidence <= 1.0",
+            name="ck_juggling_verification_confidence",
+        ),
+        CheckConstraint(
+            "termination_reason IN ('BALL_DROPPED','VIDEO_ENDED','PLAYER_STOPPED','INVALID_SEQUENCE')",
+            name="ck_juggling_verification_termination",
+        ),
+        CheckConstraint(
+            "(touch_count = 0 AND sequence_start_ms IS NULL AND sequence_end_ms IS NULL) OR "
+            "(touch_count > 0 AND sequence_start_ms IS NOT NULL AND sequence_end_ms IS NOT NULL "
+            "AND sequence_start_ms <= sequence_end_ms)",
+            name="ck_juggling_verification_boundaries",
+        ),
+        CheckConstraint(
+            "status != 'VALID' OR touch_count >= 1",
+            name="ck_juggling_verification_valid_minimum",
+        ),
+    )
 
 
 class JugglingPoseSnapshot(Base):

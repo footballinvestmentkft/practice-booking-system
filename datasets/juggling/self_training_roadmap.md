@@ -197,7 +197,9 @@ Do not share model files or service code with the biometric scope.
 **Algorithm:**
 1. For each frame: compute distance from `ball_center` to each body-part zone polygon
 2. If distance < threshold AND velocity direction reversal detected: candidate contact event
-3. Apply duplicate suppression: min 200ms between consecutive events on the same body part
+3. Evaluate duplicate suppression as a model/rule-based detector parameter. A
+   200ms gap is only an experimental hypothesis and is not a canonical
+   juggling business rule; it must be validated against reviewed data.
 
 **Velocity direction change:**
 ```python
@@ -218,9 +220,13 @@ def direction_reversal(pos_history: list) -> bool:
 
 **Algorithm:**
 - Count = number of valid contact events in the clip
-- Duplicate suppression: min 200ms gap enforced in Phase D
-- Dropped ball detection: if ball trajectory shows free-fall parabola with no contact for > 1.5s, flag as dropped
-- Final count excludes events after a dropped ball (unless the ball is picked up again)
+- Duplicate suppression remains a measured detector concern; no fixed timing
+  threshold is part of the canonical sequence policy.
+- Dropped-ball timing remains a measured detector concern; 1.5s is an
+  experimental hypothesis, not a canonical termination rule.
+- The canonical result uses explicit reviewed sequence boundaries and
+  termination. Automatic boundaries require later evaluation against the
+  reviewed golden dataset.
 
 **Outputs:** `juggling_count: int`, `juggling_confidence: float (0–1)`
 

@@ -86,6 +86,7 @@ from .juggling import (
     JugglingAnnotationReviewStatus,
     JugglingTaxonomyReviewStatus,
     JugglingVideoAnnotationStatus,
+    JugglingVerification,
     JugglingBallTrajectory,
 )
 

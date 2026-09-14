@@ -48419,6 +48419,167 @@
           }
         }
       }
+    },
+    "/api/v1/admin/juggling/videos/{video_id}/verification-candidate": {
+      "get": {
+        "operationId": "get_verification_candidate_api_v1_admin_juggling_videos__video_id__verification_candidate_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingVerificationCandidateOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Verification Candidate",
+        "tags": [
+          "admin",
+          "juggling",
+          "verification"
+        ]
+      }
+    },
+    "/api/v1/admin/juggling/videos/{video_id}/verify": {
+      "post": {
+        "operationId": "verify_juggling_video_api_v1_admin_juggling_videos__video_id__verify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HumanJugglingVerificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingVerificationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Verify Juggling Video",
+        "tags": [
+          "admin",
+          "juggling",
+          "verification"
+        ]
+      }
+    },
+    "/api/v1/users/me/juggling/videos/{video_id}/verification": {
+      "get": {
+        "operationId": "get_my_juggling_verification_api_v1_users_me_juggling_videos__video_id__verification_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JugglingVerificationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get My Juggling Verification",
+        "tags": [
+          "users",
+          "users",
+          "juggling",
+          "verification"
+        ]
+      }
     }
   },
   "components": {
@@ -77562,6 +77723,334 @@
         ],
         "title": "EnrollmentResponse",
         "description": "Response after successful tournament enrollment\nIncludes enrollment details and any conflict warnings"
+      },
+      "ContactReviewDecisionRequest": {
+        "properties": {
+          "corrected_contact_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected Contact Type"
+          },
+          "decision": {
+            "enum": [
+              "CONFIRM",
+              "REJECT",
+              "CORRECT"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "event_id": {
+            "format": "uuid",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "include_in_sequence": {
+            "default": false,
+            "title": "Include In Sequence",
+            "type": "boolean"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "event_id",
+          "decision"
+        ],
+        "title": "ContactReviewDecisionRequest",
+        "type": "object"
+      },
+      "HumanJugglingVerificationRequest": {
+        "properties": {
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "event_decisions": {
+            "items": {
+              "$ref": "#/components/schemas/ContactReviewDecisionRequest"
+            },
+            "title": "Event Decisions",
+            "type": "array"
+          },
+          "expected_annotation_revision_hash": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Expected Annotation Revision Hash",
+            "type": "string"
+          },
+          "player_user_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Player User Id",
+            "type": "integer"
+          },
+          "sequence_end_ms": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence End Ms"
+          },
+          "sequence_start_ms": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence Start Ms"
+          },
+          "status": {
+            "enum": [
+              "VALID",
+              "INVALID"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "termination_reason": {
+            "enum": [
+              "BALL_DROPPED",
+              "VIDEO_ENDED",
+              "PLAYER_STOPPED",
+              "INVALID_SEQUENCE"
+            ],
+            "title": "Termination Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "player_user_id",
+          "expected_annotation_revision_hash",
+          "event_decisions",
+          "status",
+          "termination_reason",
+          "confidence"
+        ],
+        "title": "HumanJugglingVerificationRequest",
+        "type": "object"
+      },
+      "JugglingVerificationCandidateOut": {
+        "properties": {
+          "annotation_revision_hash": {
+            "title": "Annotation Revision Hash",
+            "type": "string"
+          },
+          "contact_events": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Contact Events",
+            "type": "array"
+          },
+          "player_user_id": {
+            "title": "Player User Id",
+            "type": "integer"
+          },
+          "video_checksum_sha256": {
+            "title": "Video Checksum Sha256",
+            "type": "string"
+          },
+          "video_id": {
+            "format": "uuid",
+            "title": "Video Id",
+            "type": "string"
+          },
+          "video_version": {
+            "title": "Video Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "video_id",
+          "player_user_id",
+          "video_checksum_sha256",
+          "video_version",
+          "annotation_revision_hash",
+          "contact_events"
+        ],
+        "title": "JugglingVerificationCandidateOut",
+        "type": "object"
+      },
+      "JugglingVerificationOut": {
+        "properties": {
+          "body_part_breakdown": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Body Part Breakdown",
+            "type": "object"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "contact_event_revision_hash": {
+            "title": "Contact Event Revision Hash",
+            "type": "string"
+          },
+          "credit_transaction_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Transaction Id"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "player_user_id": {
+            "title": "Player User Id",
+            "type": "integer"
+          },
+          "progression_outcome_id": {
+            "format": "uuid",
+            "title": "Progression Outcome Id",
+            "type": "string"
+          },
+          "provenance_hash": {
+            "title": "Provenance Hash",
+            "type": "string"
+          },
+          "reviewer_user_id": {
+            "title": "Reviewer User Id",
+            "type": "integer"
+          },
+          "score": {
+            "title": "Score",
+            "type": "integer"
+          },
+          "sequence_end_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence End Ms"
+          },
+          "sequence_start_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence Start Ms"
+          },
+          "side_breakdown": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Side Breakdown",
+            "type": "object"
+          },
+          "source_annotation_revision_hash": {
+            "title": "Source Annotation Revision Hash",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "termination_reason": {
+            "title": "Termination Reason",
+            "type": "string"
+          },
+          "touch_count": {
+            "title": "Touch Count",
+            "type": "integer"
+          },
+          "verification_method": {
+            "title": "Verification Method",
+            "type": "string"
+          },
+          "verification_version": {
+            "title": "Verification Version",
+            "type": "string"
+          },
+          "verified_at": {
+            "format": "date-time",
+            "title": "Verified At",
+            "type": "string"
+          },
+          "video_checksum_sha256": {
+            "title": "Video Checksum Sha256",
+            "type": "string"
+          },
+          "video_id": {
+            "format": "uuid",
+            "title": "Video Id",
+            "type": "string"
+          },
+          "video_version": {
+            "title": "Video Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "player_user_id",
+          "video_id",
+          "reviewer_user_id",
+          "verification_method",
+          "verification_version",
+          "status",
+          "video_checksum_sha256",
+          "video_version",
+          "source_annotation_revision_hash",
+          "contact_event_revision_hash",
+          "touch_count",
+          "score",
+          "side_breakdown",
+          "body_part_breakdown",
+          "sequence_start_ms",
+          "sequence_end_ms",
+          "termination_reason",
+          "confidence",
+          "provenance_hash",
+          "progression_outcome_id",
+          "credit_transaction_id",
+          "verified_at"
+        ],
+        "title": "JugglingVerificationOut",
+        "type": "object"
       }
     },
     "securitySchemes": {

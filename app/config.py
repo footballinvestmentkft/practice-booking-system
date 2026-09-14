@@ -476,6 +476,11 @@ class Settings(BaseSettings):
     BALL_ANNOTATION_RAPID_SUBMIT_THRESHOLD: int = 5
     BALL_ANNOTATION_SPAM_FLAG_BLOCK_THRESHOLD: int = 10
 
+    # PC6A: canonical verified-result rewards. Zero is the safe baseline until
+    # product owners explicitly approve a positive reward policy.
+    JUGGLING_VERIFIED_RESULT_XP: int = 0
+    JUGGLING_VERIFIED_RESULT_CREDIT: int = 0
+
     # ── Slow-query monitoring ──────────────────────────────────────────────────
     # Queries slower than SLOW_QUERY_THRESHOLD_MS are logged to app.slow_query
     # and counted in the slow_queries_total metric.  Raise this value if normal

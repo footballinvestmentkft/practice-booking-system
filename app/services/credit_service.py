@@ -248,6 +248,24 @@ class CreditService:
         idempotency_key: str,
     ) -> CreditTransaction:
         """Atomically credit a global user balance and its ledger exactly once."""
+        transaction, _ = self.credit_with_status(
+            user=user,
+            amount=amount,
+            transaction_type=transaction_type,
+            description=description,
+            idempotency_key=idempotency_key,
+        )
+        return transaction
+
+    def credit_with_status(
+        self,
+        user: User,
+        amount: int,
+        transaction_type: str,
+        description: str,
+        idempotency_key: str,
+    ) -> tuple[CreditTransaction, bool]:
+        """Credit a global balance and report whether the ledger row was created."""
         if amount <= 0:
             raise ValueError("Credit amount must be positive")
 
@@ -262,7 +280,7 @@ class CreditService:
                 description=description,
             )
             self.db.refresh(user)
-            return existing
+            return existing, False
 
         result = self.db.execute(
             text(
@@ -288,7 +306,7 @@ class CreditService:
             raise RuntimeError("Idempotency lock did not serialize credit creation")
 
         user.credit_balance = new_balance
-        return transaction
+        return transaction, True
 
     def _lock_idempotency_key(self, idempotency_key: str) -> None:
         """Serialize one logical operation for the lifetime of the DB transaction."""

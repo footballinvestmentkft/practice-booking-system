@@ -159,8 +159,8 @@ class TestCEL12RouteCount:
         """CEL-12: route count = 922."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 928, (
-            f"Expected 928 routes, got {len(paths)}"
+        assert len(paths) == 931, (
+            f"Expected 931 routes, got {len(paths)}"
         )
 
     def test_cel_12b_card_editor_route_registered(self):

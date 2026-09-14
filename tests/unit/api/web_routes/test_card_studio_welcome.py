@@ -325,8 +325,8 @@ class TestCEW18RouteCount:
         """CEW-18: route count = 922."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 928, (
-            f"Expected 928 routes, got {len(paths)}"
+        assert len(paths) == 931, (
+            f"Expected 931 routes, got {len(paths)}"
         )
 
     def test_cew_18b_card_editor_welcome_route_registered(self):
@@ -678,8 +678,8 @@ class TestCEW44to51TemplateMoodPicker:
         """CEW-47: CE-3.8 adds 3 from-mood routes → total 842."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 928, (
-            f"Expected 928 routes, got {len(paths)}"
+        assert len(paths) == 931, (
+            f"Expected 931 routes, got {len(paths)}"
         )
 
     def test_cew_48_assign_js_has_csrf_header(self):

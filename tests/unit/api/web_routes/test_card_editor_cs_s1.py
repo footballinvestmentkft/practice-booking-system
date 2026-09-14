@@ -290,12 +290,12 @@ class TestS1bCTAAndNaming:
 
 class TestS109S110RouteAndSnapshot:
 
-    def test_s1_09_route_count_928(self):
+    def test_s1_09_route_count_931(self):
         """S1-09: PC3 replaces 14 raw-SQL routes with two canonical reads."""
         from app.main import app
         paths = app.openapi().get("paths", {})
-        assert len(paths) == 928, (
-            f"Expected 928 routes, got {len(paths)}"
+        assert len(paths) == 931, (
+            f"Expected 931 routes, got {len(paths)}"
         )
 
     def test_s1_10_openapi_snapshot_still_matches(self):
